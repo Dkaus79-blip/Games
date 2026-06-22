@@ -77,6 +77,9 @@ fetch(`https://api.github.com/repos/${username}/${repo}/contents/${gamesFolder}`
       }
     });
 
+    // ⭐ Alphabetical sorting (A → Z)
+    games.sort((a, b) => a.title.localeCompare(b.title));
+
     renderPage();
   })
   .catch(err => {
