@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Skeeter & Lily's Arcade</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: #f5f5f5;
+    }
+    header {
+        background: linear-gradient(135deg, #3b1f5f, #ff5f6d);
+        padding: 20px;
+        text-align: center;
+        position: relative;
+    }
+    header h1 {
+        margin: 0;
+        font-size: 32px;
+        text-shadow: 0 0 8px #000;
+    }
+    .cats-container {
+        position: relative;
+        margin-top: 10px;
+        height: 80px;
+    }
+    .cat {
+        position: absolute;
+        top: 10px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        background: #333;
+        box-shadow: 0 0 8px rgba(0,0,0,0.6);
+    }
+    .cat.brown { left: 10%; background: #5b3a1f; }
+    .cat.white { right: 10%; background: #f0f0f0; color: #333; }
+    .hearts {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+        font-size: 32px;
+        animation: floatHearts 2s infinite alternate;
+    }
+    @keyframes floatHearts {
+        from { transform: translate(-50%, 0); }
+        to   { transform: translate(-50%, -10px); }
+    }
+
+    .top-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background: #1b1b1b;
+        border-bottom: 1px solid #333;
+        font-size: 13px;
+    }
+    .top-bar span {
+        padding: 4px 8px;
+        background: #222;
+        border-radius: 4px;
+    }
+
+    .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        background: #222;
+        border-bottom: 1px solid #333;
+    }
+    .tab {
+        padding: 10px 16px;
+        cursor: pointer;
+        border-right: 1px solid #333;
+        font-size: 14px;
+    }
+    .tab.active {
+        background: #444;
+        font-weight: bold;
+    }
+
+    .tab-content {
+        display: none;
+        padding: 15px;
+    }
+    .tab-content.active {
+        display: block;
+    }
+
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+    }
+    .card {
+        background: #1c1c1c;
+        border: 1px solid #333;
+        border-radius: 6px;
+        padding: 10px;
+    }
+    .card h3 {
+        margin-top: 0;
+        font-size: 16px;
+    }
+    button {
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: none;
+        background: #ff5f6d;
+        color: #fff;
+        font-size: 13px;
+        margin: 2px 0;
+    }
+    button.secondary {
+        background: #555;
+    }
+    button:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+    .small {
+        font-size: 12px;
+        opacity: 0.85;
+    }
+    .inventory-list, .quest-list, .npc-list, .collection-list {
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid #333;
+        padding: 8px;
+        border-radius: 4px;
+        background: #151515;
+    }
+    .inventory-item, .quest-item, .npc-item, .collection-item {
+        padding: 4px 0;
+        border-bottom: 1px solid #333;
+        font-size: 13px;
+    }
+    .inventory-item:last-child,
+    .quest-item:last-child,
+    .npc-item:last-child,
+    .collection-item:last-child {
+        border-bottom: none;
+    }
+    .slots-display {
+        font-size: 32px;
+        text-align: center;
+        margin: 10px 0;
+    }
+    .slots-result {
+        text-align: center;
+        margin-top: 5px;
+        min-height: 20px;
+    }
+    .hotel-room {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 12px;
+    }
+    .hotel-visual {
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #151515;
+        min-height: 220px;
+        padding: 10px;
+        position: relative;
+    }
+    .hotel-item {
+        display: inline-block;
+        padding: 4px 6px;
+        margin: 3px;
+        border-radius: 4px;
+        background: #333;
+        font-size: 12px;
+    }
+    .hotel-shop-item {
+        padding: 4px 0;
+        border-bottom: 1px solid #333;
+        font-size: 13px;
+    }
+    .hotel-shop-item:last-child {
+        border-bottom: none;
+    }
+    select, input[type="password"] {
+        padding: 4px 6px;
+        border-radius: 4px;
+        border: 1px solid #444;
+        background: #222;
+        color: #f5f5f5;
+        font-size: 13px;
+    }
+    .quest-progress {
+        font-size: 11px;
+        opacity: 0.8;
+    }
+    .npc-rel {
+        font-size: 11px;
+        opacity: 0.8;
+    }
+    .npc-panel {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        width: 280px;
+        max-height: 420px;
+        background: #1b1b1b;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.7);
+        z-index: 999;
+    }
+    .npc-panel-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .npc-portrait {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-right: 8px;
+    }
+    .npc-panel-title {
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .npc-rel-bar {
+        width: 100%;
+        height: 6px;
+        background: #333;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 4px 0 6px 0;
+    }
+    .npc-rel-fill {
+        height: 100%;
+        background: #ff5f6d;
+        width: 0%;
+    }
+    .npc-panel-buttons button {
+        width: 48%;
+        margin: 2px 1%;
+        font-size: 11px;
+        padding: 4px 0;
+    }
+    .npc-panel-dialogue {
+        margin-top: 6px;
+        font-size: 12px;
+        border-top: 1px solid #333;
+        padding-top: 6px;
+        max-height: 160px;
+        overflow-y: auto;
+    }
+    .npc-panel-close {
+        position: absolute;
+        top: 4px;
+        right: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Skeeter &amp; Lily's Arcade</h1>
+    <div class="cats-container">
+        <div class="cat brown" title="Skeeter">🐱</div>
+        <div class="cat white" title="Lily">🐱</div>
+        <div class="hearts">💖💖💖</div>
+    </div>
+</header>
+
+<div class="top-bar">
+    <span id="moneyDisplay">Money: 0</span>
+    <span id="cluesDisplay">Clues: 0</span>
+    <span id="sugarDisplay">Sugar Gems: 0</span>
+    <span id="ectoDisplay">Ectoplasm: 0</span>
+    <span id="boltsDisplay">Bolts: 0</span>
+    <span id="pearlsDisplay">Pearls: 0</span>
+    <span id="pepDisplay">Pepperoni: 0</span>
+    <span id="scalesDisplay">Scales: 0</span>
+    <span id="specDisplay">Specimens: 0</span>
+    <span id="seedsDisplay">Seeds: 0</span>
+    <span id="gachaTokensDisplay">Gacha Tokens: 0</span>
+</div>
+
+<div class="tabs">
+    <div class="tab active" data-tab="arcade">Arcade Games</div>
+    <div class="tab" data-tab="gacha">Gacha Hall</div>
+    <div class="tab" data-tab="slots">Slots Room</div>
+    <div class="tab" data-tab="hotel">Hotel Room</div>
+    <div class="tab" data-tab="quests">Quests</div>
+    <div class="tab" data-tab="npcs">NPCs</div>
+    <div class="tab" data-tab="collections">Collections</div>
+    <div class="tab" data-tab="settings">Settings</div>
+</div>
+
+<!-- Arcade Tab -->
+<div id="arcade" class="tab-content active">
+    <div class="section-title">Arcade Games (10 Clickers)</div>
+    <p class="small">Each game has its own currency and upgrades. Quests track your real progress.</p>
+    <div class="grid" id="arcadeGrid"></div>
+</div>
+
+<!-- Gacha Tab -->
+<div id="gacha" class="tab-content">
+    <div class="section-title">Gacha Hall</div>
+    <p class="small">
+        Multiple machines using different currencies. You can sell duplicates, but the system always keeps at least one of each item for your collection.
+    </p>
+    <div class="grid">
+        <div class="card">
+            <h3>Clue Gacha (Detective)</h3>
+            <p>Cost: 20 Clues</p>
+            <button onclick="rollGachaMachine('clue')">Roll 🔍</button>
+            <p id="gachaResultClue" class="small"></p>
+        </div>
+        <div class="card">
+            <h3>Candy Gacha</h3>
+            <p>Cost: 20 Sugar Gems</p>
+            <button onclick="rollGachaMachine('candy')">Roll 🍬</button>
+            <p id="gachaResultCandy" class="small"></p>
+        </div>
+        <div class="card">
+            <h3>Ghost Gacha</h3>
+            <p>Cost: 20 Ectoplasm</p>
+            <button onclick="rollGachaMachine('ghost')">Roll 👻</button>
+            <p id="gachaResultGhost" class="small"></p>
+        </div>
+        <div class="card">
+            <h3>Premium Token Gacha</h3>
+            <p>Cost: 1 Gacha Token</p>
+            <button onclick="rollGachaMachine('token')">Roll 🎰</button>
+            <p id="gachaResultToken" class="small"></p>
+        </div>
+        <div class="card">
+            <h3>Inventory (Sell Duplicates)</h3>
+            <div class="inventory-list" id="inventoryList"></div>
+            <p class="small">Click “Sell 1” on items with duplicates. You always keep at least one copy.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slots Tab -->
+<div id="slots" class="tab-content">
+    <div class="section-title">Slots Room</div>
+    <div class="card">
+        <h3>Slot Machine</h3>
+        <p>Select a machine theme. All cost 5 Money per spin, but some have better odds.</p>
+        <select id="slotMachineSelect">
+            <option value="lucky">Lucky Lily Slots (balanced)</option>
+            <option value="skeeter">Skeeter’s Super Spin (high risk, high reward)</option>
+            <option value="ghost">Ghost Jackpot (more two-of-a-kind)</option>
+            <option value="candy">Candy Cascade (more small wins)</option>
+            <option value="treasure">Treasure Typhoon (rare big wins)</option>
+            <option value="robot">Robot Reels (steady)</option>
+            <option value="dragon">Dragon Fortune (swingy)</option>
+        </select><br><br>
+        <button onclick="spinSlots()">Spin 🎰</button>
+        <div class="slots-display" id="slotsDisplay">❔ ❔ ❔</div>
+        <div class="slots-result" id="slotsResult"></div>
+        <p class="small">
+            Base payouts:<br>
+            • Three of a kind: +30 Money<br>
+            • Two of a kind: +10 Money<br>
+            • No match: -5 Money (the cost)<br>
+            Machines tweak the odds slightly.
+        </p>
+    </div>
+</div>
+
+<!-- Hotel Tab -->
+<div id="hotel" class="tab-content">
+    <div class="section-title">Hotel Room</div>
+    <div class="hotel-room">
+        <div class="hotel-visual">
+            <h3>Your Room</h3>
+            <p class="small">Items you’ve bought:</p>
+            <div id="hotelItems"></div>
+        </div>
+        <div class="card">
+            <h3>Furniture Shop</h3>
+            <p class="small">Spend Money from slots to decorate your room.</p>
+            <div id="hotelShop"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Quests Tab -->
+<div id="quests" class="tab-content">
+    <div class="section-title">Quests</div>
+    <p class="small">Quests auto-complete when you actually meet the requirements. Each quest belongs to an NPC.</p>
+    <div class="quest-list" id="questList"></div>
+</div>
+
+<!-- NPCs Tab -->
+<div id="npcs" class="tab-content">
+    <div class="section-title">NPCs</div>
+    <p class="small">Click an NPC to open their panel, talk, shop, roll gacha, and trigger events.</p>
+    <div class="npc-list" id="npcList"></div>
+</div>
+
+<!-- Collections Tab -->
+<div id="collections" class="tab-content">
+    <div class="section-title">Collections</div>
+    <p class="small">Shows each unique gacha item you’ve ever obtained (at least one copy).</p>
+    <div class="collection-list" id="collectionList"></div>
+</div>
+
+<!-- Settings Tab -->
+<div id="settings" class="tab-content">
+    <div class="section-title">Settings / Save</div>
+    <p class="small">Save/load are always available. Dev cheats are locked behind a password.</p>
+    <button class="secondary" onclick="saveGame()">Save Game</button>
+    <button class="secondary" onclick="loadGame()">Load Game</button>
+    <button class="secondary" onclick="resetGame()">Reset Game</button>
+    <p class="small" id="saveStatus"></p>
+
+    <hr>
+    <p class="small"><b>Dev Panel</b> (for testing only)</p>
+    <input type="password" id="devPassword" placeholder="Enter dev password">
+    <button class="secondary" onclick="unlockDev()">Unlock</button>
+    <p class="small" id="devStatus"></p>
+
+    <div id="devPanel" style="display:none; margin-top:8px;">
+        <button class="secondary" onclick="giveMoney(100)">Give 100 Money</button>
+        <button class="secondary" onclick="giveGachaToken(5)">Give 5 Gacha Tokens</button>
+        <button class="secondary" onclick="giveAllCurrencies()">Give 50 of all currencies</button>
+    </div>
+</div>
+
+<!-- NPC Panel -->
+<div id="npcPanel" class="npc-panel" style="display:none;">
+    <div class="npc-panel-close" onclick="closeNPCPanel()">✖</div>
+    <div class="npc-panel-header">
+        <div class="npc-portrait" id="npcPortrait">🐱</div>
+        <div>
+            <div class="npc-panel-title" id="npcPanelName">NPC Name</div>
+            <div class="small" id="npcPanelTier">Tier 0</div>
+        </div>
+    </div>
+    <div class="npc-rel-bar">
+        <div class="npc-rel-fill" id="npcRelFill"></div>
+    </div>
+    <div class="small" id="npcPanelStory">Story snippet...</div>
+    <div class="npc-panel-buttons">
+        <button onclick="npcTalk()">Talk</button>
+        <button onclick="npcShowQuests()">Quests</button>
+        <button onclick="npcShowShop()">Shop</button>
+        <button onclick="npcShowGacha()">Gacha EX</button>
+        <button onclick="npcTriggerEvent()">Event</button>
+    </div>
+    <div class="npc-panel-dialogue" id="npcPanelDialogue"></div>
+</div>
+
+<script>
+/* -------------------------
+   Basic State
+-------------------------- */
+let state = {
+    money: 0,
+    currencies: {
+        clues: 0,
+        sugar: 0,
+        ecto: 0,
+        bolts: 0,
+        pearls: 0,
+        pepperoni: 0,
+        scales: 0,
+        specimens: 0,
+        seeds: 0
+    },
+    gachaTokens: 0,
+    games: {},
+    inventory: {},
+    hotelItems: [],
+    quests: [],
+    npcs: [],
+    furnitureShop: [],
+    slotsSpun: 0,
+    npcEvents: {}, // active events
+    currentNPCId: null
+};
+
+/* -------------------------
+   Game Definitions (10 clickers)
+-------------------------- */
+const GAME_DEFS = [
+    { id: 'detective', name: 'Detective Clicker', currencyKey: 'clues', icon: '🔍', desc: 'Earn Clues by investigating.' },
+    { id: 'darts', name: 'Darts Master', currencyKey: 'bolts', icon: '🎯', desc: 'Earn Bolts from dartboard machine.' },
+    { id: 'candy', name: 'Candy Clicker', currencyKey: 'sugar', icon: '🍬', desc: 'Earn Sugar Gems by eating candy.' },
+    { id: 'ghost', name: 'Ghost Investigator', currencyKey: 'ecto', icon: '👻', desc: 'Earn Ectoplasm by spooking ghosts.' },
+    { id: 'robot', name: 'Robot Factory', currencyKey: 'bolts', icon: '🤖', desc: 'Earn Bolts by assembling robots.' },
+    { id: 'treasure', name: 'Treasure Diver', currencyKey: 'pearls', icon: '🪙', desc: 'Earn Pearls from underwater treasure.' },
+    { id: 'pizza', name: 'Pizza Panic', currencyKey: 'pepperoni', icon: '🍕', desc: 'Earn Pepperoni Points from pizza chaos.' },
+    { id: 'dragon', name: 'Dragon Tamer', currencyKey: 'scales', icon: '🐉', desc: 'Earn Scales by taming dragons.' },
+    { id: 'alien', name: 'Alien Lab', currencyKey: 'specimens', icon: '👽', desc: 'Earn Specimens from alien experiments.' },
+    { id: 'garden', name: 'Garden Grower', currencyKey: 'seeds', icon: '🌱', desc: 'Earn Seeds by growing plants.' }
+];
+
+/* -------------------------
+   NPC Definitions
+-------------------------- */
+const NPC_DEFS = [
+    // Main 4 with full systems
+    {
+        id: 'whiskers',
+        name: 'Mr. Whiskers (Arcade Owner)',
+        portrait: '😺',
+        type: 'main',
+        story: [
+            'Welcome to Skeeter & Lily\'s Arcade!',
+            'You\'re becoming a regular around here.',
+            'The arcade lights shine brighter when you walk in.',
+            'You\'re part of the heart of this place now.'
+        ],
+        eventName: 'Arcade Frenzy',
+        eventDesc: 'All currencies x1.5 for 60 seconds.',
+        eventKey: 'globalBoost'
+    },
+    {
+        id: 'ghostGirl',
+        name: 'Ghost Girl',
+        portrait: '👻',
+        type: 'main',
+        story: [
+            'The ghosts whisper about you...',
+            'The spirits trust you now.',
+            'You\'ve awakened the old ghost bell.',
+            'You walk between worlds like it\'s nothing.'
+        ],
+        eventName: 'Haunted Hour',
+        eventDesc: 'Ectoplasm x2 for 60 seconds.',
+        eventKey: 'ectoBoost'
+    },
+    {
+        id: 'detectiveDog',
+        name: 'Detective Dog',
+        portrait: '🐶',
+        type: 'main',
+        story: [
+            'No mystery is too small. Keep collecting clues!',
+            'You\'re solving cases faster than I can bark.',
+            'You\'re the sharpest detective in this arcade.',
+            'You\'re basically my partner now.'
+        ],
+        eventName: 'Case Breakthrough',
+        eventDesc: 'Clues x2 for 60 seconds.',
+        eventKey: 'clueBoost'
+    },
+    {
+        id: 'candyWitch',
+        name: 'Candy Witch',
+        portrait: '🧙‍♀️',
+        type: 'main',
+        story: [
+            'Sugar, spice, and shiny gems—my favorite ingredients.',
+            'Your sweet tooth is legendary around here.',
+            'You\'ve unlocked the secret candy dimension.',
+            'You\'re practically made of sugar now.'
+        ],
+        eventName: 'Sugar Storm',
+        eventDesc: 'Sugar Gems x2 for 60 seconds.',
+        eventKey: 'sugarBoost'
+    },
+    // Flavor-only NPCs
+    {
+        id: 'robotJanitor',
+        name: 'Robot Janitor',
+        portrait: '🤖',
+        type: 'flavor',
+        story: [
+            'Beep boop. Cleaning up your jackpots and your messes.',
+            'Your efficiency is… acceptable. For a human.',
+            'You win, I sweep. Good arrangement.'
+        ]
+    },
+    {
+        id: 'treasureKid',
+        name: 'Treasure Diver Kid',
+        portrait: '🏊‍♂️',
+        type: 'flavor',
+        story: [
+            'The best treasure is the one you haven’t found yet.',
+            'You’re pulling up pearls like a pro.',
+            'You’re basically a legendary diver now.'
+        ]
+    },
+    {
+        id: 'dragonElder',
+        name: 'Dragon Elder',
+        portrait: '🐉',
+        type: 'flavor',
+        story: [
+            'Respect the dragons and they’ll share their scales.',
+            'The dragons nod when you walk by.',
+            'You are now a trusted friend of dragonkind.'
+        ]
+    },
+    {
+        id: 'alienScientist',
+        name: 'Alien Scientist',
+        portrait: '👽',
+        type: 'flavor',
+        story: [
+            'Your specimen collection is… statistically impressive.',
+            'The lab is buzzing about your discoveries.',
+            'You’ve become a key variable in my favorite experiment.'
+        ]
+    }
+];
+
+/* -------------------------
+   NPC Shops & Gacha EX
+-------------------------- */
+const NPC_SHOPS = {
+    whiskers: [
+        { name: 'Arcade Neon Sign', costMoney: 50 },
+        { name: 'Token Display Case', costMoney: 80 },
+        { name: 'VIP Carpet', costMoney: 120 }
+    ],
+    ghostGirl: [
+        { name: 'Ghost Lamp', costEcto: 40 },
+        { name: 'Haunted Portrait', costEcto: 80 },
+        { name: 'Spirit Bell', costEcto: 120 }
+    ],
+    detectiveDog: [
+        { name: 'Case Board', costClues: 40 },
+        { name: 'Detective Desk', costClues: 80 },
+        { name: 'Mystery Map', costClues: 120 }
+    ],
+    candyWitch: [
+        { name: 'Candy Cauldron', costSugar: 40 },
+        { name: 'Sweet Carpet', costSugar: 80 },
+        { name: 'Candy Lamp', costSugar: 120 }
+    ]
+};
+
+const NPC_GACHA_EX = {
+    whiskers: [
+        'Golden Arcade Token',
+        'Plush Skeeter Deluxe',
+        'Plush Lily Deluxe'
+    ],
+    ghostGirl: [
+        'Ghost Lantern Ultra',
+        'Phantom Mask Rare',
+        'Spirit Bell Deluxe'
+    ],
+    detectiveDog: [
+        'Golden Magnifying Glass',
+        'Detective Badge',
+        'Mystery Map Deluxe'
+    ],
+    candyWitch: [
+        'Candy Crown',
+        'Sugar Wand',
+        'Cotton Candy Throne'
+    ]
+};
+
+/* -------------------------
+   Utility
+-------------------------- */
+function updateTopBar() {
+    document.getElementById('moneyDisplay').textContent = 'Money: ' + state.money;
+    document.getElementById('cluesDisplay').textContent = 'Clues: ' + state.currencies.clues;
+    document.getElementById('sugarDisplay').textContent = 'Sugar Gems: ' + state.currencies.sugar;
+    document.getElementById('ectoDisplay').textContent = 'Ectoplasm: ' + state.currencies.ecto;
+    document.getElementById('boltsDisplay').textContent = 'Bolts: ' + state.currencies.bolts;
+    document.getElementById('pearlsDisplay').textContent = 'Pearls: ' + state.currencies.pearls;
+    document.getElementById('pepDisplay').textContent = 'Pepperoni: ' + state.currencies.pepperoni;
+    document.getElementById('scalesDisplay').textContent = 'Scales: ' + state.currencies.scales;
+    document.getElementById('specDisplay').textContent = 'Specimens: ' + state.currencies.specimens;
+    document.getElementById('seedsDisplay').textContent = 'Seeds: ' + state.currencies.seeds;
+    document.getElementById('gachaTokensDisplay').textContent = 'Gacha Tokens: ' + state.gachaTokens;
+
+    renderInventory();
+    renderHotel();
+    renderCollections();
+    renderQuests();
+    renderNPCs();
+}
+
+/* -------------------------
+   Tabs
+-------------------------- */
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+});
+
+/* -------------------------
+   Arcade Games
+-------------------------- */
+function initGames() {
+    GAME_DEFS.forEach(def => {
+        state.games[def.id] = {
+            id: def.id,
+            level: 1,
+            perClick: 1,
+            upgradeCost: 10,
+            clicks: 0
+        };
+    });
+}
+
+function renderArcade() {
+    const grid = document.getElementById('arcadeGrid');
+    grid.innerHTML = '';
+    GAME_DEFS.forEach(def => {
+        const g = state.games[def.id];
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <h3>${def.name}</h3>
+            <p>${def.desc}</p>
+            <p>${def.currencyKey.charAt(0).toUpperCase() + def.currencyKey.slice(1)}: <span id="${def.id}Count">${state.currencies[def.currencyKey]}</span></p>
+            <button onclick="clickGame('${def.id}')">Click ${def.icon} (+${g.perClick})</button><br>
+            <button onclick="upgradeGame('${def.id}')">
+                Upgrade (+1 per click) – Cost: <span id="${def.id}UpgradeCost">${g.upgradeCost}</span> ${def.currencyKey}
+            </button>
+            <p class="small">Level: <span id="${def.id}Level">${g.level}</span>, Per Click: <span id="${def.id}PerClick">${g.perClick}</span></p>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function refreshGameDisplays() {
+    GAME_DEFS.forEach(def => {
+        const g = state.games[def.id];
+        const countEl = document.getElementById(def.id + 'Count');
+        const costEl = document.getElementById(def.id + 'UpgradeCost');
+        const lvlEl = document.getElementById(def.id + 'Level');
+        const pcEl = document.getElementById(def.id + 'PerClick');
+        if (countEl) countEl.textContent = state.currencies[def.currencyKey];
+        if (costEl) costEl.textContent = g.upgradeCost;
+        if (lvlEl) lvlEl.textContent = g.level;
+        if (pcEl) pcEl.textContent = g.perClick;
+    });
+}
+
+function applyCurrencyBoost(key, baseGain) {
+    let gain = baseGain;
+    if (state.npcEvents.globalBoost) {
+        gain = Math.floor(gain * 1.5);
+    }
+    if (key === 'ecto' && state.npcEvents.ectoBoost) {
+        gain *= 2;
+    }
+    if (key === 'clues' && state.npcEvents.clueBoost) {
+        gain *= 2;
+    }
+    if (key === 'sugar' && state.npcEvents.sugarBoost) {
+        gain *= 2;
+    }
+    return gain;
+}
+
+function clickGame(id) {
+    const def = GAME_DEFS.find(d => d.id === id);
+    const g = state.games[id];
+    g.clicks = (g.clicks || 0) + 1;
+    const gain = applyCurrencyBoost(def.currencyKey, g.perClick);
+    state.currencies[def.currencyKey] += gain;
+    refreshGameDisplays();
+    checkQuests();
+    updateTopBar();
+}
+
+function upgradeGame(id) {
+    const def = GAME_DEFS.find(d => d.id === id);
+    const g = state.games[id];
+    if (state.currencies[def.currencyKey] >= g.upgradeCost) {
+        state.currencies[def.currencyKey] -= g.upgradeCost;
+        g.level++;
+        g.perClick++;
+        g.upgradeCost = Math.floor(g.upgradeCost * 1.8);
+        refreshGameDisplays();
+        checkQuests();
+        updateTopBar();
+    }
+}
+
+/* -------------------------
+   Gacha System
+-------------------------- */
+const GACHA_POOLS = {
+    clue: [
+        'Detective Hat',
+        'Magnifying Glass',
+        'Case File',
+        'Trench Coat',
+        'Mystery Map'
+    ],
+    candy: [
+        'Candy Critter',
+        'Giant Lollipop',
+        'Gummy Worm King',
+        'Chocolate Bar',
+        'Cotton Candy Cloud'
+    ],
+    ghost: [
+        'Ghost Charm',
+        'Haunted Lantern',
+        'Spirit Bell',
+        'Ectoplasm Jar',
+        'Phantom Mask'
+    ],
+    token: [
+        'Plush Skeeter',
+        'Plush Lily',
+        'Golden Arcade Token',
+        'Mini Dragon Statue',
+        'Retro 90s Cassette'
+    ]
+};
+
+function rollGachaMachine(type) {
+    let resultElId;
+    let pool = GACHA_POOLS[type];
+    if (!pool) return;
+
+    if (type === 'clue') {
+        if (state.currencies.clues < 20) {
+            document.getElementById('gachaResultClue').textContent = 'Not enough Clues.';
+            return;
+        }
+        state.currencies.clues -= 20;
+        resultElId = 'gachaResultClue';
+    } else if (type === 'candy') {
+        if (state.currencies.sugar < 20) {
+            document.getElementById('gachaResultCandy').textContent = 'Not enough Sugar Gems.';
+            return;
+        }
+        state.currencies.sugar -= 20;
+        resultElId = 'gachaResultCandy';
+    } else if (type === 'ghost') {
+        if (state.currencies.ecto < 20) {
+            document.getElementById('gachaResultGhost').textContent = 'Not enough Ectoplasm.';
+            return;
+        }
+        state.currencies.ecto -= 20;
+        resultElId = 'gachaResultGhost';
+    } else if (type === 'token') {
+        if (state.gachaTokens < 1) {
+            document.getElementById('gachaResultToken').textContent = 'Not enough Gacha Tokens.';
+            return;
+        }
+        state.gachaTokens -= 1;
+        resultElId = 'gachaResultToken';
+    }
+
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    if (!state.inventory[item]) state.inventory[item] = 0;
+    state.inventory[item]++;
+
+    document.getElementById(resultElId).textContent = 'You got: ' + item + '!';
+    refreshGameDisplays();
+    checkQuests();
+    updateTopBar();
+}
+
+function renderInventory() {
+    const list = document.getElementById('inventoryList');
+    list.innerHTML = '';
+    const entries = Object.entries(state.inventory);
+    if (entries.length === 0) {
+        list.innerHTML = '<div class="inventory-item small">No items yet.</div>';
+        return;
+    }
+    entries.forEach(([name, count]) => {
+        const div = document.createElement('div');
+        div.className = 'inventory-item';
+        const canSell = count > 1;
+        div.innerHTML = `
+            <b>${name}</b> — x${count}
+            <button ${canSell ? '' : 'disabled'} onclick="sellOne('${name.replace(/'/g, "\\'")}')">Sell 1 (+5 Money)</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function sellOne(name) {
+    if (!state.inventory[name] || state.inventory[name] <= 1) return;
+    state.inventory[name]--;
+    state.money += 5;
+    if (state.inventory[name] === 0) delete state.inventory[name];
+    checkQuests();
+    updateTopBar();
+}
+
+/* -------------------------
+   Slots
+-------------------------- */
+const SLOT_SYMBOLS = ['🍒', '⭐', '💎', '🍀', '🔔'];
+
+function spinSlots() {
+    if (state.money < 5) {
+        document.getElementById('slotsResult').textContent = 'Not enough money to spin.';
+        return;
+    }
+    state.money -= 5;
+    state.slotsSpun = (state.slotsSpun || 0) + 1;
+
+    const machine = document.getElementById('slotMachineSelect').value;
+
+    let symbols = SLOT_SYMBOLS.slice();
+    if (machine === 'candy') {
+        symbols.push('🍒', '🍒');
+    } else if (machine === 'treasure') {
+        symbols.push('💎');
+    } else if (machine === 'ghost') {
+        symbols.push('⭐');
+    } else if (machine === 'skeeter') {
+        symbols = ['🍒', '💎', '🔔'];
+    } else if (machine === 'dragon') {
+        symbols.push('🍀', '🍀', '💎');
+    }
+
+    const a = symbols[Math.floor(Math.random() * symbols.length)];
+    const b = symbols[Math.floor(Math.random() * symbols.length)];
+    const c = symbols[Math.floor(Math.random() * symbols.length)];
+    document.getElementById('slotsDisplay').textContent = `${a} ${b} ${c}`;
+
+    let resultText = 'No match. You lost 5 Money.';
+    if (a === b && b === c) {
+        state.money += 30;
+        resultText = 'Three of a kind! +30 Money!';
+    } else if (a === b || a === c || b === c) {
+        state.money += 10;
+        resultText = 'Two of a kind! +10 Money!';
+    }
+
+    document.getElementById('slotsResult').textContent = resultText;
+    checkQuests();
+    updateTopBar();
+}
+
+/* -------------------------
+   Hotel Room
+-------------------------- */
+function initFurnitureShop() {
+    state.furnitureShop = [
+        { name: 'Neon Arcade Sign', cost: 50 },
+        { name: 'Ghost Lamp', cost: 40 },
+        { name: 'Candy Rug', cost: 30 },
+        { name: 'Detective Desk', cost: 60 },
+        { name: 'Robot Shelf', cost: 45 },
+        { name: 'Dragon Poster', cost: 35 },
+        { name: 'Treasure Chest Table', cost: 55 },
+        { name: 'Alien Specimen Jar', cost: 25 },
+        { name: 'Garden Window Box', cost: 20 }
+    ];
+}
+
+function renderHotel() {
+    const itemsDiv = document.getElementById('hotelItems');
+    itemsDiv.innerHTML = '';
+    if (state.hotelItems.length === 0) {
+        itemsDiv.innerHTML = '<span class="small">No furniture yet. Buy some from the shop!</span>';
+    } else {
+        state.hotelItems.forEach(item => {
+            const span = document.createElement('span');
+            span.className = 'hotel-item';
+            span.textContent = item;
+            itemsDiv.appendChild(span);
+        });
+    }
+
+    const shopDiv = document.getElementById('hotelShop');
+    shopDiv.innerHTML = '';
+    state.furnitureShop.forEach((f, index) => {
+        const div = document.createElement('div');
+        div.className = 'hotel-shop-item';
+        div.innerHTML = `
+            ${f.name} — Cost: ${f.cost} Money
+            <button onclick="buyFurniture(${index})">Buy</button>
+        `;
+        shopDiv.appendChild(div);
+    });
+}
+
+function buyFurniture(index) {
+    const item = state.furnitureShop[index];
+    if (!item) return;
+    if (state.money < item.cost) return;
+    state.money -= item.cost;
+    state.hotelItems.push(item.name);
+    checkQuests();
+    updateTopBar();
+}
+
+/* -------------------------
+   NPC State & Helpers
+-------------------------- */
+function initNPCs() {
+    state.npcs = NPC_DEFS.map(def => ({
+        id: def.id,
+        name: def.name,
+        type: def.type,
+        relXP: 0,
+        relTier: 0,
+        storyStep: 0
+    }));
+}
+
+function getNPCById(id) {
+    return state.npcs.find(n => n.id === id);
+}
+
+function getNPCDefById(id) {
+    return NPC_DEFS.find(n => n.id === id);
+}
+
+function getRelTierFromXP(xp) {
+    if (xp >= 10) return 3;
+    if (xp >= 6) return 2;
+    if (xp >= 3) return 1;
+    return 0;
+}
+
+function addRelationship(npcId, amount) {
+    const npc = getNPCById(npcId);
+    if (!npc) return;
+    npc.relXP += amount;
+    npc.relTier = getRelTierFromXP(npc.relXP);
+}
+
+/* -------------------------
+   NPC Panel
+-------------------------- */
+function openNPCPanel(id) {
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    if (!npc || !def) return;
+
+    state.currentNPCId = id;
+
+    const panel = document.getElementById('npcPanel');
+    const portrait = document.getElementById('npcPortrait');
+    const nameEl = document.getElementById('npcPanelName');
+    const tierEl = document.getElementById('npcPanelTier');
+    const storyEl = document.getElementById('npcPanelStory');
+    const relFill = document.getElementById('npcRelFill');
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+
+    portrait.textContent = def.portrait || '🐱';
+    nameEl.textContent = def.name;
+    tierEl.textContent = 'Tier ' + npc.relTier;
+
+    const storyLines = def.story || [];
+    const storyIndex = Math.min(npc.storyStep, storyLines.length - 1);
+    storyEl.textContent = storyLines[storyIndex] || '';
+
+    const relPercent = Math.min(100, (npc.relXP / 10) * 100);
+    relFill.style.width = relPercent + '%';
+
+    dialogueEl.innerHTML = '<span class="small">Talk, check quests, shop, roll gacha, or trigger events.</span>';
+
+    panel.style.display = 'block';
+}
+
+function closeNPCPanel() {
+    state.currentNPCId = null;
+    document.getElementById('npcPanel').style.display = 'none';
+}
+
+function npcTalk() {
+    const id = state.currentNPCId;
+    if (!id) return;
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    if (!npc || !def) return;
+
+    addRelationship(id, 1);
+    npc.storyStep = Math.min(npc.relTier, (def.story || []).length - 1);
+
+    const storyLines = def.story || [];
+    const storyIndex = Math.min(npc.storyStep, storyLines.length - 1);
+    const line = storyLines[storyIndex] || '...';
+
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+    dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">"${line}"</span>`;
+
+    openNPCPanel(id);
+    renderNPCs();
+}
+
+/* -------------------------
+   NPC Quests
+-------------------------- */
+function initQuests() {
+    state.quests = [
+        {
+            id: 1,
+            npcId: 'detectiveDog',
+            name: 'First Investigation',
+            desc: 'Earn 10 Clues.',
+            type: 'currency',
+            key: 'clues',
+            amount: 10,
+            reward: { money: 20, tokens: 1 },
+            completed: false
+        },
+        {
+            id: 2,
+            npcId: 'candyWitch',
+            name: 'Sugar Rush',
+            desc: 'Earn 10 Sugar Gems.',
+            type: 'currency',
+            key: 'sugar',
+            amount: 10,
+            reward: { money: 20, tokens: 1 },
+            completed: false
+        },
+        {
+            id: 3,
+            npcId: 'ghostGirl',
+            name: 'Ghostly Start',
+            desc: 'Earn 10 Ectoplasm.',
+            type: 'currency',
+            key: 'ecto',
+            amount: 10,
+            reward: { money: 20, tokens: 1 },
+            completed: false
+        },
+        {
+            id: 4,
+            npcId: 'whiskers',
+            name: 'Click Addict',
+            desc: 'Click any game 50 times.',
+            type: 'totalClicks',
+            amount: 50,
+            reward: { money: 40, tokens: 1 },
+            completed: false
+        },
+        {
+            id: 5,
+            npcId: 'whiskers',
+            name: 'Slot Survivor',
+            desc: 'Spin the slots 10 times.',
+            type: 'slots',
+            amount: 10,
+            reward: { money: 50, tokens: 1 },
+            completed: false
+        }
+    ];
+}
+
+function getTotalClicks() {
+    return Object.values(state.games).reduce((sum, g) => sum + (g.clicks || 0), 0);
+}
+
+function checkQuests() {
+    state.quests.forEach(q => {
+        if (q.completed) return;
+
+        if (q.type === 'currency') {
+            if (state.currencies[q.key] >= q.amount) {
+                completeQuest(q.id);
+            }
+        } else if (q.type === 'slots') {
+            if ((state.slotsSpun || 0) >= q.amount) {
+                completeQuest(q.id);
+            }
+        } else if (q.type === 'totalClicks') {
+            if (getTotalClicks() >= q.amount) {
+                completeQuest(q.id);
+            }
+        }
+    });
+    renderQuests();
+}
+
+function renderQuests() {
+    const list = document.getElementById('questList');
+    list.innerHTML = '';
+    state.quests.forEach(q => {
+        let progressText = '';
+        if (q.type === 'currency') {
+            const cur = state.currencies[q.key] || 0;
+            progressText = `${cur}/${q.amount} ${q.key}`;
+        } else if (q.type === 'slots') {
+            progressText = `${state.slotsSpun || 0}/${q.amount} spins`;
+        } else if (q.type === 'totalClicks') {
+            progressText = `${getTotalClicks()}/${q.amount} clicks`;
+        }
+
+        const npc = getNPCById(q.npcId);
+        const npcName = npc ? npc.name : 'Unknown NPC';
+
+        const div = document.createElement('div');
+        div.className = 'quest-item';
+        div.innerHTML = `
+            <b>${q.name}</b> ${q.completed ? '<span class="small">(Completed)</span>' : ''}<br>
+            <span class="small">${q.desc}</span><br>
+            <span class="small">Given by: ${npcName}</span><br>
+            <span class="small">Reward: ${q.reward.money} Money, ${q.reward.tokens} Gacha Token(s)</span><br>
+            <span class="quest-progress">Progress: ${progressText}</span>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function completeQuest(id) {
+    const q = state.quests.find(q => q.id === id);
+    if (!q || q.completed) return;
+    q.completed = true;
+    state.money += q.reward.money;
+    state.gachaTokens += q.reward.tokens;
+
+    addRelationship(q.npcId, 2);
+}
+
+/* -------------------------
+   NPC Shop / Gacha / Event
+-------------------------- */
+function npcShowQuests() {
+    const id = state.currentNPCId;
+    if (!id) return;
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+
+    const npcQuests = state.quests.filter(q => q.npcId === id);
+    if (npcQuests.length === 0) {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">I don't have any quests for you right now.</span>`;
+        return;
+    }
+
+    let html = `<b>${def.name} – Quests:</b><br>`;
+    npcQuests.forEach(q => {
+        html += `<span class="small">${q.completed ? '✅' : '⬜'} ${q.name} – ${q.desc}</span><br>`;
+    });
+    dialogueEl.innerHTML = html;
+}
+
+function npcShowShop() {
+    const id = state.currentNPCId;
+    if (!id) return;
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+
+    if (npc.relTier < 1 || def.type !== 'main') {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">Earn my trust (Tier 1) to access my shop.</span>`;
+        return;
+    }
+
+    const shop = NPC_SHOPS[id];
+    if (!shop) {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">I don't have a shop yet.</span>`;
+        return;
+    }
+
+    let html = `<b>${def.name} – Shop:</b><br>`;
+    shop.forEach((item, index) => {
+        let costText = '';
+        if (item.costMoney) costText = `${item.costMoney} Money`;
+        if (item.costEcto) costText = `${item.costEcto} Ectoplasm`;
+        if (item.costClues) costText = `${item.costClues} Clues`;
+        if (item.costSugar) costText = `${item.costSugar} Sugar Gems`;
+        html += `<span class="small">${item.name} – Cost: ${costText}</span> <button onclick="npcBuyItem('${id}', ${index})">Buy</button><br>`;
+    });
+    dialogueEl.innerHTML = html;
+}
+
+function npcBuyItem(npcId, index) {
+    const shop = NPC_SHOPS[npcId];
+    if (!shop) return;
+    const item = shop[index];
+    if (!item) return;
+
+    if (item.costMoney && state.money >= item.costMoney) {
+        state.money -= item.costMoney;
+        state.hotelItems.push(item.name);
+    } else if (item.costEcto && state.currencies.ecto >= item.costEcto) {
+        state.currencies.ecto -= item.costEcto;
+        state.hotelItems.push(item.name);
+    } else if (item.costClues && state.currencies.clues >= item.costClues) {
+        state.currencies.clues -= item.costClues;
+        state.hotelItems.push(item.name);
+    } else if (item.costSugar && state.currencies.sugar >= item.costSugar) {
+        state.currencies.sugar -= item.costSugar;
+        state.hotelItems.push(item.name);
+    } else {
+        alert('Not enough currency to buy this.');
+        return;
+    }
+
+    addRelationship(npcId, 1);
+    renderHotel();
+    updateTopBar();
+    npcShowShop();
+}
+
+function npcShowGacha() {
+    const id = state.currentNPCId;
+    if (!id) return;
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+
+    if (npc.relTier < 2 || def.type !== 'main') {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">Reach Tier 2 to unlock my special gacha.</span>`;
+        return;
+    }
+
+    const pool = NPC_GACHA_EX[id];
+    if (!pool) {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">I don't have a special gacha yet.</span>`;
+        return;
+    }
+
+    dialogueEl.innerHTML = `
+        <b>${def.name} – Gacha EX:</b><br>
+        <span class="small">Cost: 1 Gacha Token</span><br>
+        <button onclick="npcRollGacha('${id}')">Roll Gacha EX</button>
+    `;
+}
+
+function npcRollGacha(npcId) {
+    const pool = NPC_GACHA_EX[npcId];
+    if (!pool) return;
+    if (state.gachaTokens < 1) {
+        alert('Not enough Gacha Tokens.');
+        return;
+    }
+    state.gachaTokens -= 1;
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    if (!state.inventory[item]) state.inventory[item] = 0;
+    state.inventory[item]++;
+
+    addRelationship(npcId, 1);
+    updateTopBar();
+
+    const def = getNPCDefById(npcId);
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+    dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">You got: ${item}!</span>`;
+}
+
+function npcTriggerEvent() {
+    const id = state.currentNPCId;
+    if (!id) return;
+    const npc = getNPCById(id);
+    const def = getNPCDefById(id);
+    const dialogueEl = document.getElementById('npcPanelDialogue');
+
+    if (npc.relTier < 3 || def.type !== 'main') {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">Reach Tier 3 to unlock my special event.</span>`;
+        return;
+    }
+
+    if (!def.eventKey) {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">I don't have an event yet.</span>`;
+        return;
+    }
+
+    if (state.npcEvents[def.eventKey]) {
+        dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">My event is already active!</span>`;
+        return;
+    }
+
+    state.npcEvents[def.eventKey] = true;
+    setTimeout(() => {
+        state.npcEvents[def.eventKey] = false;
+    }, 60000);
+
+    dialogueEl.innerHTML = `<b>${def.name}:</b><br><span class="small">${def.eventName} activated! ${def.eventDesc}</span>`;
+}
+
+/* -------------------------
+   NPC List Rendering
+-------------------------- */
+function renderNPCs() {
+    const list = document.getElementById('npcList');
+    list.innerHTML = '';
+    state.npcs.forEach(n => {
+        const def = getNPCDefById(n.id);
+        const div = document.createElement('div');
+        div.className = 'npc-item';
+        const tierText = `Tier ${n.relTier}`;
+        const portrait = def.portrait || '🐱';
+        const storyLines = def.story || [];
+        const storyIndex = Math.min(n.storyStep, storyLines.length - 1);
+        const line = storyLines[storyIndex] || '';
+
+        div.innerHTML = `
+            <span style="font-size:18px;">${portrait}</span> <b>${n.name}</b><br>
+            <span class="npc-rel">Relationship XP: ${n.relXP} (${tierText})</span><br>
+            <span class="small">"${line}"</span><br>
+            <button onclick="openNPCPanel('${n.id}')">Open Panel</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+/* -------------------------
+   Collections
+-------------------------- */
+function renderCollections() {
+    const list = document.getElementById('collectionList');
+    list.innerHTML = '';
+    const entries = Object.entries(state.inventory).filter(([_, count]) => count > 0);
+    if (entries.length === 0) {
+        list.innerHTML = '<div class="collection-item small">No collection items yet.</div>';
+        return;
+    }
+    entries.forEach(([name, count]) => {
+        const div = document.createElement('div');
+        div.className = 'collection-item';
+        div.innerHTML = `<b>${name}</b> — Owned: ${count >= 1 ? 'Yes' : 'No'}`;
+        list.appendChild(div);
+    });
+}
+
+/* -------------------------
+   Settings / Save / Dev
+-------------------------- */
+function giveMoney(amount) {
+    state.money += amount;
+    checkQuests();
+    updateTopBar();
+}
+function giveGachaToken(amount) {
+    state.gachaTokens += amount;
+    checkQuests();
+    updateTopBar();
+}
+function giveAllCurrencies() {
+    Object.keys(state.currencies).forEach(k => {
+        state.currencies[k] += 50;
+    });
+    checkQuests();
+    refreshGameDisplays();
+    updateTopBar();
+}
+
+function resetGame() {
+    if (!confirm('Reset all progress?')) return;
+    localStorage.removeItem('skeeterArcadeSave');
+    initFreshState();
+    document.getElementById('saveStatus').textContent = 'Game reset.';
+}
+
+function saveGame() {
+    const saveData = JSON.stringify(state);
+    localStorage.setItem('skeeterArcadeSave', saveData);
+    document.getElementById('saveStatus').textContent = 'Game saved.';
+}
+
+function loadGame() {
+    const data = localStorage.getItem('skeeterArcadeSave');
+    if (!data) {
+        document.getElementById('saveStatus').textContent = 'No save found.';
+        return;
+    }
+    try {
+        state = JSON.parse(data);
+        if (!state.games) state.games = {};
+        GAME_DEFS.forEach(def => {
+            if (!state.games[def.id]) {
+                state.games[def.id] = { id: def.id, level: 1, perClick: 1, upgradeCost: 10, clicks: 0 };
+            }
+        });
+        if (!state.furnitureShop) initFurnitureShop();
+        if (!state.quests || state.quests.length === 0) initQuests();
+        if (!state.npcs || state.npcs.length === 0) initNPCs();
+        if (state.slotsSpun == null) state.slotsSpun = 0;
+        if (!state.npcEvents) state.npcEvents = {};
+        if (!state.inventory) state.inventory = {};
+        if (!state.hotelItems) state.hotelItems = [];
+
+        renderArcade();
+        refreshGameDisplays();
+        checkQuests();
+        updateTopBar();
+        document.getElementById('saveStatus').textContent = 'Game loaded.';
+    } catch (e) {
+        document.getElementById('saveStatus').textContent = 'Error loading save.';
+    }
+}
+
+/* -------------------------
+   Dev Password
+-------------------------- */
+const DEV_PASSWORD = 'skeeterdev';
+
+function unlockDev() {
+    const input = document.getElementById('devPassword').value;
+    const status = document.getElementById('devStatus');
+    if (input === DEV_PASSWORD) {
+        document.getElementById('devPanel').style.display = 'block';
+        status.textContent = 'Dev panel unlocked.';
+    } else {
+        status.textContent = 'Wrong password.';
+    }
+}
+
+/* -------------------------
+   Init
+-------------------------- */
+function initFreshState() {
+    state = {
+        money: 0,
+        currencies: {
+            clues: 0,
+            sugar: 0,
+            ecto: 0,
+            bolts: 0,
+            pearls: 0,
+            pepperoni: 0,
+            scales: 0,
+            specimens: 0,
+            seeds: 0
+        },
+        gachaTokens: 0,
+        games: {},
+        inventory: {},
+        hotelItems: [],
+        quests: [],
+        npcs: [],
+        furnitureShop: [],
+        slotsSpun: 0,
+        npcEvents: {},
+        currentNPCId: null
+    };
+    initGames();
+    initFurnitureShop();
+    initNPCs();
+    initQuests();
+    renderArcade();
+    refreshGameDisplays();
+    checkQuests();
+    updateTopBar();
+}
+
+initFreshState();
+</script>
+
+</body>
+</html>

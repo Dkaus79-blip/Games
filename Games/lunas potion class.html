@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Luna's Potion Class – Word Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: radial-gradient(circle at top, #3b1f4f, #0b050f);
+            color: #f7e9ff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .card {
+            background: rgba(20, 8,35,0.9);
+            border-radius: 10px;
+            border: 1px solid #6a3f8a;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #c9a8ff;
+            margin-bottom: 4px;
+        }
+
+        #gameRoot {
+            display: grid;
+            grid-template-columns: 1.1fr 1.4fr 1.1fr;
+            gap: 10px;
+            padding: 10px;
+            height: 100vh;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .column { display: flex; flex-direction: column; height: 100%; }
+        #leftCol, #rightCol { overflow-y: auto; }
+        #centerCol { overflow: hidden; }
+        @media (max-width: 900px) {
+            #gameRoot {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+                overflow-y: auto;
+            }
+            #centerCol { order: 1; }
+            #leftCol { order: 2; }
+            #rightCol { order: 3; }
+        }
+
+        /* Title screen */
+        #titleScreen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top, #4b2a6a, #0b050f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        #titleInner {
+            position: relative;
+            width: min(480px, 94vw);
+            padding: 24px 18px 20px;
+            border-radius: 16px;
+            background: radial-gradient(circle at top, #2b123f, #120417);
+            border: 1px solid #8b5fd1;
+            text-align: center;
+        }
+
+        #lunaPortrait {
+            margin: 0 auto 10px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 20%, #fdf2ff, #c28cff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #lunaFace { font-size: 34px; }
+
+        .titleMain {
+            font-size: 24px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .titleSub {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-bottom: 10px;
+        }
+
+        #lunaLine {
+            font-size: 13px;
+            font-style: italic;
+            margin-bottom: 14px;
+        }
+
+        .titleButtons { display: flex; flex-direction: column; gap: 6px; }
+
+        .titleBtn {
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid #b98cff;
+            background: linear-gradient(90deg, #5b2a7a, #8b5fd1);
+            color: #fdf7ff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Menu button */
+        #lunaMenuBtn {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 20%, #fdf2ff, #c28cff);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 25;
+            font-size: 20px;
+        }
+
+        #lunaMenuPanel {
+            position: fixed;
+            top: 48px;
+            right: 8px;
+            width: 190px;
+            background: #1a0b26;
+            border-radius: 10px;
+            border: 1px solid #8b5fd1;
+            display: none;
+            flex-direction: column;
+            z-index: 26;
+        }
+
+        .menuItem {
+            padding: 7px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+        }
+
+        /* Potions */
+        #shelf {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .potion {
+            width: 34px;
+            height: 50px;
+            position: relative;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+        }
+
+        .potion.visible { opacity: 1; }
+
+        .potion::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 2px;
+            width: 30px;
+            height: 38px;
+            background: #3a1f55;
+            border: 2px solid #6a3f8a;
+            border-radius: 8px 8px 10px 10px;
+        }
+
+        .potion.purple::before {
+            background: linear-gradient(#d47aff, #7a3fa0);
+            border-color: #ffb8ff;
+        }
+
+        /* Grid */
+        #gridContainer {
+            display: grid;
+            place-items: center;
+            margin-top: 8px;
+        }
+
+        #grid {
+            display: grid;
+            gap: 4px;
+        }
+
+        .gridCell {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            background: #2a153d;
+            border: 1px solid #5b3a7a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .gridCell.selected {
+            background: #7a3fa0;
+            border-color: #ffb8ff;
+        }
+
+        .gridCell.correct {
+            background: #3a9f5a;
+            border-color: #a0ffbf;
+        }
+
+        #currentWordDisplay { text-align: center; margin-top: 4px; }
+        #selectedPreview { text-align: center; opacity: 0.9; margin-top: 4px; }
+        #wordList { font-size: 13px; line-height: 1.5; }
+        #lunaBubble { font-size: 13px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+<!-- TITLE SCREEN -->
+<div id="titleScreen">
+    <div id="titleInner">
+        <div id="lunaPortrait">
+            <div id="lunaFace">🧙‍♀️</div>
+        </div>
+
+        <div class="titleMain">Luna's Potion Class</div>
+        <div class="titleSub">Word-Search Ingredient Training</div>
+
+        <div id="lunaLine">
+            "Let’s see if you can spot ingredients before they explode."
+        </div>
+
+        <div class="titleButtons">
+            <button id="startBtn" class="titleBtn">Start Class</button>
+        </div>
+    </div>
+</div>
+<!-- MENU BUTTON -->
+<div id="lunaMenuBtn">🧙‍♀️</div>
+
+<!-- MENU PANEL -->
+<div id="lunaMenuPanel">
+    <div class="menuItem" id="menuRestart">Restart Class</div>
+    <div class="menuItem" id="menuQuit">Back to Title</div>
+</div>
+
+<!-- GAME ROOT -->
+<div id="gameRoot">
+
+    <!-- LEFT COLUMN -->
+    <div id="leftCol" class="column">
+        <div class="card">
+            <div class="label">Potions</div>
+            <div id="shelf"></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Possible Ingredients</div>
+            <div id="wordList"></div>
+        </div>
+    </div>
+
+    <!-- CENTER COLUMN -->
+    <div id="centerCol" class="column">
+        <div class="card">
+            <div class="label">Current Word</div>
+            <div id="currentWordDisplay"></div>
+            <div id="selectedPreview"></div>
+        </div>
+
+        <div class="card" id="gridContainer">
+            <div id="grid"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div id="rightCol" class="column">
+        <div class="card">
+            <div class="label">Luna</div>
+            <div id="lunaBubble">
+                "Well? Are you going to find some letters, or just stare at me?"
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+/* INGREDIENT SYSTEM */
+const colors = ["purple","golden","green","black","silver","crimson"];
+const textures = ["crunchy","slimy","powdery","sparkly","dusty","gooey"];
+const creatures = ["ghost","frog","owl","lizard","bat","sprite"];
+const items = ["eye","feather","wing","tail","tooth","scale"];
+
+function generateIngredient() {
+    return [
+        colors[Math.floor(Math.random()*colors.length)],
+        textures[Math.floor(Math.random()*textures.length)],
+        creatures[Math.floor(Math.random()*creatures.length)],
+        items[Math.floor(Math.random()*items.length)]
+    ].join(" ");
+}
+
+function generateIngredientList(realIngredient) {
+    const list = [realIngredient];
+    while (list.length < 10) {
+        const ing = generateIngredient();
+        if (!list.includes(ing)) list.push(ing);
+    }
+    return list.sort();
+}
+
+/* GAME STATE */
+let currentIngredient = "";
+let ingredientWords = [];
+let currentWordIndex = 0;
+
+let bottlesFilled = 0;
+let bottlesBroken = 0;
+let level = 1;
+
+let selectedCells = [];
+let selectedString = "";
+
+const grid = document.getElementById("grid");
+const currentWordDisplay = document.getElementById("currentWordDisplay");
+const selectedPreview = document.getElementById("selectedPreview");
+const lunaBubble = document.getElementById("lunaBubble");
+const shelf = document.getElementById("shelf");
+const wordList = document.getElementById("wordList");
+/* BUILD POTION SHELF */
+function buildShelf() {
+    shelf.innerHTML = "";
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement("div");
+        p.className = "potion purple";
+        if (i < bottlesFilled) p.classList.add("visible");
+        shelf.appendChild(p);
+    }
+}
+
+/* WORD SEARCH GRID GENERATOR */
+function generateGrid(word) {
+        const size = Math.max(word.length, 5 + level);
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    const directions = [
+        [1,0], [-1,0], [0,1], [0,-1],
+        [1,1], [-1,-1], [1,-1], [-1,1]
+    ];
+
+    let gridArr = Array.from({length:size}, ()=>Array(size).fill(""));
+
+    const dir = directions[Math.floor(Math.random()*directions.length)];
+    const dx = dir[0];
+    const dy = dir[1];
+
+    let placed = false;
+    let attempts = 0;
+
+    while (!placed && attempts < 200) {
+        attempts++;
+        const sx = Math.floor(Math.random()*size);
+        const sy = Math.floor(Math.random()*size);
+
+        let x = sx;
+        let y = sy;
+        let ok = true;
+
+        for (let i=0; i<word.length; i++) {
+            if (x<0 || y<0 || x>=size || y>=size) { ok=false; break; }
+            if (gridArr[y][x] !== "" && gridArr[y][x] !== word[i]) { ok=false; break; }
+            x += dx;
+            y += dy;
+        }
+
+        if (!ok) continue;
+
+        x = sx;
+        y = sy;
+        for (let i=0; i<word.length; i++) {
+            gridArr[y][x] = word[i];
+            x += dx;
+            y += dy;
+        }
+
+        placed = true;
+    }
+
+    for (let y=0; y<size; y++) {
+        for (let x=0; x<size; x++) {
+            if (gridArr[y][x] === "") {
+                gridArr[y][x] = letters[Math.floor(Math.random()*letters.length)];
+            }
+        }
+    }
+
+    return gridArr;
+}
+/* RENDER GRID (CLICK-TO-SELECT VERSION) */
+function renderGrid(word) {
+    selectedCells = [];
+    selectedString = "";
+    selectedPreview.textContent = "";
+
+    const gridArr = generateGrid(word.toUpperCase());
+    const size = gridArr.length;
+
+    grid.style.gridTemplateColumns = `repeat(${size}, 30px)`;
+    grid.innerHTML = "";
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const cell = document.createElement("div");
+            cell.className = "gridCell";
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            cell.dataset.letter = gridArr[y][x];
+
+            // CLICK-TO-SELECT
+            cell.addEventListener("click", () => handleCellClick(cell));
+
+            cell.textContent = gridArr[y][x];
+            grid.appendChild(cell);
+        }
+    }
+}
+/* CLICK-TO-SELECT SYSTEM */
+function handleCellClick(cell) {
+    const letter = cell.dataset.letter;
+
+    // If already selected → unselect it
+    if (cell.classList.contains("selected")) {
+        cell.classList.remove("selected");
+
+        // Remove from selectedCells
+        selectedCells = selectedCells.filter(c => c !== cell);
+
+        // Rebuild selectedString
+        selectedString = selectedCells.map(c => c.dataset.letter).join("");
+        selectedPreview.textContent = selectedString;
+        return;
+    }
+
+    // Otherwise → select it
+    cell.classList.add("selected");
+    selectedCells.push(cell);
+
+    selectedString += letter;
+    selectedPreview.textContent = selectedString;
+
+    // Auto-check when length matches target
+    const target = ingredientWords[currentWordIndex].toUpperCase();
+    if (selectedString.length === target.length) {
+        checkWord();
+    }
+}
+
+/* CHECK WORD */
+function checkWord() {
+    const target = ingredientWords[currentWordIndex].toUpperCase();
+
+    if (selectedString === target) {
+        // Correct
+        selectedCells.forEach(c => c.classList.add("correct"));
+        lunaBubble.textContent = "“Good. Even a bat could’ve found that one.”";
+
+        setTimeout(() => {
+            currentWordIndex++;
+            if (currentWordIndex >= ingredientWords.length) {
+                finishIngredient();
+            } else {
+                loadNextWord();
+            }
+        }, 600);
+
+    } else {
+        // Wrong
+        bottlesBroken++;
+        lunaBubble.textContent = "“Wrong! Try again before something explodes.”";
+
+        // Reset selection
+        selectedCells.forEach(c => c.classList.remove("selected"));
+        selectedCells = [];
+        selectedString = "";
+        selectedPreview.textContent = "";
+
+        if (bottlesBroken >= 3) {
+            breakBottle();
+        }
+    }
+}
+
+/* BOTTLE BREAK */
+function breakBottle() {
+    bottlesBroken = 0;
+    bottlesFilled = Math.max(0, bottlesFilled - 1);
+    buildShelf();
+    lunaBubble.textContent = "“Cracked another one… careful, apprentice.”";
+}
+
+/* FINISH INGREDIENT */
+function finishIngredient() {
+    bottlesFilled++;
+    buildShelf();
+    lunaBubble.textContent = "“Potion complete. Next!”";
+
+    if (bottlesFilled >= 10) {
+        level++;
+        bottlesFilled = 0;
+        lunaBubble.textContent = "“Level up! You might survive this class after all.”";
+    }
+
+    setTimeout(startRound, 800);
+}
+/* ROUND SETUP */
+function startRound() {
+    currentIngredient = generateIngredient();
+    ingredientWords = currentIngredient.split(" ");
+    currentWordIndex = 0;
+
+    const list = generateIngredientList(currentIngredient);
+    wordList.innerHTML = list.map(w => `<div>${w}</div>`).join("");
+
+    loadNextWord();
+}
+
+function loadNextWord() {
+    const word = ingredientWords[currentWordIndex];
+    currentWordDisplay.textContent = word;
+    renderGrid(word);
+}
+
+/* TITLE SCREEN + MENU */
+document.getElementById("startBtn").onclick = () => {
+    document.getElementById("titleScreen").style.display = "none";
+    document.getElementById("gameRoot").style.opacity = 1;
+    document.getElementById("gameRoot").style.pointerEvents = "auto";
+    document.getElementById("lunaMenuBtn").style.display = "flex";
+
+    buildShelf();
+    startRound();
+};
+
+document.getElementById("lunaMenuBtn").onclick = () => {
+    const p = document.getElementById("lunaMenuPanel");
+    p.style.display = p.style.display === "flex" ? "none" : "flex";
+};
+
+document.getElementById("menuRestart").onclick = () => {
+    level = 1;
+    bottlesFilled = 0;
+    buildShelf();
+    startRound();
+    document.getElementById("lunaMenuPanel").style.display = "none";
+};
+
+document.getElementById("menuQuit").onclick = () => {
+    location.reload();
+};
+</script>
+</body>
+</html>

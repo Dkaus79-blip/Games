@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fishing Multiverse — Nuclear Hybrid (Fixed)</title>
+<style>
+  :root{--bg:#0ea5d8;--panel:#ffffffcc;--accent:#0b63b8;--danger:#b22222;--good:#2e8b57;--mutant:#9b59b6;}
+  html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#5fb3ff 0%,#1f8fd6 100%);}
+  .wrap{max-width:1200px;margin:14px auto;padding:12px;}
+  header{display:flex;align-items:center;justify-content:space-between;color:#fff}
+  header h1{margin:0;font-size:20px;letter-spacing:0.6px}
+  .topbar{display:flex;gap:8px;align-items:center}
+  .panel{background:var(--panel);border-radius:10px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.12)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  select,button{font-size:14px}
+  button{cursor:pointer;border:none;padding:8px 12px;border-radius:8px}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-ghost{background:#fff;color:var(--accent);border:1px solid #ddd}
+  .btn-danger{background:var(--danger);color:#fff}
+  .layout{display:grid;grid-template-columns:1fr 420px;gap:12px;margin-top:12px}
+  .lakeArea{min-height:360px;position:relative;overflow:hidden;border-radius:12px}
+  .lakeCanvas{width:100%;height:360px;background:linear-gradient(#4fa3d1,#1f6fa5);position:relative}
+  .dock{position:absolute;left:12px;bottom:6px;width:220px;height:80px;background:#8b5a2b;border-top-right-radius:20px}
+  .fisher{position:absolute;left:60px;bottom:86px;width:44px;height:44px;background:#ffe0b2;border-radius:50%;border:2px solid #333}
+  .bobber{position:absolute;left:420px;top:120px;width:18px;height:18px;background:#fff;border:3px solid #e53935;border-radius:50%;transition:top .35s}
+  .skyEvent{position:absolute;right:12px;top:12px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+  .slot{margin-top:8px;font-size:18px}
+  .log{margin-top:8px;min-height:48px;font-size:15px}
+  .rightCol{display:flex;flex-direction:column;gap:10px}
+  .smallRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .inventory{max-height:160px;overflow:auto}
+  .statsRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .xpBar{height:14px;background:#eee;border-radius:8px;overflow:hidden}
+  .xpFill{height:100%;background:linear-gradient(90deg,#ffd54f,#ffb300);width:0%}
+  .questList{max-height:160px;overflow:auto}
+  .skillGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .skill{padding:8px;border-radius:8px;background:#fff;border:1px solid #eee;text-align:center}
+  .skill.locked{opacity:.45}
+  .bossBar{height:14px;background:#333;border-radius:8px;overflow:hidden;margin-top:6px;display:none}
+  .bossFill{height:100%;background:linear-gradient(90deg,#ff6b6b,#ff4444);width:0%}
+  .storyBox{min-height:60px;padding:8px;border-radius:8px;background:#fff}
+  footer{margin-top:12px;color:#fff;text-align:center;font-size:13px}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#fff;color:var(--accent);font-weight:600}
+  .mutant{color:var(--mutant);font-weight:700}
+  .hidden{display:none}
+  #debugPanel{position:fixed;right:12px;bottom:12px;max-width:420px;max-height:220px;overflow:auto;background:rgba(0,0,0,0.8);color:#fff;font-size:12px;padding:8px;border-radius:8px;z-index:99999}
+  @media(max-width:980px){.layout{grid-template-columns:1fr;}.rightCol{order:2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fishing Multiverse — Nuclear Hybrid (Fixed)</h1>
+    <div class="topbar">
+      <div class="badge">Player: <span id="playerName">Skeeter</span></div>
+      <div style="color:#fff">Coins: <strong id="coins">0</strong></div>
+      <div style="color:#fff">Level: <strong id="level">1</strong></div>
+      <div style="color:#fff">Rod: <strong id="rodLevelDisplay">1</strong></div>
+      <div id="saveStatus" style="color:#fff;font-size:13px;margin-left:8px">Status: Ready</div>
+    </div>
+  </header>
+
+  <div class="panel controls" style="margin-top:10px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="color:#0b63b8;font-weight:700">Lake</label>
+      <select id="lakeSelect">
+        <option value="cozy">Cozy Lake</option>
+        <option value="ghost">Ghost Lake</option>
+        <option value="candy">Candy Lagoon</option>
+        <option value="deep">Deep Sea Rift</option>
+        <option value="ink">Ink Lake</option>
+      </select>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <div class="smallRow">
+      <button id="castBtn" class="btn-primary">CAST (Slot)</button>
+      <button id="bossBtn" class="btn-danger">CHALLENGE BOSS</button>
+      <button id="shopBtn" class="btn-ghost">SHOP</button>
+      <button id="questsBtn" class="btn-ghost">QUESTS</button>
+      <button id="saveBtn" class="btn-ghost">SAVE</button>
+      <button id="resetBtn" class="btn-ghost">RESET</button>
+      <button id="exportBtn" class="btn-ghost">EXPORT SAVE</button>
+      <button id="importBtn" class="btn-ghost">IMPORT SAVE</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+      <button id="toggleDebugBtn" class="btn-ghost">Hide Debug</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="lakeArea panel">
+        <div class="lakeCanvas" id="lakeCanvas">
+          <div class="dock"></div>
+          <div class="fisher"></div>
+          <div class="bobber" id="bobber"></div>
+          <div class="skyEvent" id="skyEvent">☁ Calm waters</div>
+        </div>
+
+        <div class="slot panel" id="slot">Slot: — | — | —</div>
+        <div class="log panel" id="log">Welcome. Cast to begin the story.</div>
+
+        <div class="bossBar panel" id="bossPanel" style="display:none">
+          <div style="font-weight:700" id="bossName">BOSS</div>
+          <div class="bossBar"><div id="bossFill" class="bossFill"></div></div>
+          <div id="bossText" style="margin-top:6px;font-size:13px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <div class="panel" style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>XP</strong></div>
+            <div style="font-size:13px">XP: <span id="xp">0</span>/<span id="xpToNext">100</span></div>
+          </div>
+          <div class="xpBar" style="margin-top:6px"><div id="xpFill" class="xpFill"></div></div>
+
+          <div style="margin-top:8px" class="statsRow">
+            <div class="panel" style="padding:8px">
+              <div style="font-weight:700">Skills</div>
+              <div style="font-size:12px;margin-top:6px">Spend skill points to shape your build.</div>
+              <div style="margin-top:8px" id="skillPoints">Skill Points: 0</div>
+              <div style="margin-top:8px" class="skillGrid" id="skillGrid"></div>
+            </div>
+
+            <div class="panel" style="width:220px">
+              <div style="font-weight:700">Quick Stats</div>
+              <div id="quickStats" style="margin-top:6px;font-size:13px">Luck: 0 | Treasure+: 0%</div>
+              <div style="margin-top:8px;font-size:13px">Streak: <span id="streak">0</span></div>
+              <div style="margin-top:8px;font-size:13px">Lake Mood: <span id="mood">Neutral</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="width:320px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Inventory</div>
+            <div style="font-size:13px">Sell to earn coins</div>
+          </div>
+          <div class="inventory" id="inventory" style="margin-top:8px">Empty</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="sellBtn" class="btn-primary">SELL (Fish/Treasure/Mutants)</button>
+            <button id="recycleBtn" class="btn-ghost">RECYCLE (Garbage)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rightCol">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Quest Log</div>
+          <div style="font-size:13px" id="questCount">0 active</div>
+        </div>
+        <div class="questList" id="questList" style="margin-top:8px">No quests yet.</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="acceptDaily" class="btn-ghost">Get Daily</button>
+          <button id="abandonBtn" class="btn-ghost">Abandon</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="font-weight:700">NPC / Story</div>
+        <div class="storyBox" id="storyBox">Skeeter and Lily will comment as you play. Story adapts to your choices.</div>
+        <div style="margin-top:8px;font-size:13px" id="npcBox">Old Fisher Tom: 'Welcome.'</div>
+      </div>
+
+      <div class="panel">
+        <div style="font-weight:700">Achievements</div>
+        <div id="achievements" style="margin-top:8px;font-size:13px">None yet.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Autosave enabled. Use EXPORT/IMPORT if your browser blocks storage.</footer>
+</div>
+
+<!-- Debug panel (visible by default) -->
+<div id="debugPanel" aria-hidden="false">
+  <strong>Debug</strong>
+  <div id="debugLog" style="margin-top:6px"></div>
+</div>
+
+<script>
+/* Single-file complete game script.
+   - All functions defined and wired after DOM ready.
+   - Robust save/load with export/import fallback.
+   - Debug panel toggle remembers preference.
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dbg = document.getElementById('debugLog');
+  function debugLog(msg){
+    if(!dbg) return;
+    const time = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.textContent = `[${time}] ${msg}`;
+    dbg.prepend(line);
+    console.log(msg);
+  }
+  window.addEventListener('error', e => debugLog('ERROR: ' + (e.message || e)));
+  window.addEventListener('unhandledrejection', e => debugLog('Promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : JSON.stringify(e.reason))));
+
+  const el = id => document.getElementById(id);
+  function showLog(msg){ el('log').innerText = msg; debugLog(msg); updateSaveStatus('Ready'); }
+
+  /* Save/load */
+  const SAVE_KEY = "fm_nuclear_hybrid_v1_final_fixed";
+  function updateSaveStatus(text, isError=false){
+    const s = el('saveStatus');
+    if(!s) return;
+    s.innerText = `Status: ${text}`;
+    s.style.color = isError ? "#ffdddd" : "#fff";
+    s.style.background = isError ? "rgba(178,34,34,0.25)" : "transparent";
+  }
+
+  function saveState(){
+    const state = {
+      coins, level, xp, xpToNext, skillPoints, skills, rodLevel, luckBoost,
+      lakeMood, streak, fishInventory, garbageInventory, treasureInventory, mutantInventory,
+      achievements, unlockedGhostRod, unlockedRainbowBait, unlockedSecretLake, quests, storyState
+    };
+    try {
+      const json = JSON.stringify(state);
+      try {
+        localStorage.setItem(SAVE_KEY, json);
+        updateSaveStatus('Saved to localStorage');
+        debugLog('Save OK');
+      } catch (e) {
+        debugLog('localStorage blocked, exporting save file');
+        const blob = new Blob([json], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "fishing_multiverse_save.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        updateSaveStatus('localStorage blocked — save downloaded', true);
+      }
+    } catch (err) {
+      debugLog('Save serialization failed: ' + err);
+      updateSaveStatus('Save failed: serialization error', true);
+    }
+  }
+
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return false;
+      const s = JSON.parse(raw);
+      if(typeof s !== 'object' || s === null) return false;
+
+      coins = s.coins || 0;
+      level = s.level || 1;
+      xp = s.xp || 0;
+      xpToNext = s.xpToNext || 100;
+      skillPoints = s.skillPoints || 0;
+      skills = s.skills || defaultSkills();
+      rodLevel = s.rodLevel || 1;
+      luckBoost = s.luckBoost || 0;
+      lakeMood = s.lakeMood || 50;
+      streak = s.streak || 0;
+      fishInventory = s.fishInventory || [];
+      garbageInventory = s.garbageInventory || [];
+      treasureInventory = s.treasureInventory || [];
+      mutantInventory = s.mutantInventory || [];
+      achievements = s.achievements || achievements;
+      unlockedGhostRod = !!s.unlockedGhostRod;
+      unlockedRainbowBait = !!s.unlockedRainbowBait;
+      unlockedSecretLake = !!s.unlockedSecretLake;
+      quests = s.quests || [];
+      storyState = s.storyState || storyState;
+
+      updateAll();
+      updateSaveStatus('Loaded from localStorage');
+      debugLog('Load OK');
+      return true;
+    } catch (err) {
+      debugLog('Load failed: ' + err);
+      updateSaveStatus('Load failed: corrupted save', true);
+      return false;
+    }
+  }
+
+  function exportSave(){
+    const state = {
+      coins, level, xp, xpToNext, skillPoints, skills, rodLevel, luckBoost,
+      lakeMood, streak, fishInventory, garbageInventory, treasureInventory, mutantInventory,
+      achievements, unlockedGhostRod, unlockedRainbowBait, unlockedSecretLake, quests, storyState
+    };
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "fishing_multiverse_save.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    updateSaveStatus('Save exported');
+    debugLog('Exported save file');
+  }
+
+  function importSaveFile(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        const s = JSON.parse(e.target.result);
+        if(typeof s !== "object" || s === null){ updateSaveStatus('Invalid save file', true); debugLog('Invalid save file'); return; }
+        localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+        loadState();
+        updateSaveStatus('Save imported and loaded');
+        debugLog('Imported save file');
+      } catch (err) {
+        debugLog('Import failed: ' + err);
+        updateSaveStatus('Import failed: invalid JSON', true);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* -------------------------
+     Game state & data
+     ------------------------- */
+  let coins = 0;
+  let level = 1;
+  let xp = 0;
+  let xpToNext = 100;
+  let skillPoints = 0;
+  let rodLevel = 1;
+  let luckBoost = 0;
+  let lakeMood = 50;
+  let streak = 0;
+  let unlockedGhostRod = false;
+  let unlockedRainbowBait = false;
+  let unlockedSecretLake = false;
+
+  let fishInventory = [];
+  let garbageInventory = [];
+  let treasureInventory = [];
+  let mutantInventory = [];
+
+  let achievements = { garbageKing:0, treasureHunter:0, ghostWhisperer:0, stormRider:0, candyCrusher:0, inkMaster:0, bossSlayer:0 };
+
+  let storyState = { chapter:1, clues:[], journal:[], ghostArc:0, candyArc:0, inkArc:0, finalUnlocked:false };
+  let quests = [];
+  let questIdCounter = 100;
+
+  const lakes = {
+    cozy:{name:"Cozy Lake", moodBonus:6, treasureBonus:5, ghostChance:0, candyChance:0, inkChance:0},
+    ghost:{name:"Ghost Lake", moodBonus:-8, treasureBonus:0, ghostChance:18, candyChance:0, inkChance:0},
+    candy:{name:"Candy Lagoon", moodBonus:4, treasureBonus:12, ghostChance:0, candyChance:22, inkChance:0},
+    deep:{name:"Deep Sea Rift", moodBonus:-6, treasureBonus:18, ghostChance:6, candyChance:0, inkChance:0},
+    ink:{name:"Ink Lake", moodBonus:-14, treasureBonus:0, ghostChance:10, candyChance:0, inkChance:28}
+  };
+
+  const fishTable = [
+    {name:"Bluegill",rarity:"Common",baseChance:35,value:3},
+    {name:"Sunfish",rarity:"Common",baseChance:35,value:4},
+    {name:"Crappie",rarity:"Common",baseChance:30,value:5},
+    {name:"Bass",rarity:"Uncommon",baseChance:18,value:12},
+    {name:"Trout",rarity:"Uncommon",baseChance:15,value:15},
+    {name:"Golden Bass",rarity:"Rare",baseChance:6,value:60},
+    {name:"Rainbow Trout",rarity:"Rare",baseChance:4,value:80},
+    {name:"Phantom Catfish",rarity:"Legendary",baseChance:1,value:300}
+  ];
+
+  const garbageTable = ["Old Boot","Rusty Can","Broken Bottle","Tangled Line","Soggy Newspaper","Mysterious Goo"];
+  const treasureTable = [
+    {name:"Silver Ring",value:40},{name:"Gold Coin Pouch",value:80},{name:"Ancient Locket",value:120},{name:"Jeweled Crown Fragment",value:200},{name:"Lost Pirate Map",value:260}
+  ];
+  const mutantTable = [
+    {name:"Two-Headed Trout",value:50},{name:"Radioactive Bass",value:90},{name:"Jelly Cube Fish",value:70},{name:"Screaming Carp",value:60},{name:"Talking Minnow",value:40}
+  ];
+
+  const slotSymbols = ["🐟","🗑","💎","👻","🍬","⚡","🌀","🪝","🧪"];
+
+  let bosses = {
+    ghost:{name:"Phantom Catfish",maxHP:220,hp:220,phase:1,alive:false},
+    candy:{name:"Candy Kraken",maxHP:260,hp:260,phase:1,alive:false},
+    deep:{name:"Storm Serpent",maxHP:320,hp:320,phase:1,alive:false},
+    ink:{name:"Ink Leviathan",maxHP:380,hp:380,phase:1,alive:false}
+  };
+
+  /* -------------------------
+     Skill tree
+     ------------------------- */
+  function defaultSkills(){
+    return {
+      luck:{level:0,max:5,desc:"Increases luck for casts (+% fish/treasure)"},
+      treasure:{level:0,max:5,desc:"Boosts treasure find chance"},
+      rare:{level:0,max:5,desc:"Boosts rare/legendary fish chance"},
+      boss:{level:0,max:5,desc:"Increases boss damage"},
+      weather:{level:0,max:5,desc:"Reduces negative weather effects"},
+      insight:{level:0,max:3,desc:"Reveals hidden story clues"}
+    };
+  }
+  let skills = defaultSkills();
+
+  /* -------------------------
+     UI helpers
+     ------------------------- */
+  function updateInventoryUI(){
+    const parts=[];
+    if(fishInventory.length) parts.push("Fish: "+fishInventory.map(f=>f.name).join(", "));
+    if(mutantInventory.length) parts.push("Mutants: "+mutantInventory.map(m=>m.name).join(", "));
+    if(garbageInventory.length) parts.push("Garbage: "+garbageInventory.join(", "));
+    if(treasureInventory.length) parts.push("Treasure: "+treasureInventory.map(t=>t.name).join(", "));
+    el("inventory").innerText = parts.length?parts.join(" | "):"Empty";
+  }
+  function updateXPUI(){ el("xp").innerText = xp; el("xpToNext").innerText = xpToNext; const pct = Math.min(100, Math.floor((xp/xpToNext)*100)); el("xpFill").style.width = pct+"%"; }
+  function updateLevelUI(){ el("level").innerText = level; }
+  function updateCoins(){ el("coins").innerText = coins; }
+  function updateQuickStats(){
+    const luck = Math.round((skills.luck.level*3) + luckBoost);
+    const treasurePlus = skills.treasure.level*4 + (unlockedRainbowBait?10:0);
+    el("quickStats").innerText = `Luck: ${luck} | Treasure+: ${treasurePlus}%`;
+    el("streak").innerText = streak;
+    el("mood").innerText = lakeMood>=75?"Very Lucky":lakeMood>=55?"Calm":lakeMood>=35?"Neutral":lakeMood>=15?"Uneasy":"Haunted";
+  }
+  function updateAchievementsUI(){ const a = achievements; el("achievements").innerText = `Garbage: ${a.garbageKing} | Treasure: ${a.treasureHunter} | Ghost: ${a.ghostWhisperer} | Bosses: ${a.bossSlayer}`; }
+  function updateSkillGrid(){
+    const grid = el("skillGrid"); grid.innerHTML="";
+    for(const key of Object.keys(skills)){
+      const s = skills[key];
+      const div = document.createElement("div");
+      div.className = "skill"+(s.level>=s.max?" locked":"");
+      div.innerHTML = `<div style="font-weight:700">${key.toUpperCase()}</div><div style="font-size:12px">${s.desc}</div><div style="margin-top:6px">Level: ${s.level}/${s.max}</div>`;
+      const btn = document.createElement("button");
+      btn.style.marginTop="6px";
+      btn.textContent = "Upgrade";
+      btn.onclick = ()=>{ if(skillPoints<=0){ showLog("No skill points."); return;} if(s.level>=s.max){ showLog("Skill maxed."); return;} s.level++; skillPoints--; updateAll(); showLog(`${key} upgraded.`); saveState(); }
+      div.appendChild(btn);
+      grid.appendChild(div);
+    }
+    el("skillPoints").innerText = `Skill Points: ${skillPoints}`;
+  }
+
+  /* -------------------------
+     Leveling & XP
+     ------------------------- */
+  function gainXP(amount){
+    xp += amount;
+    showLog(`Gained ${amount} XP.`);
+    while(xp >= xpToNext){
+      xp -= xpToNext;
+      levelUp();
+    }
+    updateXPUI();
+    saveState();
+  }
+  function levelUp(){
+    level++;
+    skillPoints++;
+    xpToNext = Math.floor(xpToNext * 1.18);
+    showLog(`Level up! You are now level ${level}. Skill point awarded.`);
+    updateAll();
+  }
+
+  /* -------------------------
+     Slot & Cast
+     ------------------------- */
+  function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function rollSlot(){
+    const s1 = randomFrom(slotSymbols), s2 = randomFrom(slotSymbols), s3 = randomFrom(slotSymbols);
+    el("slot").innerText = `Slot: ${s1} | ${s2} | ${s3}`;
+    return [s1,s2,s3];
+  }
+  function animateBobber(){ const b=el("bobber"); b.style.top="140px"; setTimeout(()=>b.style.top="105px",380); }
+
+  function castLine(){
+    const lakeKey = el("lakeSelect").value;
+    npcDialogue(lakeKey);
+    animateBobber();
+    lakeMood = Math.max(0, Math.min(100, lakeMood + lakes[lakeKey].moodBonus));
+    updateQuickStats();
+    randomLakeEvent(lakeKey);
+    const slot = rollSlot();
+    setTimeout(()=>resolveCatch(lakeKey,slot),900);
+  }
+
+  function resolveCatch(lakeKey,slot){
+    const lake = lakes[lakeKey];
+    let garbageChance = 30, fishChance = 50, treasureChance = 15, mutantChance = 5;
+    const rodBonus = (rodLevel-1)*4;
+    fishChance += rodBonus; treasureChance += rodBonus; garbageChance -= rodBonus*2;
+    treasureChance += lake.treasureBonus;
+    const moodFactor = (lakeMood-50)/10;
+    fishChance += moodFactor*2; treasureChance += moodFactor*2; garbageChance -= moodFactor*3;
+    fishChance += skills.rare.level*3 + (unlockedGhostRod?10:0) + luckBoost;
+    treasureChance += skills.treasure.level*4 + (unlockedRainbowBait?10:0) + luckBoost;
+    garbageChance -= skills.weather.level*2;
+    mutantChance += skills.insight.level*1;
+    if(slot.every(s=>s==="💎")) treasureChance += 30;
+    if(slot.every(s=>s==="🐟")) fishChance += 25;
+    if(slot.every(s=>s==="🗑")) garbageChance += 25;
+    if(slot.includes("👻")) mutantChance += 10;
+    if(slot.includes("🍬")) treasureChance += 10;
+    garbageChance = Math.max(5,garbageChance);
+    const total = garbageChance + fishChance + treasureChance + mutantChance;
+    const roll = Math.random()*total;
+    if(roll < garbageChance) doCatchGarbage(lakeKey);
+    else if(roll < garbageChance + treasureChance) doCatchTreasure(lakeKey);
+    else if(roll < garbageChance + treasureChance + mutantChance) doCatchMutant(lakeKey);
+    else doCatchFish(lakeKey);
+    if(luckBoost>0) luckBoost = Math.max(0, luckBoost-2);
+    updateAll();
+    saveState();
+  }
+
+  /* -------------------------
+     Catch handlers
+     ------------------------- */
+  function doCatchGarbage(lakeKey){
+    const item = randomFrom(garbageTable);
+    garbageInventory.push(item);
+    achievements.garbageKing++;
+    streak = streak>0?0:streak-1;
+    gainXP(6);
+    showLog(`🗑 You pulled up garbage: ${item}.`);
+    updateAchievementsUI();
+    checkQuestsProgress("garbage",item);
+  }
+  function doCatchTreasure(lakeKey){
+    const item = randomFrom(treasureTable);
+    treasureInventory.push(item);
+    achievements.treasureHunter++;
+    streak = streak>=0?streak+1:1;
+    lakeMood = Math.min(100,lakeMood+5);
+    gainXP(18 + Math.floor(Math.random()*8));
+    showLog(`💎 TREASURE! You found ${item.name}.`);
+    updateAchievementsUI();
+    checkQuestsProgress("treasure",item.name);
+  }
+  function doCatchMutant(lakeKey){
+    const item = randomFrom(mutantTable);
+    mutantInventory.push(item);
+    streak = streak>=0?streak+1:1;
+    lakeMood = Math.max(0,lakeMood-3);
+    gainXP(22);
+    showLog(`🧪 Mutant caught: ${item.name}!`);
+    checkQuestsProgress("mutant",item.name);
+  }
+  function doCatchFish(lakeKey){
+    let roll = Math.random()*100;
+    let cumulative = 0;
+    let chosen = fishTable[0];
+    for(const f of fishTable){
+      const chance = f.baseChance + (rodLevel-1)*1.5 + (skills.rare.level*1.2) + (unlockedGhostRod && f.rarity==="Legendary"?10:0);
+      cumulative += chance;
+      if(roll <= cumulative){ chosen = f; break; }
+    }
+    fishInventory.push(chosen);
+    if(chosen.name==="Phantom Catfish") achievements.ghostWhisperer++;
+    streak = streak>=0?streak+1:1;
+    lakeMood = Math.min(100,lakeMood+3);
+    gainXP(12 + (chosen.rarity==="Rare"?12:0) + (chosen.rarity==="Legendary"?40:0));
+    showLog(`🐟 You caught a ${chosen.rarity} ${chosen.name}!`);
+    updateAchievementsUI();
+    checkQuestsProgress("fish",chosen.name);
+  }
+
+  /* -------------------------
+     Quests
+     ------------------------- */
+  function createQuest(title,desc,type,goal,reward,storyRelated=false){
+    const q = {id:questIdCounter++,title,desc,type,goal,progress:0,reward,active:true,storyRelated};
+    quests.push(q);
+    updateQuestUI();
+    saveState();
+    return q;
+  }
+  function acceptDailyQuest(){
+    createQuest("Daily: Catch 5 fish","Catch 5 fish anywhere","fish",5,{coins:30,xp:40},false);
+    showLog("Daily quest added.");
+  }
+  function updateQuestUI(){
+    const list = el("questList"); list.innerHTML="";
+    const active = quests.filter(q=>q.active);
+    el("questCount").innerText = `${active.length} active`;
+    if(active.length===0){ list.innerText="No quests. Talk to NPCs or get a daily."; return; }
+    for(const q of active){
+      const div = document.createElement("div");
+      div.style.padding="6px"; div.style.borderBottom="1px solid #eee";
+      div.innerHTML = `<div style="font-weight:700">${q.title}</div><div style="font-size:13px">${q.desc}</div><div style="font-size:12px;margin-top:6px">Progress: ${q.progress}/${q.goal}</div>`;
+      const btn = document.createElement("button"); btn.textContent="Claim/Advance"; btn.style.marginTop="6px";
+      btn.onclick = ()=>{ if(q.progress>=q.goal){ claimQuest(q.id); } else showLog("Quest not complete yet."); };
+      div.appendChild(btn);
+      list.appendChild(div);
+    }
+  }
+  function checkQuestsProgress(kind,identifier){
+    for(const q of quests.filter(x=>x.active)){
+      if(q.type===kind){
+        q.progress++;
+        if(q.progress>q.goal) q.progress=q.goal;
+        if(q.progress>=q.goal) showLog(`Quest ready: ${q.title} — click Claim/Advance.`);
+      }
+    }
+    updateQuestUI();
+    saveState();
+  }
+  function claimQuest(id){
+    const q = quests.find(x=>x.id===id);
+    if(!q) return;
+    if(q.progress<q.goal){ showLog("Not ready."); return; }
+    if(q.reward.coins) coins += q.reward.coins;
+    if(q.reward.xp) gainXP(q.reward.xp);
+    if(q.reward.item) treasureInventory.push(q.reward.item);
+    q.active=false;
+    showLog(`Quest completed: ${q.title}. Reward granted.`);
+    updateInventoryUI(); updateCoins(); updateQuestUI(); saveState();
+  }
+
+  /* -------------------------
+     NPC & story
+     ------------------------- */
+  function npcDialogue(lakeKey){
+    const box = el("npcBox");
+    let text = "";
+    if(lakeKey==="cozy") text = "Old Fisher Tom: 'The lake remembers gentle hands.'";
+    else if(lakeKey==="ghost") text = "Ghost Fisher: 'Listen. The water speaks in names.'";
+    else if(lakeKey==="candy") text = "Candy Witch: 'Sweetness hides secrets. Bring me a mutant.'";
+    else if(lakeKey==="deep") text = "Storm Captain: 'The deep keeps its teeth.'";
+    else if(lakeKey==="ink") text = "Ink Scribe: 'Write what you catch. The lake will answer.'";
+    box.innerText = text;
+  }
+  function storyComment(event){
+    const sb = el("storyBox");
+    if(event.includes("shadow")){ storyState.ghostArc++; sb.innerText = "Skeeter: 'That shadow felt… wrong.'"; }
+    else if(event.includes("whispers")){ storyState.clues.push("whisper"); sb.innerText = "Lily: 'I wrote down the whisper. It mentioned a name.'"; }
+    else if(event.includes("Ink")){ storyState.inkArc++; sb.innerText = "Skeeter: 'Ink again. The pages are reacting.'"; }
+    else if(event.includes("candy")){ storyState.candyArc++; sb.innerText = "Lily: 'Candy anomalies increasing.'"; }
+    else sb.innerText = "Skeeter: 'The lake is changing with every cast.'";
+    if(storyState.ghostArc>=6 && achievements.bossSlayer>=2 && !unlockedSecretLake){
+      unlockedSecretLake = true;
+      showLog("A hidden portal shimmers in the water... Secret Lake unlocked!");
+      const sel = el("lakeSelect");
+      if(!Array.from(sel.options).some(o=>o.value==="beyond")){
+        const opt = document.createElement("option"); opt.value="beyond"; opt.text="Lake Beyond Time (Secret)";
+        sel.appendChild(opt);
+      }
+    }
+    saveState();
+  }
+
+  /* -------------------------
+     Random events
+     ------------------------- */
+  function randomLakeEvent(lakeKey){
+    const events = [
+      "A shadow passes under the water...",
+      "The lake whispers your name.",
+      "A rainbow beam hits the surface.",
+      "The dock creaks behind you.",
+      "The bobber spins in place.",
+      "You feel a cold breeze.",
+      "Something tugs your pants leg.",
+      "A candy fish jumps and splashes.",
+      "Ink drips from the sky."
+    ];
+    const e = randomFrom(events);
+    el("skyEvent").innerText = e;
+    storyComment(e);
+    if(e.includes("rainbow")) lakeMood = Math.min(100,lakeMood+10);
+    if(e.includes("cold")) lakeMood = Math.max(0,lakeMood-5);
+    if(e.includes("candy")) achievements.candyCrusher++;
+    if(e.includes("Ink")) achievements.inkMaster++;
+    updateAchievementsUI();
+  }
+
+  /* -------------------------
+     Boss engine
+     ------------------------- */
+  let activeBoss = null;
+  function startBoss(){
+    const lakeKey = el("lakeSelect").value;
+    if(!["ghost","candy","deep","ink"].includes(lakeKey)){ showLog("No boss here. Try Ghost, Candy, Deep, or Ink lakes."); return; }
+    activeBoss = bosses[lakeKey];
+    activeBoss.hp = activeBoss.maxHP;
+    activeBoss.phase = 1;
+    el("bossPanel").style.display = "block";
+    el("bossName").innerText = activeBoss.name;
+    el("bossFill").style.width = "100%";
+    el("bossText").innerText = "Boss awakened. Cast to attack (each cast deals damage based on rod & boss skill).";
+    showLog(`⚔ Boss ${activeBoss.name} appears!`);
+    saveState();
+  }
+  function bossAttack(){
+    if(!activeBoss) return;
+    const roll = Math.random()*100;
+    if(roll < 50){
+      lakeMood = Math.max(0,lakeMood-8);
+      showLog(`${activeBoss.name} thrashes the water! Lake mood drops.`);
+    } else {
+      showLog(`${activeBoss.name} circles, watching your line.`);
+    }
+    updateQuickStats();
+  }
+  function playerStrikeBoss(){
+    if(!activeBoss) { showLog("No active boss."); return; }
+    const base = 12 + rodLevel*4 + skills.boss.level*6 + (level*1);
+    const crit = Math.random() < 0.12 ? 2 : 1;
+    const dmg = Math.floor(base * crit);
+    activeBoss.hp = Math.max(0, activeBoss.hp - dmg);
+    const pct = Math.floor((activeBoss.hp/activeBoss.maxHP)*100);
+    el("bossFill").style.width = pct + "%";
+    showLog(`You strike ${activeBoss.name} for ${dmg} damage.`);
+    if(activeBoss.hp<=0){
+      el("bossPanel").style.display = "none";
+      achievements.bossSlayer++;
+      coins += 150 + Math.floor(Math.random()*120);
+      showLog(`🏆 You defeated ${activeBoss.name}! Reward: coins and special drop.`);
+      if(activeBoss===bosses.ghost){ unlockedGhostRod=true; showLog("You obtained the Ghost Rod!"); }
+      if(activeBoss===bosses.candy){ unlockedRainbowBait=true; showLog("You obtained Rainbow Bait!"); }
+      activeBoss = null;
+      updateCoins();
+      updateAchievementsUI();
+      gainXP(120);
+      saveState();
+    } else {
+      bossAttack();
+    }
+  }
+
+  /* -------------------------
+     Shop & sell
+     ------------------------- */
+  function openShop(){
+    const choice = prompt("Shop: 1) Upgrade Rod (75) 2) Luck Boost (30) 3) Buy Charm (50)\nEnter 1/2/3 or Cancel");
+    if(!choice) return;
+    if(choice==="1"){ if(coins<75){ showLog("Not enough coins."); return;} coins-=75; rodLevel++; showLog("Rod upgraded."); updateCoins(); saveState(); }
+    else if(choice==="2"){ if(coins<30){ showLog("Not enough coins."); return;} coins-=30; luckBoost+=15; showLog("Luck boosted."); updateCoins(); saveState(); }
+    else if(choice==="3"){ if(coins<50){ showLog("Not enough coins."); return;} coins-=50; lakeMood=Math.min(100,lakeMood+20); showLog("Lake charm tossed."); updateCoins(); saveState(); }
+    updateAll();
+  }
+
+  function sellAll(){
+    let total=0;
+    fishInventory.forEach(f=>total+=f.value||0);
+    treasureInventory.forEach(t=>total+=t.value||0);
+    mutantInventory.forEach(m=>total+=m.value||0);
+    if(total<=0){ showLog("Nothing to sell."); return; }
+    coins+=total; fishInventory=[]; treasureInventory=[]; mutantInventory=[];
+    updateCoins(); updateInventoryUI(); showLog(`Sold items for ${total} coins.`); gainXP(20); saveState();
+  }
+  function recycleGarbage(){
+    const count = garbageInventory.length;
+    if(count===0){ showLog("No garbage to recycle."); return; }
+    const reward = count*3;
+    coins+=reward; garbageInventory=[]; updateCoins(); updateInventoryUI();
+    lakeMood = Math.min(100,lakeMood+8);
+    achievements.garbageKing += count;
+    updateAchievementsUI();
+    showLog(`Recycled ${count} garbage for ${reward} coins. Lake happier.`);
+    gainXP(8);
+    saveState();
+  }
+
+  /* -------------------------
+     Story seeds & init
+     ------------------------- */
+  function seedStoryQuests(){
+    if(!quests.some(q=>q.title.includes("Ghost"))) createQuest("Ghost Inquiry","Investigate whispers in Ghost Lake","fish",6,{coins:80,xp:120},true);
+    if(!quests.some(q=>q.title.includes("Candy"))) createQuest("Sweet Disturbance","Bring a mutant to the Candy Witch","mutant",1,{coins:100,xp:140},true);
+    if(!quests.some(q=>q.title.includes("Ink"))) createQuest("Ink Pages","Collect 3 ink clues from Ink Lake","treasure",3,{coins:120,xp:160},true);
+  }
+
+  function updateAll(){
+    updateCoins(); updateInventoryUI(); updateXPUI(); updateLevelUI(); updateQuickStats(); updateAchievementsUI(); updateSkillGrid(); updateQuestUI();
+    el("playerName").innerText = "Skeeter";
+    if(el("rodLevelDisplay")) el("rodLevelDisplay").innerText = rodLevel;
+  }
+
+  /* -------------------------
+     Wire UI events (safe)
+     ------------------------- */
+  try {
+    el('castBtn').addEventListener('click', () => { try { if(activeBoss) playerStrikeBoss(); else castLine(); } catch(e){ debugLog('cast error: '+e); } });
+    el('sellBtn').addEventListener('click', () => { try { sellAll(); } catch(e){ debugLog('sell error: '+e); } });
+    el('recycleBtn').addEventListener('click', () => { try { recycleGarbage(); } catch(e){ debugLog('recycle error: '+e); } });
+    el('shopBtn').addEventListener('click', () => { try { openShop(); } catch(e){ debugLog('shop error: '+e); } });
+    el('bossBtn').addEventListener('click', () => { try { startBoss(); } catch(e){ debugLog('boss error: '+e); } });
+    el('saveBtn').addEventListener('click', () => { try { saveState(); } catch(e){ debugLog('save error: '+e); } });
+    el('resetBtn').addEventListener('click', () => { try { if(confirm('Reset all progress?')) { localStorage.removeItem(SAVE_KEY); location.reload(); } } catch(e){ debugLog('reset error: '+e); } });
+    el('exportBtn').addEventListener('click', () => { try { exportSave(); } catch(e){ debugLog('export error: '+e); } });
+    el('importBtn').addEventListener('click', () => { try { el('importFile').click(); } catch(e){ debugLog('import click error: '+e); } });
+    el('importFile').addEventListener('change', (ev) => { try { const f = ev.target.files && ev.target.files[0]; if(f) importSaveFile(f); ev.target.value = ''; } catch(e){ debugLog('import file error: '+e); } });
+    el('acceptDaily').addEventListener('click', () => { try { acceptDailyQuest(); } catch(e){ debugLog('acceptDaily error: '+e); } });
+    el('abandonBtn').addEventListener('click', () => {
+      try {
+        const id = prompt("Enter quest id to abandon");
+        if(!id) return;
+        const q = quests.find(x=>x.id==id);
+        if(q){ q.active=false; updateQuestUI(); showLog("Quest abandoned."); saveState(); } else showLog("Quest not found.");
+      } catch(e){ debugLog('abandon error: '+e); }
+    });
+  } catch (err) {
+    debugLog('Wiring error: ' + err);
+  }
+
+  /* -------------------------
+     Debug toggle (persistent)
+     ------------------------- */
+  const DEBUG_KEY = 'fm_debug_hidden';
+  function isDebugHidden(){ try { return localStorage.getItem(DEBUG_KEY) === '1'; } catch(e){ return false; } }
+  function setDebugHidden(v){ try { localStorage.setItem(DEBUG_KEY, v ? '1' : '0'); } catch(e){} }
+  function applyDebugVisibility(hidden){
+    const panel = el('debugPanel');
+    const btn = el('toggleDebugBtn');
+    if(!panel || !btn) return;
+    panel.style.display = hidden ? 'none' : '';
+    btn.textContent = hidden ? 'Show Debug' : 'Hide Debug';
+    setDebugHidden(hidden);
+  }
+  // initialize debug visibility
+  applyDebugVisibility(isDebugHidden());
+  el('toggleDebugBtn').addEventListener('click', ()=> {
+    const panel = el('debugPanel');
+    if(!panel) return;
+    const currentlyHidden = panel.style.display === 'none';
+    applyDebugVisibility(!currentlyHidden);
+  });
+
+  /* -------------------------
+     Start
+     ------------------------- */
+  seedStoryQuests();
+  updateAll();
+  if(!loadState()){
+    createQuest("Tutorial: Catch 3 fish","Catch 3 fish to learn the ropes","fish",3,{coins:50,xp:80},false);
+    showLog("Welcome. Try the tutorial quest or cast to explore.");
+    updateAll();
+  }
+  setInterval(saveState, 30000);
+
+  // expose helpers for console
+  window._fm = { saveState, loadState, exportSave, importSaveFile, debugLog };
+
+  debugLog('Game initialized and ready.');
+});
+</script>
+</body>
+</html>

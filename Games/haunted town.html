@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Haunted Town — Fixed Playable Prototype</title>
+<style>
+  :root{--bg:#0b1220;--panel:#ffffff11;--accent:#9ad3ff;--muted:#cbd5e1;--danger:#ff6b6b}
+  html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:
+    radial-gradient(1200px 600px at 10% 10%, #0f1b2a 0%, transparent 20%),
+    linear-gradient(180deg,#071021 0%, #0b1220 100%); color:#e6eef8;}
+  .wrap{max-width:1200px;margin:12px auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  header h1{margin:0;font-size:20px;color:var(--accent)}
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:10px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02)}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{cursor:pointer;border:none;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.04);color:var(--muted)}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),#6fb8ff);color:#041022;font-weight:700}
+  .layout{display:grid;grid-template-columns:1fr 360px;gap:12px}
+  .sceneArea{min-height:420px;position:relative;overflow:hidden;border-radius:10px;padding:12px}
+  .sceneTitle{font-size:18px;color:var(--accent);margin-bottom:6px}
+  .sceneText{font-size:15px;line-height:1.45;color:#dfefff}
+  .choices{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .choiceBtn{background:rgba(255,255,255,0.03);text-align:left;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+  .meter{background:#0b1220;border-radius:8px;padding:6px 8px;border:1px solid rgba(255,255,255,0.02)}
+  .bar{height:10px;background:#0b1220;border-radius:6px;overflow:hidden;margin-top:6px}
+  .barFill{height:100%;background:linear-gradient(90deg,#ffd54f,#ffb300);width:0%}
+  .journal{max-height:220px;overflow:auto;font-size:13px}
+  .inventory{max-height:120px;overflow:auto;font-size:13px}
+  .map{display:flex;flex-direction:column;gap:6px}
+  #debugPanel{position:fixed;right:12px;bottom:12px;max-width:520px;max-height:320px;overflow:auto;background:rgba(0,0,0,0.9);color:#fff;font-size:12px;padding:8px;border-radius:8px;z-index:99999}
+  .hidden{display:none}
+  .panel-focus{outline:2px solid rgba(154,211,255,0.12);box-shadow:0 8px 30px rgba(10,20,40,0.6)}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:6px}
+  .small{font-size:13px;color:var(--muted)}
+  @media(max-width:980px){.layout{grid-template-columns:1fr;}.rightCol{order:2}}
+</style>
+</head>
+<body>
+<!-- Diagnostic snippet (must be first script in body) -->
+<script>
+(function(){
+  function ensureDebugPanel(){
+    var dbg = document.getElementById('debugLog');
+    if(dbg) return dbg;
+    var panel = document.createElement('div');
+    panel.id = 'debugPanelFallback';
+    panel.style.position = 'fixed';
+    panel.style.right = '12px';
+    panel.style.bottom = '12px';
+    panel.style.maxWidth = '520px';
+    panel.style.maxHeight = '320px';
+    panel.style.overflow = 'auto';
+    panel.style.background = 'rgba(0,0,0,0.92)';
+    panel.style.color = '#fff';
+    panel.style.fontSize = '12px';
+    panel.style.padding = '8px';
+    panel.style.borderRadius = '8px';
+    panel.style.zIndex = 999999;
+    var title = document.createElement('strong');
+    title.innerText = 'Runtime Debug';
+    panel.appendChild(title);
+    var log = document.createElement('div');
+    log.id = 'debugLog';
+    log.style.marginTop = '6px';
+    panel.appendChild(log);
+    document.body.appendChild(panel);
+    return log;
+  }
+  var logEl = null;
+  function log(msg){
+    try {
+      logEl = logEl || ensureDebugPanel();
+      var time = new Date().toLocaleTimeString();
+      var line = document.createElement('div');
+      line.textContent = '['+time+'] ' + msg;
+      line.style.marginBottom = '6px';
+      logEl.prepend(line);
+      console.log(msg);
+    } catch(e){
+      try { console.log('Logging failed', e); } catch(_) {}
+    }
+  }
+  window.addEventListener('error', function(ev){
+    var src = ev.filename ? (' at ' + ev.filename + ':' + ev.lineno + ':' + ev.colno) : '';
+    log('ERROR: ' + (ev.message || ev.error || 'Unknown') + src);
+    try { ev.preventDefault(); } catch(e){}
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    var reason = ev.reason && (ev.reason.message || JSON.stringify(ev.reason)) || String(ev.reason);
+    log('UNHANDLED PROMISE REJECTION: ' + reason);
+    try { ev.preventDefault(); } catch(e){}
+  });
+  document.addEventListener('DOMContentLoaded', function(){ log('DOM ready — diagnostic catcher active.'); });
+  log('Diagnostic script injected. Waiting for other scripts...');
+})();
+</script>
+
+<div class="wrap">
+  <header>
+    <h1>Haunted Town — Fixed Playable Prototype</h1>
+    <div class="topbar">
+      <div class="badge">Player <strong id="playerName">Skeeter</strong></div>
+      <div class="meter panel">
+        <strong>Sanity</strong>
+        <div class="bar"><div id="sanityFill" class="barFill"></div></div>
+      </div>
+      <div class="meter panel">
+        <strong>XP / Level</strong>
+        <div id="xpText" class="small">0 XP • Lvl 1</div>
+      </div>
+      <div class="meter panel">
+        <strong>Skill Points</strong>
+        <div id="skillPoints" class="small">0</div>
+      </div>
+      <div id="saveStatus" class="small">Status: Ready</div>
+    </div>
+  </header>
+
+  <div class="panel controls">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="mapBtn" class="btn-primary">Open Map</button>
+      <button id="journalBtn">Journal</button>
+      <button id="inventoryBtn">Inventory</button>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="saveBtn">SAVE</button>
+      <button id="exportBtn">EXPORT</button>
+      <button id="importBtn">IMPORT</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+      <button id="toggleDebugBtn">Hide Debug</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <main class="panel sceneArea" id="sceneArea">
+      <div class="sceneTitle" id="sceneTitle">Loading...</div>
+      <div class="sceneText" id="sceneText">...</div>
+      <div class="choices" id="choices"></div>
+    </main>
+
+    <aside class="rightCol">
+      <div id="journalPanel" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Journal</div>
+          <div class="small" id="journalCount">0</div>
+        </div>
+        <div class="journal" id="journal">No entries yet.</div>
+      </div>
+
+      <div id="inventoryPanel" class="panel" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Inventory</div>
+          <div class="small" id="invCount">0</div>
+        </div>
+        <div class="inventory" id="inventory">Empty</div>
+      </div>
+
+      <div class="panel" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Map</div>
+          <div class="small">Locations</div>
+        </div>
+        <div class="map" id="mapList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Each run is seeded. Explore, collect clues, and try different endings.</footer>
+</div>
+
+<div id="debugPanel" aria-hidden="false"></div>
+
+<script>
+/* Full fixed game script with robust debug toggle (final) */
+document.addEventListener('DOMContentLoaded', function () {
+  var $ = function(id){ return document.getElementById(id); };
+  var dbg = $('debugLog');
+  function debugLog(msg){ if(!dbg) return; var t=new Date().toLocaleTimeString(); var d=document.createElement('div'); d.textContent='['+t+'] '+msg; dbg.prepend(d); console.log(msg); }
+
+  var SAVE_KEY = 'haunted_town_save_v2_fixed';
+  var META_KEY = 'haunted_meta_v2_fixed';
+
+  function rngFactory(seed){
+    var t = seed >>> 0;
+    return function(){
+      t += 0x6D2B79F5;
+      var r = Math.imul(t ^ t >>> 15, 1 | t);
+      r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
+      return ((r ^ r >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  var state = {
+    playerName: 'Skeeter',
+    sanity: 80,
+    xp: 0,
+    level: 1,
+    xpToNext: 100,
+    skillPoints: 0,
+    inventory: [],
+    journal: [],
+    flags: {},
+    location: 'town_square',
+    time: 8,
+    unlockedLocations: ['town_square','docks','inn'],
+    quests: [],
+    runCount: 0,
+    runSeed: null,
+    hauntType: 'spectral',
+    hauntModifiers: {},
+    metaUnlocks: []
+  };
+
+  function loadMeta(){
+    try {
+      var raw = localStorage.getItem(META_KEY);
+      if(!raw) return;
+      var m = JSON.parse(raw);
+      state.runCount = m.runCount || 0;
+      state.metaUnlocks = m.metaUnlocks || [];
+      if(state.metaUnlocks.indexOf('start_with_locket') !== -1){
+        if(state.inventory.filter(function(i){return i.id==='salt_locket';}).length === 0) state.inventory.push({id:'salt_locket',name:'Salt Locket'});
+      }
+      debugLog('Meta loaded');
+    } catch(e){ debugLog('Load meta failed: '+e); }
+  }
+  function saveMeta(){
+    try {
+      var meta = { runCount: state.runCount || 0, metaUnlocks: state.metaUnlocks || [] };
+      localStorage.setItem(META_KEY, JSON.stringify(meta));
+      debugLog('Meta saved');
+    } catch(e){ debugLog('Meta save failed: '+e); }
+  }
+
+  function createRunSeed(){
+    var base = ((Date.now() ^ (state.runCount || 0)) >>> 0) || 1;
+    state.runSeed = base;
+    var rnd = rngFactory(state.runSeed);
+    var hauntTypes = ['spectral','cult','industrial','ink'];
+    state.hauntType = hauntTypes[Math.floor(rnd()*hauntTypes.length)];
+    state.hauntModifiers = {
+      foggy: rnd() < 0.45,
+      moreShadows: rnd() < 0.35,
+      bellActive: rnd() < 0.28,
+      rareCluesBoost: rnd() < 0.22
+    };
+    if(rnd() < 0.5 && state.unlockedLocations.indexOf('cemetery') === -1) state.unlockedLocations.push('cemetery');
+    debugLog('Run seed ' + state.runSeed + ' type ' + state.hauntType);
+  }
+
+  function variantText(template){
+    if(typeof template === 'string') return template;
+    if(!template) return '';
+    if(template[state.hauntType]) return template[state.hauntType];
+    if(state.hauntModifiers && state.hauntModifiers.foggy && template.foggy) return template.foggy;
+    return template.default || '';
+  }
+
+  // procedural events (safe functions referencing global state)
+  var proceduralEvents = [
+    {
+      id: 'whisper',
+      weight: 1,
+      text: { default: 'You hear a whisper from the alley.', spectral: 'A child\'s whisper calls your name.' },
+      cond: function(){ return true; },
+      effect: function(){
+        if(Math.random() < 0.6) state.journal.unshift({ text: 'Heard a whisper', time: new Date().toLocaleString() });
+        state.sanity = Math.max(0, state.sanity - 2);
+      }
+    },
+    {
+      id: 'glint',
+      weight: 0.8,
+      text: { default: 'Something glints in the water.', cult: 'A sigil glints beneath the surface.' },
+      cond: function(){ return true; },
+      effect: function(){
+        var exists = false;
+        for(var i=0;i<state.inventory.length;i++){ if(state.inventory[i].id === 'mysterious_shard'){ exists = true; break; } }
+        if(Math.random() < 0.5 && !exists) state.inventory.push({ id: 'mysterious_shard', name: 'Mysterious Shard' });
+      }
+    },
+    {
+      id: 'bell_echo',
+      weight: 0.4,
+      cond: function(){ return state.hauntModifiers && state.hauntModifiers.bellActive; },
+      text: { default: 'A distant bell tolls once.' },
+      effect: function(){
+        state.sanity = Math.max(0, state.sanity - 4);
+        state.journal.unshift({ text: 'Heard a distant bell', time: new Date().toLocaleString() });
+      }
+    }
+  ];
+
+  function pickProceduralEvent(){
+    var seed = ((state.runSeed || Date.now()) ^ (state.time<<8) ^ (state.location.length)) >>> 0;
+    var r = rngFactory(seed);
+    var pool = [];
+    for(var i=0;i<proceduralEvents.length;i++){
+      var e = proceduralEvents[i];
+      if(!e.cond || e.cond()) pool.push(e);
+    }
+    var total = 0;
+    for(i=0;i<pool.length;i++) total += (pool[i].weight || 1);
+    var roll = r() * total;
+    for(i=0;i<pool.length;i++){
+      roll -= (pool[i].weight || 1);
+      if(roll <= 0) return pool[i];
+    }
+    return null;
+  }
+
+  state._actionCounter = 0;
+  function maybeTriggerEvent(){
+    state._actionCounter = (state._actionCounter||0) + 1;
+    var threshold = 3;
+    if(state._actionCounter % threshold !== 0) return;
+    var ev = pickProceduralEvent();
+    if(ev){
+      var txt = variantText(ev.text) || ev.text || 'Something happens.';
+      state.journal.unshift({ text: txt, time: new Date().toLocaleString() });
+      if(ev.effect) ev.effect();
+      debugLog('Procedural event: ' + (ev.id || 'event'));
+    }
+  }
+
+  // scenes (compact)
+  var scenes = {
+    town_square: {
+      title: 'Town Square',
+      text: {
+        default: 'Fog curls between the lamp posts. The town clock reads ' + state.time + ':00. A notice board creaks in the wind.',
+        spectral: 'A pale mist moves like a slow breath. The clock\'s hands seem to hesitate.',
+        cult: 'A fresh chalk symbol stains the notice board. The clock ticks like a metronome.'
+      },
+      choices: [
+        { text: 'Read the notice board', goto: 'notice_board', effects:[{type:'journal',text:'Found a torn notice about missing people.'}] },
+        { text: 'Head to the docks', goto: 'docks' },
+        { text: 'Visit the inn', goto: 'inn' },
+        { text: 'Search the shadows', goto: 'shadow_search', cond: function(){ return state.sanity >= 30; } }
+      ]
+    },
+    notice_board: {
+      title: 'Notice Board',
+      text: 'The notice board is plastered with missing posters. One poster has a strange symbol scratched into it.',
+      choices: [
+        { text: 'Take a rubbing of the symbol', goto: 'town_square', effects:[{type:'item',item:{id:'symbol_rubbing',name:'Symbol Rubbing'}},{type:'xp',amount:10}] },
+        { text: 'Tear down a poster', goto: 'town_square', effects:[{type:'journal',text:'Tore down a poster: "Missing: Old Tom"'}] }
+      ]
+    },
+    docks: {
+      title: 'The Docks',
+      text: 'The water is black and still. A single boat rocks without a soul aboard.',
+      choices: [
+        { text: 'Fish the water with a rope', goto: 'docks_fish', effects:[{type:'xp',amount:8}] },
+        { text: 'Return to town square', goto: 'town_square' }
+      ]
+    },
+    docks_fish: {
+      title: 'Docks — Reach',
+      text: 'You hook something heavy. A small locket comes up, encrusted with salt.',
+      choices: [
+        { text: 'Open the locket', goto: 'docks_open_locket', effects:[{type:'item',item:{id:'salt_locket',name:'Salt Locket'}},{type:'xp',amount:12}] },
+        { text: 'Pocket it and leave', goto: 'docks', effects:[{type:'item',item:{id:'salt_locket',name:'Salt Locket'}}] }
+      ]
+    },
+    docks_open_locket: {
+      title: 'Locket',
+      text: 'Inside the locket is a faded photograph of a child and a scribbled note: "Forgive me."',
+      choices: [
+        { text: 'Add note to journal', goto: 'docks', effects:[{type:'journal',text:'Found locket with note: "Forgive me."'}] },
+        { text: 'Keep the locket', goto: 'docks', effects:[{type:'item',item:{id:'salt_locket',name:'Salt Locket'}}] }
+      ]
+    },
+    inn: {
+      title: 'The Rusty Lantern Inn',
+      text: 'Warm light spills from the windows. The innkeeper eyes you with a practiced suspicion.',
+      choices: [
+        { text: 'Talk to the innkeeper', goto: 'inn_talk' },
+        { text: 'Listen at the door to the back room', goto: 'inn_listen', cond: function(){ return state.sanity >= 20; } },
+        { text: 'Return to town square', goto: 'town_square' }
+      ]
+    },
+    inn_talk: {
+      title: 'Innkeeper',
+      text: 'The innkeeper, Mara, remembers faces. She mentions a rumor about the old chapel and a bell that rings at midnight.',
+      choices: [
+        { text: 'Ask about the chapel', goto: 'chapel_info', effects:[{type:'journal',text:'Mara mentioned the chapel bell at midnight.'},{type:'xp',amount:6}] },
+        { text: 'Buy a drink (restore sanity)', goto: 'inn', effects:[{type:'sanity',amount:12},{type:'xp',amount:4}] }
+      ]
+    },
+    inn_listen: {
+      title: 'Eavesdrop',
+      text: 'You hear a hushed argument about "keeping the door closed" and "the bell must not toll."',
+      choices: [
+        { text: 'Write it down', goto: 'inn', effects:[{type:'journal',text:'Heard: "the bell must not toll."'}] },
+        { text: 'Confront them', goto: 'inn_confront', cond: function(){ return state.sanity >= 50; } }
+      ]
+    },
+    inn_confront: {
+      title: 'Confrontation',
+      text: 'A shadow slips away. You catch a glimpse of a symbol matching the notice board.',
+      choices: [
+        { text: 'Chase the shadow', goto: 'alley_chase', effects:[{type:'xp',amount:10}] },
+        { text: 'Return to the inn', goto: 'inn' }
+      ]
+    },
+    alley_chase: {
+      title: 'Narrow Alley',
+      text: 'The alley smells of old rain. You find a scrap of cloth with the same symbol.',
+      choices: [
+        { text: 'Take the scrap', goto: 'town_square', effects:[{type:'item',item:{id:'cloth_scrap',name:'Cloth Scrap with Symbol'}},{type:'xp',amount:8}] },
+        { text: 'Follow deeper', goto: 'alley_deeper', cond: function(){ return state.sanity >= 30; } }
+      ]
+    },
+    alley_deeper: {
+      title: 'Deeper Alley',
+      text: 'A whisper brushes your ear: "We keep the bell sleeping."',
+      choices: [
+        { text: 'Record the whisper', goto: 'town_square', effects:[{type:'journal',text:'Whisper: "We keep the bell sleeping."'}] },
+        { text: 'Scream and run', goto: 'town_square', effects:[{type:'sanity',amount:-10}] }
+      ]
+    },
+    shadow_search: {
+      title: 'Shadow Search',
+      text: 'You peer into the darkness. For a moment, the shadows look back.',
+      choices: [
+        { text: 'Reach into the shadow', goto: 'shadow_touch', effects:[{type:'sanity',amount:-15},{type:'xp',amount:18}] },
+        { text: 'Step back', goto: 'town_square' }
+      ]
+    },
+    shadow_touch: {
+      title: 'Touch',
+      text: 'Something cold touches your palm. You feel a memory that is not yours.',
+      choices: [
+        { text: 'Hold the memory', goto: 'town_square', effects:[{type:'journal',text:'A foreign memory: a bell tolling in a chapel.'},{type:'sanity',amount:-5}] },
+        { text: 'Let it go', goto: 'town_square', effects:[{type:'sanity',amount:5}] }
+      ]
+    },
+    chapel_info: {
+      title: 'Chapel Info',
+      text: 'The chapel sits on the hill. The bell has not rung in years, but the townsfolk whisper of a midnight toll.',
+      choices: [
+        { text: 'Go to the chapel', goto: 'chapel' },
+        { text: 'Stay in town', goto: 'town_square' }
+      ]
+    },
+    chapel: {
+      title: 'Old Chapel',
+      text: 'The chapel is boarded up. Moonlight paints the bell tower in silver. A ladder leads to the belfry.',
+      choices: [
+        { text: 'Climb the ladder', goto: 'belfry', cond: function(){ return state.sanity >= 20; } },
+        { text: 'Search the grounds', goto: 'chapel_ground' },
+        { text: 'Return to town', goto: 'town_square' }
+      ]
+    },
+    chapel_ground: {
+      title: 'Chapel Grounds',
+      text: 'You find footprints leading to a hidden cellar door. The lock is old but not rusted.',
+      choices: [
+        { text: 'Pick the lock', goto: 'cellar', cond: function(){ return state.inventory.some(function(i){return i.id==='salt_locket';}) || state.skillPoints>0; }, effects:[{type:'xp',amount:10}] },
+        { text: 'Mark the spot in your journal', goto: 'chapel', effects:[{type:'journal',text:'Found a hidden cellar door near the chapel.'}] }
+      ]
+    },
+    cellar: {
+      title: 'Hidden Cellar',
+      text: 'The cellar smells of incense and old paper. A ledger lies open with names and dates.',
+      choices: [
+        { text: 'Read the ledger', goto: 'ledger_read', effects:[{type:'journal',text:'Ledger lists names and a date: the night the bell last tolled.'},{type:'xp',amount:20}] },
+        { text: 'Take a page', goto: 'cellar', effects:[{type:'item',item:{id:'ledger_page',name:'Ledger Page'}}] }
+      ]
+    },
+    ledger_read: {
+      title: 'Ledger',
+      text: 'The ledger mentions a ritual to "bind the bell" and a warning: "Do not let it toll."',
+      choices: [
+        { text: 'Copy the warning', goto: 'chapel', effects:[{type:'journal',text:'Ledger warning: "Do not let it toll."'}] },
+        { text: 'Pocket the ledger page', goto: 'chapel', effects:[{type:'item',item:{id:'ledger_page',name:'Ledger Page'}}] }
+      ]
+    },
+    cemetery: {
+      title: 'Old Cemetery',
+      text: {
+        default: 'Tombstones lean like tired teeth. A mausoleum door yawns open.',
+        spectral: 'Shadows drift between the stones like slow ghosts.',
+        cult: 'Fresh chalk circles mark a path between graves.'
+      },
+      choices: [
+        { text: 'Enter the mausoleum', goto: 'mausoleum', cond: function(){ return state.sanity >= 25; } },
+        { text: 'Search the graves', goto: 'grave_search' },
+        { text: 'Return to town square', goto: 'town_square' }
+      ]
+    },
+    mausoleum: {
+      title: 'Mausoleum',
+      text: 'The air is cold. A name is carved into the stone that matches a ledger entry.',
+      choices: [
+        { text: 'Copy the name to your journal', goto: 'cemetery', effects:[{type:'journal',text:'Copied a name from the mausoleum.'},{type:'xp',amount:8}] },
+        { text: 'Leave quietly', goto: 'cemetery' }
+      ]
+    },
+    grave_search: {
+      title: 'Between Stones',
+      text: 'You find a small token wedged in moss.',
+      choices: [
+        { text: 'Take the token', goto: 'cemetery', effects:[{type:'item',item:{id:'grave_token',name:'Grave Token'}}] },
+        { text: 'Leave it', goto: 'cemetery' }
+      ]
+    },
+    bell_toll: {
+      title: 'Midnight Bell',
+      text: 'The bell tolls once. The town shudders. You feel the world tilt.',
+      choices: [
+        { text: 'Face the bell', goto: 'final_confront', cond: function(){ return state.sanity >= 30; } },
+        { text: 'Hide and survive', goto: 'survive', cond: function(){ return state.sanity < 30; } }
+      ]
+    },
+    final_confront: {
+      title: 'Confrontation at the Belfry',
+      text: 'You climb into the belfry. A figure stands by the bell, chanting. The symbol glows.',
+      choices: [
+        { text: 'Stop the ritual', goto: 'ending_stop', effects:[{type:'xp',amount:60},{type:'skill',amount:1},{type:'metaEnd'}] },
+        { text: 'Join the chant', goto: 'ending_join', effects:[{type:'sanity',amount:-50},{type:'xp',amount:40},{type:'metaEnd'}] }
+      ]
+    },
+    ending_stop: {
+      title: 'Ending — The Bell Sleeps',
+      text: 'You wrench the bell rope. The ritual breaks. Dawn finds the town shaken but alive. You are remembered.',
+      choices: [
+        { text: 'Play again', goto: 'town_square', effects:[{type:'reset'}] }
+      ]
+    },
+    ending_join: {
+      title: 'Ending — The New Keeper',
+      text: 'You let the chant take you. The bell tolls and the town slips into a long sleep. You become part of the watch.',
+      choices: [
+        { text: 'Play again', goto: 'town_square', effects:[{type:'reset'}] }
+      ]
+    },
+    survive: {
+      title: 'Ending — Survive',
+      text: 'You hide as the bell tolls. The town changes. You survive, but at a cost.',
+      choices: [
+        { text: 'Play again', goto: 'town_square', effects:[{type:'reset'}] }
+      ]
+    }
+  };
+
+  function applyEffects(effects){
+    if(!effects) return;
+    for(var i=0;i<effects.length;i++){
+      var e = effects[i];
+      try {
+        if(e.type === 'item'){
+          if(state.inventory.filter(function(it){return it.id===e.item.id;}).length === 0) state.inventory.push(e.item);
+          debugLog('Gained item: '+e.item.name);
+        } else if(e.type === 'journal'){
+          state.journal.unshift({text:e.text, time: new Date().toLocaleString()});
+          debugLog('Journal entry: '+e.text);
+        } else if(e.type === 'xp'){
+          gainXP(e.amount);
+        } else if(e.type === 'sanity'){
+          state.sanity = Math.max(0, Math.min(100, state.sanity + e.amount));
+          debugLog('Sanity changed by '+e.amount+' -> '+state.sanity);
+        } else if(e.type === 'skill'){
+          state.skillPoints += e.amount;
+          debugLog('Skill points +'+e.amount);
+        } else if(e.type === 'reset'){
+          endRunSummary('reset');
+          var name = state.playerName;
+          state = {
+            playerName: name, sanity:80, xp:0, level:1, xpToNext:100, skillPoints:0,
+            inventory:[], journal:[], flags:{}, location:'town_square', time:8, unlockedLocations:['town_square','docks','inn'], quests:[],
+            runCount: state.runCount || 0, runSeed: null, hauntType: 'spectral', hauntModifiers: {}, metaUnlocks: state.metaUnlocks || []
+          };
+          loadMeta();
+          createRunSeed();
+          debugLog('Game reset for new run');
+        } else if(e.type === 'metaEnd'){
+          endRunSummary('ending');
+        }
+      } catch(err){ debugLog('Effect error: '+err); }
+    }
+  }
+
+  function gainXP(amount){
+    state.xp += amount;
+    while(state.xp >= state.xpToNext){
+      state.xp -= state.xpToNext;
+      state.level++;
+      state.skillPoints++;
+      state.xpToNext = Math.floor(state.xpToNext * 1.25);
+      debugLog('Leveled up to '+state.level);
+    }
+    updateAll();
+  }
+
+  function renderScene(id){
+    var node = scenes[id];
+    if(!node){ debugLog('Scene not found: '+id); return; }
+    state.location = id;
+    var raw = variantText(node.text);
+    var text = (raw || '').replace(/\$\{time\}/g, state.time);
+    $('sceneTitle').innerText = node.title;
+    $('sceneText').innerText = text;
+    var choicesEl = $('choices');
+    choicesEl.innerHTML = '';
+    var choices = node.choices || [];
+    for(var i=0;i<choices.length;i++){
+      (function(c){
+        var cond = c.cond ? c.cond() : true;
+        if(!cond) return;
+        var btn = document.createElement('button');
+        btn.className = 'choiceBtn';
+        btn.innerText = c.text;
+        btn.onclick = function(){
+          try {
+            if(c.effects) applyEffects(c.effects);
+            if(c.goto && state.unlockedLocations.indexOf(c.goto) === -1 && scenes[c.goto]) state.unlockedLocations.push(c.goto);
+            state.time = (state.time + 1) % 24;
+            if(state.time >= 22 || state.time < 6) state.sanity = Math.max(0, state.sanity - 1);
+            maybeTriggerEvent();
+            if(c.goto) renderScene(c.goto);
+            updateAll();
+            saveStateDebounced();
+          } catch(err){ debugLog('Choice handler error: '+err); }
+        };
+        choicesEl.appendChild(btn);
+      })(choices[i]);
+    }
+    updateAll();
+  }
+
+  function updateAll(){
+    $('playerName').innerText = state.playerName;
+    $('sanityFill').style.width = state.sanity + '%';
+    $('xpText').innerText = state.xp + ' XP • Lvl ' + state.level;
+    $('skillPoints').innerText = state.skillPoints;
+    $('inventory').innerHTML = state.inventory.length ? state.inventory.map(function(i){return '<div>'+i.name+'</div>';}).join('') : 'Empty';
+    $('invCount').innerText = state.inventory.length;
+    $('journal').innerHTML = state.journal.length ? state.journal.map(function(it){return '<div style="margin-bottom:6px"><strong class="small">'+it.time+'</strong><div>'+it.text+'</div></div>';}).join('') : 'No entries yet.';
+    $('journalCount').innerText = state.journal.length;
+    var map = $('mapList'); map.innerHTML = '';
+    var keys = Object.keys(scenes);
+    for(var k=0;k<keys.length;k++){
+      var loc = keys[k];
+      if(state.unlockedLocations.indexOf(loc) === -1) continue;
+      var b = document.createElement('button');
+      b.innerText = scenes[loc].title || loc;
+      (function(l){ b.onclick = function(){ renderScene(l); }; })(loc);
+      map.appendChild(b);
+    }
+    updateSaveStatus('Ready');
+  }
+
+  function saveState(){
+    try {
+      var json = JSON.stringify(state);
+      localStorage.setItem(SAVE_KEY, json);
+      updateSaveStatus('Saved to localStorage');
+      debugLog('Saved');
+    } catch(err){
+      debugLog('Save failed: '+err);
+      updateSaveStatus('Save failed', true);
+    }
+  }
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return false;
+      var s = JSON.parse(raw);
+      if(typeof s !== 'object') return false;
+      state = Object.assign(state, s);
+      debugLog('Loaded save');
+      updateSaveStatus('Loaded from localStorage');
+      return true;
+    } catch(err){
+      debugLog('Load failed: '+err);
+      updateSaveStatus('Load failed', true);
+      return false;
+    }
+  }
+  function exportSave(){
+    try {
+      var json = JSON.stringify(state, null, 2);
+      var blob = new Blob([json], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'haunted_town_save.json';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      updateSaveStatus('Exported save');
+      debugLog('Exported save');
+    } catch(err){
+      debugLog('Export failed: '+err);
+      updateSaveStatus('Export failed', true);
+    }
+  }
+  function importSaveFile(file){
+    try {
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try {
+          var s = JSON.parse(e.target.result);
+          if(typeof s !== 'object') { updateSaveStatus('Invalid save file', true); return; }
+          localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+          loadState();
+          updateSaveStatus('Imported and loaded');
+          debugLog('Imported save');
+        } catch(err){ debugLog('Import failed: '+err); updateSaveStatus('Import failed', true); }
+      };
+      reader.readAsText(file);
+    } catch(err){ debugLog('Import setup failed: '+err); updateSaveStatus('Import failed', true); }
+  }
+
+  var saveTimer = null;
+  function saveStateDebounced(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ saveState(); saveTimer = null; }, 600);
+  }
+
+  function updateSaveStatus(text, isError){
+    var el = $('saveStatus');
+    if(!el) return;
+    el.innerText = 'Status: ' + text;
+    el.style.color = isError ? '#ffb3b3' : '#cfe9ff';
+    el.style.background = isError ? 'rgba(178,34,34,0.12)' : 'transparent';
+  }
+
+  function togglePanel(panelId){
+    var p = $(panelId);
+    if(!p) return;
+    var hidden = p.classList.toggle('hidden');
+    if(!hidden){
+      p.classList.add('panel-focus');
+      setTimeout(function(){ p.classList.remove('panel-focus'); }, 900);
+      p.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }
+
+  function endRunSummary(kind){
+    state.runCount = (state.runCount || 0) + 1;
+    state.metaUnlocks = state.metaUnlocks || [];
+    if(state.runCount % 2 === 0 && state.metaUnlocks.indexOf('start_with_locket') === -1){
+      state.metaUnlocks.push('start_with_locket');
+      debugLog('Meta unlock granted: start_with_locket');
+    }
+    saveMeta();
+    saveState();
+    debugLog('Run ended ('+kind+'). runCount=' + state.runCount);
+  }
+
+  /* Robust debug-toggle IIFE (finds actual debug container and toggles it) */
+  (function(){
+    var DEBUG_KEY = 'haunted_debug_hidden_fixed';
+    function isDebugHidden(){ try { return localStorage.getItem(DEBUG_KEY) === '1'; } catch(e){ return false; } }
+    function setDebugHidden(v){ try { localStorage.setItem(DEBUG_KEY, v ? '1' : '0'); } catch(e){} }
+
+    function findDebugContainer(){
+      var log = document.getElementById('debugLog');
+      if(log && log.parentElement) return log.parentElement;
+      var panel = document.getElementById('debugPanel');
+      if(panel) return panel;
+      return document.getElementById('debugPanelFallback');
+    }
+
+    function applyDebugVisibility(hidden){
+      var panel = findDebugContainer();
+      var btn = document.getElementById('toggleDebugBtn');
+      if(!panel || !btn) return;
+      if(hidden){
+        panel.setAttribute('data-hidden','1');
+        panel.classList.add('hidden');
+        btn.textContent = 'Show Debug';
+      } else {
+        panel.removeAttribute('data-hidden');
+        panel.classList.remove('hidden');
+        btn.textContent = 'Hide Debug';
+      }
+      setDebugHidden(hidden);
+    }
+
+    try { applyDebugVisibility(isDebugHidden()); } catch(e){ console && console.warn && console.warn('Debug init failed', e); }
+
+    var toggleBtn = document.getElementById('toggleDebugBtn');
+    if(toggleBtn){
+      toggleBtn.addEventListener('click', function(){
+        var panel = findDebugContainer();
+        if(!panel) return;
+        var currentlyHidden = panel.classList.contains('hidden') || panel.getAttribute('data-hidden') === '1';
+        applyDebugVisibility(!currentlyHidden);
+      });
+    }
+  })();
+
+  try {
+    $('mapBtn').addEventListener('click', function(){ $('mapList').scrollIntoView({behavior:'smooth', block:'center'}); });
+    $('journalBtn').addEventListener('click', function(){ togglePanel('journalPanel'); });
+    $('inventoryBtn').addEventListener('click', function(){ togglePanel('inventoryPanel'); });
+    $('saveBtn').addEventListener('click', function(){ saveState(); });
+    $('exportBtn').addEventListener('click', function(){ exportSave(); });
+    $('importBtn').addEventListener('click', function(){ $('importFile').click(); });
+    $('importFile').addEventListener('change', function(ev){ var f = ev.target.files && ev.target.files[0]; if(f) importSaveFile(f); ev.target.value = ''; });
+  } catch(err){
+    debugLog('UI wiring error: '+err);
+  }
+
+  loadMeta();
+  createRunSeed();
+  if(!loadState()){
+    if(!state.journal.length) state.journal.push({text:'You arrived in town to investigate strange disappearances.', time: new Date().toLocaleString()});
+    renderScene('town_square');
+    updateAll();
+    debugLog('New run started');
+  } else {
+    if(!state.runSeed) createRunSeed();
+    renderScene(state.location || 'town_square');
+    updateAll();
+    debugLog('Loaded existing save');
+  }
+
+  window._haunted = { state: state, saveState: saveState, loadState: loadState, exportSave: exportSave, importSaveFile: importSaveFile, debugLog: debugLog, createRunSeed: createRunSeed, loadMeta: loadMeta };
+  debugLog('Prototype ready (debug toggle final)');
+});
+</script>
+
+</body>
+</html>

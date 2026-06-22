@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Catnip Scramble</title>
+<style>
+    body {
+        margin: 0;
+        font-family: "Trebuchet MS", sans-serif;
+        background: #f7f2e9;
+        color: #5a3e2b;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 48px;
+        margin-bottom: 5px;
+        color: #5a3e2b;
+        text-shadow: 2px 2px #b48a68;
+    }
+
+    #subtitle {
+        font-size: 18px;
+        margin-bottom: 25px;
+        color: #7a5a45;
+    }
+
+    #gameBox {
+        background: #fffaf3;
+        border: 4px solid #b48a68;
+        border-radius: 20px;
+        width: 80%;
+        max-width: 600px;
+        margin: auto;
+        padding: 25px;
+        box-shadow: 0 0 20px rgba(90,62,43,0.2);
+        position: relative;
+    }
+
+    #scrambledWord {
+        font-size: 40px;
+        font-weight: bold;
+        margin: 20px 0;
+        letter-spacing: 4px;
+    }
+
+    input {
+        padding: 10px;
+        font-size: 20px;
+        width: 70%;
+        border: 2px solid #b48a68;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .pawButton {
+        background: #b48a68;
+        color: white;
+        border: none;
+        padding: 12px 22px;
+        margin: 8px;
+        border-radius: 40px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .pawButton:hover {
+        background: #5a3e2b;
+        transform: scale(1.05);
+    }
+
+    #revealBtn { background: #e8b7b7; }
+    #shuffleBtn { background: #d8d8d8; }
+    #categoryBtn { background: #f7f2e9; color: #5a3e2b; border: 2px solid #b48a68; }
+    #randomAllBtn { background: #d4b06a; }
+
+    #score {
+        margin-top: 15px;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    #categoryMenu {
+        margin-top: 20px;
+        display: none;
+    }
+
+    .catOption {
+        background: #fffaf3;
+        border: 2px solid #b48a68;
+        padding: 10px;
+        margin: 6px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 18px;
+        width: 60%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .catOption:hover {
+        background: #f7e7d3;
+    }
+</style>
+</head>
+<body>
+
+<h1>Catnip Scramble</h1>
+<div id="subtitle">A Cozy Cat Loft Word Puzzle</div>
+
+<div id="gameBox">
+    <div id="scrambledWord">Loading...</div>
+
+    <input id="guessInput" placeholder="Type your guess...">
+
+    <br>
+
+    <button class="pawButton" id="newWordBtn">New Word</button>
+    <button class="pawButton" id="shuffleBtn">Shuffle</button>
+    <button class="pawButton" id="revealBtn">Reveal</button>
+    <button class="pawButton" id="categoryBtn">Choose Category</button>
+    <button class="pawButton" id="randomAllBtn">Random All</button>
+
+    <div id="score">Score: 0</div>
+
+    <div id="categoryMenu"></div>
+</div>
+
+<script>
+/* -------------------------
+   500-WORD DICTIONARY
+-------------------------- */
+
+const categories = {
+"animals": [
+"antelope","armadillo","badger","bat","beaver","bison","bobcat","buffalo","canary","cardinal",
+"catfish","cheetah","chipmunk","cougar","coyote","cricket","dolphin","donkey","eagle","ferret",
+"flamingo","fox","gazelle","giraffe","goat","gorilla","hamster","hawk","hedgehog","heron",
+"jaguar","kangaroo","koala","lemur","leopard","lion","lizard","meerkat","mole","moose",
+"otter","owl","panther","rabbit","raccoon","seal","sparrow","tiger","zebra"
+],
+
+"food": [
+"apple","avocado","bacon","bagel","banana","barbecue","biscuit","brownie","burrito","cabbage",
+"cake","caramel","cereal","cheese","chicken","chili","chocolate","cinnamon","cookie","cupcake",
+"dumpling","enchilada","granola","hamburger","honey","hotdog","jellybean","lasagna","lemonade","marshmallow",
+"meatball","muffin","nachos","noodles","pancake","pasta","peanut","pepperoni","pickle","pizza",
+"popcorn","pretzel","pudding","sandwich","sausage","smoothie","spaghetti","taco","waffle"
+],
+
+"objects": [
+"backpack","battery","blanket","bottle","broom","bucket","button","camera","candle","carpet",
+"cellphone","charger","clipboard","compass","computer","crayon","drawer","engine","feather","flashlight",
+"folder","hammer","helmet","jacket","keyboard","ladder","lantern","magnet","marker","mirror",
+"notebook","paintbrush","pillow","printer","radio","remote","ruler","scissors","screwdriver","shovel",
+"stapler","suitcase","teapot","toothbrush","towel","wallet","whistle","window","zipper"
+],
+
+"places": [
+"airport","alleyway","aquarium","bakery","basement","beach","bridge","canyon","castle","cathedral",
+"cave","cemetery","cottage","courthouse","desert","dungeon","farm","forest","garden","harbor",
+"hospital","hotel","island","jungle","library","lighthouse","mansion","meadow","mine","mountain",
+"museum","orchard","palace","park","pier","playground","plaza","port","prison","quarry",
+"riverbank","school","stadium","subway","temple","tower","village","waterfall","zoo"
+],
+
+"jobs": [
+"actor","archer","artist","astronaut","baker","barber","blacksmith","captain","carpenter","cashier",
+"chef","coach","detective","doctor","driver","farmer","firefighter","fisherman","gardener","guard",
+"hunter","inventor","janitor","judge","knight","librarian","magician","mechanic","merchant","miner",
+"musician","nurse","painter","pilot","plumber","police","ranger","sailor","scientist","scout",
+"shepherd","singer","soldier","student","teacher","tailor","waiter","writer"
+],
+
+"fantasy": [
+"angel","basilisk","centaur","chimera","cyclops","demon","djinn","dragon","dryad","dwarf",
+"elf","fairy","gargoyle","genie","ghoul","giant","gnome","goblin","golem","griffin",
+"harpy","hydra","imp","kelpie","kraken","leviathan","lich","mage","mermaid","minotaur",
+"naga","nymph","ogre","orc","pegasus","phoenix","pixie","revenant","satyr","selkie",
+"siren","skeleton","slime","specter","sprite","troll","unicorn","wraith"
+],
+
+"spooky": [
+"apparition","banshee","batling","bloodling","bogeyman","bonewalker","corpse","creeper","cryptling","demonspawn",
+"drifter","fiend","fleshling","ghast","ghost","ghoulspawn","goblinling","gremlin","haunt","hellhound",
+"horrorbeast","lichspawn","lurker","mummy","nightbeast","nightmare","phantom","poltergeist","revenantling","shadowbeast",
+"shade","shapeshifter","skeletonling","skullcrawler","specterling","spook","stalker","terrorhound","tombcrawler","vampire",
+"warlock","werecat","werewolf","witch","wraithling","zombie","zombiefiend","cryptspawn"
+],
+
+"haunted": [
+"abandonedhouse","atticroom","backhall","basementdoor","blackforest","bloodchapel","bonecellar","brokenbridge","candlehall","catacombs",
+"cellarstears","cursedbarn","darkattic","darkcellar","darkcorridor","darkforest","deadorchard","demonroom","dustyhall","emptychurch",
+"forgottenmine","ghostcabin","ghostdock","ghosthall","hauntedbarn","hauntedbridge","hauntedcellar","hauntedchapel","hauntedforest","hauntedhotel",
+"hauntedlibrary","hauntedlodge","hauntedmill","hauntedorchard","hauntedporch","hauntedroom","hauntedschool","hauntedshack","hauntedtower","lostcemetery",
+"midnightforest","oldattic","oldbarn","oldcellar","oldchapel","oldcorridor","oldmansion","shadowhall","silentroom"
+],
+
+"magic": [
+"alchemy","amulet","arcana","binding","blessing","bloodmagic","charm","conjure","curse","darkspell",
+"enchantment","essence","fateweave","fireball","foresight","glyph","hexcraft","illusion","incantation","invocation",
+"lifebind","mana","mindspell","mystic","omen","potion","prophecy","protection","ritual","runestone",
+"scroll","shadowbind","sigil","sorcery","soulmark","spellbook","spiritcall","starlight","summoning","talisman",
+"thunderbolt","trance","warding","witchcraft","wizardry","runeblade","spellfire","cursebind","charmweave"
+],
+
+"horror": [
+"afterdark","bloodmoon","bonechill","butcher","chainsaw","clawmark","coldbreath","corpsefire","creepstep","darkness",
+"deadlight","dreadstorm","fearwind","fleshrot","graveyard","grimshadow","horrorwind","howlstorm","killer","lifeless",
+"midnight","nightmarefuel","nightterror","pitchblack","razorwire","redmist","rotwood","scarecrow","scream","shadowfall",
+"silentstep","skullmask","slasher","spinechill","terrorfall","tombstone","torment","toxicfog","trapped","unholy",
+"voidborn","whispering","wickedness","witchhour","witchmark","wraithfire","zombiefog","gravechill"
+]
+};
+
+/* -------------------------
+   GAME LOGIC
+-------------------------- */
+
+let currentCategory = "animals";
+let currentWord = "";
+let scrambled = "";
+let score = 0;
+
+function pickWord() {
+    const list = categories[currentCategory];
+    currentWord = list[Math.floor(Math.random() * list.length)];
+    scrambleWord();
+}
+
+function scrambleWord() {
+    scrambled = currentWord.split("").sort(() => Math.random() - 0.5).join("");
+    document.getElementById("scrambledWord").textContent = scrambled;
+}
+
+function checkGuess() {
+    const guess = document.getElementById("guessInput").value.toLowerCase();
+    if (guess === currentWord) {
+        score++;
+        document.getElementById("score").textContent = "Score: " + score;
+        pickWord();
+        document.getElementById("guessInput").value = "";
+    }
+}
+
+document.getElementById("guessInput").addEventListener("input", checkGuess);
+
+document.getElementById("newWordBtn").onclick = pickWord;
+document.getElementById("shuffleBtn").onclick = scrambleWord;
+document.getElementById("revealBtn").onclick = () => alert("Answer: " + currentWord);
+
+document.getElementById("randomAllBtn").onclick = () => {
+    const keys = Object.keys(categories);
+    currentCategory = keys[Math.floor(Math.random() * keys.length)];
+    pickWord();
+};
+
+document.getElementById("categoryBtn").onclick = () => {
+    const menu = document.getElementById("categoryMenu");
+    menu.innerHTML = "";
+    menu.style.display = "block";
+
+    for (let cat in categories) {
+        const div = document.createElement("div");
+        div.className = "catOption";
+        div.textContent = cat;
+        div.onclick = () => {
+            currentCategory = cat;
+            menu.style.display = "none";
+            pickWord();
+        };
+        menu.appendChild(div);
+    }
+};
+
+pickWord();
+</script>
+
+</body>
+</html>

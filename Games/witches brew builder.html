@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Witch's Brew Builder</title>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Trebuchet MS", sans-serif;
+        background: #1a0f1f;
+        color: #f5e9ff;
+    }
+    #gameRoot {
+        display: flex;
+        height: 100vh;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .column {
+        padding: 10px;
+        box-sizing: border-box;
+    }
+    #leftCol {
+        width: 25%;
+        border-right: 1px solid #5a2a6d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #centerCol {
+        width: 50%;
+        border-right: 1px solid #5a2a6d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #rightCol {
+        width: 25%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        color: #ff9dfc;
+        text-shadow: 0 0 8px #ff4dfc;
+        font-size: 26px;
+        margin: 5px 0 10px;
+        text-align: center;
+    }
+    .sub {
+        font-size: 13px;
+        opacity: 0.8;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .card {
+        background: #2a1630;
+        border: 1px solid #5a2a6d;
+        border-radius: 10px;
+        padding: 10px;
+        margin: 5px 0;
+        width: 100%;
+        box-shadow: 0 0 12px rgba(255, 0, 255, 0.2);
+        box-sizing: border-box;
+    }
+    #shelf {
+        width: 100%;
+        height: 220px;
+        background: #3b2416;
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px #1a0f1f;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+    .potion {
+        width: 40px;
+        height: 60px;
+        background: url('data:image/svg+xml;utf8,<svg width="40" height="60" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="45" rx="18" ry="12" fill="%23a84dff"/><rect x="12" y="10" width="16" height="30" fill="%23d47aff"/><ellipse cx="20" cy="10" rx="10" ry="6" fill="%23ffb3ff"/></svg>') no-repeat center/contain;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+    }
+    .potion.visible {
+        opacity: 1;
+        transform: translateY(-4px);
+    }
+    .potion.shatter {
+        animation: shatter 0.4s forwards;
+    }
+    @keyframes shatter {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.2) rotate(90deg); }
+    }
+    #centerScroll {
+        flex: 1;
+        width: 100%;
+        overflow-y: auto;
+        padding-right: 4px;
+        box-sizing: border-box;
+    }
+    #ingredients {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .ingredient {
+        background: #3a1f45;
+        padding: 8px;
+        margin: 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid #6a3f7d;
+        transition: transform 0.15s, background 0.15s;
+        font-size: 13px;
+        max-width: 45%;
+        box-sizing: border-box;
+    }
+    .ingredient:hover {
+        background: #4d2a5a;
+        transform: scale(1.05);
+    }
+    .ingredient.selected {
+        background: #6a2a8a !important;
+        border-color: #ffb3ff !important;
+        transform: scale(1.08);
+    }
+    #cauldron {
+        width: 160px;
+        height: 160px;
+        margin: 10px auto;
+        background: radial-gradient(circle at center, #4b2a5a, #2a1630);
+        border-radius: 50%;
+        position: relative;
+        box-shadow: 0 0 20px #7a3fa0;
+        overflow: hidden;
+    }
+    #cauldron::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 120px;
+        height: 120px;
+        background: #1a0f1f;
+        border-radius: 50%;
+        transform: translateX(-50%);
+    }
+    .bubble {
+        position: absolute;
+        bottom: 20px;
+        width: 16px;
+        height: 16px;
+        background: #9d5cff;
+        border-radius: 50%;
+        animation: bubbleUp 1.5s linear;
+        opacity: 0.8;
+    }
+    @keyframes bubbleUp {
+        0% { transform: translateY(0) scale(1); opacity: 0.8; }
+        100% { transform: translateY(-110px) scale(0.3); opacity: 0; }
+    }
+    .sparkle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #ffd6ff;
+        border-radius: 50%;
+        animation: sparkleUp 0.8s linear;
+    }
+    @keyframes sparkleUp {
+        0% { transform: translateY(40px) scale(0.5); opacity: 1; }
+        100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+    }
+    .smoke {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: rgba(120, 80, 140, 0.7);
+        border-radius: 50%;
+        animation: smokeUp 0.8s linear;
+    }
+    @keyframes smokeUp {
+        0% { transform: translateY(40px) scale(0.8); opacity: 0.8; }
+        100% { transform: translateY(-40px) scale(1.4); opacity: 0; }
+    }
+    .label {
+        font-size: 14px;
+        margin-bottom: 4px;
+        text-align: center;
+    }
+    .stat {
+        font-size: 13px;
+        opacity: 0.8;
+    }
+</style>
+</head>
+<body>
+
+<div id="gameRoot">
+    <div id="leftCol" class="column">
+        <h1>Potions</h1>
+        <div class="sub">Fill the shelf to 10 to level up!</div>
+        <div id="shelf"></div>
+        <div class="card">
+            <div class="label">Level</div>
+            <div class="stat" id="levelDisplay">1</div>
+            <div class="label" style="margin-top:6px;">Potions on shelf</div>
+            <div class="stat" id="shelfDisplay">0 / 10</div>
+        </div>
+    </div>
+
+    <div id="centerCol" class="column">
+        <h1>Witch's Brew Builder</h1>
+        <div class="sub">Choose the right ingredients to match the Witch’s clues.</div>
+        <div id="centerScroll">
+            <div id="potionCard" class="card"></div>
+            <div id="clueCard" class="card"></div>
+            <div id="ingredientCard" class="card">
+                <div class="label" id="chooseLabel"></div>
+                <div id="ingredients"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="rightCol" class="column">
+        <h1>Cauldron</h1>
+        <div id="cauldron"></div>
+        <div id="witchCard" class="card">
+            <div class="label">🧙‍♀️ Witch</div>
+            <div class="stat" id="witchText">“Let’s see what you can brew, dearie…”</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simple SFX using Web Audio API
+let audioCtx = null;
+function playTone(freq, duration, type="sine", volume=0.2) {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.value = volume;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); }, duration);
+    } catch (e) {}
+}
+const sfx = {
+    pop: () => playTone(600, 80, "square", 0.15),
+    bubble: () => playTone(300, 120, "sine", 0.12),
+    sparkle: () => { playTone(900, 80, "triangle", 0.18); setTimeout(()=>playTone(1200,80,"triangle",0.15),80); },
+    smoke: () => playTone(120, 200, "sawtooth", 0.12),
+    shatter: () => { playTone(400,60,"square",0.18); setTimeout(()=>playTone(250,80,"square",0.16),60); },
+    levelup: () => { playTone(700,80,"triangle",0.18); setTimeout(()=>playTone(900,80,"triangle",0.18),90); setTimeout(()=>playTone(1100,120,"triangle",0.18),190); }
+};
+
+// WORD POOLS
+const colors = ["blue", "green", "purple", "crimson", "golden", "silver", "black"];
+const textures = ["slimy", "sparkly", "sticky", "powdery", "gooey", "crunchy"];
+const creatures = ["bat", "frog", "ghost", "crow", "lizard", "spider", "owl"];
+const parts = ["eye", "feather", "tooth", "bone", "claw", "wing", "tail"];
+const potionTypes = ["Elixir", "Brew", "Tonic", "Draught", "Potion"];
+const effects = ["Levitation", "Night Vision", "Luck", "Invisibility", "Calm", "Chaos", "Wisdom"];
+
+const witchLines = {
+    cute: [
+        "Ooooh sparkly! My favorite.",
+        "You stir like a baby bat learning to fly.",
+        "That one smells like candy and chaos."
+    ],
+    spooky: [
+        "The spirits whisper… you chose wisely.",
+        "A shadow trembles. Your brew pleases it.",
+        "The cauldron hungers for more."
+    ],
+    sassy: [
+        "Really? That’s what you picked. Bold.",
+        "If this explodes, I’m blaming you.",
+        "Try not to embarrass yourself this time."
+    ],
+    fail: [
+        "Oh my stars… what was that supposed to be?",
+        "The spirits are laughing at you.",
+        "That brew died of cringe."
+    ],
+    perfect: [
+        "Marvelous! You brewed brilliance.",
+        "A perfect potion! Even I’m impressed.",
+        "You’re a natural, dearie."
+    ],
+    levelup: [
+        "Aha! A new rank! Don’t let it go to your head.",
+        "Your power grows… try not to burn the hut down.",
+        "Level up! The spirits take notice."
+    ]
+};
+
+function r(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+// GAME STATE
+let level = 1;
+let shelfCount = 0;
+let correctIngredients = []; // array of objects
+let allIngredients = [];
+let selectedIds = [];
+
+// SHELF
+function initShelf() {
+    const shelf = document.getElementById("shelf");
+    shelf.innerHTML = "";
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement("div");
+        p.className = "potion";
+        shelf.appendChild(p);
+    }
+    updateShelfDisplay();
+}
+function updateShelfDisplay() {
+    document.getElementById("levelDisplay").textContent = level;
+    document.getElementById("shelfDisplay").textContent = `${shelfCount} / 10`;
+}
+
+// INGREDIENT OBJECT
+let nextId = 1;
+function makeIngredientObj() {
+    const color = r(colors);
+    const texture = r(textures);
+    const creature = r(creatures);
+    const part = r(parts);
+    return {
+        id: nextId++,
+        color,
+        texture,
+        creature,
+        part,
+        label: `${color} ${texture} ${creature} ${part}`
+    };
+}
+
+// CLUE SYSTEM
+
+function creatureGroup(creature) {
+    if (["spider", "lizard", "frog"].includes(creature)) return "crawls";
+    if (["bat", "owl", "crow"].includes(creature)) return "flies";
+    if (creature === "ghost") return "beyond";
+    return null;
+}
+
+// Check how many ingredients share a property
+function countByProperty(list, prop, value) {
+    return list.filter(i => i[prop] === value).length;
+}
+
+// Simple, enhanced, advanced clue builders
+function simpleClue(ing) {
+    const type = Math.floor(Math.random() * 3);
+    if (type === 0) return { text: `Something ${ing.color}`, kind: "color", props: {color: ing.color} };
+    if (type === 1) return { text: `Something ${ing.texture}`, kind: "texture", props: {texture: ing.texture} };
+    return { text: `Something from a ${ing.creature}`, kind: "creature", props: {creature: ing.creature} };
+}
+
+function enhancedClue(ing) {
+    const group = creatureGroup(ing.creature);
+    if (group === "crawls") {
+        return { text: "Something from a creature that crawls", kind: "group", props: {group: "crawls"} };
+    }
+    if (group === "flies") {
+        return { text: "Something from a creature that flies", kind: "group", props: {group: "flies"} };
+    }
+    if (group === "beyond") {
+        return { text: "Something from beyond the veil", kind: "group", props: {group: "beyond"} };
+    }
+    // fallback to simple if no group
+    return simpleClue(ing);
+}
+
+function advancedClue(ing) {
+    const type = Math.floor(Math.random() * 3);
+    if (type === 0) {
+        return {
+            text: `A ${ing.color} part of a ${ing.creature}`,
+            kind: "colorCreature",
+            props: {color: ing.color, creature: ing.creature}
+        };
+    }
+    if (type === 1) {
+        return {
+            text: `A ${ing.texture} ingredient from a ${ing.creature}`,
+            kind: "textureCreature",
+            props: {texture: ing.texture, creature: ing.creature}
+        };
+    }
+    return {
+        text: `A ${ing.color} and ${ing.texture} ingredient`,
+        kind: "colorTexture",
+        props: {color: ing.color, texture: ing.texture}
+    };
+}
+
+// Full specific clue (last resort)
+function specificClue(ing) {
+    return {
+        text: `The ${ing.color} ${ing.texture} ${ing.creature} ${ing.part}`,
+        kind: "specific",
+        props: {id: ing.id}
+    };
+}
+
+// Predicate: does ingredient match clue?
+function ingredientMatchesClue(ing, clue) {
+    const p = clue.props;
+    switch (clue.kind) {
+        case "color": return ing.color === p.color;
+        case "texture": return ing.texture === p.texture;
+        case "creature": return ing.creature === p.creature;
+        case "group":
+            const g = creatureGroup(ing.creature);
+            return g === p.group;
+        case "colorCreature":
+            return ing.color === p.color && ing.creature === p.creature;
+        case "textureCreature":
+            return ing.texture === p.texture && ing.creature === p.creature;
+        case "colorTexture":
+            return ing.color === p.color && ing.texture === p.texture;
+        case "specific":
+            return ing.id === p.id;
+        default:
+            return false;
+    }
+}
+
+// Build fair clues with dynamic upgrading and no duplicate kinds
+function buildCluesFromCorrect(correctList, allList) {
+    const clues = [];
+    const usedKinds = new Set();
+    const maxClues = Math.min(3 + Math.floor(level / 2), 5);
+
+    const pool = [...correctList];
+
+    while (clues.length < maxClues && pool.length > 0) {
+        const ing = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+
+        // Try simple, enhanced, advanced in order
+        let candidates = [];
+
+        // Simple candidate only if its kind not already used
+        let s = simpleClue(ing);
+        if (!usedKinds.has(s.kind)) candidates.push(s);
+
+        // Enhanced only if creature group is unique in round and kind not used
+        let e = enhancedClue(ing);
+        if (e.kind === "group") {
+            const groupCount = allList.filter(i => creatureGroup(i.creature) === e.props.group).length;
+            if (groupCount === 1 && !usedKinds.has(e.kind)) {
+                candidates.push(e);
+            }
+        }
+
+        // Advanced candidate if kind not used
+        let a = advancedClue(ing);
+        if (!usedKinds.has(a.kind)) candidates.push(a);
+
+        // Always have specific as last resort
+        let spec = specificClue(ing);
+
+        let chosen = null;
+
+        // Dynamic upgrading: pick first candidate that is unique
+        for (let cand of candidates) {
+            const matchesCorrect = correctList.filter(ci => ingredientMatchesClue(ci, cand)).length;
+            const matchesWrong = allList.filter(ai => !correctList.includes(ai) && ingredientMatchesClue(ai, cand)).length;
+            if (matchesCorrect >= 1 && matchesWrong === 0) {
+                chosen = cand;
+                break;
+            }
+        }
+
+        // If none of the candidates are unique, use specific
+        if (!chosen) {
+            chosen = spec;
+        }
+
+        clues.push(chosen);
+        usedKinds.add(chosen.kind);
+    }
+
+    // Fallback if somehow no clues
+    if (clues.length === 0 && correctList.length > 0) {
+        const c = specificClue(correctList[0]);
+        clues.push(c);
+    }
+
+    return clues;
+}
+
+// NEW ROUND
+function newRound() {
+    selectedIds = [];
+    const potionCard = document.getElementById("potionCard");
+    const clueCard = document.getElementById("clueCard");
+    const ingredientContainer = document.getElementById("ingredients");
+    ingredientContainer.innerHTML = "";
+
+    const potionName = `${r(potionTypes)} of ${r(effects)}`;
+    potionCard.innerHTML = `<div class="label">Potion</div><div class="stat" style="font-size:16px;">${potionName}</div>`;
+
+    const correctCount = Math.min(3 + Math.floor(level / 3), 5);
+    correctIngredients = [];
+    for (let i = 0; i < correctCount; i++) {
+        correctIngredients.push(makeIngredientObj());
+    }
+
+    const wrongCount = 6 + level * 2;
+    const wrongIngredients = [];
+    for (let i = 0; i < wrongCount; i++) {
+        wrongIngredients.push(makeIngredientObj());
+    }
+
+    allIngredients = [...correctIngredients, ...wrongIngredients];
+    allIngredients.sort(() => Math.random() - 0.5);
+
+    const clues = buildCluesFromCorrect(correctIngredients, allIngredients);
+    clueCard.innerHTML = `<div class="label">Clues</div>${clues.map(c => `<div class="stat">🔮 ${c.text}</div>`).join("")}`;
+
+    document.getElementById("chooseLabel").textContent = `Choose ${correctCount} ingredients:`;
+
+    allIngredients.forEach(ing => {
+        const div = document.createElement("div");
+        div.className = "ingredient";
+        div.textContent = ing.label;
+        div.dataset.id = ing.id;
+        div.onclick = () => toggleIngredient(ing.id, div, correctCount);
+        ingredientContainer.appendChild(div);
+    });
+
+    speak(`“A new brew... let’s see if you can handle level ${level}, dearie.”`);
+}
+
+// SELECT
+function toggleIngredient(id, element, needed) {
+    const idx = selectedIds.indexOf(id);
+    if (idx !== -1) {
+        selectedIds.splice(idx, 1);
+        element.classList.remove("selected");
+        return;
+    }
+    if (selectedIds.length >= needed) return;
+
+    selectedIds.push(id);
+    element.classList.add("selected");
+    sfx.pop();
+    animateCauldronNeutral();
+
+    if (selectedIds.length === needed) {
+        setTimeout(submitBrew, 500);
+    }
+}
+
+// SUBMIT
+function submitBrew() {
+    const needed = correctIngredients.length;
+    if (selectedIds.length !== needed) return;
+
+    let score = 0;
+    selectedIds.forEach(id => {
+        if (correctIngredients.some(ci => ci.id === id)) score++;
+    });
+
+    if (score === needed) {
+        handleCorrect();
+    } else {
+        handleWrong();
+    }
+}
+
+// CORRECT
+function handleCorrect() {
+    animateCauldronSuccess();
+    sfx.sparkle();
+
+    const potions = document.querySelectorAll(".potion");
+    if (shelfCount < 10) {
+        potions[shelfCount].classList.add("visible");
+        shelfCount++;
+        updateShelfDisplay();
+    }
+
+    speak(r([...witchLines.cute, ...witchLines.spooky, ...witchLines.sassy, ...witchLines.perfect]));
+
+    if (shelfCount >= 10) {
+        levelUp();
+    } else {
+        setTimeout(newRound, 1100);
+    }
+}
+
+// WRONG
+function handleWrong() {
+    animateCauldronFail();
+    sfx.smoke();
+
+    const potions = document.querySelectorAll(".potion");
+    if (shelfCount > 0) {
+        shelfCount--;
+        potions[shelfCount].classList.add("shatter");
+        sfx.shatter();
+        setTimeout(() => {
+            potions[shelfCount].classList.remove("visible", "shatter");
+            updateShelfDisplay();
+        }, 400);
+    }
+
+    speak(r(witchLines.fail));
+    setTimeout(newRound, 1100);
+}
+
+// LEVEL UP
+function levelUp() {
+    level++;
+    sfx.levelup();
+    speak(r(witchLines.levelup));
+    setTimeout(() => {
+        shelfCount = 0;
+        initShelf();
+        newRound();
+    }, 1500);
+}
+
+// WITCH SPEAK
+function speak(line) {
+    document.getElementById("witchText").textContent = line;
+}
+
+// CAULDRON ANIMATIONS
+function animateCauldronNeutral() {
+    const c = document.getElementById("cauldron");
+    const b = document.createElement("div");
+    b.className = "bubble";
+    b.style.left = (20 + Math.random() * 120) + "px";
+    c.appendChild(b);
+    sfx.bubble();
+    setTimeout(() => b.remove(), 1500);
+}
+function animateCauldronSuccess() {
+    const c = document.getElementById("cauldron");
+    c.style.boxShadow = "0 0 24px #d47aff";
+    for (let i = 0; i < 6; i++) {
+        const s = document.createElement("div");
+        s.className = "sparkle";
+        s.style.left = (40 + Math.random() * 80) + "px";
+        s.style.top = (60 + Math.random() * 40) + "px";
+        c.appendChild(s);
+        setTimeout(() => s.remove(), 800);
+    }
+    setTimeout(() => c.style.boxShadow = "0 0 20px #7a3fa0", 800);
+}
+function animateCauldronFail() {
+    const c = document.getElementById("cauldron");
+    c.style.boxShadow = "0 0 24px #552244";
+    const s = document.createElement("div");
+    s.className = "smoke";
+    s.style.left = "60px";
+    s.style.top = "60px";
+    c.appendChild(s);
+    setTimeout(() => s.remove(), 800);
+    setTimeout(() => c.style.boxShadow = "0 0 20px #7a3fa0", 800);
+}
+
+// START
+initShelf();
+newRound();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Classic Bunco – Wood Table</title>
+<meta charset="UTF-8">
+<style>
+    body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        text-align: center;
+        color: #222;
+        background:
+            repeating-linear-gradient(
+                90deg,
+                #c89b6b 0,
+                #c89b6b 40px,
+                #b8865b 40px,
+                #b8865b 80px
+            );
+    }
+    header {
+        background: rgba(0,0,0,0.6);
+        color: #fdf5e6;
+        padding: 14px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    h1 {
+        margin: 0;
+        font-size: 28px;
+    }
+    #main {
+        padding: 15px;
+    }
+    #tableWrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(255, 248, 235, 0.95);
+        border-radius: 14px;
+        box-shadow: 0 0 18px rgba(0,0,0,0.4);
+        padding: 15px;
+        border: 3px solid #8b5a2b;
+    }
+    #setup {
+        margin-top: 10px;
+        text-align: left;
+    }
+    #setup h2 {
+        margin-top: 0;
+        text-align: center;
+    }
+    select, button, input {
+        padding: 6px 10px;
+        font-size: 14px;
+        margin: 3px;
+        border-radius: 6px;
+        border: 1px solid #b0a38a;
+    }
+    button {
+        background: #b30000;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #d00000;
+    }
+    button:disabled {
+        background: #999;
+        cursor: default;
+    }
+    #gameArea {
+        margin-top: 15px;
+        display: none;
+    }
+    #infoBar {
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+    #diceArea {
+        margin: 15px 0;
+    }
+    .die {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        margin: 5px;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 3px solid #b30000;
+        box-shadow: 0 0 8px rgba(0,0,0,0.4);
+        font-size: 40px;
+    }
+    #message {
+        margin-top: 10px;
+        font-size: 16px;
+        min-height: 22px;
+    }
+    #players {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 15px;
+    }
+    .playerCard {
+        background: #fffaf0;
+        border-radius: 8px;
+        border: 1px solid #c0b090;
+        padding: 8px;
+        margin: 5px;
+        width: 190px;
+        box-shadow: 0 0 4px rgba(0,0,0,0.2);
+        font-size: 14px;
+    }
+    .playerName {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    .activePlayer {
+        border: 2px solid #b30000;
+        box-shadow: 0 0 10px rgba(179,0,0,0.7);
+    }
+    #winnerModal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+    }
+    #winnerBox {
+        background: #fffaf0;
+        padding: 20px;
+        border-radius: 10px;
+        width: 320px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.7);
+        border: 2px solid #8b5a2b;
+    }
+    #winnerBox h2 {
+        margin-top: 0;
+        color: #b30000;
+    }
+    .playerSetupRow {
+        margin: 5px 0;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Classic Bunco – Wood Table</h1>
+</header>
+
+<div id="main">
+    <div id="tableWrapper">
+        <div id="setup">
+            <h2>Game Setup</h2>
+            <div style="text-align:center;">
+                Total players:
+                <select id="playerCount" onchange="updateSetupVisibility()">
+                    <option value="2">2 players</option>
+                    <option value="3">3 players</option>
+                    <option value="4">4 players</option>
+                </select>
+            </div>
+            <div id="playerSetup">
+                <div class="playerSetupRow" id="setupP1">
+                    <strong>Player 1:</strong>
+                    Name: <input id="name1" placeholder="Your name">
+                    Type:
+                    <select id="type1">
+                        <option value="human">Human</option>
+                        <option value="cpu">CPU</option>
+                    </select>
+                </div>
+                <div class="playerSetupRow" id="setupP2">
+                    <strong>Player 2:</strong>
+                    Name: <input id="name2" placeholder="Player 2">
+                    Type:
+                    <select id="type2">
+                        <option value="human">Human</option>
+                        <option value="cpu">CPU</option>
+                    </select>
+                </div>
+                <div class="playerSetupRow" id="setupP3">
+                    <strong>Player 3:</strong>
+                    Name: <input id="name3" placeholder="Player 3">
+                    Type:
+                    <select id="type3">
+                        <option value="human">Human</option>
+                        <option value="cpu">CPU</option>
+                    </select>
+                </div>
+                <div class="playerSetupRow" id="setupP4">
+                    <strong>Player 4:</strong>
+                    Name: <input id="name4" placeholder="Player 4">
+                    Type:
+                    <select id="type4">
+                        <option value="human">Human</option>
+                        <option value="cpu">CPU</option>
+                    </select>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:8px;">
+                <button onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+
+        <div id="gameArea">
+            <div id="infoBar">
+                Round: <span id="roundDisplay">1</span> |
+                Current Player: <span id="currentPlayerName"></span> |
+                Target Number: <span id="targetNumber">1</span>
+            </div>
+
+            <div id="diceArea">
+                <div class="die" id="die1">⚀</div>
+                <div class="die" id="die2">⚀</div>
+                <div class="die" id="die3">⚀</div>
+            </div>
+
+            <button id="rollBtn" onclick="rollDice()">Roll Dice</button>
+            <div id="message"></div>
+
+            <div id="players"></div>
+        </div>
+    </div>
+</div>
+
+<audio id="diceSound" preload="auto">
+    <source src="dice-roll.mp3" type="audio/mpeg">
+</audio>
+
+<div id="winnerModal">
+    <div id="winnerBox">
+        <h2>Game Over</h2>
+        <div id="winnerText"></div>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+</div>
+
+<script>
+let players = [];
+let currentPlayerIndex = 0;
+let roundNumber = 1;
+let rolling = false;
+const diceChars = ["⚀","⚁","⚂","⚃","⚄","⚅"];
+
+function updateSetupVisibility() {
+    const count = parseInt(document.getElementById("playerCount").value, 10);
+    document.getElementById("setupP1").style.display = "block";
+    document.getElementById("setupP2").style.display = count >= 2 ? "block" : "none";
+    document.getElementById("setupP3").style.display = count >= 3 ? "block" : "none";
+    document.getElementById("setupP4").style.display = count >= 4 ? "block" : "none";
+}
+updateSetupVisibility();
+
+function startGame() {
+    const count = parseInt(document.getElementById("playerCount").value, 10);
+    players = [];
+    let cpuCounter = 1;
+    for (let i = 1; i <= count; i++) {
+        const nameInput = document.getElementById("name" + i);
+        const typeSelect = document.getElementById("type" + i);
+        let type = typeSelect.value;
+        let name = nameInput.value.trim();
+        if (type === "cpu") {
+            name = "CPU " + cpuCounter;
+            cpuCounter++;
+        } else if (!name) {
+            name = "Player " + i;
+        }
+        players.push({
+            name: name,
+            totalScore: 0,
+            roundScore: 0,
+            buncos: 0,
+            isCPU: (type === "cpu")
+        });
+    }
+    roundNumber = 1;
+    currentPlayerIndex = 0;
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+    updateUI();
+    startTurnIfCPU();
+}
+
+function updateUI() {
+    document.getElementById("roundDisplay").innerText = roundNumber;
+    document.getElementById("targetNumber").innerText = roundNumber;
+    document.getElementById("currentPlayerName").innerText = players[currentPlayerIndex].name;
+
+    const playersDiv = document.getElementById("players");
+    playersDiv.innerHTML = "";
+    players.forEach((p, idx) => {
+        const card = document.createElement("div");
+        card.className = "playerCard" + (idx === currentPlayerIndex ? " activePlayer" : "");
+        card.innerHTML = `
+            <div class="playerName">${p.name}${p.isCPU ? " (CPU)" : ""}</div>
+            <div>Total Score: ${p.totalScore}</div>
+            <div>Round Score: ${p.roundScore}</div>
+            <div>Buncos: ${p.buncos}</div>
+        `;
+        playersDiv.appendChild(card);
+    });
+
+    const current = players[currentPlayerIndex];
+    document.getElementById("rollBtn").disabled = current.isCPU;
+}
+
+function rollDice() {
+    if (rolling) return;
+    rolling = true;
+    document.getElementById("message").innerText = "Rolling...";
+    document.getElementById("rollBtn").disabled = true;
+
+    const d1 = document.getElementById("die1");
+    const d2 = document.getElementById("die2");
+    const d3 = document.getElementById("die3");
+
+    const sound = document.getElementById("diceSound");
+    if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(() => {});
+    }
+
+    let animCount = 0;
+    const anim = setInterval(() => {
+        d1.textContent = diceChars[Math.floor(Math.random()*6)];
+        d2.textContent = diceChars[Math.floor(Math.random()*6)];
+        d3.textContent = diceChars[Math.floor(Math.random()*6)];
+        animCount++;
+        if (animCount > 10) {
+            clearInterval(anim);
+            finalizeRoll();
+        }
+    }, 70);
+}
+
+function randomDieValue() {
+    return Math.floor(Math.random() * 6) + 1;
+}
+function valueToChar(v) {
+    return diceChars[v - 1];
+}
+
+function finalizeRoll() {
+    const target = roundNumber;
+    const d1v = randomDieValue();
+    const d2v = randomDieValue();
+    const d3v = randomDieValue();
+
+    document.getElementById("die1").textContent = valueToChar(d1v);
+    document.getElementById("die2").textContent = valueToChar(d2v);
+    document.getElementById("die3").textContent = valueToChar(d3v);
+
+    const dice = [d1v, d2v, d3v];
+    const player = players[currentPlayerIndex];
+
+    let points = 0;
+    let msg = "";
+
+    const allSame = (d1v === d2v && d2v === d3v);
+
+    if (allSame && d1v === target) {
+        points = 21;
+        player.buncos++;
+        msg = "BUNCO! 21 points!";
+    } else if (allSame) {
+        points = 5;
+        msg = "Three of a kind! 5 points.";
+    } else {
+        let matches = dice.filter(v => v === target).length;
+        points = matches;
+        if (matches > 0) {
+            msg = matches + " point" + (matches > 1 ? "s" : "") + " for matching the target.";
+        } else {
+            msg = "No points. Turn over.";
+        }
+    }
+
+    player.roundScore += points;
+    player.totalScore += points;
+
+    document.getElementById("message").innerText = msg;
+    updateUI();
+
+    let roundEnded = false;
+    if (player.roundScore >= 21) {
+        document.getElementById("message").innerText += " Round over!";
+        roundEnded = true;
+        setTimeout(() => {
+            nextRound();
+        }, 700);
+    } else if (points === 0) {
+        nextPlayer();
+    }
+
+    rolling = false;
+    if (!players[currentPlayerIndex].isCPU && !roundEnded) {
+        document.getElementById("rollBtn").disabled = false;
+    }
+
+    if (players[currentPlayerIndex].isCPU && !roundEnded && points > 0) {
+        setTimeout(() => {
+            rollDice();
+        }, 800);
+    }
+}
+
+function nextPlayer() {
+    currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    document.getElementById("message").innerText += " Next player's turn.";
+    updateUI();
+    startTurnIfCPU();
+}
+
+function startTurnIfCPU() {
+    const current = players[currentPlayerIndex];
+    if (current.isCPU) {
+        setTimeout(() => {
+            rollDice();
+        }, 800);
+    } else {
+        document.getElementById("rollBtn").disabled = false;
+    }
+}
+
+function nextRound() {
+    players.forEach(p => p.roundScore = 0);
+    roundNumber++;
+    if (roundNumber > 6) {
+        endGame();
+        return;
+    }
+    currentPlayerIndex = 0;
+    updateUI();
+    startTurnIfCPU();
+}
+
+function endGame() {
+    const sorted = [...players].sort((a, b) => b.totalScore - a.totalScore);
+    const winner = sorted[0];
+    let text = `Winner: <strong>${winner.name}</strong> with <strong>${winner.totalScore}</strong> points and <strong>${winner.buncos}</strong> Buncos.<br><br>`;
+    text += "Final standings:<br>";
+    sorted.forEach((p, i) => {
+        text += `${i+1}. ${p.name} – ${p.totalScore} pts, ${p.buncos} Buncos<br>`;
+    });
+    document.getElementById("winnerText").innerHTML = text;
+    document.getElementById("winnerModal").style.display = "flex";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spooky Gacha Town</title>
+<style>
+  body {
+    background:#05040a;
+    color:#f5f0ff;
+    font-family:Arial, sans-serif;
+    margin:0;
+  }
+  #topBar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 12px;
+    background:#120d1f;
+    border-bottom:1px solid #3a284f;
+    font-size:14px;
+  }
+  #gameContainer {
+    padding:12px;
+  }
+  .townRow {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .townBtn {
+    flex:1 1 120px;
+    padding:10px;
+    text-align:center;
+    background:#1a1028;
+    border:1px solid #3a284f;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .townBtn:hover {
+    background:#261538;
+  }
+  .panel {
+    border:1px solid #3a284f;
+    border-radius:6px;
+    padding:10px;
+    margin-bottom:10px;
+    background:#120d1f;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .panel.active {
+    opacity:1;
+    pointer-events:auto;
+  }
+  .panel h2 {
+    margin:0 0 6px 0;
+    font-size:16px;
+  }
+  button {
+    background:#2b1844;
+    color:#f5f0ff;
+    border:1px solid #5b3b8a;
+    border-radius:4px;
+    padding:4px 8px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:default;
+  }
+  #bannerTabs button {
+    margin-right:4px;
+    margin-bottom:4px;
+  }
+  .locked {
+    opacity:0.4;
+  }
+  #summonResult, #arenaLog, #collectionMsg, #hutMsg, #dojoMsg, #shopMsg, #itemsMsg {
+    margin-top:6px;
+    min-height:40px;
+    font-size:13px;
+    white-space:pre-line;
+  }
+  .rarity-1 { color:#b0b0b0; }
+  .rarity-2 { color:#6fe0ff; }
+  .rarity-3 { color:#ff9bff; }
+  .rarity-4 { color:#ffdf6f; }
+  #pumpkin2007Btn {
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:4px;
+    background:#2b1a1a;
+    cursor:pointer;
+    margin-top:4px;
+    font-size:13px;
+  }
+  #pumpkin2007Btn.sparkle {
+    box-shadow:0 0 8px 3px #ff7b00;
+  }
+  .row {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .col {
+    flex:1 1 260px;
+  }
+  .charBox {
+    border:1px solid #3a284f;
+    border-radius:4px;
+    padding:6px;
+    font-size:13px;
+  }
+  #collectionList {
+    max-height:200px;
+    overflow-y:auto;
+    border:1px solid #3a284f;
+    padding:4px;
+    font-size:13px;
+  }
+  .heroRow {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:2px;
+  }
+  .heroRow span {
+    flex:1;
+  }
+  #teamPanel span.slotLabel {
+    display:inline-block;
+    min-width:60px;
+  }
+  #teamPanel div.slotLine {
+    margin-bottom:4px;
+  }
+  #heroSelectOverlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+  }
+  #heroSelectBox {
+    background:#120d1f;
+    border:1px solid #3a284f;
+    border-radius:6px;
+    padding:10px;
+    max-width:360px;
+    max-height:320px;
+    overflow-y:auto;
+    font-size:13px;
+  }
+  #heroSelectBox h3 {
+    margin-top:0;
+    margin-bottom:6px;
+    font-size:15px;
+  }
+  .selectHeroRow {
+    padding:3px 4px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .selectHeroRow:hover {
+    background:#2b1844;
+  }
+  #enemyTeamBox {
+    font-size:13px;
+  }
+  .enemyLine {
+    margin-bottom:2px;
+  }
+  #itemsList {
+    max-height:200px;
+    overflow-y:auto;
+    border:1px solid #3a284f;
+    padding:4px;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+<div id="topBar">
+  <div id="shardDisplay">Shards: 0</div>
+  <div id="levelDisplay">Level 1 • XP 0/5</div>
+</div>
+
+<div id="gameContainer">
+
+  <!-- Town Map -->
+  <div class="panel active" id="panel-town">
+    <h2>Spooky Town</h2>
+    <div style="font-size:13px;margin-bottom:6px;">
+      Click a building to enter. Panels fade in like ghosts.
+    </div>
+    <div class="townRow">
+      <div class="townBtn" data-target="panel-pumpkin">🎃 Pumpkin 2007</div>
+      <div class="townBtn" data-target="panel-hut">🧙‍♀️ Witch’s Hut</div>
+      <div class="townBtn" data-target="panel-dojo">🥋 Training Dojo</div>
+      <div class="townBtn" data-target="panel-shop">🛒 Merchant Cart</div>
+    </div>
+    <div class="townRow">
+      <div class="townBtn" data-target="panel-arena">⚔️ Arena</div>
+      <div class="townBtn" data-target="panel-summon">🔮 Summon Altar</div>
+      <div class="townBtn" data-target="panel-heroes">📦 My Heroes</div>
+      <div class="townBtn" data-target="panel-items">🎒 Items</div>
+    </div>
+  </div>
+
+  <!-- Pumpkin 2007 -->
+  <div class="panel" id="panel-pumpkin">
+    <h2>🎃 Pumpkin 2007</h2>
+    <div>Click the old pumpkin to awaken starter banners and gain a small shard bonus once per run.</div>
+    <div id="pumpkin2007Btn">🎃 2007 Pumpkin</div>
+    <div id="pumpkin2007Msg" style="font-size:12px;margin-top:4px;color:#ffdf6f;"></div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Witch's Hut -->
+  <div class="panel" id="panel-hut">
+    <h2>🧙‍♀️ Witch’s Hut</h2>
+    <div style="font-size:13px;margin-bottom:6px;">
+      Temporary buffs that last for the next Arena battle only. They stack.
+    </div>
+    <button id="hutAtkBtn">+2 ATK to all heroes (5 shards)</button><br><br>
+    <button id="hutGuardBtn">+3 Guard to all heroes (5 shards)</button><br><br>
+    <button id="hutDodgeBtn">+10% Dodge to all heroes (8 shards)</button><br><br>
+    <button id="hutHPBtn">+5 HP to all heroes (6 shards)</button>
+    <div id="hutMsg"></div>
+    <div style="margin-top:8px;font-size:12px;">
+      Current temporary buffs:<br>
+      ATK: <span id="buffAtkText">0</span> • Guard: <span id="buffGuardText">0</span> • Dodge: <span id="buffDodgeText">0</span> • HP: <span id="buffHPText">0</span>
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Training Dojo -->
+  <div class="panel" id="panel-dojo">
+    <h2>🥋 Training Dojo</h2>
+    <div style="font-size:13px;margin-bottom:6px;">
+      Permanent upgrades for Nookie and your team heroes.
+    </div>
+    <div style="font-size:13px;margin-bottom:4px;">
+      Target:
+      <select id="dojoTarget">
+        <option value="nookie">Nookie</option>
+        <option value="slot2">Slot 2 Hero</option>
+        <option value="slot3">Slot 3 Hero</option>
+      </select>
+    </div>
+    <button id="dojoHPBtn">+1 HP (3 shards)</button><br><br>
+    <button id="dojoAtkBtn">+1 ATK (5 shards)</button><br><br>
+    <button id="dojoGuardBtn">+1 Guard (6 shards)</button><br><br>
+    <button id="dojoDodgeBtn">+1% Dodge (4 shards)</button>
+    <div id="dojoMsg"></div>
+    <div style="margin-top:8px;font-size:12px;">
+      Permanent bonuses (Nookie): HP <span id="permNHP">0</span>, ATK <span id="permNATK">0</span>, Guard <span id="permNGUARD">0</span>, Dodge <span id="permNDODGE">0</span>%
+    </div>
+    <div style="margin-top:4px;font-size:12px;">
+      Slot 2: HP <span id="perm2HP">0</span>, ATK <span id="perm2ATK">0</span>, Guard <span id="perm2GUARD">0</span>, Dodge <span id="perm2DODGE">0</span>%
+    </div>
+    <div style="margin-top:4px;font-size:12px;">
+      Slot 3: HP <span id="perm3HP">0</span>, ATK <span id="perm3ATK">0</span>, Guard <span id="perm3GUARD">0</span>, Dodge <span id="perm3DODGE">0</span>%
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Merchant Cart -->
+  <div class="panel" id="panel-shop">
+    <h2>🛒 Merchant Cart</h2>
+    <div style="font-size:13px;margin-bottom:6px;">
+      Buy items using shards. Items go into your inventory.
+    </div>
+    <button class="shopItemBtn" data-item="atkScroll">Buff Scroll (+2 ATK next fight) — 4 shards</button><br><br>
+    <button class="shopItemBtn" data-item="guardScroll">Guard Scroll (+3 Guard next fight) — 4 shards</button><br><br>
+    <button class="shopItemBtn" data-item="dojoToken">Dojo Token (+1 ATK permanent) — 8 shards</button><br><br>
+    <button class="shopItemBtn" data-item="cosmeticGlow">Cosmetic: Pumpkin Glow — 10 shards</button>
+    <div id="shopMsg"></div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Arena -->
+  <div class="panel" id="panel-arena">
+    <h2>⚔️ Arena</h2>
+    <div class="row">
+      <div class="col">
+        <div class="charBox" id="heroBox">
+          <strong>👻🐾 Nookie (You)</strong><br>
+          HP: <span id="heroHPText">30 / 30</span><br>
+          Role: Balanced Ghost Cat
+        </div>
+        <div class="charBox" id="teamPanel">
+          <div class="slotLine">
+            <span class="slotLabel">Slot 1:</span>
+            👻🐾 Nookie (Fixed)
+          </div>
+          <div class="slotLine">
+            <span class="slotLabel">Slot 2:</span>
+            <span id="slot2Text">Empty</span>
+            <button id="slot2Btn">Set Slot 2</button>
+          </div>
+          <div class="slotLine">
+            <span class="slotLabel">Slot 3:</span>
+            <span id="slot3Text">Empty</span>
+            <button id="slot3Btn">Set Slot 3</button>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="charBox" id="enemyTeamBox">
+          <strong>Enemy Team</strong><br>
+          <div class="enemyLine" id="enemy1Line">Enemy 1: none</div>
+          <div class="enemyLine" id="enemy2Line">Enemy 2: none</div>
+        </div>
+      </div>
+    </div>
+    <button id="newEnemyBtn">Find Opponents</button>
+    <button id="fightBtn" disabled>Fight!</button>
+    <div id="arenaLog"></div>
+    <div style="font-size:12px;margin-top:4px;">
+      Win = +1 XP and shards. Loss = 0 XP. Enemies scale with your level. Your team is Nookie + 2 heroes vs 2 enemies.
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Summon Altar -->
+  <div class="panel" id="panel-summon">
+    <h2>🔮 Summon Altar</h2>
+    <div id="bannerTabs"></div>
+    <div id="bannerInfo" style="font-size:12px;margin-bottom:6px;"></div>
+    <button id="summonBtn">Summon (10 shards)</button>
+    <div id="summonResult"></div>
+    <div style="font-size:12px;margin-top:4px;">
+      Banners unlock as you level up and awaken the 2007 pumpkin.
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Heroes / Collection -->
+  <div class="panel" id="panel-heroes">
+    <h2>📦 My Heroes <span id="collectionCount">(0 / 666)</span></h2>
+    <div id="collectionList"></div>
+    <button id="sellSelectedBtn">Sell Selected</button>
+    <div id="collectionMsg"></div>
+    <div style="font-size:12px;margin-top:4px;">
+      Equipped heroes are marked as "Equipped". Selling always asks for confirmation.
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="panel" id="panel-items">
+    <h2>🎒 Items</h2>
+    <div id="itemsList"></div>
+    <div id="itemsMsg"></div>
+    <div style="font-size:12px;margin-top:4px;">
+      Buff scrolls apply temporary buffs. Dojo tokens grant permanent ATK to the selected dojo target. Cosmetics are just for flex.
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="showPanel('panel-town')">Back to Town</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Hero selector overlay -->
+<div id="heroSelectOverlay">
+  <div id="heroSelectBox">
+    <h3>Select a Hero</h3>
+    <div id="heroSelectList"></div>
+    <button id="heroSelectCancel">Cancel</button>
+  </div>
+</div>
+
+<script>
+  // ===== Core state =====
+  let shards = 0;
+  let playerLevel = 1;
+  let playerXP = 0;
+  const levelThresholds = [0,5,10,18,28,40,55,75,100,130];
+
+  // Nookie base
+  const heroBase = {
+    name:"Nookie",
+    emoji:"👻🐾",
+    maxHP:30,
+    dmgMin:4,
+    dmgMax:6,
+    guard:0,
+    dodge:0.05
+  };
+  let heroCurrentHP = heroBase.maxHP;
+
+  // Permanent upgrades
+  const permUpgrades = {
+    nookie:{hp:0, atk:0, guard:0, dodge:0},
+    slot2:{hp:0, atk:0, guard:0, dodge:0},
+    slot3:{hp:0, atk:0, guard:0, dodge:0}
+  };
+
+  // Temporary buffs (next fight)
+  const tempBuffs = {hp:0, atk:0, guard:0, dodge:0};
+
+  // Collection & team
+  const MAX_HEROES = 666;
+  let playerCollection = [];
+  let nextHeroId = 1;
+  let teamSlot2Id = null;
+  let teamSlot3Id = null;
+
+  // Items
+  let inventory = []; // {id,type,name}
+
+  // Pumpkin / unlocks
+  let clicked2007Pumpkin = false;
+  let pumpkin2007ClaimedThisRun = false;
+  let starterTierUnlocked = false;
+  let witchTierUnlocked = false;
+  let bloodMoonTierUnlocked = false;
+  let secretTierUnlocked = false;
+
+  // Enemy team
+  const enemies = [
+    { name:"Training Dummy", emoji:"🪵", tier:1, baseHP:20, baseMin:2, baseMax:4, baseGuard:0, baseDodge:0.00, intro:"The Training Dummy wobbles into place..." },
+    { name:"Tiny Skeleton", emoji:"💀", tier:1, baseHP:18, baseMin:3, baseMax:5, baseGuard:0, baseDodge:0.02, intro:"The Tiny Skeleton rattles into the arena..." },
+    { name:"Pumpkin Sprout", emoji:"🎃", tier:1, baseHP:16, baseMin:2, baseMax:3, baseGuard:0, baseDodge:0.04, intro:"A Pumpkin Sprout hops nervously into view..." },
+
+    { name:"Ghost Wisp", emoji:"👻", tier:2, baseHP:22, baseMin:3, baseMax:5, baseGuard:0, baseDodge:0.08, intro:"A Ghost Wisp flickers into the arena..." },
+    { name:"Scarecrow Guard", emoji:"🌾", tier:2, baseHP:26, baseMin:3, baseMax:4, baseGuard:1, baseDodge:0.02, intro:"The Scarecrow Guard creaks into position..." },
+    { name:"Lantern Slime", emoji:"🕯️", tier:2, baseHP:24, baseMin:3, baseMax:5, baseGuard:0.5, baseDodge:0.03, intro:"A Lantern Slime oozes across the floor..." },
+
+    { name:"Pumpkin Brute", emoji:"🎃💢", tier:3, baseHP:30, baseMin:4, baseMax:7, baseGuard:1, baseDodge:0.03, intro:"The Pumpkin Brute stomps into the arena..." },
+    { name:"Witch Apprentice", emoji:"🧹", tier:3, baseHP:26, baseMin:4, baseMax:6, baseGuard:0.5, baseDodge:0.05, intro:"A Witch Apprentice floats in, clutching a broom..." },
+    { name:"Graveyard Bat", emoji:"🦇", tier:3, baseHP:24, baseMin:4, baseMax:6, baseGuard:0, baseDodge:0.10, intro:"The Graveyard Bat swoops down from the rafters..." },
+
+    { name:"Blood Moon Shade", emoji:"🌑", tier:4, baseHP:34, baseMin:5, baseMax:8, baseGuard:1.5, baseDodge:0.08, intro:"A Blood Moon Shade rises from the shadows..." },
+    { name:"Crimson Reaver", emoji:"🗡️", tier:4, baseHP:30, baseMin:6, baseMax:9, baseGuard:1, baseDodge:0.07, intro:"The Crimson Reaver steps forward, blade glowing..." },
+    { name:"Phantom Cat", emoji:"🐾👻", tier:4, baseHP:28, baseMin:5, baseMax:7, baseGuard:0.5, baseDodge:0.15, intro:"A Phantom Cat pads silently into the arena..." }
+  ];
+  let enemyTeam = []; // [{...}, {...}]
+
+  // Banners with emoji
+  const banners = [
+    {
+      id:"halloween",
+      name:"Halloween Legends",
+      tier:1,
+      description:"Spooky basics: pumpkins, skeletons, and early 3★ heroes.",
+      heroes:[
+        { name:"Pumpkin Sprout", rarity:1, emoji:"🎃" },
+        { name:"Tiny Skeleton", rarity:1, emoji:"💀" },
+        { name:"Cobweb Spider", rarity:1, emoji:"🕷️" },
+        { name:"Lantern Wisp", rarity:2, emoji:"🕯️" },
+        { name:"Graveyard Bat", rarity:2, emoji:"🦇" },
+        { name:"Scarecrow Guard", rarity:2, emoji:"🌾" },
+        { name:"Pumpkin Knight EX", rarity:3, emoji:"🎃🗡️" },
+        { name:"Witch Queen Marrow", rarity:3, emoji:"🧙‍♀️" },
+        { name:"Ghost Cat Prime", rarity:3, emoji:"👻🐾" }
+      ]
+    },
+    {
+      id:"cats",
+      name:"Cat Companions",
+      tier:1,
+      description:"All cats, all vibes. Cute, spooky, and occasionally deadly.",
+      heroes:[
+        { name:"Sleepy Cat", rarity:1, emoji:"😴🐱" },
+        { name:"Curious Cat", rarity:1, emoji:"❓🐱" },
+        { name:"Pumpkin Kitten", rarity:1, emoji:"🎃🐱" },
+        { name:"Pumpkin Cat", rarity:2, emoji:"🎃🐾" },
+        { name:"Alley Ghost Cat", rarity:2, emoji:"👻🐱" },
+        { name:"Misty Purr", rarity:2, emoji:"🌫️🐱" },
+        { name:"Shadow Paw", rarity:3, emoji:"🌑🐾" },
+        { name:"Moonlight Kitten", rarity:3, emoji:"🌙🐱" },
+        { name:"Phantom Cat", rarity:3, emoji:"🐾👻" }
+      ]
+    },
+    {
+      id:"witches",
+      name:"Witch's Coven",
+      tier:2,
+      description:"Witches, hexes, and spirits. Stronger 3★ heroes.",
+      heroes:[
+        { name:"Little Witchling", rarity:1, emoji:"🧙‍♀️" },
+        { name:"Candle Drip", rarity:1, emoji:"🕯️" },
+        { name:"Pumpkin Familiar", rarity:1, emoji:"🎃🐾" },
+        { name:"Apprentice Witch", rarity:2, emoji:"🧹" },
+        { name:"Candle Slime", rarity:2, emoji:"🕯️🩸" },
+        { name:"Broom Spirit", rarity:2, emoji:"🧹👻" },
+        { name:"Lantern Witch Prime", rarity:3, emoji:"🧙‍♀️🕯️" },
+        { name:"Hexbinder Rowan", rarity:3, emoji:"📜🧙‍♂️" },
+        { name:"Ember Witch", rarity:3, emoji:"🔥🧙‍♀️" }
+      ]
+    },
+    {
+      id:"lanterns",
+      name:"Lantern Spirits",
+      tier:2,
+      description:"Ghostly lights and spirits with high dodge and speed.",
+      heroes:[
+        { name:"Faint Lantern", rarity:1, emoji:"🕯️" },
+        { name:"Lost Glow", rarity:1, emoji:"✨" },
+        { name:"Wandering Wick", rarity:1, emoji:"🕯️🚶" },
+        { name:"Street Spirit", rarity:2, emoji:"🚶‍♂️👻" },
+        { name:"Grave Lantern", rarity:2, emoji:"🕯️🪦" },
+        { name:"Foglight Wisp", rarity:2, emoji:"🌫️✨" },
+        { name:"Midnight Beacon", rarity:3, emoji:"🌙🕯️" },
+        { name:"Eclipse Lantern", rarity:3, emoji:"🌑🕯️" },
+        { name:"Harbor of Souls", rarity:3, emoji:"⚓👻" }
+      ]
+    },
+    {
+      id:"bloodmoon",
+      name:"Blood Moon",
+      tier:3,
+      description:"Limited banner with 4★ Mythic heroes under the Blood Moon.",
+      heroes:[
+        { name:"Red Mist Slime", rarity:1, emoji:"🩸🧪" },
+        { name:"Bone Rat", rarity:1, emoji:"🐀💀" },
+        { name:"Shadow Bat", rarity:2, emoji:"🌑🦇" },
+        { name:"Blood Lantern Spirit", rarity:2, emoji:"🕯️🩸👻" },
+        { name:"Crimson Pumpkin Knight", rarity:3, emoji:"🎃🗡️🩸" },
+        { name:"Eclipse Witch", rarity:3, emoji:"🌑🧙‍♀️" },
+        { name:"Eternal Pumpkin King", rarity:4, emoji:"👑🎃" },
+        { name:"Nine-Lives Cat God", rarity:4, emoji:"😼✨" },
+        { name:"Phantom Reaper", rarity:4, emoji:"☠️👻" }
+      ]
+    },
+    {
+      id:"crimson",
+      name:"Crimson Night",
+      tier:3,
+      description:"Side banner to Blood Moon with strong 3★ heroes.",
+      heroes:[
+        { name:"Crimson Slime", rarity:1, emoji:"🩸" },
+        { name:"Blood Crow", rarity:1, emoji:"🩸🐦" },
+        { name:"Night Stalker", rarity:2, emoji:"🌙🗡️" },
+        { name:"Grave Howler", rarity:2, emoji:"🐺🪦" },
+        { name:"Crimson Reaver", rarity:3, emoji:"🗡️🩸" },
+        { name:"Moonlit Slayer", rarity:3, emoji:"🌙🗡️" }
+      ]
+    },
+    {
+      id:"secret",
+      name:"???",
+      tier:4,
+      description:"A mysterious banner unlocked at Level 10.",
+      heroes:[
+        { name:"Veiled Spirit", rarity:2, emoji:"🕸️👻" },
+        { name:"Silent Watcher", rarity:2, emoji:"👁️‍🗨️" },
+        { name:"Graveborn Monarch", rarity:3, emoji:"👑🪦" },
+        { name:"Cat of the Deep Gate", rarity:3, emoji:"🐱🚪" },
+        { name:"The Lantern Beyond", rarity:4, emoji:"🕯️✨" },
+        { name:"The Final Pumpkin", rarity:4, emoji:"🎃⚰️" }
+      ]
+    },
+    {
+      id:"graveborn",
+      name:"Graveborn",
+      tier:4,
+      description:"Endgame banner with rare 3★ and 4★ heroes.",
+      heroes:[
+        { name:"Bonebound Guard", rarity:2, emoji:"🦴🛡️" },
+        { name:"Tomb Warden", rarity:2, emoji:"🪦🛡️" },
+        { name:"Graveborn Knight", rarity:3, emoji:"🪦🗡️" },
+        { name:"Crypt Witch", rarity:3, emoji:"🧙‍♀️⚰️" },
+        { name:"King of the Mausoleum", rarity:4, emoji:"👑⚰️" },
+        { name:"Cat of the Last Door", rarity:4, emoji:"🐱🚪" }
+      ]
+    }
+  ];
+  let currentBannerId = "halloween";
+
+  // ===== DOM =====
+  const shardDisplay = document.getElementById("shardDisplay");
+  const levelDisplay = document.getElementById("levelDisplay");
+  const heroHPText = document.getElementById("heroHPText");
+  const arenaLog = document.getElementById("arenaLog");
+  const newEnemyBtn = document.getElementById("newEnemyBtn");
+  const fightBtn = document.getElementById("fightBtn");
+  const enemy1Line = document.getElementById("enemy1Line");
+  const enemy2Line = document.getElementById("enemy2Line");
+
+  const bannerTabs = document.getElementById("bannerTabs");
+  const bannerInfo = document.getElementById("bannerInfo");
+  const summonBtn = document.getElementById("summonBtn");
+  const summonResult = document.getElementById("summonResult");
+
+  const pumpkin2007Btn = document.getElementById("pumpkin2007Btn");
+  const pumpkin2007Msg = document.getElementById("pumpkin2007Msg");
+
+  const collectionList = document.getElementById("collectionList");
+  const collectionCount = document.getElementById("collectionCount");
+  const sellSelectedBtn = document.getElementById("sellSelectedBtn");
+  const collectionMsg = document.getElementById("collectionMsg");
+
+  const slot2Text = document.getElementById("slot2Text");
+  const slot3Text = document.getElementById("slot3Text");
+  const slot2Btn = document.getElementById("slot2Btn");
+  const slot3Btn = document.getElementById("slot3Btn");
+
+  const heroSelectOverlay = document.getElementById("heroSelectOverlay");
+  const heroSelectList = document.getElementById("heroSelectList");
+  const heroSelectCancel = document.getElementById("heroSelectCancel");
+
+  const hutMsg = document.getElementById("hutMsg");
+  const buffAtkText = document.getElementById("buffAtkText");
+  const buffGuardText = document.getElementById("buffGuardText");
+  const buffDodgeText = document.getElementById("buffDodgeText");
+  const buffHPText = document.getElementById("buffHPText");
+
+  const dojoMsg = document.getElementById("dojoMsg");
+  const dojoTarget = document.getElementById("dojoTarget");
+  const permNHP = document.getElementById("permNHP");
+  const permNATK = document.getElementById("permNATK");
+  const permNGUARD = document.getElementById("permNGUARD");
+  const permNDODGE = document.getElementById("permNDODGE");
+  const perm2HP = document.getElementById("perm2HP");
+  const perm2ATK = document.getElementById("perm2ATK");
+  const perm2GUARD = document.getElementById("perm2GUARD");
+  const perm2DODGE = document.getElementById("perm2DODGE");
+  const perm3HP = document.getElementById("perm3HP");
+  const perm3ATK = document.getElementById("perm3ATK");
+  const perm3GUARD = document.getElementById("perm3GUARD");
+  const perm3DODGE = document.getElementById("perm3DODGE");
+
+  const shopMsg = document.getElementById("shopMsg");
+  const itemsList = document.getElementById("itemsList");
+  const itemsMsg = document.getElementById("itemsMsg");
+
+  let selectingSlot = null;
+
+  // ===== Panel switching (fade-in) =====
+  function showPanel(id) {
+    const panels = document.querySelectorAll(".panel");
+    panels.forEach(p => {
+      if (p.id === id) {
+        p.classList.add("active");
+      } else {
+        p.classList.remove("active");
+      }
+    });
+  }
+
+  document.querySelectorAll(".townBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-target");
+      showPanel(target);
+    });
+  });
+
+  // ===== Basic helpers =====
+  function updateShardDisplay() {
+    shardDisplay.textContent = `Shards: ${shards}`;
+  }
+  function xpNeededForNextLevel(level) {
+    if (level >= 10) return 0;
+    return levelThresholds[level];
+  }
+  function updateLevelDisplay() {
+    const needed = xpNeededForNextLevel(playerLevel);
+    if (needed === 0) {
+      levelDisplay.textContent = `Level ${playerLevel} • MAX`;
+    } else {
+      levelDisplay.textContent = `Level ${playerLevel} • XP ${playerXP}/${needed}`;
+    }
+  }
+  function addXP(amount) {
+    if (playerLevel >= 10) return;
+    playerXP += amount;
+    let needed = xpNeededForNextLevel(playerLevel);
+    let leveledUp = false;
+    while (needed > 0 && playerXP >= needed && playerLevel < 10) {
+      playerXP -= needed;
+      playerLevel++;
+      leveledUp = true;
+      needed = xpNeededForNextLevel(playerLevel);
+    }
+    updateLevelDisplay();
+    if (leveledUp) checkTierUnlocks();
+  }
+  function addShards(amount) {
+    shards += amount;
+    updateShardDisplay();
+  }
+  function spendShards(amount) {
+    if (shards < amount) return false;
+    shards -= amount;
+    updateShardDisplay();
+    return true;
+  }
+
+  // ===== Tier unlocks =====
+  function checkTierUnlocks() {
+    if (clicked2007Pumpkin) starterTierUnlocked = true;
+    if (playerLevel >= 3) witchTierUnlocked = true;
+    if (playerLevel >= 5 && clicked2007Pumpkin) bloodMoonTierUnlocked = true;
+    if (playerLevel >= 10) secretTierUnlocked = true;
+    renderBannerTabs();
+  }
+  function isBannerUnlocked(banner) {
+    if (banner.tier === 1) return starterTierUnlocked;
+    if (banner.tier === 2) return witchTierUnlocked;
+    if (banner.tier === 3) return bloodMoonTierUnlocked;
+    if (banner.tier === 4) return secretTierUnlocked;
+    return false;
+  }
+
+  // ===== Banners UI =====
+  function rarityClass(r) {
+    if (r === 1) return "rarity-1";
+    if (r === 2) return "rarity-2";
+    if (r === 3) return "rarity-3";
+    if (r === 4) return "rarity-4";
+    return "";
+  }
+  function rarityStars(r) {
+    return "★".repeat(r);
+  }
+  function renderBannerTabs() {
+    bannerTabs.innerHTML = "";
+    banners.forEach(b => {
+      const btn = document.createElement("button");
+      btn.textContent = b.name;
+      const unlocked = isBannerUnlocked(b);
+      if (!unlocked) {
+        btn.classList.add("locked");
+        btn.disabled = true;
+      }
+      if (b.id === currentBannerId) {
+        btn.style.outline = "2px solid #ffdf6f";
+      }
+      btn.addEventListener("click", () => {
+        if (!unlocked) return;
+        currentBannerId = b.id;
+        renderBannerTabs();
+        renderBannerInfo();
+      });
+      bannerTabs.appendChild(btn);
+    });
+    renderBannerInfo();
+  }
+  function renderBannerInfo() {
+    const banner = banners.find(b => b.id === currentBannerId);
+    if (!banner) {
+      bannerInfo.textContent = "";
+      return;
+    }
+    bannerInfo.textContent = `${banner.name} — ${banner.description}`;
+  }
+
+  // ===== Rarity stats + twist =====
+  function baseStatsForRarity(r) {
+    if (r === 1) return {hp:18, min:3, max:5, dodge:0.02, guard:0};
+    if (r === 2) return {hp:22, min:4, max:6, dodge:0.04, guard:0.5};
+    if (r === 3) return {hp:26, min:5, max:7, dodge:0.06, guard:1};
+    if (r === 4) return {hp:32, min:6, max:9, dodge:0.08, guard:1.5};
+    return {hp:20, min:3, max:5, dodge:0.02, guard:0};
+  }
+  function applyRandomTwist(stats) {
+    const roll = Math.floor(Math.random() * 4);
+    if (roll === 0) {
+      stats.hp += 2 + Math.floor(Math.random() * 4);
+    } else if (roll === 1) {
+      stats.min += 1;
+      stats.max += 1;
+    } else if (roll === 2) {
+      stats.dodge += 0.02;
+    } else if (roll === 3) {
+      stats.guard += 0.5;
+    }
+    return stats;
+  }
+
+  function summonOnce() {
+    const banner = banners.find(b => b.id === currentBannerId);
+    if (!banner) return null;
+    const roll = Math.random() * 100;
+    let rarity;
+    if (roll < 70) rarity = 1;
+    else if (roll < 92) rarity = 2;
+    else if (roll < 99) rarity = 3;
+    else rarity = 4;
+    const pool = banner.heroes.filter(h => h.rarity === rarity);
+    const baseHero = (pool.length === 0)
+      ? banner.heroes[Math.floor(Math.random() * banner.heroes.length)]
+      : pool[Math.floor(Math.random() * pool.length)];
+    const baseStats = baseStatsForRarity(baseHero.rarity);
+    const finalStats = applyRandomTwist({...baseStats});
+    const heroInstance = {
+      id: nextHeroId++,
+      name: baseHero.name,
+      rarity: baseHero.rarity,
+      emoji: baseHero.emoji || "❓",
+      maxHP: finalStats.hp,
+      dmgMin: finalStats.min,
+      dmgMax: finalStats.max,
+      dodge: finalStats.dodge,
+      guard: finalStats.guard
+    };
+    return heroInstance;
+  }
+
+  summonBtn.addEventListener("click", () => {
+    if (playerCollection.length >= MAX_HEROES) {
+      summonResult.textContent = "Your vault is full (666 heroes). Sell some before summoning again.";
+      return;
+    }
+    if (!spendShards(10)) {
+      summonResult.textContent = "Not enough shards to summon (need 10).";
+      return;
+    }
+    const hero = summonOnce();
+    if (!hero) {
+      summonResult.textContent = "Nothing answered your call...";
+      return;
+    }
+    playerCollection.push(hero);
+    summonResult.innerHTML = `Summoned: <span class="${rarityClass(hero.rarity)}">${hero.emoji} ${hero.name}</span> (${rarityStars(hero.rarity)})`;
+    renderCollection();
+  });
+
+  // ===== Pumpkin 2007 =====
+  pumpkin2007Btn.addEventListener("click", () => {
+    clicked2007Pumpkin = true;
+    checkTierUnlocks();
+    pumpkin2007Btn.classList.add("sparkle");
+    setTimeout(() => pumpkin2007Btn.classList.remove("sparkle"), 400);
+    if (!pumpkin2007ClaimedThisRun) {
+      pumpkin2007ClaimedThisRun = true;
+      addShards(5);
+      pumpkin2007Msg.textContent = "You feel an old power stir... (+5 shards, starter banners awakened)";
+    } else {
+      pumpkin2007Msg.textContent = "The old pumpkin is quiet. Try again after more progress.";
+    }
+  });
+
+  // ===== Collection =====
+  function renderCollection() {
+    collectionList.innerHTML = "";
+    collectionCount.textContent = `(${playerCollection.length} / ${MAX_HEROES})`;
+    playerCollection.forEach(hero => {
+      const row = document.createElement("div");
+      row.className = "heroRow";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.dataset.id = hero.id;
+      const span = document.createElement("span");
+      let text = `${hero.emoji} ${hero.name} (${rarityStars(hero.rarity)})`;
+      if (hero.id === teamSlot2Id || hero.id === teamSlot3Id) {
+        text += " — Equipped";
+      }
+      span.innerHTML = `<span class="${rarityClass(hero.rarity)}">${text}</span>`;
+      row.appendChild(cb);
+      row.appendChild(span);
+      collectionList.appendChild(row);
+    });
+  }
+  function getSelectedHeroIds() {
+    const boxes = collectionList.querySelectorAll("input[type=checkbox]");
+    const ids = [];
+    boxes.forEach(cb => {
+      if (cb.checked) ids.push(parseInt(cb.dataset.id,10));
+    });
+    return ids;
+  }
+  function sellValueForRarity(r) {
+    if (r === 1) return 1;
+    if (r === 2) return 3;
+    if (r === 3) return 10;
+    if (r === 4) return 50;
+    return 0;
+  }
+  sellSelectedBtn.addEventListener("click", () => {
+    const ids = getSelectedHeroIds();
+    if (ids.length === 0) {
+      collectionMsg.textContent = "No heroes selected.";
+      return;
+    }
+    let totalShards = 0;
+    let equippedCount = 0;
+    ids.forEach(id => {
+      const hero = playerCollection.find(h => h.id === id);
+      if (!hero) return;
+      totalShards += sellValueForRarity(hero.rarity);
+      if (hero.id === teamSlot2Id || hero.id === teamSlot3Id) equippedCount++;
+    });
+    let msg = `Sell ${ids.length} heroes for ${totalShards} shards?`;
+    if (equippedCount > 0) {
+      msg = `Warning: ${equippedCount} of these heroes are currently on your team.\n` + msg;
+    }
+    if (!confirm(msg)) return;
+    playerCollection = playerCollection.filter(h => !ids.includes(h.id));
+    if (ids.includes(teamSlot2Id)) teamSlot2Id = null;
+    if (ids.includes(teamSlot3Id)) teamSlot3Id = null;
+    addShards(totalShards);
+    collectionMsg.textContent = `Sold ${ids.length} heroes for ${totalShards} shards.`;
+    renderCollection();
+    renderTeamText();
+  });
+
+  // ===== Team selector =====
+  function openHeroSelector(slot) {
+    selectingSlot = slot;
+    heroSelectList.innerHTML = "";
+    if (playerCollection.length === 0) {
+      const p = document.createElement("div");
+      p.textContent = "You have no heroes yet.";
+      heroSelectList.appendChild(p);
+    } else {
+      playerCollection.forEach(hero => {
+        const row = document.createElement("div");
+        row.className = "selectHeroRow";
+        let text = `${hero.emoji} ${hero.name} (${rarityStars(hero.rarity)})`;
+        if (hero.id === teamSlot2Id || hero.id === teamSlot3Id) {
+          text += " — Equipped";
+        }
+        row.innerHTML = `<span class="${rarityClass(hero.rarity)}">${text}</span>`;
+        row.addEventListener("click", () => {
+          if (selectingSlot === 2) teamSlot2Id = hero.id;
+          else if (selectingSlot === 3) teamSlot3Id = hero.id;
+          selectingSlot = null;
+          heroSelectOverlay.style.display = "none";
+          renderTeamText();
+          renderCollection();
+        });
+        heroSelectList.appendChild(row);
+      });
+    }
+    heroSelectOverlay.style.display = "flex";
+  }
+  heroSelectCancel.addEventListener("click", () => {
+    selectingSlot = null;
+    heroSelectOverlay.style.display = "none";
+  });
+  slot2Btn.addEventListener("click", () => openHeroSelector(2));
+  slot3Btn.addEventListener("click", () => openHeroSelector(3));
+
+  function renderTeamText() {
+    const h2 = playerCollection.find(h => h.id === teamSlot2Id);
+    const h3 = playerCollection.find(h => h.id === teamSlot3Id);
+    slot2Text.textContent = h2 ? `${h2.emoji} ${h2.name} (${rarityStars(h2.rarity)})` : "Empty";
+    slot3Text.textContent = h3 ? `${h3.emoji} ${h3.name} (${rarityStars(h3.rarity)})` : "Empty";
+  }
+
+  // ===== Buffs UI =====
+  function updateBuffText() {
+    buffAtkText.textContent = tempBuffs.atk;
+    buffGuardText.textContent = tempBuffs.guard;
+    buffDodgeText.textContent = Math.round(tempBuffs.dodge*100);
+    buffHPText.textContent = tempBuffs.hp;
+  }
+  document.getElementById("hutAtkBtn").addEventListener("click", () => {
+    if (!spendShards(5)) { hutMsg.textContent = "Not enough shards."; return; }
+    tempBuffs.atk += 2;
+    hutMsg.textContent = "The witch cackles. Your team feels stronger (+2 ATK next fight).";
+    updateBuffText();
+  });
+  document.getElementById("hutGuardBtn").addEventListener("click", () => {
+    if (!spendShards(5)) { hutMsg.textContent = "Not enough shards."; return; }
+    tempBuffs.guard += 3;
+    hutMsg.textContent = "A thick aura surrounds your team (+3 Guard next fight).";
+    updateBuffText();
+  });
+  document.getElementById("hutDodgeBtn").addEventListener("click", () => {
+    if (!spendShards(8)) { hutMsg.textContent = "Not enough shards."; return; }
+    tempBuffs.dodge += 0.10;
+    hutMsg.textContent = "The air warps around your team (+10% Dodge next fight).";
+    updateBuffText();
+  });
+  document.getElementById("hutHPBtn").addEventListener("click", () => {
+    if (!spendShards(6)) { hutMsg.textContent = "Not enough shards."; return; }
+    tempBuffs.hp += 5;
+    hutMsg.textContent = "A warm glow fills your team (+5 HP next fight).";
+    updateBuffText();
+  });
+
+  // ===== Dojo UI =====
+  function updatePermText() {
+    permNHP.textContent = permUpgrades.nookie.hp;
+    permNATK.textContent = permUpgrades.nookie.atk;
+    permNGUARD.textContent = permUpgrades.nookie.guard;
+    permNDODGE.textContent = permUpgrades.nookie.dodge;
+    perm2HP.textContent = permUpgrades.slot2.hp;
+    perm2ATK.textContent = permUpgrades.slot2.atk;
+    perm2GUARD.textContent = permUpgrades.slot2.guard;
+    perm2DODGE.textContent = permUpgrades.slot2.dodge;
+    perm3HP.textContent = permUpgrades.slot3.hp;
+    perm3ATK.textContent = permUpgrades.slot3.atk;
+    perm3GUARD.textContent = permUpgrades.slot3.guard;
+    perm3DODGE.textContent = permUpgrades.slot3.dodge;
+  }
+  function getDojoTargetKey() {
+    const v = dojoTarget.value;
+    if (v === "nookie") return "nookie";
+    if (v === "slot2") return "slot2";
+    if (v === "slot3") return "slot3";
+    return "nookie";
+  }
+  document.getElementById("dojoHPBtn").addEventListener("click", () => {
+    if (!spendShards(3)) { dojoMsg.textContent = "Not enough shards."; return; }
+    const key = getDojoTargetKey();
+    permUpgrades[key].hp += 1;
+    dojoMsg.textContent = `+1 HP permanently to ${key}.`;
+    updatePermText();
+  });
+  document.getElementById("dojoAtkBtn").addEventListener("click", () => {
+    if (!spendShards(5)) { dojoMsg.textContent = "Not enough shards."; return; }
+    const key = getDojoTargetKey();
+    permUpgrades[key].atk += 1;
+    dojoMsg.textContent = `+1 ATK permanently to ${key}.`;
+    updatePermText();
+  });
+  document.getElementById("dojoGuardBtn").addEventListener("click", () => {
+    if (!spendShards(6)) { dojoMsg.textContent = "Not enough shards."; return; }
+    const key = getDojoTargetKey();
+    permUpgrades[key].guard += 1;
+    dojoMsg.textContent = `+1 Guard permanently to ${key}.`;
+    updatePermText();
+  });
+  document.getElementById("dojoDodgeBtn").addEventListener("click", () => {
+    if (!spendShards(4)) { dojoMsg.textContent = "Not enough shards."; return; }
+    const key = getDojoTargetKey();
+    permUpgrades[key].dodge += 1;
+    dojoMsg.textContent = `+1% Dodge permanently to ${key}.`;
+    updatePermText();
+  });
+
+  // ===== Shop & Items =====
+  function addItem(type, name) {
+    const id = Date.now() + Math.random();
+    inventory.push({id, type, name});
+    renderItems();
+  }
+  document.querySelectorAll(".shopItemBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const type = btn.getAttribute("data-item");
+      if (type === "atkScroll") {
+        if (!spendShards(4)) { shopMsg.textContent = "Not enough shards."; return; }
+        addItem("atkScroll", "Buff Scroll (+2 ATK next fight)");
+        shopMsg.textContent = "You bought a Buff Scroll.";
+      } else if (type === "guardScroll") {
+        if (!spendShards(4)) { shopMsg.textContent = "Not enough shards."; return; }
+        addItem("guardScroll", "Guard Scroll (+3 Guard next fight)");
+        shopMsg.textContent = "You bought a Guard Scroll.";
+      } else if (type === "dojoToken") {
+        if (!spendShards(8)) { shopMsg.textContent = "Not enough shards."; return; }
+        addItem("dojoToken", "Dojo Token (+1 ATK permanent)");
+        shopMsg.textContent = "You bought a Dojo Token.";
+      } else if (type === "cosmeticGlow") {
+        if (!spendShards(10)) { shopMsg.textContent = "Not enough shards."; return; }
+        addItem("cosmetic", "Pumpkin Glow Cosmetic");
+        shopMsg.textContent = "You bought a Pumpkin Glow.";
+      }
+    });
+  });
+
+  function renderItems() {
+    itemsList.innerHTML = "";
+    if (inventory.length === 0) {
+      itemsList.textContent = "No items yet.";
+      return;
+    }
+    inventory.forEach(item => {
+      const row = document.createElement("div");
+      row.style.marginBottom = "4px";
+      const span = document.createElement("span");
+      span.textContent = item.name;
+      const btn = document.createElement("button");
+      btn.textContent = "Use";
+      btn.style.marginLeft = "6px";
+      btn.addEventListener("click", () => useItem(item.id));
+      row.appendChild(span);
+      if (item.type !== "cosmetic") row.appendChild(btn);
+      itemsList.appendChild(row);
+    });
+  }
+
+  function useItem(id) {
+    const item = inventory.find(i => i.id === id);
+    if (!item) return;
+    if (item.type === "atkScroll") {
+      tempBuffs.atk += 2;
+      itemsMsg.textContent = "You read the Buff Scroll. (+2 ATK next fight)";
+      updateBuffText();
+    } else if (item.type === "guardScroll") {
+      tempBuffs.guard += 3;
+      itemsMsg.textContent = "You read the Guard Scroll. (+3 Guard next fight)";
+      updateBuffText();
+    } else if (item.type === "dojoToken") {
+      const key = getDojoTargetKey();
+      permUpgrades[key].atk += 1;
+      itemsMsg.textContent = `Dojo Token consumed. +1 ATK permanently to ${key}.`;
+      updatePermText();
+    } else if (item.type === "cosmetic") {
+      itemsMsg.textContent = "You equip the Pumpkin Glow. You feel stylish.";
+    }
+    inventory = inventory.filter(i => i.id !== id || item.type === "cosmetic");
+    renderItems();
+  }
+
+  // ===== Arena / 3v2 combat =====
+  function updateHeroHP() {
+    heroHPText.textContent = `${Math.max(0, Math.round(heroCurrentHP))} / ${heroBase.maxHP + permUpgrades.nookie.hp + tempBuffs.hp}`;
+  }
+  function levelToTier(level) {
+    if (level <= 2) return 1;
+    if (level <= 4) return 2;
+    if (level <= 7) return 3;
+    return 4;
+  }
+  function spawnEnemyTeam() {
+    const tier = levelToTier(playerLevel);
+    const pool = enemies.filter(e => e.tier === tier);
+    const e1 = pool[Math.floor(Math.random() * pool.length)];
+    let e2 = pool[Math.floor(Math.random() * pool.length)];
+    if (e2 === e1 && pool.length > 1) {
+      e2 = pool[(pool.indexOf(e1)+1) % pool.length];
+    }
+    function makeEnemy(base) {
+      const hp = base.baseHP + playerLevel * 4;
+      const minD = base.baseMin + playerLevel * 0.3;
+      const maxD = base.baseMax + playerLevel * 0.3;
+      const guard = base.baseGuard + playerLevel * 0.2;
+      const dodge = Math.min(base.baseDodge + playerLevel * 0.01, 0.20);
+      return {
+        name:base.name,
+        emoji:base.emoji,
+        tier:base.tier,
+        maxHP:hp,
+        hp:hp,
+        dmgMin:minD,
+        dmgMax:maxD,
+        guard:guard,
+        dodge:dodge,
+        intro:base.intro
+      };
+    }
+    enemyTeam = [makeEnemy(e1), makeEnemy(e2)];
+    enemy1Line.textContent = `${enemyTeam[0].emoji} ${enemyTeam[0].name} (HP ${Math.round(enemyTeam[0].hp)})`;
+    enemy2Line.textContent = `${enemyTeam[1].emoji} ${enemyTeam[1].name} (HP ${Math.round(enemyTeam[1].hp)})`;
+    arenaLog.textContent = `${enemyTeam[0].emoji} ${enemyTeam[0].intro}\n${enemyTeam[1].emoji} ${enemyTeam[1].intro}\n👻🐾 Nookie drifts silently into the arena...`;
+  }
+
+  function rollDamage(min, max) {
+    return min + Math.random() * (max - min);
+  }
+  function tryHit(attackerLabel, dmgMin, dmgMax, target) {
+    const dodgeRoll = Math.random();
+    if (dodgeRoll < target.dodge) {
+      return {text:`${attackerLabel} attacks, but the target phases away!`, dmg:0, dodged:true};
+    }
+    let dmg = rollDamage(dmgMin, dmgMax);
+    dmg = Math.max(1, dmg - target.guard);
+    target.hp -= dmg;
+    return {text:`${attackerLabel} hits for ${Math.round(dmg)} damage.`, dmg, dodged:false};
+  }
+
+  function getTeamInstances() {
+    const team = [];
+    team.push({
+      label:"Nookie",
+      emoji:heroBase.emoji,
+      maxHP:heroBase.maxHP + permUpgrades.nookie.hp + tempBuffs.hp,
+      dmgMin:heroBase.dmgMin + permUpgrades.nookie.atk + tempBuffs.atk,
+      dmgMax:heroBase.dmgMax + permUpgrades.nookie.atk + tempBuffs.atk,
+      dodge:heroBase.dodge + permUpgrades.nookie.dodge/100 + tempBuffs.dodge,
+      guard:heroBase.guard + permUpgrades.nookie.guard + tempBuffs.guard
+    });
+    const h2 = playerCollection.find(h => h.id === teamSlot2Id);
+    const h3 = playerCollection.find(h => h.id === teamSlot3Id);
+    if (h2) {
+      team.push({
+        label:h2.name,
+        emoji:h2.emoji,
+        maxHP:h2.maxHP + permUpgrades.slot2.hp + tempBuffs.hp,
+        dmgMin:h2.dmgMin + permUpgrades.slot2.atk + tempBuffs.atk,
+        dmgMax:h2.dmgMax + permUpgrades.slot2.atk + tempBuffs.atk,
+        dodge:h2.dodge + permUpgrades.slot2.dodge/100 + tempBuffs.dodge,
+        guard:h2.guard + permUpgrades.slot2.guard + tempBuffs.guard
+      });
+    } else {
+      team.push(null);
+    }
+    if (h3) {
+      team.push({
+        label:h3.name,
+        emoji:h3.emoji,
+        maxHP:h3.maxHP + permUpgrades.slot3.hp + tempBuffs.hp,
+        dmgMin:h3.dmgMin + permUpgrades.slot3.atk + tempBuffs.atk,
+        dmgMax:h3.dmgMax + permUpgrades.slot3.atk + tempBuffs.atk,
+        dodge:h3.dodge + permUpgrades.slot3.dodge/100 + tempBuffs.dodge,
+        guard:h3.guard + permUpgrades.slot3.guard + tempBuffs.guard
+      });
+    } else {
+      team.push(null);
+    }
+    return team;
+  }
+
+  newEnemyBtn.addEventListener("click", () => {
+    const team = getTeamInstances();
+    if (!team[1] && !team[2]) {
+      arenaLog.textContent = "You should equip at least one hero in Slot 2 or 3 before fighting.";
+      return;
+    }
+    heroCurrentHP = team[0].maxHP;
+    updateHeroHP();
+    spawnEnemyTeam();
+    fightBtn.disabled = false;
+  });
+
+  fightBtn.addEventListener("click", () => {
+    if (enemyTeam.length === 0) return;
+    fightBtn.disabled = true;
+
+    const team = getTeamInstances();
+    const teamHP = team.map(h => h ? h.maxHP : 0);
+    heroCurrentHP = teamHP[0];
+    updateHeroHP();
+
+    let log = "";
+    let round = 1;
+
+    function anyHeroAlive() {
+      return teamHP.some(hp => hp > 0);
+    }
+    function anyEnemyAlive() {
+      return enemyTeam.some(e => e.hp > 0);
+    }
+
+    while (anyHeroAlive() && anyEnemyAlive() && round <= 50) {
+      log += `\n-- Round ${round} --\n`;
+      // Heroes attack frontmost alive enemy
+      for (let i=0;i<team.length;i++) {
+        if (!team[i] || teamHP[i] <= 0 || !anyEnemyAlive()) continue;
+        const h = team[i];
+        const targetIndex = enemyTeam[0].hp > 0 ? 0 : (enemyTeam[1].hp > 0 ? 1 : -1);
+        if (targetIndex === -1) break;
+        const target = enemyTeam[targetIndex];
+        const res = tryHit(`${h.emoji} ${h.label}`, h.dmgMin, h.dmgMax, {hp:target.hp, dodge:target.dodge, guard:target.guard});
+        target.hp -= res.dmg;
+        log += res.text + ` (${target.emoji} ${target.name})\n`;
+        enemy1Line.textContent = `${enemyTeam[0].emoji} ${enemyTeam[0].name} (HP ${Math.max(0,Math.round(enemyTeam[0].hp))})`;
+        enemy2Line.textContent = `${enemyTeam[1].emoji} ${enemyTeam[1].name} (HP ${Math.max(0,Math.round(enemyTeam[1].hp))})`;
+        if (!anyEnemyAlive()) {
+          log += `Both enemies fall!\n`;
+          break;
+        }
+      }
+      if (!anyEnemyAlive()) break;
+
+      // Enemies attack random alive hero
+      for (let ei=0; ei<enemyTeam.length; ei++) {
+        const e = enemyTeam[ei];
+        if (e.hp <= 0 || !anyHeroAlive()) continue;
+        const aliveIndices = teamHP.map((hp,idx) => (hp>0 && team[idx]) ? idx : -1).filter(idx => idx>=0);
+        if (aliveIndices.length === 0) break;
+        const targetIndex = aliveIndices[Math.floor(Math.random()*aliveIndices.length)];
+        const target = team[targetIndex];
+        const targetState = {hp:teamHP[targetIndex], dodge:target.dodge, guard:target.guard};
+        const res = tryHit(`${e.emoji} ${e.name}`, e.dmgMin, e.dmgMax, targetState);
+        teamHP[targetIndex] = targetState.hp;
+        log += res.text + ` (${target.emoji} ${target.label})\n`;
+        heroCurrentHP = teamHP[0];
+        updateHeroHP();
+        if (!anyHeroAlive()) {
+          log += `All heroes fall... The arena grows quiet.\n`;
+          break;
+        }
+      }
+      round++;
+    }
+
+    if (anyEnemyAlive() === false && anyHeroAlive()) {
+      addXP(1);
+      const shardGain = 4 + enemyTeam[0].tier; // 5–8
+      addShards(shardGain);
+      log += `\nVictory! +1 XP, +${shardGain} shards.`;
+    } else if (!anyHeroAlive()) {
+      log += `\nDefeat. No XP gained.`;
+    } else {
+      log += `\nThe fight fizzles out in a draw.`;
+    }
+
+    arenaLog.textContent = arenaLog.textContent + "\n" + log;
+    enemyTeam = [];
+    enemy1Line.textContent = "Enemy 1: none";
+    enemy2Line.textContent = "Enemy 2: none";
+
+    // Clear temporary buffs after fight
+    tempBuffs.hp = 0;
+    tempBuffs.atk = 0;
+    tempBuffs.guard = 0;
+    tempBuffs.dodge = 0;
+    updateBuffText();
+  });
+
+  // ===== Init =====
+  function init() {
+    updateShardDisplay();
+    updateLevelDisplay();
+    checkTierUnlocks();
+    renderBannerTabs();
+    renderBannerInfo();
+    renderCollection();
+    renderTeamText();
+    updateHeroHP();
+    updateBuffText();
+    updatePermText();
+    renderItems();
+  }
+  init();
+</script>
+</body>
+</html>

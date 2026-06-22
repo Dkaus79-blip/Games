@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Skeeter & Lily: Arcade Case Craze</title>
+
+<style>
+/* --- COLORS --- */
+:root {
+  --pink: #ff66cc;
+  --yellow: #ffcc33;
+  --purple: #9b59b6;
+  --blue: #3498db;
+  --mint: #2ecc71;
+  --light: #fff7ff;
+  --border: #f0d0ff;
+}
+
+/* --- PAGE --- */
+body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at top, #ffe6ff, #ffb3d9);
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* --- HEADER --- */
+header {
+  background: linear-gradient(90deg, var(--pink), var(--yellow));
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* --- TOP BAR --- */
+#topBar {
+  background: rgba(255,255,255,0.9);
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+/* --- MAIN LAYOUT --- */
+#main {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+#left, #right {
+  flex: 1;
+  background: rgba(255,255,255,0.95);
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* --- TABS --- */
+#leftTabs, #rightTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.left-tab-btn, .right-tab-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--light);
+  cursor: pointer;
+}
+
+.left-tab-btn.active, .right-tab-btn.active {
+  background: #fff;
+  border-color: var(--pink);
+  font-weight: bold;
+}
+
+/* --- PANELS --- */
+.left-panel, .right-panel {
+  display: none;
+  font-size: 13px;
+}
+
+.left-panel.active, .right-panel.active {
+  display: block;
+}
+
+/* --- BUTTONS --- */
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin: 2px;
+}
+
+.primary { background: var(--pink); color: #fff; }
+.secondary { background: var(--yellow); color: #222; }
+.small { padding: 4px 8px; font-size: 11px; }
+
+/* --- COLLECTION & SETS LISTS --- */
+#collectionTabs, #setsTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.collection-tab-btn, .sets-tab-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 3px 6px;
+  font-size: 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--light);
+  cursor: pointer;
+}
+
+.collection-tab-btn.active, .sets-tab-btn.active {
+  background: #fff;
+  border-color: var(--purple);
+  font-weight: bold;
+}
+
+#collectionList, #setsList {
+  height: 190px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px;
+}
+
+.collection-row, .set-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.collection-row.undiscovered {
+  opacity: 0.4;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎠 Skeeter & Lily: Arcade Case Craze</h1>
+  <div id="stats">
+    Coins: <span id="coins">0</span> |
+    Tokens: <span id="tokens">0</span> |
+    Stars: <span id="stars">0</span> |
+    Cases: <span id="casesOpened">0</span> |
+    Prestige: <span id="prestigeLevel">0</span> |
+    Items: <span id="itemCount">0</span>
+  </div>
+</header>
+
+<div id="topBar">
+  <div>
+    Room:
+    <select id="roomSelect">
+      <option value="bubblegum">Bubblegum Basement</option>
+      <option value="tin">Tin Alley</option>
+      <option value="rainbow">Rainbow Arcade</option>
+      <option value="ink">Ink Detective’s Den</option>
+      <option value="phantom">Phantom Parlor</option>
+    </select>
+  </div>
+
+  <div>
+    Season:
+    <select id="seasonSelect">
+      <option value="none">None</option>
+      <option value="halloween">Halloween</option>
+      <option value="winter">Winter</option>
+      <option value="summer">Summer</option>
+    </select>
+  </div>
+</div>
+
+<div id="main">
+<!-- LEFT SIDE -->
+<div id="left">
+
+  <div id="leftTabs">
+    <div class="left-tab-btn active" data-left-tab="roomPanel">🎮 Room</div>
+    <div class="left-tab-btn" data-left-tab="upgradesPanel">⬆️ Upgrades</div>
+    <div class="left-tab-btn" data-left-tab="questsPanel">📜 Quests</div>
+    <div class="left-tab-btn" data-left-tab="setsPanel">📦 Sets</div>
+    <div class="left-tab-btn" data-left-tab="prestigePanel">⭐ Prestige</div>
+    <div class="left-tab-btn" data-left-tab="logPanel">💬 Log</div>
+  </div>
+
+  <!-- ROOM -->
+  <div id="roomPanel" class="left-panel active">
+    <div id="roomInfo"></div>
+
+    <p>
+      <button class="primary" id="openCaseBtn">Open Case</button>
+      <button class="secondary small" id="sellDuplicatesBtn">Sell Duplicates</button>
+      <button class="secondary small" id="sellCommonsBtn">Sell All Commons</button>
+    </p>
+
+    <div id="dialog">
+      <strong>Skeeter:</strong> “Let’s crack some candy crates!”<br>
+      <strong>Lily:</strong> “Try not to sell the good ones.”
+    </div>
+  </div>
+
+  <!-- UPGRADES -->
+  <div id="upgradesPanel" class="left-panel">
+    <h2>⬆️ Upgrades</h2>
+    <div id="upgradesPanelContent"></div>
+  </div>
+
+  <!-- QUESTS -->
+  <div id="questsPanel" class="left-panel">
+    <h2>📜 Quests</h2>
+    <div id="questsPanelContent"></div>
+  </div>
+
+  <!-- SETS -->
+  <div id="setsPanel" class="left-panel">
+    <h2>📦 Sets</h2>
+
+    <div id="setsTabs">
+      <div class="sets-tab-btn active" data-sets-room="bubblegum">🍬 Bubblegum</div>
+      <div class="sets-tab-btn" data-sets-room="tin">🛠️ Tin Alley</div>
+      <div class="sets-tab-btn" data-sets-room="rainbow">🌈 Rainbow</div>
+      <div class="sets-tab-btn" data-sets-room="ink">🕵️ Ink Den</div>
+      <div class="sets-tab-btn" data-sets-room="phantom">👻 Phantom</div>
+      <div class="sets-tab-btn" data-sets-room="seasonal">🎃 Seasonal</div>
+      <div class="sets-tab-btn" data-sets-room="all">⭐ All Sets</div>
+    </div>
+
+    <div id="setsList"></div>
+  </div>
+
+  <!-- PRESTIGE -->
+  <div id="prestigePanel" class="left-panel">
+    <h2>⭐ Prestige</h2>
+    <div id="prestigePanelContent"></div>
+  </div>
+
+  <!-- LOG -->
+  <div id="logPanel" class="left-panel">
+    <h2>💬 Log</h2>
+    <div id="logPanelContent"></div>
+  </div>
+
+</div>
+<!-- RIGHT SIDE -->
+<div id="right">
+
+  <div id="rightTabs">
+    <div class="right-tab-btn active" data-right-tab="inventoryPanel">👜 Inventory</div>
+    <div class="right-tab-btn" data-right-tab="collectionPanel">📚 Collection</div>
+    <div class="right-tab-btn" data-right-tab="statsPanel">📊 Stats</div>
+    <div class="right-tab-btn" data-right-tab="settingsPanel">⚙️ Settings</div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div id="inventoryPanel" class="right-panel active">
+    <h2>👜 Inventory</h2>
+    <div id="inventoryPanelContent"></div>
+  </div>
+
+  <!-- COLLECTION -->
+  <div id="collectionPanel" class="right-panel">
+    <h2>📚 Collection Book</h2>
+
+    <div id="collectionTabs">
+      <div class="collection-tab-btn active" data-collection-room="bubblegum">🍬 Bubblegum</div>
+      <div class="collection-tab-btn" data-collection-room="tin">🛠️ Tin Alley</div>
+      <div class="collection-tab-btn" data-collection-room="rainbow">🌈 Rainbow</div>
+      <div class="collection-tab-btn" data-collection-room="ink">🕵️ Ink Den</div>
+      <div class="collection-tab-btn" data-collection-room="phantom">👻 Phantom</div>
+      <div class="collection-tab-btn" data-collection-room="seasonal">🎃 Seasonal</div>
+      <div class="collection-tab-btn" data-collection-room="all">⭐ All Items</div>
+    </div>
+
+    <div id="collectionSummary"></div>
+    <div id="collectionList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="statsPanel" class="right-panel">
+    <h2>📊 Stats</h2>
+    <div id="statsPanelContent"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settingsPanel" class="right-panel">
+    <h2>⚙️ Settings</h2>
+    <button class="secondary small" id="saveGameBtn">💾 Save Game</button>
+    <button class="secondary small" id="loadGameBtn">📂 Load Game</button>
+    <button class="primary small" id="resetGameBtn">🔄 Reset Game</button>
+  </div>
+
+</div>
+<script>
+/* ============================
+   RARITIES & VALUE TABLES
+============================ */
+const RARITIES = ["Common","Uncommon","Rare","Epic","Legendary","Mythic"];
+
+const rarityBaseValue = {
+  Common: 50,
+  Uncommon: 100,
+  Rare: 300,
+  Epic: 1000,
+  Legendary: 5000,
+  Mythic: 25000
+};
+
+const tagMultipliers = {
+  none: 1.0,
+  shiny: 1.25,
+  signed: 1.5,
+  glitched: 2.0
+};
+
+let currentSeason = "none";
+
+/* ============================
+   CASE DEFINITIONS
+============================ */
+const CASES = {
+  bubblegum: {
+    id: "cardboard_candy_crate",
+    name: "Cardboard Candy Crate",
+    roomName: "Bubblegum Basement",
+    costCoins: 100,
+    rarityWeights: { Common:.60, Uncommon:.30, Rare:.08, Epic:.02, Legendary:0, Mythic:0 },
+    caseMultiplier: 1
+  },
+  tin: {
+    id: "tin_trunk",
+    name: "Tin Trunk",
+    roomName: "Tin Alley",
+    costCoins: 500,
+    rarityWeights: { Common:.40, Uncommon:.35, Rare:.18, Epic:.06, Legendary:.01, Mythic:0 },
+    caseMultiplier: 1.2
+  },
+  rainbow: {
+    id: "rainbow_candy_case",
+    name: "Rainbow Candy Case",
+    roomName: "Rainbow Arcade",
+    costCoins: 2000,
+    rarityWeights: { Common:.10, Uncommon:.35, Rare:.30, Epic:.18, Legendary:.06, Mythic:.01 },
+    caseMultiplier: 1.5
+  },
+  ink: {
+    id: "ink_case_file",
+    name: "Ink Case File",
+    roomName: "Ink Detective’s Den",
+    costCoins: 10000,
+    rarityWeights: { Common:0, Uncommon:.10, Rare:.35, Epic:.30, Legendary:.18, Mythic:.07 },
+    caseMultiplier: 2
+  },
+  phantom: {
+    id: "phantom_vault",
+    name: "Phantom Vault",
+    roomName: "Phantom Parlor",
+    costCoins: 0,
+    costTokens: 5,
+    rarityWeights: { Common:0, Uncommon:0, Rare:.10, Epic:.40, Legendary:.35, Mythic:.15 },
+    caseMultiplier: 3
+  }
+};
+
+/* ============================
+   ITEM + SET GENERATION
+============================ */
+let ITEMS = [];
+let ITEMS_BY_ID = {};
+let SETS = {};
+let discoveredItems = new Set();
+
+function generateItemsAndSets() {
+  const rooms = [
+    { roomKey:"bubblegum", label:"Bubblegum Basement",
+      prefix:["Chewy","Sugar","Gumdrop","Bubble","Jawbreaker","Sticky","Lollipop","Minty","Cotton","Caramel"],
+      types:["Blaster","Pistol","Launcher","Hammer","Sprayer","Rifle"],
+      count:160, seasonal:false },
+
+    { roomKey:"tin", label:"Tin Alley",
+      prefix:["Tin","Rusty","Gear","Clockwork","Spring","Clank","Bolt","Copper","Iron","Steel"],
+      types:["Tapper","Whacker","Cannon","Carbine","Crusher","Repeater"],
+      count:150, seasonal:false },
+
+    { roomKey:"rainbow", label:"Rainbow Arcade",
+      prefix:["Rainbow","Gummy","Sour","Marshmallow","Licorice","Neon","Prism","Glitter","Candyfloss","Skittle"],
+      types:["Gatling","Bazooka","Sniper","Rifle","Launcher","Blaster"],
+      count:150, seasonal:false },
+
+    { roomKey:"ink", label:"Ink Detective’s Den",
+      prefix:["Inkstorm","Shadow","Casefile","Spy","Magnifying","Clue","Evidence","Noir","Stencil","Scribble"],
+      types:["Sniper","Pen","Carbine","Scope","Recorder","Scanner"],
+      count:150, seasonal:false },
+
+    { roomKey:"phantom", label:"Phantom Parlor",
+      prefix:["Glitchy","Ectoplasm","Cursed","Spectral","Haunted","Whisper","Phantom","Wraith","Echo","Hollow"],
+      types:["Blaster","Emitter","Core","Slicer","Halo","Pistol"],
+      count:150, seasonal:false },
+
+    { roomKey:"seasonal", label:"Seasonal",
+      prefix:["Pumpkin","Lantern","Candy Corn","Spooky","Graveyard","Cobweb","Batwing","Midnight","Harvest","Ghoul"],
+      types:["Blaster","Launcher","Curse","Charm","Totem","Torch"],
+      count:40, seasonal:true }
+  ];
+
+  const rarityPattern = [
+    "Common","Common","Common","Common",
+    "Uncommon","Uncommon","Uncommon",
+    "Rare","Rare",
+    "Epic",
+    "Legendary",
+    "Mythic"
+  ];
+
+  rooms.forEach(cfg => {
+    const list = [];
+    let i = 0;
+
+    while (list.length < cfg.count) {
+      const p = cfg.prefix[i % cfg.prefix.length];
+      const t = cfg.types[(i * 7) % cfg.types.length];
+      const r = rarityPattern[(i * 5 + cfg.count) % rarityPattern.length];
+
+      const id = `${cfg.roomKey}_${r.toLowerCase()}_${i}`;
+      const name = `${p} ${t}`;
+      const base = rarityBaseValue[r] + (i % 5) * 20;
+
+      list.push({
+        id, name, rarity:r, type:t.toLowerCase(),
+        setId:null, baseValue:base,
+        allowedCases:[cfg.roomKey],
+        roomKey: cfg.seasonal ? "seasonal" : cfg.roomKey
+      });
+
+      i++;
+    }
+
+    const setCount = Math.floor(list.length / 5);
+    for (let s = 0; s < setCount; s++) {
+      const setId = `${cfg.roomKey}_set_${s}`;
+      const setName = `${cfg.label} Set ${s+1}`;
+      const ids = [];
+
+      for (let j = 0; j < 5; j++) {
+        const idx = s * 5 + j;
+        if (list[idx]) {
+          list[idx].setId = setId;
+          ids.push(list[idx].id);
+        }
+      }
+
+      if (ids.length > 0) {
+        SETS[setId] = {
+          id:setId,
+          name:setName,
+          itemIds:ids,
+          rewards:{
+            coins:5000 + s*500,
+            tokens: cfg.seasonal ? 1 : (s % 3 === 0 ? 1 : 0),
+            stars: cfg.roomKey === "phantom" && s % 4 === 0 ? 1 : 0
+          },
+          bonus:{ type:"sellValueMultiplier", amount:0.005 },
+          roomKey: cfg.roomKey,
+          _awarded:false
+        };
+      }
+    }
+
+    ITEMS = ITEMS.concat(list);
+  });
+
+  ITEMS.forEach(i => ITEMS_BY_ID[i.id] = i);
+}
+
+generateItemsAndSets();
+
+/* ============================
+   QUESTS
+============================ */
+let QUESTS = [
+  { id:"q_open_50", desc:"Open 50 cases", type:"casesOpened", target:50, rewardCoins:10000, done:false },
+  { id:"q_sell_20000", desc:"Earn 20,000 coins from selling", type:"coinsEarned", target:20000, rewardCoins:15000, done:false },
+  { id:"q_complete_5_sets", desc:"Complete 5 sets", type:"setsCompleted", target:5, rewardCoins:25000, done:false }
+];
+
+/* ============================
+   PLAYER DATA
+============================ */
+const player = {
+  coins:2000,
+  tokens:0,
+  stars:0,
+  prestigeLevel:0,
+  inventory:[],
+  stats:{ casesOpened:0, totalCoinsEarned:0, setsCompleted:0 },
+  upgrades:{ caseDiscount:0, rarityBoost:0, idleIncome:0 },
+  globalValueMult:1.0,
+  setBonuses:{ sellValueMultiplier:0 },
+  roomRarityBoosts:{ ink:0 }
+};
+
+let instanceCounter = 1;
+let currentRoom = "bubblegum";
+let currentCollectionRoomFilter = "bubblegum";
+let currentSetsRoomFilter = "bubblegum";
+/* ============================
+   LOGGING
+============================ */
+function log(m){
+  const d=document.getElementById("logPanelContent");
+  const l=document.createElement("div");
+  l.textContent=m;
+  d.prepend(l);
+}
+
+/* ============================
+   UI UPDATE
+============================ */
+function updateUI(){
+  document.getElementById("coins").textContent=Math.floor(player.coins);
+  document.getElementById("tokens").textContent=player.tokens;
+  document.getElementById("stars").textContent=player.stars;
+  document.getElementById("casesOpened").textContent=player.stats.casesOpened;
+  document.getElementById("prestigeLevel").textContent=player.prestigeLevel;
+  document.getElementById("itemCount").textContent=player.inventory.length;
+
+  renderRoomInfo();
+  renderInventory();
+  renderQuestsPanel();
+  renderStatsPanel();
+  renderCollectionBook();
+  renderSetsPanel();
+}
+
+/* ============================
+   ROOM INFO
+============================ */
+function renderRoomInfo(){
+  const c=CASES[currentRoom];
+  const base=c.costCoins||0;
+  const discount=1-player.upgrades.caseDiscount*.03;
+  const cost=c.costTokens?`${c.costTokens} tokens`:`${Math.floor(base*discount)} coins`;
+
+  let extra="";
+  if(currentRoom==="phantom" && currentSeason==="halloween"){
+    extra="<br><em>Halloween event case active!</em>";
+  }
+
+  document.getElementById("roomInfo").innerHTML=
+    `<h2>${c.roomName}</h2>
+     <p>Case: <strong>${c.name}</strong><br>Cost: ${cost}${extra}</p>`;
+}
+
+/* ============================
+   INVENTORY RENDER
+============================ */
+function renderInventory(){
+  const d=document.getElementById("inventoryPanelContent");
+  d.innerHTML="";
+  if(player.inventory.length===0){
+    d.textContent="No items yet.";
+    return;
+  }
+
+  player.inventory.forEach(inst=>{
+    const def=ITEMS_BY_ID[inst.itemId];
+    const row=document.createElement("div");
+    row.className="item-row";
+    row.innerHTML=
+      `<span class="rarity-${def.rarity}">[${def.rarity}]</span> ${def.name}
+       <span>${inst.value}c</span>`;
+    d.appendChild(row);
+  });
+}
+
+/* ============================
+   QUESTS RENDER
+============================ */
+function renderQuestsPanel(){
+  const d=document.getElementById("questsPanelContent");
+  d.innerHTML="";
+
+  QUESTS.forEach(q=>{
+    let p=0;
+    if(q.type==="casesOpened")p=player.stats.casesOpened;
+    if(q.type==="coinsEarned")p=player.stats.totalCoinsEarned;
+    if(q.type==="setsCompleted")p=player.stats.setsCompleted;
+
+    const row=document.createElement("div");
+    row.className="quest-row";
+    row.innerHTML=
+      `<span>${q.desc} (${Math.min(p,q.target)}/${q.target})</span>
+       <span>${q.done?"✓":""}</span>`;
+    d.appendChild(row);
+  });
+}
+
+/* ============================
+   STATS RENDER
+============================ */
+function renderStatsPanel(){
+  document.getElementById("statsPanelContent").innerHTML=
+    `Total items: ${ITEMS.length}<br>
+     Discovered: ${discoveredItems.size}<br>
+     Sets completed: ${player.stats.setsCompleted}<br>
+     Total coins earned: ${player.stats.totalCoinsEarned}`;
+}
+
+/* ============================
+   COLLECTION BOOK
+============================ */
+function renderCollectionBook(){
+  const list=document.getElementById("collectionList");
+  const sum=document.getElementById("collectionSummary");
+  list.innerHTML="";
+
+  let filtered=ITEMS;
+  if(currentCollectionRoomFilter!=="all"){
+    filtered=ITEMS.filter(i=>i.roomKey===currentCollectionRoomFilter);
+  }
+
+  let disc=0;
+
+  filtered.forEach(item=>{
+    const row=document.createElement("div");
+    row.className="collection-row";
+
+    const known=discoveredItems.has(item.id);
+    if(!known)row.classList.add("undiscovered");
+
+    row.innerHTML=
+      `<span class="rarity-${item.rarity}">[${item.rarity}]</span>
+       ${known?item.name:"???"}
+       <span>${item.setId?SETS[item.setId].name:""}</span>`;
+
+    if(known)disc++;
+    list.appendChild(row);
+  });
+
+  sum.textContent=`Discovered ${disc}/${filtered.length} items.`;
+}
+
+/* ============================
+   SETS PANEL
+============================ */
+function renderSetsPanel(){
+  const list=document.getElementById("setsList");
+  list.innerHTML="";
+
+  let filtered=Object.values(SETS);
+  if(currentSetsRoomFilter!=="all"){
+    filtered=filtered.filter(s=>s.roomKey===currentSetsRoomFilter);
+  }
+
+  filtered.forEach(set=>{
+    const have=new Set(player.inventory.map(i=>i.itemId));
+    const owned=set.itemIds.filter(id=>have.has(id)).length;
+
+    const row=document.createElement("div");
+    row.className="set-row";
+    row.innerHTML=
+      `<span>${set.name} (${owned}/${set.itemIds.length})</span>
+       <span>${set._awarded?"✓":""}</span>`;
+
+    list.appendChild(row);
+  });
+}
+
+/* ============================
+   RARITY ROLLING
+============================ */
+function rollRarity(w,room){
+  const valid=[];
+  RARITIES.forEach(r=>{
+    if((w[r]||0)>0){
+      const pool=ITEMS.filter(i=>i.allowedCases.includes(room)&&i.rarity===r);
+      if(pool.length>0)valid.push(r);
+    }
+  });
+
+  if(valid.length===0)return"Common";
+
+  let total=valid.reduce((a,r)=>a+w[r],0);
+  let roll=Math.random()*total;
+
+  for(const r of valid){
+    roll-=w[r];
+    if(roll<=0)return r;
+  }
+
+  return valid[0];
+}
+
+function rollTag(){
+  return Math.random()<.03?"shiny":"none";
+}
+
+/* ============================
+   OPEN CASE
+============================ */
+function openCase(){
+  const c=CASES[currentRoom];
+  let room=currentRoom;
+
+  if(currentRoom==="phantom" && currentSeason==="halloween"){
+    room="seasonal";
+  }
+
+  let cost=0;
+
+  if(c.costTokens){
+    if(player.tokens<c.costTokens){
+      log("Not enough tokens.");
+      return;
+    }
+    player.tokens-=c.costTokens;
+  } else {
+    const base=c.costCoins;
+    const discount=1-player.upgrades.caseDiscount*.03;
+    cost=Math.floor(base*discount);
+
+    if(player.coins<cost){
+      log("Not enough coins.");
+      return;
+    }
+    player.coins-=cost;
+  }
+
+  const w={...c.rarityWeights};
+  const boost=player.upgrades.rarityBoost*.01;
+  w.Rare=(w.Rare||0)+boost;
+  w.Epic=(w.Epic||0)+boost;
+
+  const r=rollRarity(w,room);
+  const pool=ITEMS.filter(i=>i.allowedCases.includes(room)&&i.rarity===r);
+
+  if(pool.length===0){
+    log("Empty rarity pool.");
+    return;
+  }
+
+  const item=pool[Math.floor(Math.random()*pool.length)];
+  const tag=rollTag();
+
+  const base=rarityBaseValue[item.rarity];
+  const val=Math.floor(
+    base*c.caseMultiplier*
+    tagMultipliers[tag]*
+    player.globalValueMult*
+    (1+player.setBonuses.sellValueMultiplier)
+  );
+
+  const inst={
+    instanceId:instanceCounter++,
+    itemId:item.id,
+    rarity:item.rarity,
+    tag,
+    value:val
+  };
+
+  player.inventory.push(inst);
+  discoveredItems.add(item.id);
+  player.stats.casesOpened++;
+
+  log(`Opened: [${item.rarity}] ${item.name}${tag==="none"?"":" ("+tag+")"} worth ${val}c`);
+
+  checkSets();
+  checkQuests();
+  updateUI();
+}
+
+/* ============================
+   SELLING
+============================ */
+function sellDuplicates(){
+  const map={};
+
+  player.inventory.forEach(i=>{
+    if(!map[i.itemId])map[i.itemId]=[];
+    map[i.itemId].push(i);
+  });
+
+  let keep=[],gain=0;
+
+  for(const id in map){
+    const g=map[id].sort((a,b)=>b.value-a.value);
+    keep.push(g[0]);
+    for(let i=1;i<g.length;i++)gain+=g[i].value;
+  }
+
+  player.inventory=keep;
+  player.coins+=gain;
+  player.stats.totalCoinsEarned+=gain;
+
+  log(`Sold duplicates for ${gain}c`);
+
+  checkQuests();
+  updateUI();
+}
+
+function sellCommons(){
+  let keep=[],gain=0;
+
+  player.inventory.forEach(inst=>{
+    const def=ITEMS_BY_ID[inst.itemId];
+    if(def.rarity==="Common")gain+=inst.value;
+    else keep.push(inst);
+  });
+
+  player.inventory=keep;
+  player.coins+=gain;
+  player.stats.totalCoinsEarned+=gain;
+
+  log(`Sold Commons for ${gain}c`);
+
+  checkQuests();
+  updateUI();
+}
+
+/* ============================
+   SET COMPLETION
+============================ */
+function checkSets(){
+  Object.values(SETS).forEach(set=>{
+    if(set._awarded)return;
+
+    const have=new Set(player.inventory.map(i=>i.itemId));
+    const done=set.itemIds.every(id=>have.has(id));
+
+    if(done){
+      set._awarded=true;
+
+      player.coins+=set.rewards.coins;
+      player.tokens+=set.rewards.tokens;
+      player.stars+=set.rewards.stars||0;
+
+      player.setBonuses.sellValueMultiplier+=set.bonus.amount;
+      player.stats.setsCompleted++;
+
+      log(`Set completed: ${set.name}!`);
+    }
+  });
+}
+
+/* ============================
+   QUEST COMPLETION
+============================ */
+function checkQuests(){
+  QUESTS.forEach(q=>{
+    if(q.done)return;
+
+    let p=0;
+    if(q.type==="casesOpened")p=player.stats.casesOpened;
+    if(q.type==="coinsEarned")p=player.stats.totalCoinsEarned;
+    if(q.type==="setsCompleted")p=player.stats.setsCompleted;
+
+    if(p>=q.target){
+      q.done=true;
+      player.coins+=q.rewardCoins;
+      log(`Quest complete: ${q.desc}!`);
+    }
+  });
+}
+
+/* ============================
+   PRESTIGE
+============================ */
+function doPrestige(){
+  if(player.stats.totalCoinsEarned<200000){
+    log("Need 200k earned.");
+    return;
+  }
+
+  player.prestigeLevel++;
+  player.stars++;
+  player.globalValueMult*=1.1;
+
+  player.coins=2000;
+  player.tokens=0;
+  player.inventory=[];
+  player.stats={casesOpened:0,totalCoinsEarned:0,setsCompleted:0};
+
+  Object.values(SETS).forEach(s=>s._awarded=false);
+  discoveredItems.clear();
+  QUESTS.forEach(q=>q.done=false);
+
+  log("Prestiged!");
+  updateUI();
+}
+
+/* ============================
+   IDLE INCOME
+============================ */
+setInterval(()=>{
+  const inc=player.upgrades.idleIncome*5;
+  if(inc>0){
+    player.coins+=inc;
+    player.stats.totalCoinsEarned+=inc;
+    checkQuests();
+    updateUI();
+  }
+},1000);
+
+/* ============================
+   SAVE / LOAD / RESET
+============================ */
+function saveGame(){
+  const data={player,discoveredItems:[...discoveredItems],QUESTS};
+  localStorage.setItem("skeeter_arcade_save",JSON.stringify(data));
+  log("Game saved.");
+}
+
+function loadGame(){
+  const raw=localStorage.getItem("skeeter_arcade_save");
+  if(!raw){
+    log("No save.");
+    return;
+  }
+
+  const data=JSON.parse(raw);
+  Object.assign(player,data.player);
+  discoveredItems=new Set(data.discoveredItems);
+  QUESTS=data.QUESTS;
+
+  log("Game loaded.");
+  updateUI();
+}
+
+function resetGame(){
+  player.coins=2000;
+  player.tokens=0;
+  player.stars=0;
+  player.prestigeLevel=0;
+  player.inventory=[];
+  player.stats={casesOpened:0,totalCoinsEarned:0,setsCompleted:0};
+  player.upgrades={caseDiscount:0,rarityBoost:0,idleIncome:0};
+  player.globalValueMult=1.0;
+  player.setBonuses={sellValueMultiplier:0};
+  player.roomRarityBoosts={ink:0};
+
+  Object.values(SETS).forEach(s=>s._awarded=false);
+  discoveredItems.clear();
+  QUESTS.forEach(q=>q.done=false);
+
+  localStorage.removeItem("skeeter_arcade_save");
+
+  log("Game reset.");
+  updateUI();
+}
+
+/* ============================
+   EVENT LISTENERS
+============================ */
+document.getElementById("openCaseBtn").addEventListener("click",openCase);
+document.getElementById("sellDuplicatesBtn").addEventListener("click",sellDuplicates);
+document.getElementById("sellCommonsBtn").addEventListener("click",sellCommons);
+
+document.getElementById("saveGameBtn").addEventListener("click",saveGame);
+document.getElementById("loadGameBtn").addEventListener("click",loadGame);
+document.getElementById("resetGameBtn").addEventListener("click",resetGame);
+
+document.getElementById("roomSelect").addEventListener("change",e=>{
+  currentRoom=e.target.value;
+  updateUI();
+});
+
+document.getElementById("seasonSelect").addEventListener("change",e=>{
+  currentSeason=e.target.value;
+  updateUI();
+});
+
+document.querySelectorAll(".collection-tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".collection-tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentCollectionRoomFilter=btn.getAttribute("data-collection-room");
+    renderCollectionBook();
+  });
+});
+
+document.querySelectorAll(".sets-tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".sets-tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentSetsRoomFilter=btn.getAttribute("data-sets-room");
+    renderSetsPanel();
+  });
+});
+
+document.querySelectorAll(".left-tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".left-tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const tab=btn.getAttribute("data-left-tab");
+    document.querySelectorAll(".left-panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById(tab).classList.add("active");
+  });
+});
+
+document.querySelectorAll(".right-tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".right-tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const tab=btn.getAttribute("data-right-tab");
+    document.querySelectorAll(".right-panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById(tab).classList.add("active");
+  });
+});
+
+updateUI();
+log(`Welcome to the 800-item arcade! Total items: ${ITEMS.length}.`);
+/* ============================
+   UPGRADE DEFINITIONS
+============================ */
+const UPGRADE_LIST = [
+  {
+    id: "caseDiscount",
+    name: "Case Discount",
+    desc: "Reduces coin cost of cases by 3% per level.",
+    baseCost: 500,
+    costMult: 1.6
+  },
+  {
+    id: "rarityBoost",
+    name: "Rarity Boost",
+    desc: "Slightly increases Rare/Epic odds.",
+    baseCost: 1500,
+    costMult: 1.7
+  },
+  {
+    id: "idleIncome",
+    name: "Idle Income",
+    desc: "Earns coins automatically every second.",
+    baseCost: 2000,
+    costMult: 1.8
+  }
+];
+
+/* ============================
+   RENDER UPGRADES PANEL
+============================ */
+function renderUpgradesPanel() {
+  const box = document.getElementById("upgradesPanelContent");
+  box.innerHTML = "";
+
+  UPGRADE_LIST.forEach(up => {
+    const level = player.upgrades[up.id];
+    const cost = Math.floor(up.baseCost * Math.pow(up.costMult, level));
+
+    const row = document.createElement("div");
+    row.className = "upgrade-row";
+    row.style.borderBottom = "1px solid #eee";
+    row.style.padding = "6px 0";
+
+    row.innerHTML = `
+      <strong>${up.name}</strong> (Lv ${level})<br>
+      <small>${up.desc}</small><br>
+      Cost: ${cost} coins<br>
+      <button class="primary small" onclick="buyUpgrade('${up.id}')">Buy</button>
+    `;
+
+    box.appendChild(row);
+  });
+}
+
+/* ============================
+   BUY UPGRADE
+============================ */
+function buyUpgrade(id) {
+  const up = UPGRADE_LIST.find(u => u.id === id);
+  const level = player.upgrades[id];
+  const cost = Math.floor(up.baseCost * Math.pow(up.costMult, level));
+
+  if (player.coins < cost) {
+    log("Not enough coins.");
+    return;
+  }
+
+  player.coins -= cost;
+  player.upgrades[id]++;
+
+  log(`Upgraded: ${up.name} to level ${player.upgrades[id]}`);
+
+  updateUI();
+}
+
+/* Render upgrades immediately */
+renderUpgradesPanel();
+
+/* ============================
+   PRESTIGE PANEL RENDER
+============================ */
+function renderPrestigePanel() {
+  const box = document.getElementById("prestigePanelContent");
+  box.innerHTML = "";
+
+  const needed = 200000;
+  const earned = player.stats.totalCoinsEarned;
+  const can = earned >= needed;
+
+  const div = document.createElement("div");
+  div.className = "prestige-info";
+
+  div.innerHTML = `
+    <h3>Prestige Level: ${player.prestigeLevel}</h3>
+    <p>Prestige resets your progress but gives permanent bonuses.</p>
+
+    <p><strong>Requirement:</strong><br>
+    Earn 200,000 total coins.<br>
+    <span style="color:${can ? 'lime' : 'red'};">
+      ${earned.toLocaleString()} / ${needed.toLocaleString()}
+    </span></p>
+
+    <p><strong>Bonuses per Prestige:</strong><br>
+    +1 Star<br>
+    +10% global sell value<br>
+    Faster progression</p>
+
+    <button class="primary" onclick="doPrestige()" ${can ? "" : "disabled"}>
+      Prestige Now
+    </button>
+  `;
+
+  box.appendChild(div);
+}
+
+</script>
+
+</div> <!-- end of #main -->
+
+</body>
+</html>

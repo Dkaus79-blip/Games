@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ghost Hunting Tycoon</title>
+
+<style>
+    body {
+        background: #0b0b0f;
+        color: #eee;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #gameContainer {
+        width: 960px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .screen {
+        display: none;
+    }
+
+    .btn {
+        background: #262633;
+        color: #eee;
+        padding: 8px 12px;
+        margin: 4px;
+        border: 1px solid #555;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 14px;
+    }
+
+    .btn:hover {
+        background: #34344a;
+    }
+
+    #topBar {
+        background: #151520;
+        padding: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #333;
+        font-size: 14px;
+    }
+
+    #navBar {
+        background: #151520;
+        padding: 8px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #333;
+    }
+
+    #storyBox {
+        background: #050509;
+        padding: 20px;
+        border: 1px solid #444;
+        font-size: 18px;
+        line-height: 1.5;
+    }
+
+    h2 {
+        margin-top: 0;
+    }
+
+    #jobLog {
+        height: 220px;
+        overflow-y: auto;
+        background:#050509;
+        padding:10px;
+        border:1px solid #444;
+        font-size: 13px;
+    }
+
+    .panel {
+        background:#11111a;
+        border:1px solid #333;
+        padding:10px;
+        margin-bottom:10px;
+    }
+
+    .listItem {
+        border-bottom:1px solid #333;
+        padding:6px 0;
+        font-size: 13px;
+    }
+
+    .small {
+        font-size: 12px;
+        color:#aaa;
+    }
+
+    #jobImage {
+        height:120px;
+        background:#050509;
+        border:1px solid #333;
+        margin-bottom:8px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        color:#888;
+    }
+
+    .tag {
+        display:inline-block;
+        padding:2px 6px;
+        margin-right:4px;
+        background:#222;
+        border-radius:3px;
+        font-size:11px;
+        color:#ccc;
+    }
+</style>
+</head>
+
+<body>
+<div id="gameContainer">
+
+    <!-- TOP BAR -->
+    <div id="topBar">
+        <div id="money">Money: $0</div>
+        <div id="day">Day 1</div>
+        <div id="reputation">Reputation: 0</div>
+        <div id="statusText"></div>
+    </div>
+
+    <!-- NAV BAR -->
+    <div id="navBar">
+        <span class="btn" onclick="goHQ()">HQ</span>
+        <span class="btn" onclick="openJobs()">Jobs</span>
+        <span class="btn" onclick="openItems()">Items</span>
+        <span class="btn" onclick="openStaff()">Staff</span>
+        <span class="btn" onclick="openResearch()">Research</span>
+        <span class="btn" onclick="openGear()">Gear / Upgrades</span>
+        <span class="btn" onclick="endDay()">End Day</span>
+        <span class="btn" onclick="saveGame()">Save</span>
+        <span class="btn" onclick="loadGame()">Load</span>
+        <span class="btn" onclick="resetGame()">Reset</span>
+    </div>
+    <!-- STORY INTRO SCREEN -->
+    <div id="introScreen" class="screen">
+        <div id="storyBox">
+            <p>It started with one phone call. A trembling voice, a farmhouse, and a promise you weren’t ready to make.</p>
+            <p>The town of Eldorado Springs had always been strange… but lately, the ghosts weren’t just haunting — they were organizing.</p>
+            <p>You opened Eldorado Paranormal Agency with a second‑hand van, a cheap EMF reader, and a stubborn belief: ghosts can be managed… for a price.</p>
+            <p>Now the calls don’t stop. Farmhouses, motels, forest edges, hospital ruins. Everyone wants help.</p>
+            <p>Day 1. Your office is small, your gear is weak, and your vault is empty. The job board flickers to life…</p>
+        </div>
+        <div style="margin-top:15px;">
+            <span class="btn" onclick="startGame()">Continue</span>
+        </div>
+    </div>
+
+    <!-- HQ SCREEN -->
+    <div id="hqScreen" class="screen">
+        <h2>Agency HQ</h2>
+        <div class="panel" id="hqDescription">
+            Your tiny office smells like dust and old coffee. A flickering neon sign reads: “Eldorado Paranormal Agency”.
+        </div>
+
+        <div class="panel">
+            <b>Rooms & Status</b><br>
+            <span class="small" id="hqRoomsText"></span>
+        </div>
+
+        <div class="panel">
+            <b>Quick Actions</b><br>
+            <span class="btn" onclick="openJobs()">Check Job Board</span>
+            <span class="btn" onclick="openItems()">Check Vault & Items</span>
+            <span class="btn" onclick="openStaff()">Review Staff</span>
+            <span class="btn" onclick="openGear()">Gear & Upgrades</span>
+        </div>
+    </div>
+
+    <!-- JOB BOARD -->
+    <div id="jobScreen" class="screen">
+        <h2>Job Board</h2>
+        <div class="panel small">
+            New calls come in constantly. You can take up to 3 jobs per day.
+        </div>
+        <div id="jobList" class="panel"></div>
+        <span class="btn" onclick="generateJobs()">Refresh Jobs</span>
+    </div>
+
+    <!-- JOB ACTION SCREEN -->
+    <div id="jobActionScreen" class="screen">
+        <h2 id="jobLocationTitle"></h2>
+        <div id="jobImage">[Location silhouette]</div>
+        <div class="small" id="jobInfo"></div>
+        <div id="jobLog"></div>
+
+        <div style="margin-top:8px;">
+            <span class="btn" onclick="jobAction('emf')">Use EMF</span>
+            <span class="btn" onclick="jobAction('camera')">Use Camera</span>
+            <span class="btn" onclick="jobAction('talk')">Talk to Client</span>
+            <span class="btn" onclick="jobAction('search')">Search Area</span>
+            <span class="btn" onclick="jobAction('cleanse')">Attempt Cleansing</span>
+            <span class="btn" onclick="finishJob()">Leave</span>
+        </div>
+    </div>
+
+    <!-- ITEMS SCREEN -->
+    <div id="itemScreen" class="screen">
+        <h2>Haunted Items & Vault</h2>
+        <div class="panel">
+            <b>Inventory</b>
+            <div id="itemList"></div>
+        </div>
+        <div class="panel">
+            <b>Vault (Stored Items)</b>
+            <div id="vaultList"></div>
+        </div>
+    </div>
+
+    <!-- STAFF SCREEN -->
+    <div id="staffScreen" class="screen">
+        <h2>Staff</h2>
+        <div class="panel small">
+            Staff can run auto‑jobs, gain experience, and suffer injuries or morale drops.
+        </div>
+        <div class="panel" id="staffList"></div>
+        <div class="panel">
+            <b>Hire New Staff</b><br>
+            <span class="btn" onclick="hireRandomStaff()">Hire Random Applicant ($150)</span>
+        </div>
+    </div>
+
+    <!-- RESEARCH SCREEN -->
+    <div id="researchScreen" class="screen">
+        <h2>Research Lab</h2>
+        <div class="panel small">
+            Research cursed items to unlock lore, reduce curses, or improve their bonuses.
+        </div>
+        <div class="panel" id="researchList"></div>
+    </div>
+
+    <!-- GEAR / UPGRADES SCREEN -->
+    <div id="gearScreen" class="screen">
+        <h2>Gear & HQ Upgrades</h2>
+        <div class="panel" id="gearPanel"></div>
+        <div class="panel" id="hqUpgradePanel"></div>
+        <div class="panel" id="furniturePanel"></div>
+    </div>
+
+</div>
+<script>
+// ===================== BASIC GAME STATE =====================
+let money = 250;
+let day = 1;
+let reputation = 0;
+let jobsToday = 0;
+let maxJobsPerDay = 3;
+
+let gear = {
+    emf: 1,
+    camera: 1,
+    spiritBox: 1,
+    protection: 0
+};
+
+let hqUpgrades = {
+    vaultSize: 4,
+    researchLevel: 1,
+    shopLevel: 1,
+    vanLevel: 1,
+    securityLevel: 0,
+    occultLibrary: 0
+};
+
+let furniture = {
+    luckyCat: false,
+    saltRug: false,
+    antiqueDesk: false
+};
+
+let items = [];
+let vault = [];
+let staff = [];
+let researchQueue = [];
+
+let currentJob = null;
+let jobLogEl = null;
+
+// ===================== SAVE SYSTEM =====================
+function saveGame() {
+    const saveData = {
+        money,
+        day,
+        reputation,
+        jobsToday,
+        gear,
+        hqUpgrades,
+        furniture,
+        items,
+        vault,
+        staff,
+        researchQueue
+    };
+
+    localStorage.setItem("ghostTycoonSave", JSON.stringify(saveData));
+    setStatus("Game saved.");
+}
+
+function loadGame() {
+    const data = localStorage.getItem("ghostTycoonSave");
+    if (!data) {
+        alert("No save found.");
+        return;
+    }
+
+    const save = JSON.parse(data);
+
+    money = save.money;
+    day = save.day;
+    reputation = save.reputation;
+    jobsToday = save.jobsToday;
+    gear = save.gear;
+    hqUpgrades = save.hqUpgrades;
+    furniture = save.furniture;
+    items = save.items;
+    vault = save.vault;
+    staff = save.staff;
+    researchQueue = save.researchQueue;
+
+    updateTopBar();
+    renderHQ();
+    setStatus("Game loaded.");
+}
+
+// AUTO‑LOAD ON PAGE OPEN
+window.onload = function() {
+    if (localStorage.getItem("ghostTycoonSave")) {
+        loadGame();
+    }
+};
+
+// ===================== UTILS =====================
+function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function chance(p) { return Math.random() < p; }
+
+function logJob(text) {
+    if (!jobLogEl) return;
+    jobLogEl.innerHTML += "<div>" + text + "</div>";
+    jobLogEl.scrollTop = jobLogEl.scrollHeight;
+}
+
+function updateTopBar() {
+    document.getElementById("money").innerText = "Money: $" + money;
+    document.getElementById("day").innerText = "Day " + day;
+    document.getElementById("reputation").innerText = "Reputation: " + reputation;
+}
+
+function setStatus(text) {
+    document.getElementById("statusText").innerText = text;
+}
+
+function resetGame() {
+    if (confirm("Reset your entire game and start over?")) {
+        localStorage.removeItem("ghostTycoonSave");
+        location.reload();
+    }
+}
+// ===================== SCREEN CONTROL =====================
+function hideAll() {
+    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+}
+
+function startGame() {
+    hideAll();
+    document.getElementById("hqScreen").style.display = "block";
+    initGame();
+}
+
+function goHQ() {
+    hideAll();
+    document.getElementById("hqScreen").style.display = "block";
+    renderHQ();
+}
+
+function openJobs() {
+    hideAll();
+    document.getElementById("jobScreen").style.display = "block";
+    renderJobs();
+}
+
+function openItems() {
+    hideAll();
+    document.getElementById("itemScreen").style.display = "block";
+    renderItems();
+}
+
+function openStaff() {
+    hideAll();
+    document.getElementById("staffScreen").style.display = "block";
+    renderStaff();
+}
+
+function openResearch() {
+    hideAll();
+    document.getElementById("researchScreen").style.display = "block";
+    renderResearch();
+}
+
+function openGear() {
+    hideAll();
+    document.getElementById("gearScreen").style.display = "block";
+    renderGear();
+}
+
+// ===================== INIT =====================
+function initGame() {
+    updateTopBar();
+    jobsToday = 0;
+    generateJobs();
+
+    if (staff.length === 0) {
+        staff.push(makeStaff("Mia", "Brave"));
+        staff.push(makeStaff("Jonah", "Sensitive"));
+    }
+
+    renderHQ();
+}
+
+document.getElementById("introScreen").style.display = "block";
+
+// ===================== HQ =====================
+function renderHQ() {
+    let txt = [];
+    txt.push("Vault size: " + vault.length + "/" + hqUpgrades.vaultSize);
+    txt.push("Research level: " + hqUpgrades.researchLevel);
+    txt.push("Shop level: " + hqUpgrades.shopLevel);
+    txt.push("Van level: " + hqUpgrades.vanLevel);
+    txt.push("Security level: " + hqUpgrades.securityLevel);
+    txt.push("Occult library: " + (hqUpgrades.occultLibrary ? "Yes" : "No"));
+
+    if (furniture.luckyCat) txt.push("Lucky Cat statue: +rare items");
+    if (furniture.saltRug) txt.push("Salt circle rug: -curse events");
+    if (furniture.antiqueDesk) txt.push("Antique desk: +client payouts");
+
+    document.getElementById("hqRoomsText").innerText = txt.join(" | ");
+}
+// ===================== JOBS =====================
+let availableJobs = [];
+
+const ghostTypes = [
+    { id: "poltergeist", name: "Poltergeist", desc: "Chaotic, noisy, breaks gear.", itemBonusChance: 0.25, danger: 0.4 },
+    { id: "shadow", name: "Shadow Entity", desc: "Hides, stalks, big rewards.", itemBonusChance: 0.2, danger: 0.5 },
+    { id: "trickster", name: "Trickster Spirit", desc: "Fake scares, unpredictable.", itemBonusChance: 0.3, danger: 0.35 },
+    { id: "guardian", name: "Guardian Ghost", desc: "Protects something valuable.", itemBonusChance: 0.35, danger: 0.45 }
+];
+
+const locations = [
+    { id: "farmhouse", name: "Abandoned Farmhouse", flavor: "A leaning farmhouse at the edge of town." },
+    { id: "motel", name: "Old Motel Hallway", flavor: "A long hallway with flickering lights." },
+    { id: "woods", name: "Forest Edge", flavor: "Trees crowd the road. Something moves between them." },
+    { id: "hospital", name: "Hospital Ruins Basement", flavor: "Broken tiles and rusted beds." }
+];
+
+function generateJobs() {
+    availableJobs = [];
+
+    for (let i = 0; i < 3; i++) {
+        let loc = randChoice(locations);
+        let ghost = randChoice(ghostTypes);
+        let risk = randChoice(["Low", "Medium", "High"]);
+
+        let basePay = 80 + randRange(0, 120);
+        if (risk === "Medium") basePay += 60;
+        if (risk === "High") basePay += 120;
+
+        availableJobs.push({
+            id: "job" + day + "_" + i,
+            location: loc,
+            ghost: ghost,
+            risk: risk,
+            basePay: basePay,
+            special: randChoice(["Item‑rich", "Dangerous", "Rumor", "Unknown", "None"])
+        });
+    }
+
+    renderJobs();
+}
+
+function renderJobs() {
+    let el = document.getElementById("jobList");
+    el.innerHTML = "";
+
+    if (jobsToday >= maxJobsPerDay) {
+        el.innerHTML = "<div class='small'>You’ve reached the job limit for today.</div>";
+        return;
+    }
+
+    availableJobs.forEach(job => {
+        let div = document.createElement("div");
+        div.className = "listItem";
+
+        div.innerHTML =
+            "<b>" + job.location.name + "</b> — " + job.ghost.name +
+            " | Risk: " + job.risk + " | Pay: $" + job.basePay +
+            "<br><span class='small'>" + job.location.flavor + "</span><br>" +
+            "<span class='tag'>" + job.special + "</span> " +
+            "<span class='tag'>" + job.ghost.desc + "</span><br>" +
+            "<span class='btn' onclick=\"acceptJob('" + job.id + "')\">Accept Job</span>";
+
+        el.appendChild(div);
+    });
+}
+
+function acceptJob(id) {
+    if (jobsToday >= maxJobsPerDay) {
+        alert("You’ve already taken the maximum jobs today.");
+        return;
+    }
+
+    let job = availableJobs.find(j => j.id === id);
+    if (!job) return;
+
+    currentJob = {
+        ...job,
+        evidence: 0,
+        anger: 0,
+        foundItem: false,
+        cleansed: false,
+        dangerHits: 0
+    };
+
+    jobsToday++;
+    startJob();
+}
+// ===================== START JOB =====================
+function startJob() {
+    hideAll();
+    document.getElementById("jobActionScreen").style.display = "block";
+
+    jobLogEl = document.getElementById("jobLog");
+    jobLogEl.innerHTML = "";
+
+    document.getElementById("jobLocationTitle").innerText = currentJob.location.name;
+    document.getElementById("jobImage").innerText = "[" + currentJob.location.name + " silhouette]";
+    document.getElementById("jobInfo").innerText =
+        currentJob.ghost.name + " | Risk: " + currentJob.risk + " | Base Pay: $" + currentJob.basePay;
+
+    logJob("You arrive at the " + currentJob.location.name + ". " + currentJob.location.flavor);
+    logJob("Client whispers about a " + currentJob.ghost.name + " haunting the place.");
+}
+
+// ===================== JOB ACTIONS =====================
+function jobAction(type) {
+    if (!currentJob) return;
+
+    let g = currentJob.ghost;
+    let riskFactor =
+        (currentJob.risk === "Low" ? 0.2 :
+         currentJob.risk === "Medium" ? 0.4 : 0.6) + g.danger;
+
+    let protection = gear.protection * 0.1 + (hqUpgrades.securityLevel * 0.05);
+    let dangerChance = Math.max(0.05, riskFactor - protection);
+
+    // EMF
+    if (type === "emf") {
+        let power = gear.emf + (hasVaultTag("clue") ? 1 : 0);
+        if (chance(0.6 + power * 0.05)) {
+            currentJob.evidence++;
+            logJob("Your EMF spikes near a cold corner. Strong evidence.");
+        } else {
+            logJob("The EMF flickers, but nothing solid.");
+        }
+    }
+
+    // CAMERA
+    if (type === "camera") {
+        let power = gear.camera + (hasVaultTag("rare") ? 1 : 0);
+        if (chance(0.4 + power * 0.08)) {
+            currentJob.evidence++;
+            logJob("You capture a blurry figure in the frame.");
+            if (chance(g.itemBonusChance + 0.1)) {
+                currentJob.foundItem = true;
+                logJob("You notice a strange object in the background...");
+            }
+        } else {
+            logJob("The camera clicks in the dark. Nothing appears.");
+        }
+    }
+
+    // TALK
+    if (type === "talk") {
+        if (chance(0.5 + (hasVaultTag("rep") ? 0.1 : 0))) {
+            currentJob.evidence++;
+            logJob("You calm the client and get clearer details.");
+            reputation += 1;
+            updateTopBar();
+        } else {
+            logJob("The client rambles, terrified. Not much useful info.");
+        }
+    }
+
+    // SEARCH
+    if (type === "search") {
+        if (chance(0.4 + (hasVaultTag("rare") ? 0.1 : 0))) {
+            currentJob.foundItem = true;
+            logJob("You find a hidden object tucked away in the shadows.");
+        } else {
+            logJob("You search the area, but only dust and junk turn up.");
+        }
+    }
+
+    // CLEANSE
+    if (type === "cleanse") {
+        let base = 0.25 + gear.protection * 0.1 + (hasVaultTag("safety") ? 0.1 : 0);
+        if (currentJob.evidence >= 2) base += 0.2;
+
+        if (chance(base)) {
+            currentJob.cleansed = true;
+            logJob("You perform a careful cleansing ritual. The air feels lighter.");
+        } else {
+            logJob("Your cleansing attempt stirs the entity. The room grows colder.");
+            currentJob.anger++;
+        }
+    }
+
+    // DANGER ROLL
+    if (chance(dangerChance + currentJob.anger * 0.05)) {
+        currentJob.dangerHits++;
+        logJob("<span style='color:#f66;'>The ghost lashes out! A violent shove knocks you off balance.</span>");
+
+        if (chance(0.3 + g.danger)) {
+            let repairCost = randRange(20, 80);
+            money = Math.max(0, money - repairCost);
+            updateTopBar();
+            logJob("<span class='small'>Some gear is damaged. Repairs cost $" + repairCost + ".</span>");
+        }
+    }
+}
+
+// ===================== FINISH JOB =====================
+function finishJob() {
+    if (!currentJob) return;
+
+    let payout = currentJob.basePay;
+    let bonus = 0;
+
+    if (currentJob.evidence >= 1) bonus += 0.2;
+    if (currentJob.evidence >= 2) bonus += 0.2;
+    if (currentJob.cleansed) bonus += 0.3;
+    if (currentJob.dangerHits === 0) bonus += 0.1;
+    if (hasVaultTag("money")) bonus += 0.1;
+    if (furniture.antiqueDesk) bonus += 0.05;
+
+    let finalPay = Math.round(payout * (1 + bonus));
+    money += finalPay;
+    reputation += currentJob.evidence;
+    updateTopBar();
+
+    logJob("<b>Job complete.</b> You earn $" + finalPay + ".");
+
+    if (currentJob.foundItem) {
+        let newItem = makeRandomItem();
+        items.push(newItem);
+        logJob("You bring back a haunted item: <b>" + newItem.name + "</b>.");
+    }
+
+    setStatus("Completed job at " + currentJob.location.name + " for $" + finalPay);
+
+    currentJob = null;
+
+    saveGame();
+
+    setTimeout(() => {
+        goHQ();
+    }, 1200);
+}
+
+// ===================== ITEMS =====================
+const baseItems = [
+    { name: "Cracked Pocket Watch", value: 120, curse: "Time glitches.", bonus: "Higher payouts.", tag: "money" },
+    { name: "Doll with Missing Eyes", value: 300, curse: "Morale drops.", bonus: "Rare item chance.", tag: "rare" },
+    { name: "Black Mirror Shard", value: 220, curse: "More curse events.", bonus: "Better clues.", tag: "clue" },
+    { name: "Old Locket", value: 150, curse: "Night calls.", bonus: "More reputation.", tag: "rep" },
+    { name: "Silver Bell", value: 180, curse: "Rings alone.", bonus: "Fewer curse outbreaks.", tag: "safety" }
+];
+
+function makeRandomItem() {
+    let base = randChoice(baseItems);
+    return {
+        id: "item_" + Date.now() + "_" + Math.floor(Math.random() * 9999),
+        name: base.name,
+        value: base.value + randRange(-20, 40),
+        curse: base.curse,
+        bonus: base.bonus,
+        tag: base.tag,
+        researched: false
+    };
+}
+
+function renderItems() {
+    let invEl = document.getElementById("itemList");
+    let vaultEl = document.getElementById("vaultList");
+
+    invEl.innerHTML = "";
+    vaultEl.innerHTML = "";
+
+    if (items.length === 0) {
+        invEl.innerHTML = "<div class='small'>No haunted items in your inventory.</div>";
+    } else {
+        items.forEach(it => {
+            let div = document.createElement("div");
+            div.className = "listItem";
+            div.innerHTML =
+                "<b>" + it.name + "</b> — Value: $" + it.value +
+                "<br><span class='small'>Curse: " + it.curse + "<br>Bonus: " + it.bonus + "</span><br>" +
+                "<span class='btn' onclick=\"sellItem('" + it.id + "')\">Sell</span>" +
+                "<span class='btn' onclick=\"storeItem('" + it.id + "')\">Store</span>" +
+                "<span class='btn' onclick=\"queueResearch('" + it.id + "')\">Research</span>";
+            invEl.appendChild(div);
+        });
+    }
+
+    if (vault.length === 0) {
+        vaultEl.innerHTML = "<div class='small'>Vault is empty.</div>";
+    } else {
+        vault.forEach(it => {
+            let div = document.createElement("div");
+            div.className = "listItem";
+            div.innerHTML =
+                "<b>" + it.name + "</b>" +
+                (it.researched ? " <span class='tag'>Researched</span>" : "") +
+                "<br><span class='small'>Curse: " + it.curse + "<br>Bonus: " + it.bonus + "</span>";
+            vaultEl.appendChild(div);
+        });
+    }
+}
+
+function sellItem(id) {
+    let idx = items.findIndex(i => i.id === id);
+    if (idx === -1) return;
+
+    let it = items[idx];
+    let price = it.value;
+
+    if (hqUpgrades.shopLevel > 1)
+        price = Math.round(price * (1 + 0.1 * (hqUpgrades.shopLevel - 1)));
+
+    money += price;
+    updateTopBar();
+
+    items.splice(idx, 1);
+    setStatus("Sold " + it.name + " for $" + price);
+
+    renderItems();
+}
+
+function storeItem(id) {
+    if (vault.length >= hqUpgrades.vaultSize) {
+        alert("Vault is full.");
+        return;
+    }
+
+    let idx = items.findIndex(i => i.id === id);
+    if (idx === -1) return;
+
+    let it = items[idx];
+    items.splice(idx, 1);
+    vault.push(it);
+
+    setStatus("Stored " + it.name + " in the vault.");
+    renderItems();
+}
+
+function hasVaultTag(tag) {
+    return vault.some(v => v.tag === tag);
+}
+
+// ===================== RESEARCH =====================
+function queueResearch(id) {
+    let it = items.find(i => i.id === id);
+    if (!it) return;
+
+    let cost = (hqUpgrades.researchLevel > 1) ? 40 : 60;
+
+    if (money < cost) {
+        alert("Not enough money.");
+        return;
+    }
+
+    money -= cost;
+    updateTopBar();
+
+    researchQueue.push(it);
+    items = items.filter(i => i.id !== id);
+
+    setStatus("Research started on " + it.name);
+    renderItems();
+    renderResearch();
+}
+
+function renderResearch() {
+    let el = document.getElementById("researchList");
+    el.innerHTML = "";
+
+    if (researchQueue.length === 0) {
+        el.innerHTML = "<div class='small'>No items being researched.</div>";
+        return;
+    }
+
+    researchQueue.forEach(it => {
+        let div = document.createElement("div");
+        div.className = "listItem";
+        div.innerHTML =
+            "<b>" + it.name + "</b><br>" +
+            "<span class='small'>Research in progress...</span>";
+        el.appendChild(div);
+    });
+}
+
+function processResearchEndOfDay() {
+    if (researchQueue.length === 0) return;
+
+    let completed = [];
+
+    researchQueue.forEach(it => {
+        it.researched = true;
+
+        if (it.tag === "lore") reputation += 2;
+        if (it.tag === "safety") hqUpgrades.securityLevel++;
+
+        completed.push(it);
+        vault.push(it);
+    });
+
+    researchQueue = [];
+
+    if (completed.length > 0)
+        setStatus("Research complete on " + completed.length + " item(s).");
+}
+// ===================== STAFF =====================
+const staffNames = ["Mia", "Jonah", "Riley", "Harper", "Alex", "Casey", "Morgan", "Sam", "Jordan", "Taylor"];
+const staffTraits = ["Brave", "Coward", "Lucky", "Clumsy", "Sensitive", "Skeptic", "Greedy"];
+
+function makeStaff(name, trait) {
+    return {
+        id: "staff_" + Date.now() + "_" + Math.floor(Math.random() * 9999),
+        name: name,
+        trait: trait,
+        level: 1,
+        xp: 0,
+        injured: false,
+        morale: 100
+    };
+}
+
+function renderStaff() {
+    let el = document.getElementById("staffList");
+    el.innerHTML = "";
+
+    if (staff.length === 0) {
+        el.innerHTML = "<div class='small'>You have no staff yet.</div>";
+        return;
+    }
+
+    staff.forEach(s => {
+        let div = document.createElement("div");
+        div.className = "listItem";
+        div.innerHTML =
+            "<b>" + s.name + "</b> — " + s.trait +
+            " | Lv " + s.level + " | Morale: " + s.morale +
+            (s.injured ? " <span style='color:#f66;'>Injured</span>" : "") +
+            "<br><span class='btn' onclick=\"sendAutoJob('" + s.id + "')\">Auto Job</span>" +
+            "<span class='btn' onclick=\"trainStaff('" + s.id + "')\">Train ($80)</span>" +
+            "<span class='btn' onclick=\"fireStaff('" + s.id + "')\">Fire</span>";
+        el.appendChild(div);
+    });
+}
+
+function hireRandomStaff() {
+    if (money < 150) {
+        alert("Not enough money.");
+        return;
+    }
+
+    money -= 150;
+    updateTopBar();
+
+    let name = randChoice(staffNames);
+    let trait = randChoice(staffTraits);
+
+    let s = makeStaff(name, trait);
+    staff.push(s);
+
+    setStatus("Hired " + s.name + " (" + s.trait + ")");
+    renderStaff();
+}
+
+function fireStaff(id) {
+    let idx = staff.findIndex(s => s.id === id);
+    if (idx === -1) return;
+
+    let name = staff[idx].name;
+    staff.splice(idx, 1);
+
+    setStatus("You let " + name + " go.");
+    renderStaff();
+}
+
+function trainStaff(id) {
+    let s = staff.find(st => st.id === id);
+    if (!s) return;
+
+    if (money < 80) {
+        alert("Not enough money.");
+        return;
+    }
+
+    money -= 80;
+    updateTopBar();
+
+    s.xp += 20;
+
+    if (s.xp >= 100) {
+        s.level++;
+        s.xp = 0;
+        setStatus(s.name + " leveled up to " + s.level);
+    } else {
+        setStatus("Training " + s.name + "...");
+    }
+
+    renderStaff();
+}
+
+function sendAutoJob(id) {
+    let s = staff.find(st => st.id === id);
+    if (!s) return;
+
+    if (s.injured) {
+        alert(s.name + " is injured.");
+        return;
+    }
+
+    let loc = randChoice(locations);
+    let ghost = randChoice(ghostTypes);
+    let risk = randChoice(["Low", "Medium", "High"]);
+
+    let basePay = 60 + randRange(0, 80);
+    if (risk === "Medium") basePay += 40;
+    if (risk === "High") basePay += 80;
+
+    let successChance = 0.5 + (s.level * 0.05);
+    if (s.trait === "Brave") successChance += 0.1;
+    if (s.trait === "Coward") successChance -= 0.1;
+    if (s.trait === "Sensitive") successChance += 0.05;
+    if (s.trait === "Clumsy") successChance -= 0.05;
+
+    let injuryChance = 0.15;
+    if (risk === "High") injuryChance += 0.15;
+
+    let text = s.name + " investigates the " + loc.name + " (" + ghost.name + "). ";
+
+    if (chance(successChance)) {
+        let pay = basePay;
+        if (s.trait === "Greedy") pay = Math.round(pay * 1.2);
+
+        money += pay;
+        s.xp += 25;
+
+        text += "Success! Earned $" + pay + ".";
+
+        if (chance(0.25 + (s.trait === "Lucky" ? 0.15 : 0))) {
+            let it = makeRandomItem();
+            items.push(it);
+            text += " Found item: " + it.name + ".";
+        }
+
+        if (s.xp >= 100) {
+            s.level++;
+            s.xp = 0;
+            text += " Level up!";
+        }
+    } else {
+        text += "The job goes poorly.";
+
+        if (chance(injuryChance)) {
+            s.injured = true;
+            s.morale -= 20;
+            text += " " + s.name + " is injured.";
+        } else {
+            s.morale -= 10;
+        }
+    }
+
+    if (s.morale < 30 && s.trait === "Coward" && chance(0.3)) {
+        text += " Overwhelmed, " + s.name + " quits the agency.";
+        staff = staff.filter(st => st.id !== s.id);
+    }
+
+    updateTopBar();
+    setStatus(text);
+    renderStaff();
+}
+
+// ===================== GEAR & HQ UPGRADES =====================
+function renderGear() {
+    let gearEl = document.getElementById("gearPanel");
+    let hqEl = document.getElementById("hqUpgradePanel");
+    let furnEl = document.getElementById("furniturePanel");
+
+    gearEl.innerHTML = "<b>Gear</b><br>" +
+        "EMF Level: " + gear.emf + " <span class='btn' onclick='upgradeGear(\"emf\")'>Upgrade ($120)</span><br>" +
+        "Camera Level: " + gear.camera + " <span class='btn' onclick='upgradeGear(\"camera\")'>Upgrade ($120)</span><br>" +
+        "Spirit Box Level: " + gear.spiritBox + " <span class='btn' onclick='upgradeGear(\"spiritBox\")'>Upgrade ($120)</span><br>" +
+        "Protection Sigils: " + gear.protection + " <span class='btn' onclick='upgradeGear(\"protection\")'>Upgrade ($150)</span>";
+
+    hqEl.innerHTML = "<b>HQ Upgrades</b><br>" +
+        "Vault Size: " + hqUpgrades.vaultSize + " <span class='btn' onclick='upgradeHQ(\"vault\")'>Upgrade ($200)</span><br>" +
+        "Research Level: " + hqUpgrades.researchLevel + " <span class='btn' onclick='upgradeHQ(\"research\")'>Upgrade ($180)</span><br>" +
+        "Shop Level: " + hqUpgrades.shopLevel + " <span class='btn' onclick='upgradeHQ(\"shop\")'>Upgrade ($180)</span><br>" +
+        "Van Level: " + hqUpgrades.vanLevel + " <span class='btn' onclick='upgradeHQ(\"van\")'>Upgrade ($160)</span><br>" +
+        "Security Level: " + hqUpgrades.securityLevel + " <span class='btn' onclick='upgradeHQ(\"security\")'>Upgrade ($160)</span><br>" +
+        "Occult Library: " + (hqUpgrades.occultLibrary ? "Yes" : "No") + " <span class='btn' onclick='upgradeHQ(\"library\")'>Build ($300)</span>";
+
+    furnEl.innerHTML = "<b>Furniture & Decorations</b><br>" +
+        "Lucky Cat Statue: " + (furniture.luckyCat ? "Owned" : "<span class='btn' onclick='buyFurniture(\"luckyCat\")'>Buy ($120)</span>") + "<br>" +
+        "Salt Circle Rug: " + (furniture.saltRug ? "Owned" : "<span class='btn' onclick='buyFurniture(\"saltRug\")'>Buy ($120)</span>") + "<br>" +
+        "Antique Desk: " + (furniture.antiqueDesk ? "Owned" : "<span class='btn' onclick='buyFurniture(\"antiqueDesk\")'>Buy ($150)</span>");
+}
+
+function upgradeGear(type) {
+    let cost = (type === "protection") ? 150 : 120;
+    if (money < cost) {
+        alert("Not enough money.");
+        return;
+    }
+    money -= cost;
+    gear[type]++;
+    updateTopBar();
+    setStatus("Upgraded " + type + " gear.");
+    renderGear();
+}
+
+function upgradeHQ(type) {
+    let cost = 180;
+    if (type === "vault") cost = 200;
+    if (type === "van") cost = 160;
+    if (type === "security") cost = 160;
+    if (type === "library") cost = 300;
+
+    if (money < cost) {
+        alert("Not enough money.");
+        return;
+    }
+
+    if (type === "library" && hqUpgrades.occultLibrary) {
+        alert("Occult library already built.");
+        return;
+    }
+
+    money -= cost;
+
+    if (type === "vault") hqUpgrades.vaultSize += 2;
+    if (type === "research") hqUpgrades.researchLevel++;
+    if (type === "shop") hqUpgrades.shopLevel++;
+    if (type === "van") hqUpgrades.vanLevel++;
+    if (type === "security") hqUpgrades.securityLevel++;
+    if (type === "library") hqUpgrades.occultLibrary = 1;
+
+    updateTopBar();
+    setStatus("Upgraded HQ: " + type);
+    renderGear();
+    renderHQ();
+}
+
+function buyFurniture(type) {
+    let cost = (type === "antiqueDesk") ? 150 : 120;
+
+    if (money < cost) {
+        alert("Not enough money.");
+        return;
+    }
+
+    money -= cost;
+    furniture[type] = true;
+
+    updateTopBar();
+    setStatus("Purchased " + type + ".");
+    renderGear();
+    renderHQ();
+}
+
+// ===================== END DAY =====================
+function endDay() {
+    day++;
+    jobsToday = 0;
+
+    updateTopBar();
+    processResearchEndOfDay();
+    randomHQEvent();
+    generateJobs();
+
+    setStatus("A new day begins...");
+
+    saveGame();
+}
+
+// ===================== RANDOM HQ EVENTS =====================
+function randomHQEvent() {
+    let roll = Math.random();
+
+    if (roll < 0.15 && vault.length > 0) {
+        let it = randChoice(vault);
+        setStatus("A disturbance from the vault: " + it.name + " stirs...");
+        if (!hasVaultTag("safety")) {
+            money = Math.max(0, money - randRange(20, 60));
+            updateTopBar();
+        }
+        return;
+    }
+
+    if (roll < 0.30 && staff.length > 0) {
+        let s = randChoice(staff);
+        s.morale -= 10;
+        setStatus(s.name + " seems stressed after a long night.");
+        return;
+    }
+
+    if (roll < 0.40) {
+        if (chance(0.5)) {
+            setStatus("A local official fines you for 'unsafe paranormal storage'.");
+            money = Math.max(0, money - 40);
+            updateTopBar();
+        } else {
+            setStatus("A curious official praises your work. Reputation rises.");
+            reputation += 2;
+            updateTopBar();
+        }
+        return;
+    }
+
+    if (roll < 0.50) {
+        if (money >= 200 && confirm("A shady occult dealer offers a risky artifact for $200. Buy it?")) {
+            money -= 200;
+            updateTopBar();
+
+            let it = makeRandomItem();
+            it.name = "Shadow Lantern";
+            it.value = 400;
+            it.curse = "Attracts powerful entities.";
+            it.bonus = "Greatly increases rare item chance.";
+            it.tag = "rare";
+
+            vault.push(it);
+            setStatus("You acquire the Shadow Lantern. The air feels heavier.");
+        } else {
+            setStatus("You decline the occult dealer’s offer.");
+        }
+        return;
+    }
+
+    if (roll < 0.60) {
+        setStatus("A strange radio broadcast hints at activity near the forest edge.");
+        return;
+    }
+
+    setStatus("The night passes quietly... too quietly.");
+}
+
+</script>
+
+</body>
+</html>

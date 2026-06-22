@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Neighborhood Golf Deluxe (Patched Swing)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --bg:#050910;
+    --panel:#101827;
+    --accent:#7ee0ff;
+    --accent2:#ffcf6b;
+    --muted:#cfe7ff;
+    --danger:#ff6b6b;
+    --good:#7CFC00;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    height:100%;
+    font-family:Segoe UI,system-ui,-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+    background:radial-gradient(circle at top,#17263b 0%,#050910 55%,#020409 100%);
+    color:#e8f5ff;
+  }
+  body{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+  }
+  .wrap{
+    max-width:1180px;
+    width:100%;
+    margin:10px;
+    padding:10px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  h1{
+    margin:0;
+    font-size:22px;
+    color:var(--accent);
+    text-shadow:0 0 12px rgba(126,224,255,0.7);
+  }
+  .tagline{
+    font-size:13px;
+    color:var(--muted);
+  }
+  .panel{
+    background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.6));
+    border-radius:10px;
+    padding:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.7);
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  button{
+    cursor:pointer;
+    border:none;
+    padding:6px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,0.05);
+    color:var(--muted);
+    font-size:13px;
+  }
+  button:hover{
+    background:rgba(255,255,255,0.12);
+  }
+  button:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+  .btn-primary{
+    background:linear-gradient(90deg,var(--accent),#5fd7ff);
+    color:#021018;
+    font-weight:600;
+  }
+  .btn-danger{
+    background:linear-gradient(90deg,#ff6b6b,#ff9f6b);
+    color:#1b0505;
+    font-weight:600;
+  }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:1.5fr 0.9fr;
+    gap:10px;
+  }
+  .sceneArea{
+    min-height:540px;
+    position:relative;
+  }
+  .sceneTitle{
+    font-size:18px;
+    color:var(--accent2);
+    margin-bottom:4px;
+  }
+  .sceneText{
+    font-size:14px;
+    line-height:1.45;
+  }
+  .small{font-size:12px;color:var(--muted);}
+  .pill{
+    padding:3px 7px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.15);
+    font-size:11px;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+  }
+  .pill strong{font-size:11px;}
+  .pill.good{border-color:var(--good);}
+  .pill.bad{border-color:var(--danger);}
+  .club-pill{
+    padding:3px 7px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.15);
+    cursor:pointer;
+    font-size:12px;
+  }
+  .club-pill.active{
+    background:linear-gradient(90deg,#7ee0ff,#5fd7ff);
+    color:#021018;
+    border-color:transparent;
+    font-weight:600;
+  }
+  #courseCanvas{
+    width:100%;
+    height:260px;
+    border-radius:10px;
+    display:block;
+    margin-top:6px;
+    background:#2f6b2f;
+  }
+  #swingCanvas{
+    width:100%;
+    height:90px;
+    border-radius:8px;
+    display:block;
+    margin-top:6px;
+    background:#050b18;
+  }
+  .rightCol > .panel{margin-bottom:8px;}
+  .journal,.inventory{
+    max-height:180px;
+    overflow:auto;
+    font-size:13px;
+  }
+  .scorecard{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+    margin-top:4px;
+  }
+  .scorecard th,.scorecard td{
+    border:1px solid rgba(255,255,255,0.1);
+    padding:2px 3px;
+    text-align:center;
+  }
+  .scorecard th{
+    background:rgba(255,255,255,0.05);
+  }
+  .score-you{color:#7ee0ff;font-weight:600;}
+  .score-ai{color:#ffcf6b;font-weight:600;}
+  .score-birdie{background:rgba(124,252,0,0.18);}
+  .score-bogey{background:rgba(255,107,107,0.18);}
+  .score-eagle{background:rgba(255,215,0,0.22);}
+  .hidden{display:none;}
+  footer{
+    margin-top:4px;
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+  }
+  #debugPanel{
+    position:fixed;
+    right:10px;
+    bottom:10px;
+    max-width:520px;
+    max-height:260px;
+    overflow:auto;
+    background:rgba(0,0,0,0.9);
+    color:#fff;
+    font-size:11px;
+    padding:6px;
+    border-radius:8px;
+    z-index:9999;
+  }
+  #debugPanel.hidden{display:none;}
+  #debugPanel strong{font-size:11px;}
+  .menuOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9000;
+  }
+  .menuBox{
+    max-width:720px;
+    width:95%;
+    background:linear-gradient(180deg,#111827,#02040a);
+    border-radius:12px;
+    padding:14px;
+    border:1px solid rgba(255,255,255,0.15);
+    box-shadow:0 20px 60px rgba(0,0,0,0.9);
+  }
+  .menuTitle{
+    font-size:18px;
+    margin-bottom:4px;
+    color:var(--accent);
+  }
+  .menuSubtitle{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .charGrid,.courseGrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:8px;
+  }
+  .charCard,.courseCard{
+    border-radius:10px;
+    padding:8px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.1);
+    cursor:pointer;
+    font-size:13px;
+  }
+  .charCard.selected,.courseCard.selected{
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px rgba(126,224,255,0.6);
+  }
+  .charName{
+    font-weight:600;
+    margin-bottom:2px;
+  }
+  .statRow{
+    font-size:11px;
+    color:var(--muted);
+  }
+  .locked{
+    opacity:0.4;
+    position:relative;
+  }
+  .locked::after{
+    content:"Locked";
+    position:absolute;
+    right:6px;
+    top:6px;
+    font-size:10px;
+    padding:2px 4px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.7);
+    border:1px solid rgba(255,255,255,0.3);
+  }
+  .xpBarOuter{
+    width:100%;
+    height:8px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+  .xpBarInner{
+    height:100%;
+    background:linear-gradient(90deg,#7ee0ff,#5fd7ff);
+  }
+  .topStats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+  }
+  .miniMap{
+    position:absolute;
+    right:10px;
+    top:10px;
+    width:120px;
+    height:80px;
+    border-radius:8px;
+    background:rgba(0,0,0,0.4);
+    border:1px solid rgba(255,255,255,0.15);
+    overflow:hidden;
+  }
+  #miniCanvas{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .toast{
+    position:absolute;
+    left:50%;
+    top:8px;
+    transform:translateX(-50%);
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.8);
+    font-size:12px;
+    border:1px solid rgba(255,255,255,0.2);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 0.25s ease-out, transform 0.25s ease-out;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(4px);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Neighborhood Golf Deluxe</h1>
+      <div class="tagline">Hot Shots‑style swing · Golden Tee overhead · XP, characters, courses, and Riley trying to steal your trophy.</div>
+    </div>
+    <div class="small" id="fileNotice" style="display:none">Running from file:// — saves use localStorage & downloads.</div>
+  </header>
+
+  <div class="panel topbar">
+    <button id="mainMenuBtn" class="btn-ghost">Main Menu</button>
+    <button id="charSelectBtn">Character</button>
+    <button id="courseSelectBtn">Course</button>
+    <button id="rangeBtn">Practice Range</button>
+    <button id="puttingBtn">Putting Green</button>
+    <div style="flex:1"></div>
+    <span class="small" id="xpLabel">XP: 0 · Lv 1</span>
+    <div class="xpBarOuter"><div class="xpBarInner" id="xpBar" style="width:0%"></div></div>
+    <button id="saveBtn">Save</button>
+    <button id="exportBtn">Export</button>
+    <button id="importBtn">Import</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none">
+    <button id="toggleDebugBtn">Hide Debug</button>
+  </div>
+
+  <div class="layout">
+    <main class="panel sceneArea" id="sceneArea">
+      <div class="sceneTitle" id="sceneTitle">Hole 1 — Neighborhood Fairway</div>
+      <div class="sceneText" id="sceneText">
+        Hold Swing to build power, release to lock it, then tap again in the accuracy zone. Early hooks, late slices. Perfects feel amazing.
+      </div>
+
+      <div class="topStats" style="margin-top:6px;">
+        <span class="pill"><strong>Hole</strong> <span id="holeNumber">1</span>/<span id="holeCount">18</span></span>
+        <span class="pill"><strong>Par</strong> <span id="holePar">4</span></span>
+        <span class="pill"><strong>Dist</strong> <span id="distanceToHole">400</span> yd</span>
+        <span class="pill"><strong>Wind</strong> <span id="windText">Calm</span></span>
+        <span class="pill"><strong>Lie</strong> <span id="lieText">Fairway</span></span>
+        <span class="pill"><strong>Diff</strong> <span id="diffText">Classic</span></span>
+      </div>
+
+      <canvas id="courseCanvas" width="900" height="260"></canvas>
+      <div class="miniMap"><canvas id="miniCanvas" width="120" height="80"></canvas></div>
+      <div class="toast" id="toast"></div>
+      <canvas id="swingCanvas" width="900" height="90"></canvas>
+
+      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        <span class="small">Club:</span>
+        <span class="club-pill active" data-club="driver">Driver</span>
+        <span class="club-pill" data-club="iron">Iron</span>
+        <span class="club-pill" data-club="wedge">Wedge</span>
+        <span class="club-pill" data-club="putter">Putter</span>
+        <span class="small" id="clubHint">Driver — big carry, more curve.</span>
+      </div>
+
+      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        <button id="swingBtn" class="btn-primary">Swing (Hold → Release → Tap)</button>
+        <button id="replayBtn">Replay Last Shot</button>
+        <button id="nextHoleBtn">Next Hole</button>
+        <button id="restartBtn" class="btn-danger">Restart Round</button>
+        <button id="difficultyBtn">Difficulty: Classic</button>
+        <button id="soundBtn">Sound: Off</button>
+      </div>
+
+      <div style="margin-top:4px;font-size:12px;">
+        <strong>Your strokes:</strong> <span id="strokeDisplay">0</span> (Total <span id="totalStrokeDisplay">0</span>) ·
+        <strong>Riley:</strong> <span id="aiStrokeDisplay">0</span> (Total <span id="aiTotalStrokeDisplay">0</span>)
+      </div>
+    </main>
+
+    <aside class="rightCol">
+      <div id="journalPanel" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:600;">Match Log</div>
+          <div class="small" id="journalCount">0</div>
+        </div>
+        <div class="journal" id="journal">No entries yet.</div>
+      </div>
+
+      <div id="inventoryPanel" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:600;">Bag & Character</div>
+          <div class="small" id="invCount">4 clubs</div>
+        </div>
+        <div class="inventory" id="inventory">
+          Driver — max distance, more hook/slice.<br>
+          Iron — balanced distance and control.<br>
+          Wedge — short, high control.<br>
+          Putter — for the green.<br><br>
+          Character: <span id="charNameLabel">Skeeter</span><br>
+          Style: <span id="charStyleLabel">Balanced</span>
+        </div>
+      </div>
+
+      <div id="scorePanel" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:600;">Scorecard</div>
+          <div class="small" id="courseNameLabel">Neighborhood Championship (18)</div>
+        </div>
+        <table class="scorecard" id="scoreTable"></table>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Hold <strong>Swing</strong> to build power, release to lock it, then tap again in the colored accuracy zone. Perfect timing = bonus distance and straighter shots.
+  </footer>
+</div>
+
+<div id="debugPanel">
+  <strong>Runtime Debug</strong>
+  <div id="debugLog" style="margin-top:4px;"></div>
+</div>
+
+<!-- Menus -->
+<div class="menuOverlay" id="mainMenuOverlay" style="display:none;">
+  <div class="menuBox">
+    <div class="menuTitle">Neighborhood Golf Deluxe</div>
+    <div class="menuSubtitle">Hot Shots‑style swing, Golden Tee overhead, XP, characters, courses, and Riley as your rival.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <button id="menuPlayBtn" class="btn-primary">Play Round</button>
+      <button id="menuRangeBtn">Practice Range</button>
+      <button id="menuPuttingBtn">Putting Green</button>
+      <button id="menuCharBtn">Character Select</button>
+      <button id="menuCourseBtn">Course Select</button>
+      <button id="menuCloseBtn" class="btn-ghost">Close</button>
+    </div>
+    <div class="small" id="menuProgressText">XP: 0 · Level 1 · Unlocks: 0</div>
+  </div>
+</div>
+
+<div class="menuOverlay" id="charOverlay" style="display:none;">
+  <div class="menuBox">
+    <div class="menuTitle">Character Select</div>
+    <div class="menuSubtitle">Each character tweaks power, control, spin, and focus. Some unlock as you level up.</div>
+    <div class="charGrid" id="charGrid"></div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div class="small" id="charDesc">Choose your golfer.</div>
+      <div>
+        <button id="charCloseBtn" class="btn-ghost">Close</button>
+        <button id="charConfirmBtn" class="btn-primary">Use Character</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="menuOverlay" id="courseOverlay" style="display:none;">
+  <div class="menuBox">
+    <div class="menuTitle">Course Select</div>
+    <div class="menuSubtitle">Pick a full 18‑hole track, a par‑3 challenge, or a practice layout.</div>
+    <div class="courseGrid" id="courseGrid"></div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div class="small" id="courseDesc">Choose your course.</div>
+      <div>
+        <button id="courseCloseBtn" class="btn-ghost">Close</button>
+        <button id="courseConfirmBtn" class="btn-primary">Use Course</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var debugEl = $('debugLog');
+  function log(msg){
+    if(!debugEl) return;
+    var t = new Date().toLocaleTimeString();
+    var d = document.createElement('div');
+    d.textContent = '['+t+'] '+msg;
+    debugEl.prepend(d);
+    console.log(msg);
+  }
+
+  if(location.protocol === 'file:'){
+    $('fileNotice').style.display = 'block';
+    log('Running from file:// origin.');
+  }
+
+  var SAVE_KEY = 'ngd_deluxe_v1';
+
+  function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ log('Save failed: '+e); } }
+  function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+  function rngFactory(seed){
+    var t = seed>>>0;
+    return function(){
+      t += 0x6D2B79F5;
+      var r = Math.imul(t ^ t>>>15, 1 | t);
+      r ^= r + Math.imul(r ^ r>>>7, 61 | r);
+      return ((r ^ r>>>14)>>>0)/4294967296;
+    };
+  }
+
+  var characters = [
+    {id:'skeeter', name:'Skeeter', style:'Balanced', power:1.0, control:1.0, spin:1.0, focus:1.0, unlockLevel:1,
+     blurb:'Balanced all‑rounder. Feels like the default Hot Shots golfer.'},
+    {id:'riley', name:'Riley', style:'Accuracy Specialist', power:0.9, control:1.2, spin:1.1, focus:1.1, unlockLevel:1,
+     blurb:'Smaller accuracy zone penalties, better at holding the line in wind.'},
+    {id:'boomer', name:'Boomer', style:'Power Hitter', power:1.15, control:0.85, spin:0.9, focus:0.9, unlockLevel:2,
+     blurb:'Big drives, but timing mistakes hurt more.'},
+    {id:'lily', name:'Lily', style:'Control Wizard', power:0.9, control:1.25, spin:1.2, focus:1.15, unlockLevel:3,
+     blurb:'Tiny curve, big control. Great for tight pins.'},
+    {id:'coach', name:'Coach Maple', style:'Perfect Timing', power:1.0, control:1.0, spin:1.0, focus:1.3, unlockLevel:5,
+     blurb:'Wider perfect window. Loves clutch shots.'},
+    {id:'ghost', name:'Ghost Golfer', style:'Night Specialist', power:1.05, control:1.05, spin:1.1, focus:1.1, unlockLevel:7,
+     blurb:'Glows faintly on night courses. Spooky good.'}
+  ];
+
+  function makeCourse(id,name,holes,par3Only){
+    return {id:id,name:name,holes:holes,par3Only:!!par3Only};
+  }
+
+  function gen18(){
+    return [
+      {par:4,dist:380},{par:4,dist:410},{par:3,dist:165},{par:5,dist:520},{par:4,dist:395},
+      {par:4,dist:430},{par:3,dist:175},{par:5,dist:505},{par:4,dist:410},
+      {par:4,dist:385},{par:4,dist:420},{par:3,dist:180},{par:5,dist:540},{par:4,dist:405},
+      {par:4,dist:395},{par:3,dist:160},{par:5,dist:515},{par:4,dist:435}
+    ];
+  }
+  function genPar3(){
+    return [
+      {par:3,dist:145},{par:3,dist:160},{par:3,dist:175},{par:3,dist:155},{par:3,dist:165},
+      {par:3,dist:140},{par:3,dist:170},{par:3,dist:150},{par:3,dist:180}
+    ];
+  }
+
+  var courses = [
+    makeCourse('neighborhood18','Neighborhood Championship (18)', gen18(), false),
+    makeCourse('par3nine','Backyard Par‑3 Challenge (9)', genPar3(), true),
+    makeCourse('range','Driving Range (Practice)', [{par:0,dist:280}], false),
+    makeCourse('putting','Putting Green (Practice)', [{par:0,dist:25}], true)
+  ];
+
+  var clubs = {
+    driver:{name:'Driver', carry:240, roll:25, curve:0.35, control:0.45, hint:'Driver — big carry, more curve.'},
+    iron:{name:'Iron', carry:170, roll:15, curve:0.22, control:0.65, hint:'Iron — balanced distance and control.'},
+    wedge:{name:'Wedge', carry:90, roll:5, curve:0.12, control:0.85, hint:'Wedge — short, high control.'},
+    putter:{name:'Putter', carry:40, roll:0, curve:0.05, control:0.95, hint:'Putter — for the green.'}
+  };
+
+  var lies = {
+    fairway:{name:'Fairway', distance:1.0, curve:1.0, roll:1.0},
+    rough:{name:'Rough', distance:0.85, curve:1.2, roll:0.7},
+    bunker:{name:'Bunker', distance:0.7, curve:1.3, roll:0.4},
+    green:{name:'Green', distance:0.6, curve:0.9, roll:0.3}
+  };
+
+  var difficulties = [
+    {id:'casual', name:'Casual', meterSpeed:0.012, accZone:0.26, windScale:0.7, aiSkill:0.8},
+    {id:'classic', name:'Classic', meterSpeed:0.018, accZone:0.18, windScale:1.0, aiSkill:1.0},
+    {id:'pro', name:'Pro', meterSpeed:0.024, accZone:0.12, windScale:1.3, aiSkill:1.2}
+  ];
+
+  var game = {
+    xp:0,
+    level:1,
+    unlocks:{nightMode:false},
+    selectedChar:'skeeter',
+    selectedCourse:'neighborhood18',
+    difficulty:'classic',
+    sound:false,
+    round:{
+      courseId:'neighborhood18',
+      holeIndex:0,
+      distance:380,
+      strokes:0,
+      totalStrokes:0,
+      aiStrokes:0,
+      aiTotalStrokes:0,
+      scores:[],
+      journal:[],
+      lie:'fairway',
+      ballPos:0,
+      wind:{speed:0,dir:0},
+      runSeed:null,
+      lastShot:null,
+      practiceMode:null
+    },
+    currentClub:'driver'
+  };
+
+  var courseCanvas = $('courseCanvas');
+  var cctx = courseCanvas.getContext('2d');
+  var CW = courseCanvas.width;
+  var CH = courseCanvas.height;
+
+  var miniCanvas = $('miniCanvas');
+  var mctx = miniCanvas.getContext('2d');
+  var MW = miniCanvas.width;
+  var MH = miniCanvas.height;
+
+  var swingCanvas = $('swingCanvas');
+  var sctx = swingCanvas.getContext('2d');
+  var SW = swingCanvas.width;
+  var SH = swingCanvas.height;
+
+  var animating = false;
+
+  var swingState = {
+    phase:'idle',
+    power:0,
+    accPos:0.5,
+    accZoneStart:0.4,
+    accZoneEnd:0.6,
+    dir:1,
+    timer:null,
+    hold:false
+  };
+
+  function currentDifficulty(){
+    return difficulties.find(d=>d.id===game.difficulty) || difficulties[1];
+  }
+  function currentCourse(){
+    return courses.find(c=>c.id===game.round.courseId) || courses[0];
+  }
+  function currentHole(){
+    var c = currentCourse();
+    return c.holes[game.round.holeIndex] || c.holes[0];
+  }
+  function currentChar(){
+    return characters.find(c=>c.id===game.selectedChar) || characters[0];
+  }
+  function currentClubStats(){
+    return clubs[game.currentClub] || clubs.driver;
+  }
+  function currentLieStats(){
+    return lies[game.round.lie] || lies.fairway;
+  }
+
+  function levelForXp(xp){
+    var lvl = 1;
+    var need = 200;
+    var total = 0;
+    while(xp >= total+need && lvl < 50){
+      total += need;
+      lvl++;
+      need = Math.floor(need*1.25);
+    }
+    return lvl;
+  }
+  function xpProgress(xp){
+    var lvl = 1;
+    var need = 200;
+    var total = 0;
+    while(xp >= total+need && lvl < 50){
+      total += need;
+      lvl++;
+      need = Math.floor(need*1.25);
+    }
+    var into = xp-total;
+    return {level:lvl, need:need, into:into, frac:need?into/need:0};
+  }
+
+  function toast(msg,color){
+    var t = $('toast');
+    t.textContent = msg;
+    t.style.borderColor = color || 'rgba(255,255,255,0.4)';
+    t.style.color = '#fff';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 1200);
+  }
+
+  function drawCourse(){
+    var hole = currentHole();
+    var night = game.unlocks.nightMode && (game.round.courseId==='neighborhood18' || game.round.courseId==='par3nine');
+    cctx.clearRect(0,0,CW,CH);
+    cctx.fillStyle = night ? '#0b1a0f' : '#1f4f1f';
+    cctx.fillRect(0,0,CW,CH);
+    cctx.fillStyle = night ? '#285f2a' : '#2f7b2f';
+    cctx.fillRect(40,40,CW-80,CH-80);
+    cctx.fillStyle = night ? '#b89b60' : '#c2b280';
+    cctx.fillRect(CW*0.45,CH*0.2,60,CH*0.6);
+    cctx.fillStyle = night ? '#163516' : '#1f3f1f';
+    cctx.fillRect(CW*0.2,CH*0.15,80,CH*0.7);
+    var greenX = CW*0.8;
+    var greenY = CH*0.4;
+    var greenW = 80;
+    var greenH = 60;
+    cctx.fillStyle = night ? '#cfe9cf' : '#e0f5e0';
+    cctx.beginPath();
+    cctx.ellipse(greenX,greenY,greenW,greenH,0,0,Math.PI*2);
+    cctx.fill();
+    cctx.fillStyle = night ? '#f0ffe0' : '#d0ffd0';
+    cctx.beginPath();
+    cctx.ellipse(greenX+10,greenY,25,18,0,0,Math.PI*2);
+    cctx.fill();
+    cctx.fillStyle = '#222';
+    cctx.beginPath();
+    cctx.arc(greenX+20,greenY,5,0,Math.PI*2);
+    cctx.fill();
+    cctx.fillStyle = '#ff2d55';
+    cctx.fillRect(greenX+20,greenY-30,2,30);
+    cctx.fillStyle = '#ffd54f';
+    cctx.beginPath();
+    cctx.moveTo(greenX+22,greenY-30);
+    cctx.lineTo(greenX+40,greenY-22);
+    cctx.lineTo(greenX+22,greenY-14);
+    cctx.closePath();
+    cctx.fill();
+    var teeX = 60;
+    var teeY = CH*0.5;
+    cctx.fillStyle = night ? '#7b4a2b' : '#8b5a2b';
+    cctx.fillRect(teeX-10,teeY-10,20,20);
+    var t = Math.min(1, game.round.ballPos / hole.dist);
+    var bx = teeX + (greenX+20 - teeX)*t;
+    var by = teeY;
+    cctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    cctx.setLineDash([4,4]);
+    cctx.beginPath();
+    cctx.moveTo(bx,by-18);
+    cctx.lineTo(greenX+20,greenY);
+    cctx.stroke();
+    cctx.setLineDash([]);
+    cctx.fillStyle = '#ffffff';
+    cctx.beginPath();
+    cctx.arc(bx,by,6,0,Math.PI*2);
+    cctx.fill();
+    if(game.round.lastShot && game.round.lastShot.trace){
+      cctx.strokeStyle = 'rgba(126,224,255,0.9)';
+      cctx.lineWidth = 2;
+      cctx.beginPath();
+      var pts = game.round.lastShot.trace;
+      for(var i=0;i<pts.length;i++){
+        var p = pts[i];
+        var tt = Math.min(1, p.pos / hole.dist);
+        var x = teeX + (greenX+20 - teeX)*tt;
+        var y = teeY - p.height;
+        if(i===0) cctx.moveTo(x,y);
+        else cctx.lineTo(x,y);
+      }
+      cctx.stroke();
+      cctx.lineWidth = 1;
+    }
+    cctx.fillStyle = '#e8f5ff';
+    cctx.font = '12px Segoe UI, Arial';
+    cctx.fillText('Hole '+(game.round.holeIndex+1)+' — '+currentCourse().name,10,16);
+    cctx.fillText('Par '+hole.par+' · '+hole.dist+' yd',10,32);
+    var wtxt = $('windText').innerText;
+    cctx.fillText('Wind: '+wtxt, CW-170, 16);
+  }
+
+  function drawMini(){
+    var hole = currentHole();
+    mctx.clearRect(0,0,MW,MH);
+    mctx.fillStyle = '#163016';
+    mctx.fillRect(0,0,MW,MH);
+    mctx.fillStyle = '#2f7b2f';
+    mctx.fillRect(8,10,MW-16,MH-20);
+    var greenX = MW-18;
+    var greenY = MH/2;
+    mctx.fillStyle = '#d0ffd0';
+    mctx.beginPath();
+    mctx.ellipse(greenX,greenY,14,10,0,0,Math.PI*2);
+    mctx.fill();
+    var teeX = 12;
+    var teeY = MH/2;
+    mctx.fillStyle = '#8b5a2b';
+    mctx.fillRect(teeX-3,teeY-3,6,6);
+    var t = Math.min(1, game.round.ballPos / hole.dist);
+    var bx = teeX + (greenX - teeX)*t;
+    var by = teeY;
+    mctx.fillStyle = '#ffffff';
+    mctx.beginPath();
+    mctx.arc(bx,by,3,0,Math.PI*2);
+    mctx.fill();
+    var d = game.round.wind;
+    if(d.speed>0){
+      mctx.strokeStyle = '#7ee0ff';
+      mctx.lineWidth = 1;
+      var cx = MW/2;
+      var cy = 12;
+      var len = 10 + d.speed*0.4;
+      var dir = d.dir===-1?-1:(d.dir===1?1:0);
+      mctx.beginPath();
+      mctx.moveTo(cx-len*dir,cy);
+      mctx.lineTo(cx+len*dir,cy);
+      mctx.stroke();
+      mctx.beginPath();
+      if(dir!==0){
+        var tipX = cx+len*dir;
+        mctx.moveTo(tipX,cy);
+        mctx.lineTo(tipX-3*dir,cy-3);
+        mctx.lineTo(tipX-3*dir,cy+3);
+        mctx.closePath();
+        mctx.fillStyle = '#7ee0ff';
+        mctx.fill();
+      }
+    }
+  }
+
+  function drawSwingMeter(){
+    sctx.clearRect(0,0,SW,SH);
+    sctx.fillStyle = '#050b18';
+    sctx.fillRect(0,0,SW,SH);
+    var meterW = SW*0.7;
+    var meterH = 18;
+    var meterX = (SW-meterW)/2;
+    var meterY = SH/2 - meterH/2;
+    sctx.fillStyle = '#1a2538';
+    sctx.fillRect(meterX,meterY,meterW,meterH);
+    var diff = currentDifficulty();
+    var char = currentChar();
+    var baseZone = diff.accZone * (1.0/char.control) * 1.15;
+    var lieStats = currentLieStats();
+    var zone = Math.max(0.08, baseZone * (1.0/lieStats.curve));
+    var zoneCenter = 0.5;
+    swingState.accZoneStart = zoneCenter - zone/2;
+    swingState.accZoneEnd = zoneCenter + zone/2;
+    var zStartX = meterX + meterW*swingState.accZoneStart;
+    var zEndX = meterX + meterW*swingState.accZoneEnd;
+    var grd = sctx.createLinearGradient(zStartX,meterY,zEndX,meterY);
+    grd.addColorStop(0,'rgba(124,252,0,0.1)');
+    grd.addColorStop(0.5,'rgba(124,252,0,0.4)');
+    grd.addColorStop(1,'rgba(124,252,0,0.1)');
+    sctx.fillStyle = grd;
+    sctx.fillRect(zStartX,meterY,zEndX-zStartX,meterH);
+    var powerFrac = swingState.power;
+    sctx.fillStyle = '#4caf50';
+    sctx.fillRect(meterX,meterY,meterW*powerFrac,meterH);
+    var accFrac = swingState.accPos;
+    var accX = meterX + meterW*accFrac;
+    sctx.fillStyle = '#ffeb3b';
+    sctx.fillRect(accX-2,meterY-6,4,meterH+12);
+    sctx.strokeStyle = '#ffffff';
+    sctx.lineWidth = 1;
+    sctx.strokeRect(meterX,meterY,meterW,meterH);
+    sctx.fillStyle = '#e8f5ff';
+    sctx.font = '12px Segoe UI, Arial';
+    sctx.fillText('Hold: power · Release: lock · Tap: accuracy', meterX, meterY-10);
+    sctx.fillText('Power: '+Math.round(powerFrac*100)+'%   Accuracy: '+Math.round((accFrac-0.5)*200)+'%', meterX, meterY+meterH+16);
+  }
+
+  function createRunSeed(){
+    var base = ((Date.now() ^ (game.round.holeIndex+1))>>>0) || 1;
+    game.round.runSeed = base;
+    log('Run seed '+base);
+  }
+
+  function randomWind(){
+    var diff = currentDifficulty();
+    var rnd = rngFactory((game.round.runSeed||Date.now()) ^ ((game.round.holeIndex+1)<<3));
+    var speed = Math.floor(rnd()*16);
+    var dirRoll = rnd();
+    var dir = 0;
+    if(dirRoll<0.45) dir=-1;
+    else if(dirRoll>0.55) dir=1;
+    game.round.wind.speed = speed;
+    game.round.wind.dir = dir;
+    var eff = Math.round(speed*diff.windScale);
+    var txt = eff===0 ? 'Calm' : (eff+' mph '+(dir===-1?'left':'right'));
+    $('windText').innerText = txt;
+    log('Wind set: '+txt);
+  }
+
+  function startHole(index){
+    var course = currentCourse();
+    if(index<0) index=0;
+    if(index>=course.holes.length) index=course.holes.length-1;
+    game.round.courseId = course.id;
+    game.round.holeIndex = index;
+    var hole = currentHole();
+    game.round.distance = hole.dist;
+    game.round.ballPos = 0;
+    game.round.strokes = 0;
+    game.round.aiStrokes = 0;
+    game.round.lie = 'fairway';
+    game.round.lastShot = null;
+    createRunSeed();
+    randomWind();
+    $('sceneTitle').innerText = 'Hole '+(game.round.holeIndex+1)+' — '+course.name;
+    $('sceneText').innerText = flavorTextForHole(hole, game.round.holeIndex, course);
+    updateUI();
+    drawCourse();
+    drawMini();
+    drawSwingMeter();
+    log('Started hole '+(game.round.holeIndex+1)+' distance '+game.round.distance);
+  }
+
+  function flavorTextForHole(hole, idx, course){
+    if(course.id==='range') return 'Driving Range — no score, just swing away and watch the tracer.';
+    if(course.id==='putting') return 'Putting Green — short strokes, soft touch. Great for dialing in distance.';
+    var base = [
+      'Streetlights glow beyond the trees. The fairway stretches out like an old PC golf course.',
+      'A gentle dogleg framed by backyards and porch lights. Riley cracks their knuckles.',
+      'Short par 3 over a tiny creek. You can almost hear a 90s sound card in the background.',
+      'Long par 5 along the neighborhood fence. Three good swings or one disaster.',
+      'The school roof peeks over the trees. Wind swirls between the houses.',
+      'Tracks run along the right. Anything too far right is flirting with trouble.',
+      'A small pond guards the green. Riley pretends not to be scared of the water.',
+      'Wide open, but long. The kind of hole that makes you want to crush a drive.',
+      'The clubhouse lights glow ahead. One last chance to beat Riley.'
+    ];
+    if(course.id==='par3nine'){
+      return 'Backyard Par‑3 Challenge — tight greens, swirling wind, and lots of XP if you play smart.';
+    }
+    return base[idx] || ('Night settles over the course. '+course.name+' feels like a classic round.');
+  }
+
+  function startSwingHold(){
+    if(animating || game.round.distance<=0) return;
+    if(swingState.phase!=='idle') return;
+    swingState.phase = 'power';
+    swingState.power = 0;
+    swingState.accPos = 0.5;
+    swingState.dir = 1;
+    swingState.hold = true;
+    var diff = currentDifficulty();
+    var char = currentChar();
+    var lieStats = currentLieStats();
+    var clubSpeedBoost = (game.currentClub === 'wedge' || game.currentClub === 'putter') ? 1.4 : 1.0;
+    var speed = diff.meterSpeed * (1.0/char.focus) * (1.0/Math.max(0.7,lieStats.distance)) * clubSpeedBoost;
+    if(swingState.timer) clearInterval(swingState.timer);
+    swingState.timer = setInterval(function(){
+      if(swingState.phase==='power'){
+        swingState.power += speed;
+        if(swingState.power>=1) swingState.power=1;
+      }else if(swingState.phase==='accuracy'){
+        swingState.accPos += speed * swingState.dir * 3.2;
+        if(swingState.accPos>=1){ swingState.accPos=1; swingState.dir=-1; }
+        if(swingState.accPos<=0){ swingState.accPos=0; swingState.dir=1; }
+      }
+      drawSwingMeter();
+    },30);
+    log('Swing phase: power (hold)');
+  }
+
+  function releaseSwing(){
+    if(swingState.phase==='power'){
+      swingState.phase = 'accuracy';
+      swingState.dir = 1;
+      swingState.accPos = 0.5;
+      swingState.hold = false;
+      log('Swing phase: accuracy (power '+Math.round(swingState.power*100)+'%)');
+    }
+  }
+
+  function tapAccuracy(){
+    if(animating || game.round.distance<=0) return;
+    if(swingState.phase!=='accuracy') return;
+    if(swingState.timer){ clearInterval(swingState.timer); swingState.timer=null; }
+    swingState.phase = 'idle';
+    log('Swing locked: power '+Math.round(swingState.power*100)+'%, accuracy '+Math.round((swingState.accPos-0.5)*200)+'%');
+    resolveSwing();
+  }
+
+  function resolveSwing(){
+    var course = currentCourse();
+    var hole = currentHole();
+    var club = currentClubStats();
+    var lieStats = currentLieStats();
+    game.round.strokes++;
+    if(!game.round.practiceMode) game.round.totalStrokes++;
+    var seed = ((game.round.runSeed||Date.now()) ^ ((game.round.strokes+1)<<4))>>>0;
+    var r = rngFactory(seed);
+    var powerFrac = swingState.power;
+    var accFrac = swingState.accPos;
+    var diff = currentDifficulty();
+    var char = currentChar();
+    var zoneStart = swingState.accZoneStart;
+    var zoneEnd = swingState.accZoneEnd;
+    var resultType = 'nice';
+    var accOffset = accFrac-0.5;
+    var perfectWindow = 0.055 * char.focus;
+    if(accFrac>=0.5-perfectWindow && accFrac<=0.5+perfectWindow){
+      resultType = 'perfect';
+    }else if(accFrac>=zoneStart && accFrac<=zoneEnd){
+      resultType = 'nice';
+    }else{
+      var distFromCenter = Math.abs(accFrac-0.5);
+      if(distFromCenter>0.25) resultType='shank';
+      else resultType='miss';
+    }
+    var baseCarry = club.carry * powerFrac * char.power;
+    var baseRoll = club.roll * powerFrac;
+    var windEff = game.round.wind.speed * (game.round.wind.dir===0?0:(game.round.wind.dir*0.5)) * diff.windScale;
+    var distance = baseCarry + baseRoll;
+    distance *= lieStats.distance;
+    distance += windEff * 0.6;
+    var randomness = (r()-0.5)*10;
+    distance += randomness;
+    distance += lieStats.roll * 4;
+    if(resultType==='perfect'){
+      distance *= 1.08;
+    }else if(resultType==='shank'){
+      distance *= 0.6;
+    }else if(resultType==='miss'){
+      distance *= 0.85;
+    }
+    if(distance<5) distance=5;
+    var curveFactor = club.curve * lieStats.curve * (1.0/char.spin);
+    var curve = accOffset * 2 * curveFactor;
+    if(resultType==='perfect') curve*=0.4;
+    if(resultType==='shank') curve*=2.0;
+    var curveDeg = Math.round(curve*30);
+    var msg;
+    if(resultType==='perfect'){
+      msg='PERFECT!';
+      document.body.style.transition = 'background 0.15s';
+      document.body.style.background = '#0a1f0a';
+      setTimeout(()=>document.body.style.background='',150);
+    }else if(resultType==='nice') msg='Nice shot!';
+    else if(resultType==='miss') msg = curve>0?'Slice!':'Hook!';
+    else msg='Shank!';
+    toast(msg, resultType==='perfect'? '#7CFC00' : (resultType==='shank'? '#ff6b6b' : '#ffcf6b'));
+    var logText = 'You swing '+club.name+': '+Math.round(powerFrac*100)+'% power, '+Math.round(accOffset*200)+'% accuracy, '+Math.round(distance)+' yd, curve '+curveDeg+'° ('+msg+')';
+    game.round.journal.unshift({text:logText,time:new Date().toLocaleTimeString()});
+    log(logText);
+    animateBall(distance, curve, function(trace){
+      var actual = Math.min(distance, game.round.distance);
+      game.round.distance -= actual;
+      if(game.round.distance<0) game.round.distance=0;
+      game.round.ballPos = hole.dist - game.round.distance;
+      updateLie();
+      game.round.lastShot = {distance:distance, curve:curve, result:resultType, trace:trace};
+      if(game.round.distance===0){
+        finishHolePlayer();
+      }else{
+        game.round.journal.unshift({text:'Ball lands. '+Math.round(game.round.distance)+' yd remain. Lie: '+lies[game.round.lie].name,time:new Date().toLocaleTimeString()});
+        log('Remaining distance: '+game.round.distance+' lie '+game.round.lie);
+        updateUI();
+      }
+    });
+  }
+
+  function animateBall(distance, curve, callback){
+    animating = true;
+    var hole = currentHole();
+    var startPos = game.round.ballPos;
+    var targetPos = Math.min(hole.dist, startPos+distance);
+    var t0 = null;
+    var duration = 800 + Math.min(700, distance*3);
+    var trace = [];
+    function step(ts){
+      if(!t0) t0 = ts;
+      var t = (ts-t0)/duration;
+      if(t>1) t=1;
+      var ease = 1 - Math.pow(1-t,3);
+      var pos = startPos + (targetPos-startPos)*ease;
+      var height = Math.sin(Math.PI*ease)*45;
+      var lateral = curve*80*ease;
+      trace.push({pos:pos,height:height,lat:lateral});
+      game.round.ballPos = pos;
+      drawCourse();
+      drawMini();
+      if(t<1){
+        requestAnimationFrame(step);
+      }else{
+        animating=false;
+        game.round.ballPos = targetPos;
+        drawCourse();
+        drawMini();
+        if(typeof callback==='function') callback(trace);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function updateLie(){
+    var dist = game.round.distance;
+    if(dist<=40){
+      game.round.lie='green';
+    }else{
+      var rnd = rngFactory((game.round.runSeed||Date.now()) ^ ((game.round.strokes+3)<<2));
+      var roll = rnd();
+      if(roll<0.7) game.round.lie='fairway';
+      else if(roll<0.9) game.round.lie='rough';
+      else game.round.lie='bunker';
+    }
+  }
+
+  function finishHolePlayer(){
+    var course = currentCourse();
+    var hole = currentHole();
+    var scoreText = 'You finish hole '+(game.round.holeIndex+1)+' in '+game.round.strokes+' strokes (par '+hole.par+').';
+    game.round.journal.unshift({text:scoreText,time:new Date().toLocaleTimeString()});
+    log(scoreText);
+    game.round.distance=0;
+    updateUI();
+    if(!game.round.practiceMode && course.id!=='range' && course.id!=='putting'){
+      playAIHole();
+    }
+    if(!game.round.practiceMode){
+      var xpGain = computeHoleXp(hole, game.round.strokes, game.round.lastShot);
+      game.xp += xpGain;
+      var prog = xpProgress(game.xp);
+      game.level = prog.level;
+      toast('XP +'+xpGain+' (Lv '+game.level+')','#7ee0ff');
+      updateXpUI();
+    }
+  }
+
+  function computeHoleXp(hole, strokes, lastShot){
+    if(hole.par===0) return 5;
+    var diff = hole.par - strokes;
+    var base = 50*diff;
+    if(base<10) base=10;
+    var bonus = 0;
+    if(lastShot){
+      if(lastShot.result==='perfect') bonus+=25;
+      if(hole.par>=4 && lastShot.distance>260) bonus+=20;
+    }
+    if(strokes===1) bonus+=40;
+    if(strokes===hole.par-2) bonus+=30;
+    if(strokes===hole.par-1) bonus+=20;
+    if(strokes===hole.par+1) bonus+=10;
+    if(strokes>=hole.par+2) bonus+=5;
+    var diffMult = currentDifficulty().id==='pro'?1.4:(currentDifficulty().id==='classic'?1.1:1.0);
+    var total = Math.max(5, Math.round((base+bonus)*diffMult));
+    return total;
+  }
+
+  function playAIHole(){
+    var hole = currentHole();
+    var diff = currentDifficulty();
+    var seed = ((game.round.runSeed||Date.now()) ^ ((game.round.holeIndex+1)<<6))>>>0;
+    var r = rngFactory(seed);
+    var basePar = hole.par;
+    var skill = diff.aiSkill;
+    var roll = r();
+    var aiScore;
+    if(roll<0.12*skill) aiScore = basePar-1;
+    else if(roll<0.55*skill) aiScore = basePar;
+    else if(roll<0.85) aiScore = basePar+1;
+    else aiScore = basePar+2;
+    if(aiScore<1) aiScore=1;
+    game.round.aiStrokes = aiScore;
+    game.round.aiTotalStrokes += aiScore;
+    var text = 'Riley plays the hole in '+aiScore+' strokes.';
+    game.round.journal.unshift({text:text,time:new Date().toLocaleTimeString()});
+    log(text);
+    game.round.scores[game.round.holeIndex] = {you:game.round.strokes, ai:aiScore, par:hole.par};
+    updateUI();
+  }
+
+  function nextHole(){
+    if(animating || game.round.distance>0){
+      log('Cannot go to next hole until current hole is finished.');
+      return;
+    }
+    var course = currentCourse();
+    if(game.round.holeIndex >= course.holes.length-1){
+      var diff = game.round.totalStrokes - game.round.aiTotalStrokes;
+      var summary;
+      if(course.id==='range' || course.id==='putting'){
+        summary = 'Practice session complete.';
+      }else if(diff<0) summary='Round complete! You beat Riley by '+Math.abs(diff)+' strokes.';
+      else if(diff>0) summary='Round complete! Riley beats you by '+diff+' strokes.';
+      else summary='Round complete! You and Riley tie.';
+      game.round.journal.unshift({text:summary,time:new Date().toLocaleTimeString()});
+      log(summary);
+      updateUI();
+      return;
+    }
+    startHole(game.round.holeIndex+1);
+  }
+
+  function restartRound(){
+    var course = currentCourse();
+    game.round.courseId = course.id;
+    game.round.holeIndex = 0;
+    game.round.distance = course.holes[0].dist;
+    game.round.ballPos = 0;
+    game.round.strokes = 0;
+    game.round.totalStrokes = 0;
+    game.round.aiStrokes = 0;
+    game.round.aiTotalStrokes = 0;
+    game.round.journal = [];
+    game.round.scores = [];
+    game.round.lie = 'fairway';
+    game.round.practiceMode = (course.id==='range' || course.id==='putting');
+    var pills = document.querySelectorAll('.club-pill');
+    pills.forEach(function(p){ p.classList.remove('active'); if(p.getAttribute('data-club')==='driver') p.classList.add('active'); });
+    game.currentClub='driver';
+    $('clubHint').innerText = clubs.driver.hint;
+    startHole(0);
+    game.round.journal.unshift({text:'New round on '+course.name+'. '+(game.round.practiceMode?'Practice mode — no score, just swings.':'You and Riley step onto the first tee.'),time:new Date().toLocaleTimeString()});
+    updateUI();
+    log('Round restarted');
+  }
+
+  function updateScoreTable(){
+    var tbl = $('scoreTable');
+    var course = currentCourse();
+    var html = '<tr><th>Hole</th>';
+    for(var i=0;i<course.holes.length;i++){ html+='<th>'+(i+1)+'</th>'; }
+    html+='<th>Total</th></tr>';
+    html+='<tr><th>Par</th>';
+    var parTotal=0;
+    course.holes.forEach(function(h){ parTotal+=h.par; html+='<td>'+h.par+'</td>'; });
+    html+='<td>'+parTotal+'</td></tr>';
+    html+='<tr><th class="score-you">You</th>';
+    var youTotal=0;
+    for(var j=0;j<course.holes.length;j++){
+      var s = game.round.scores[j];
+      if(s && typeof s.you==='number'){
+        var cls='';
+        if(s.you<s.par-1) cls='score-eagle';
+        else if(s.you===s.par-1) cls='score-birdie';
+        else if(s.you===s.par+1) cls='score-bogey';
+        else if(s.you>=s.par+2) cls='score-bogey';
+        html+='<td class="'+cls+'">'+s.you+'</td>';
+        youTotal+=s.you;
+      }else html+='<td>-</td>';
+    }
+    html+='<td class="score-you">'+(youTotal||'-')+'</td></tr>';
+    html+='<tr><th class="score-ai">Riley</th>';
+    var aiTotal=0;
+    for(var k=0;k<course.holes.length;k++){
+      var s2 = game.round.scores[k];
+      if(s2 && typeof s2.ai==='number'){ html+='<td>'+s2.ai+'</td>'; aiTotal+=s2.ai; }
+      else html+='<td>-</td>';
+    }
+    html+='<td class="score-ai">'+(aiTotal||'-')+'</td></tr>';
+    tbl.innerHTML = html;
+  }
+
+  function updateXpUI(){
+    var prog = xpProgress(game.xp);
+    $('xpLabel').innerText = 'XP: '+game.xp+' · Lv '+prog.level;
+    $('xpBar').style.width = (prog.frac*100).toFixed(1)+'%';
+    $('menuProgressText').innerText = 'XP: '+game.xp+' · Level '+prog.level+' · Unlocks: '+Object.keys(game.unlocks).filter(k=>game.unlocks[k]).length;
+    if(prog.level>=4) game.unlocks.nightMode = true;
+  }
+
+  function updateUI(){
+    var course = currentCourse();
+    var hole = currentHole();
+    $('holeNumber').innerText = game.round.holeIndex+1;
+    $('holeCount').innerText = course.holes.length;
+    $('holePar').innerText = hole.par;
+    $('distanceToHole').innerText = Math.round(game.round.distance);
+    $('strokeDisplay').innerText = game.round.strokes;
+    $('aiStrokeDisplay').innerText = game.round.aiStrokes;
+    $('totalStrokeDisplay').innerText = game.round.totalStrokes;
+    $('aiTotalStrokeDisplay').innerText = game.round.aiTotalStrokes;
+    $('lieText').innerText = lies[game.round.lie].name;
+    $('diffText').innerText = currentDifficulty().name;
+    $('courseNameLabel').innerText = course.name;
+    $('journal').innerHTML = game.round.journal.length
+      ? game.round.journal.map(function(it){
+          return '<div style="margin-bottom:4px;"><strong class="small">'+it.time+'</strong><div>'+it.text+'</div></div>';
+        }).join('')
+      : 'No entries yet.';
+    $('journalCount').innerText = game.round.journal.length;
+    $('nextHoleBtn').disabled = (game.round.distance>0) || animating;
+    $('replayBtn').disabled = !game.round.lastShot;
+    $('soundBtn').textContent = 'Sound: '+(game.sound?'On':'Off');
+    $('difficultyBtn').textContent = 'Difficulty: '+currentDifficulty().name;
+    $('charNameLabel').innerText = currentChar().name;
+    $('charStyleLabel').innerText = currentChar().style;
+    updateScoreTable();
+    drawCourse();
+    drawMini();
+    drawSwingMeter();
+    updateXpUI();
+  }
+
+  function saveState(){
+    try{
+      safeSet(SAVE_KEY, JSON.stringify(game));
+      log('Saved state');
+      toast('Game saved','#7ee0ff');
+    }catch(e){ log('Save failed: '+e); }
+  }
+  function loadState(){
+    try{
+      var raw = safeGet(SAVE_KEY);
+      if(!raw) return false;
+      var g = JSON.parse(raw);
+      if(typeof g!=='object') return false;
+      game = g;
+      if(!game.round) game.round = {courseId:game.selectedCourse||'neighborhood18',holeIndex:0,distance:380,strokes:0,totalStrokes:0,aiStrokes:0,aiTotalStrokes:0,scores:[],journal:[],lie:'fairway',ballPos:0,wind:{speed:0,dir:0},runSeed:null,lastShot:null,practiceMode:null};
+      if(!game.round.runSeed) createRunSeed();
+      randomWind();
+      updateUI();
+      log('Loaded save');
+      return true;
+    }catch(e){ log('Load failed: '+e); return false; }
+  }
+  function exportSave(){
+    try{
+      var json = JSON.stringify(game,null,2);
+      var dataUri = 'data:application/json;charset=utf-8,'+encodeURIComponent(json);
+      var a = document.createElement('a');
+      a.href = dataUri;
+      a.download = 'neighborhood_golf_deluxe_save.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      log('Exported via data URI');
+    }catch(e){ log('Export failed: '+e); }
+  }
+  function importSaveFile(file){
+    try{
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          var g = JSON.parse(e.target.result);
+          if(typeof g!=='object'){ log('Invalid save file'); return; }
+          safeSet(SAVE_KEY, JSON.stringify(g));
+          loadState();
+          log('Imported save');
+          toast('Save imported','#7ee0ff');
+        }catch(err){ log('Import failed: '+err); }
+      };
+      reader.readAsText(file);
+    }catch(err){ log('Import setup failed: '+err); }
+  }
+
+  function buildCharMenu(){
+    var grid = $('charGrid');
+    grid.innerHTML = '';
+    var prog = xpProgress(game.xp);
+    characters.forEach(function(ch){
+      var card = document.createElement('div');
+      card.className = 'charCard';
+      if(prog.level < ch.unlockLevel) card.classList.add('locked');
+      if(ch.id===game.selectedChar) card.classList.add('selected');
+      card.dataset.id = ch.id;
+      card.innerHTML =
+        '<div class="charName">'+ch.name+'</div>'+
+        '<div class="statRow">Style: '+ch.style+'</div>'+
+        '<div class="statRow">Power: '+ch.power.toFixed(2)+' · Control: '+ch.control.toFixed(2)+'</div>'+
+        '<div class="statRow">Spin: '+ch.spin.toFixed(2)+' · Focus: '+ch.focus.toFixed(2)+'</div>'+
+        '<div class="statRow small">Unlock Lv '+ch.unlockLevel+'</div>';
+      card.addEventListener('click', function(){
+        var prog = xpProgress(game.xp);
+        if(prog.level < ch.unlockLevel){
+          $('charDesc').textContent = ch.name+' is locked (requires level '+ch.unlockLevel+').';
+          return;
+        }
+        var cards = grid.querySelectorAll('.charCard');
+        cards.forEach(function(c){ c.classList.remove('selected'); });
+        card.classList.add('selected');
+        $('charDesc').textContent = ch.blurb;
+        grid.dataset.selected = ch.id;
+      });
+      grid.appendChild(card);
+    });
+    grid.dataset.selected = game.selectedChar;
+    var cur = currentChar();
+    $('charDesc').textContent = cur.blurb;
+  }
+
+  function buildCourseMenu(){
+    var grid = $('courseGrid');
+    grid.innerHTML = '';
+    courses.forEach(function(c){
+      var card = document.createElement('div');
+      card.className = 'courseCard';
+      if(c.id===game.round.courseId) card.classList.add('selected');
+      card.dataset.id = c.id;
+      var parTotal = c.holes.reduce((a,h)=>a+h.par,0);
+      card.innerHTML =
+        '<div class="charName">'+c.name+'</div>'+
+        '<div class="statRow">Holes: '+c.holes.length+' · Par '+parTotal+'</div>'+
+        '<div class="statRow small">'+(c.id==='range'?'Driving range — practice only.':(c.id==='putting'?'Putting green — short game practice.':(c.par3Only?'All par‑3s, tight greens.':'Full neighborhood championship track.')) )+'</div>';
+      card.addEventListener('click', function(){
+        var cards = grid.querySelectorAll('.courseCard');
+        cards.forEach(function(c2){ c2.classList.remove('selected'); });
+        card.classList.add('selected');
+        grid.dataset.selected = c.id;
+        $('courseDesc').textContent = c.name+' selected.';
+      });
+      grid.appendChild(card);
+    });
+    grid.dataset.selected = game.round.courseId;
+    $('courseDesc').textContent = currentCourse().name+' selected.';
+  }
+
+  function showOverlay(id,show){
+    $(id).style.display = show?'flex':'none';
+  }
+
+  function cycleDifficulty(){
+    var idx = difficulties.findIndex(d=>d.id===game.difficulty);
+    if(idx<0) idx=0;
+    idx = (idx+1)%difficulties.length;
+    game.difficulty = difficulties[idx].id;
+    updateUI();
+  }
+
+  function toggleSound(){
+    game.sound = !game.sound;
+    updateUI();
+  }
+
+  function replayLastShot(){
+    if(!game.round.lastShot) return;
+    var last = game.round.lastShot;
+    var hole = currentHole();
+    var startPos = hole.dist - game.round.distance - last.distance;
+    if(startPos<0) startPos=0;
+    var t0=null;
+    var duration = 800 + Math.min(700, last.distance*3);
+    animating=true;
+    function step(ts){
+      if(!t0) t0=ts;
+      var t=(ts-t0)/duration;
+      if(t>1) t=1;
+      var idx = Math.floor(last.trace.length*t);
+      if(idx<0) idx=0;
+      if(idx>=last.trace.length) idx=last.trace.length-1;
+      var p = last.trace[idx];
+      game.round.ballPos = startPos + (last.distance*(idx/last.trace.length));
+      drawCourse();
+      drawMini();
+      if(t<1) requestAnimationFrame(step);
+      else{
+        animating=false;
+        game.round.ballPos = hole.dist - game.round.distance;
+        drawCourse();
+        drawMini();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  $('swingBtn').addEventListener('mousedown', function(){ startSwingHold(); });
+  $('swingBtn').addEventListener('touchstart', function(e){ e.preventDefault(); startSwingHold(); }, {passive:false});
+  document.addEventListener('mouseup', function(){ releaseSwing(); });
+  document.addEventListener('touchend', function(){ releaseSwing(); });
+  $('swingBtn').addEventListener('click', function(e){
+    if(!swingState.hold && swingState.phase==='accuracy'){
+      tapAccuracy();
+    }
+  });
+
+  swingCanvas.addEventListener('click', function(){
+    if(swingState.phase === 'accuracy') tapAccuracy();
+  });
+
+  $('replayBtn').addEventListener('click', replayLastShot);
+  $('nextHoleBtn').addEventListener('click', nextHole);
+  $('restartBtn').addEventListener('click', restartRound);
+  $('difficultyBtn').addEventListener('click', function(){ cycleDifficulty(); });
+  $('soundBtn').addEventListener('click', function(){ toggleSound(); });
+
+  var pills = document.querySelectorAll('.club-pill');
+  pills.forEach(function(p){
+    p.addEventListener('click', function(){
+      var clubId = p.getAttribute('data-club');
+      game.currentClub = clubId;
+      pills.forEach(function(x){ x.classList.remove('active'); });
+      p.classList.add('active');
+      var c = clubs[clubId];
+      $('clubHint').innerText = c ? c.hint : '';
+      drawSwingMeter();
+    });
+  });
+
+  $('saveBtn').addEventListener('click', saveState);
+  $('exportBtn').addEventListener('click', exportSave);
+  $('importBtn').addEventListener('click', function(){ $('importFile').click(); });
+  $('importFile').addEventListener('change', function(ev){
+    var f = ev.target.files && ev.target.files[0];
+    if(f) importSaveFile(f);
+    ev.target.value='';
+  });
+
+  (function(){
+    var DEBUG_KEY = 'ngd_debug_hidden';
+    function isHidden(){ try{ return localStorage.getItem(DEBUG_KEY)==='1'; }catch(e){ return false; } }
+    function setHidden(v){ try{ localStorage.setItem(DEBUG_KEY, v?'1':'0'); }catch(e){} }
+    function apply(hidden){
+      var panel = $('debugPanel');
+      var btn = $('toggleDebugBtn');
+      if(!panel || !btn) return;
+      if(hidden){
+        panel.classList.add('hidden');
+        btn.textContent='Show Debug';
+      }else{
+        panel.classList.remove('hidden');
+        btn.textContent='Hide Debug';
+      }
+      setHidden(hidden);
+    }
+    apply(isHidden());
+    $('toggleDebugBtn').addEventListener('click', function(){
+      var panel = $('debugPanel');
+      var hidden = panel.classList.contains('hidden');
+      apply(!hidden);
+    });
+  })();
+
+  $('mainMenuBtn').addEventListener('click', function(){ showOverlay('mainMenuOverlay',true); });
+  $('menuCloseBtn').addEventListener('click', function(){ showOverlay('mainMenuOverlay',false); });
+  $('menuPlayBtn').addEventListener('click', function(){ game.round.practiceMode=false; restartRound(); showOverlay('mainMenuOverlay',false); });
+  $('menuRangeBtn').addEventListener('click', function(){ game.round.courseId='range'; game.selectedCourse='range'; restartRound(); showOverlay('mainMenuOverlay',false); });
+  $('menuPuttingBtn').addEventListener('click', function(){ game.round.courseId='putting'; game.selectedCourse='putting'; restartRound(); showOverlay('mainMenuOverlay',false); });
+  $('menuCharBtn').addEventListener('click', function(){ buildCharMenu(); showOverlay('charOverlay',true); });
+  $('menuCourseBtn').addEventListener('click', function(){ buildCourseMenu(); showOverlay('courseOverlay',true); });
+
+  $('charSelectBtn').addEventListener('click', function(){ buildCharMenu(); showOverlay('charOverlay',true); });
+  $('charCloseBtn').addEventListener('click', function(){ showOverlay('charOverlay',false); });
+  $('charConfirmBtn').addEventListener('click', function(){
+    var grid = $('charGrid');
+    var id = grid.dataset.selected || game.selectedChar;
+    var ch = characters.find(c=>c.id===id);
+    var prog = xpProgress(game.xp);
+    if(ch && prog.level>=ch.unlockLevel){
+      game.selectedChar = ch.id;
+      toast('Now playing as '+ch.name,'#7ee0ff');
+      updateUI();
+    }
+    showOverlay('charOverlay',false);
+  });
+
+  $('courseSelectBtn').addEventListener('click', function(){ buildCourseMenu(); showOverlay('courseOverlay',true); });
+  $('courseCloseBtn').addEventListener('click', function(){ showOverlay('courseOverlay',false); });
+  $('courseConfirmBtn').addEventListener('click', function(){
+    var grid = $('courseGrid');
+    var id = grid.dataset.selected || game.round.courseId;
+    var c = courses.find(x=>x.id===id);
+    if(c){
+      game.round.courseId = c.id;
+      game.selectedCourse = c.id;
+      toast('Course: '+c.name,'#7ee0ff');
+      restartRound();
+    }
+    showOverlay('courseOverlay',false);
+  });
+
+  $('rangeBtn').addEventListener('click', function(){ game.round.courseId='range'; game.selectedCourse='range'; restartRound(); });
+  $('puttingBtn').addEventListener('click', function(){ game.round.courseId='putting'; game.selectedCourse='putting'; restartRound(); });
+
+  if(!loadState()){
+    restartRound();
+  }else{
+    log('Loaded existing game');
+  }
+
+  showOverlay('mainMenuOverlay',true);
+  window._ngd = {game:game, restart:restartRound};
+  log('Neighborhood Golf Deluxe ready (patched swing)');
+});
+</script>
+</body>
+</html>

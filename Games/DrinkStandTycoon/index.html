@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drink Stand Tycoon: Summer Rush</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+        <h1 class="game-title">Drink Stand Tycoon<br><span>Summer Rush</span></h1>
+
+        <button id="start-btn" class="retro-button">Start Game</button>
+
+        <p class="goal-text">Summer: 90 Days — Goal: Buy a Gaming PC ($2,000)</p>
+    </div>
+
+    <!-- MAIN GAME SCREEN -->
+    <div id="game-screen" style="display:none;">
+
+        <!-- TOP BAR -->
+        <div id="top-bar">
+            <div class="top-item">Day: <span id="day-display">1</span> / 90</div>
+            <div class="top-item">Cash: $<span id="cash-display">100.00</span></div>
+            <div class="top-item">Goal: $<span id="goal-display">2000</span></div>
+        </div>
+
+        <!-- STAND + WEATHER ROW -->
+        <div id="stand-row">
+            <div id="stand-graphic">
+                <div class="stand-roof">🍹 SUMMER STAND 🍹</div>
+                <div class="stand-body">
+                    <div class="pitcher">🥤</div>
+                    <div class="cups">🧃🧃🧃</div>
+                    <div class="cashbox">💵</div>
+                </div>
+            </div>
+
+            <div id="weather-panel">
+                <h2>Today's Weather</h2>
+                <div id="weather-icon">☀️</div>
+                <div id="weather-temp">85°F</div>
+                <div id="weather-desc">Hot & Sunny</div>
+            </div>
+        </div>
+
+        <!-- DRINK CONTROLS -->
+        <div id="drink-panel">
+            <h2>Drinks & Prices</h2>
+            <table id="drink-table">
+                <thead>
+                    <tr>
+                        <th>Drink</th>
+                        <th>Base Cost / Cup</th>
+                        <th>Your Price / Cup</th>
+                        <th>Cups to Prepare</th>
+                    </tr>
+                </thead>
+                <tbody id="drink-rows">
+                    <!-- Filled by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- UPGRADES + ACTIONS -->
+        <div id="middle-row">
+            <div id="upgrades-panel">
+                <h2>Upgrades</h2>
+                <button class="upgrade-btn" data-upgrade="sign">Bigger Sign ($150)<br><span>+ Customers</span></button>
+                <button class="upgrade-btn" data-upgrade="ingredients">Better Ingredients ($200)<br><span>+ Satisfaction</span></button>
+                <button class="upgrade-btn" data-upgrade="service">Faster Service ($150)<br><span>- Impatient Loss</span></button>
+                <button class="upgrade-btn" data-upgrade="radio">Weather Radio ($100)<br><span>See Tomorrow</span></button>
+                <button class="upgrade-btn" data-upgrade="storage">Storage Upgrade ($250)<br><span>More Cups</span></button>
+                <p id="upgrade-msg"></p>
+            </div>
+
+            <div id="actions-panel">
+                <h2>Day Controls</h2>
+                <button id="run-day-btn" class="retro-button small">Run Day</button>
+                <p id="tomorrow-forecast" class="forecast-text"></p>
+            </div>
+        </div>
+
+        <!-- DAILY REPORT -->
+        <div id="report-panel">
+            <h2>Daily Report</h2>
+            <div id="report-output"></div>
+        </div>
+
+        <!-- END GAME PANEL -->
+        <div id="end-game-panel" style="display:none;">
+            <h2 id="end-title"></h2>
+            <p id="end-summary"></p>
+            <button id="restart-btn" class="retro-button small">Play Again</button>
+        </div>
+
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

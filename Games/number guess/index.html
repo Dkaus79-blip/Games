@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>C64 Number Guesser</title>
+<style>
+    body {
+        background: black;
+        color: #00ff80;
+        font-family: monospace;
+        text-align: center;
+        padding-top: 50px;
+        transition: background 0.1s;
+    }
+    input {
+        font-size: 20px;
+        padding: 5px;
+        width: 120px;
+        text-align: center;
+    }
+    button {
+        font-size: 20px;
+        padding: 10px 20px;
+        margin: 10px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<h1>C64 Number Guesser</h1>
+
+<div id="menu">
+    <button onclick="startGame(1)">1 Player</button>
+    <button onclick="startGame(2)">2 Player</button>
+</div>
+
+<div id="game" style="display:none;">
+    <p id="turnText"></p>
+    <p>Enter your guess (1–100):</p>
+    <input id="guessInput" type="number" min="1" max="100">
+    <button onclick="makeGuess()">Guess</button>
+
+    <p id="feedback"></p>
+    <p id="guessCount"></p>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

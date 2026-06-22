@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cute Cat War</title>
+<style>
+    body {
+        background: radial-gradient(circle at top, #ffeaf7 0, #ffdff0 40%, #ffcfe8 100%);
+        font-family: "Segoe UI", Arial, sans-serif;
+        text-align: center;
+        padding-top: 20px;
+    }
+
+    h1 {
+        color: #ff5fa8;
+        text-shadow: 0 0 8px #ffffff;
+        margin-bottom: 5px;
+    }
+
+    #subtitle {
+        color: #ff8fc4;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    #gameArea {
+        margin-top: 10px;
+    }
+
+    .card {
+        width: 230px;
+        height: 340px;
+        background: linear-gradient(145deg, #ffffff, #ffe9f6);
+        border-radius: 20px;
+        display: inline-block;
+        margin: 10px;
+        padding: 10px;
+        box-shadow: 0 0 15px rgba(255, 140, 200, 0.7);
+        border: 3px solid #ff8fc4;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: "★";
+        position: absolute;
+        font-size: 40px;
+        color: rgba(255, 200, 240, 0.7);
+        top: -10px;
+        left: 10px;
+    }
+
+    .card::after {
+        content: "♡";
+        position: absolute;
+        font-size: 40px;
+        color: rgba(255, 200, 240, 0.7);
+        bottom: -5px;
+        right: 15px;
+    }
+
+    .catEmoji {
+        font-size: 80px;
+        margin-top: 10px;
+    }
+
+    .catName {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ff3f9a;
+        margin-top: 5px;
+    }
+
+    .catPower {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+
+    .catType {
+        font-size: 15px;
+        color: #777;
+        margin-top: 2px;
+    }
+
+    .catAbility {
+        font-size: 13px;
+        color: #aa6aa0;
+        margin-top: 6px;
+    }
+
+    #result {
+        font-size: 26px;
+        margin-top: 15px;
+        color: #ff3f9a;
+        font-weight: bold;
+        text-shadow: 0 0 6px #ffffff;
+        min-height: 32px;
+    }
+
+    #score {
+        font-size: 20px;
+        margin-top: 5px;
+        color: #ff3f9a;
+    }
+
+    button {
+        padding: 14px 30px;
+        font-size: 20px;
+        background: linear-gradient(135deg, #ff7fba, #ff4f9f);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        margin-top: 18px;
+        box-shadow: 0 0 15px rgba(255, 120, 190, 0.9);
+        transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+    }
+
+    button:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+        box-shadow: 0 0 18px rgba(255, 120, 190, 1);
+    }
+
+    button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 10px rgba(255, 120, 190, 0.7);
+    }
+
+    #roundInfo {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #aa6aa0;
+        min-height: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🐾 Cute Cat War 🐾</h1>
+<div id="subtitle">Draw adorable cat cards and see who wins the fluffiest battle!</div>
+
+<div id="gameArea">
+    <div id="playerCard" class="card"></div>
+    <div id="cpuCard" class="card"></div>
+</div>
+
+<div id="result"></div>
+<div id="score">Player: 0 | CPU: 0</div>
+<div id="roundInfo"></div>
+
+<button onclick="drawCards()">Draw Card</button>
+
+<script>
+let playerScore = 0;
+let cpuScore = 0;
+
+const cats = [
+    {
+        name:"Ghost Kitty",
+        power:4,
+        type:"Spirit",
+        ability:"haunt",
+        emoji:"👻🐱",
+        abilityText:"10% chance to spook and steal 1 point from the opponent."
+    },
+    {
+        name:"Battle Tabby",
+        power:8,
+        type:"Warrior",
+        ability:"slayer",
+        emoji:"⚔️🐱",
+        abilityText:"+1 power if opponent is a Spirit cat."
+    },
+    {
+        name:"Witch’s Familiar",
+        power:6,
+        type:"Mage",
+        ability:"double",
+        emoji:"🔮🐱",
+        abilityText:"20% chance to magically double its power."
+    },
+    {
+        name:"Sleepy Loaf",
+        power:2,
+        type:"Normal",
+        ability:"none",
+        emoji:"😴🐱",
+        abilityText:"No ability, just maximum loaf energy."
+    },
+    {
+        name:"Chaos Kitten",
+        power:5,
+        type:"Trickster",
+        ability:"swap",
+        emoji:"🎲🐱",
+        abilityText:"25% chance to swap power with the opponent."
+    },
+    {
+        name:"Royal Fluff",
+        power:9,
+        type:"Noble",
+        ability:"shield",
+        emoji:"👑🐱",
+        abilityText:"Blocks haunt effects this round."
+    },
+    {
+        name:"Tiny Tiger",
+        power:7,
+        type:"Wild",
+        ability:"roar",
+        emoji:"🐯🐱",
+        abilityText:"15% chance to roar and gain +2 power."
+    }
+];
+
+function describeAbility(cat) {
+    return cat.abilityText;
+}
+
+function drawCards() {
+    let p = cats[Math.floor(Math.random()*cats.length)];
+    let c = cats[Math.floor(Math.random()*cats.length)];
+
+    let pPower = p.power;
+    let cPower = c.power;
+
+    let roundLog = [];
+
+    let playerShield = (p.ability === "shield");
+    let cpuShield = (c.ability === "shield");
+
+    // Player abilities
+    if (p.ability === "double" && Math.random() < 0.20) {
+        pPower *= 2;
+        roundLog.push("Your Witch’s Familiar doubled its power!");
+    }
+    if (p.ability === "roar" && Math.random() < 0.15) {
+        pPower += 2;
+        roundLog.push("Your Tiny Tiger roared and gained +2 power!");
+    }
+    if (p.ability === "haunt" && Math.random() < 0.10 && !cpuShield) {
+        cpuScore = Math.max(0, cpuScore - 1);
+        roundLog.push("Ghost Kitty haunted the CPU and stole 1 point!");
+    } else if (p.ability === "haunt" && cpuShield) {
+        roundLog.push("CPU’s Royal Fluff blocked your haunt!");
+    }
+
+    // CPU abilities
+    if (c.ability === "double" && Math.random() < 0.20) {
+        cPower *= 2;
+        roundLog.push("CPU’s Witch’s Familiar doubled its power!");
+    }
+    if (c.ability === "roar" && Math.random() < 0.15) {
+        cPower += 2;
+        roundLog.push("CPU’s Tiny Tiger roared and gained +2 power!");
+    }
+    if (c.ability === "haunt" && Math.random() < 0.10 && !playerShield) {
+        playerScore = Math.max(0, playerScore - 1);
+        roundLog.push("CPU’s Ghost Kitty haunted you and stole 1 point!");
+    } else if (c.ability === "haunt" && playerShield) {
+        roundLog.push("Your Royal Fluff blocked the CPU’s haunt!");
+    }
+
+    // Swap ability (after other buffs)
+    if (p.ability === "swap" && Math.random() < 0.25) {
+        let temp = pPower;
+        pPower = cPower;
+        cPower = temp;
+        roundLog.push("Chaos Kitten caused a power swap!");
+    }
+    if (c.ability === "swap" && Math.random() < 0.25) {
+        let temp = pPower;
+        pPower = cPower;
+        cPower = temp;
+        roundLog.push("CPU’s Chaos Kitten caused a power swap!");
+    }
+
+    // Battle Tabby bonus vs Spirit
+    if (p.ability === "slayer" && c.type === "Spirit") {
+        pPower += 1;
+        roundLog.push("Battle Tabby gets +1 vs Spirit cats!");
+    }
+    if (c.ability === "slayer" && p.type === "Spirit") {
+        cPower += 1;
+        roundLog.push("CPU’s Battle Tabby gets +1 vs your Spirit cat!");
+    }
+
+    // Display cards
+    document.getElementById("playerCard").innerHTML =
+        `<div class='catEmoji'>${p.emoji}</div>
+         <div class='catName'>${p.name}</div>
+         <div class='catPower'>Power: ${pPower}</div>
+         <div class='catType'>Type: ${p.type}</div>
+         <div class='catAbility'>${describeAbility(p)}</div>`;
+
+    document.getElementById("cpuCard").innerHTML =
+        `<div class='catEmoji'>${c.emoji}</div>
+         <div class='catName'>${c.name}</div>
+         <div class='catPower'>Power: ${cPower}</div>
+         <div class='catType'>Type: ${c.type}</div>
+         <div class='catAbility'>${describeAbility(c)}</div>`;
+
+    // Determine winner
+    let resultText = "";
+    if (pPower > cPower) {
+        playerScore++;
+        resultText = "You win the round! 🐾";
+    } else if (cPower > pPower) {
+        cpuScore++;
+        resultText = "CPU wins the round! 😼";
+    } else {
+        resultText = "It's a tie! 😺";
+    }
+
+    document.getElementById("result").innerText = resultText;
+    document.getElementById("score").innerText = `Player: ${playerScore} | CPU: ${cpuScore}`;
+    document.getElementById("roundInfo").innerText = roundLog.join(" ");
+}
+</script>
+
+</body>
+</html>
