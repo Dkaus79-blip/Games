@@ -1,13 +1,14 @@
 // games.js
-// Place this file in the repo root. It populates Games/index.html with an alphabetical,
-// paginated list (10 per page) by reading the repo contents via GitHub API.
+// Place this file in the repo root. Load it from Games/index.html with: <script src="../games.js"></script>
 
 (async function () {
-  const OWNER = "Dkaus79-blip"; // your GitHub username (adjust if different)
-  const REPO = "Games";         // repo name
-  const FOLDER = "Games";       // folder to list
-  const BRANCH = "main";        // branch to read
-  const PER_PAGE = 10;          // items per page
+  // === CONFIG ===
+  const OWNER = "Dkaus79-blip"; // GitHub username (change if different)
+  const REPO = "Games";         // Repository name (change if different)
+  const FOLDER = "Games";       // Folder inside the repo to list
+  const BRANCH = "main";        // Branch to read
+  const PER_PAGE = 10;          // Items per page
+  // ==============
 
   // Utility: read page number from ?page= query
   function getPageFromQuery() {
@@ -23,12 +24,17 @@
     history.replaceState(null, "", url.toString());
   }
 
-  // Build link target for an item returned by GitHub API
+  // Build link target for an item returned by GitHub API or games.json
   function buildHref(itemName, itemType) {
     // index.html is inside Games/, so links should be relative to that folder
     // e.g., "Catnip Scramble.html" or "DrinkStandTycoon/"
-    const encoded = encodeURI(itemName);
-    return itemType === "dir" ? `${encoded}/` : `${encoded}`;
+    // Encode each path segment safely
+    // If itemName already ends with '/', keep it
+    if (itemType === "dir") {
+      return encodeURI(itemName) + "/";
+    } else {
+      return encodeURI(itemName);
+    }
   }
 
   // Render the list and pagination controls into the page
@@ -38,8 +44,8 @@
 
     container.innerHTML = "";
 
-    if (items.length === 0) {
-      container.innerHTML = "<p>No games found.</p>";
+    if (!items || items.length === 0) {
+      container.innerHTML = "<p style='color:#aaa'>No games found.</p>";
       return;
     }
 
@@ -54,6 +60,7 @@
       a.href = buildHref(it.name, it.type);
       a.textContent = it.displayName;
       a.setAttribute("title", it.name);
+      // Open folder links in same tab (they point to folder/ which will load index.html inside)
       div.appendChild(a);
       container.appendChild(div);
     });
@@ -150,8 +157,31 @@
     }
   }
 
-  // Fetch folder contents from GitHub API
-  async function fetchFolderContents() {
+  // Try to fetch static /games.json first
+  async function fetchStaticJson() {
+    try {
+      const res = await fetch('/games.json', { cache: "no-store" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data)) return null;
+      const mapped = data.map(item => {
+        let display = item.name;
+        if (item.type === 'file' && display.toLowerCase().endsWith('.html')) {
+          display = display.slice(0, -5);
+        }
+        display = display.replace(/_/g, ' ');
+        return { name: item.name, type: item.type, displayName: display };
+      });
+      // Ensure sorted alphabetically by displayName (case-insensitive)
+      mapped.sort((a, b) => a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()));
+      return mapped;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Fallback: fetch folder contents from GitHub API
+  async function fetchFromGitHubApi() {
     const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(FOLDER)}?ref=${BRANCH}`;
     try {
       const res = await fetch(apiUrl, { headers: { Accept: "application/vnd.github.v3+json" } });
@@ -159,51 +189,33 @@
         throw new Error(`GitHub API error ${res.status}`);
       }
       const data = await res.json();
-      // Filter out hidden files like .gitkeep and README.md if present
       const filtered = data.filter(item => {
         const name = item.name || "";
         if (name.startsWith(".")) return false;
-        // optionally ignore README.md inside folder
         if (name.toLowerCase() === "readme.md") return false;
         return true;
       });
-
-      // Map to simpler objects and sort alphabetically by displayName
       const mapped = filtered.map(item => {
-        // displayName: nicer label (remove extension for .html)
         let display = item.name;
-        if (item.type === "file" && display.toLowerCase().endsWith(".html")) {
-          display = display.slice(0, -5);
-        }
-        // Replace underscores with spaces and keep capitalization
+        if (item.type === "file" && display.toLowerCase().endsWith(".html")) display = display.slice(0, -5);
         display = display.replace(/_/g, " ");
         return { name: item.name, type: item.type, displayName: display };
       });
-
-      mapped.sort((a, b) => {
-        const A = a.displayName.toLowerCase();
-        const B = b.displayName.toLowerCase();
-        if (A < B) return -1;
-        if (A > B) return 1;
-        return 0;
-      });
-
+      mapped.sort((a, b) => a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()));
       return mapped;
     } catch (err) {
-      console.error("Failed to fetch folder contents:", err);
+      console.error("Failed to fetch folder contents from GitHub API:", err);
       return null;
     }
   }
 
-  // Fallback: if API fails, try to use a hardcoded list embedded in index.html
+  // Fallback: read embedded fallback JSON inside the page (optional)
   function readFallbackListFromPage() {
-    // If you want a fallback, add a <script id="games-fallback" type="application/json">[...]</script>
-    // inside Games/index.html. This function will read it.
     try {
       const el = document.getElementById("games-fallback");
       if (!el) return null;
       const json = JSON.parse(el.textContent || "[]");
-      // json should be array of { name: "Catnip Scramble.html", type: "file" } etc.
+      if (!Array.isArray(json)) return null;
       const mapped = json.map(item => {
         let display = item.name;
         if (item.type === "file" && display.toLowerCase().endsWith(".html")) display = display.slice(0, -5);
@@ -228,11 +240,10 @@
   // show loading
   container.innerHTML = "<p style='color:#aaa'>Loading games…</p>";
 
-  let items = await fetchFolderContents();
-  if (!items) {
-    // try fallback
-    items = readFallbackListFromPage();
-  }
+  // Try static JSON -> GitHub API -> embedded fallback
+  let items = await fetchStaticJson();
+  if (!items) items = await fetchFromGitHubApi();
+  if (!items) items = readFallbackListFromPage();
 
   if (!items) {
     container.innerHTML = "<p style='color:#f88'>Could not load game list. Try again or add a fallback list.</p>";
