@@ -105,7 +105,7 @@
 
   async function fetchStatic() {
     try {
-      const res = await fetch('../games.json', { cache: "no-store" });
+      const res = await fetch('games.json', { cache: "no-store" });
       if (!res.ok) return null;
       const data = await res.json();
       if (!Array.isArray(data)) return null;
