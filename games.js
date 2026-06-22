@@ -26,10 +26,8 @@
 
   // Build link target for an item returned by GitHub API or games.json
   function buildHref(itemName, itemType) {
-    // index.html is inside Games/, so links should be relative to that folder
-    // e.g., "Catnip Scramble.html" or "DrinkStandTycoon/"
-    // Encode each path segment safely
-    // If itemName already ends with '/', keep it
+    // When running from Games/index.html, links should be relative to that folder.
+    // For directories, append a trailing slash so the browser loads the folder's index.html.
     if (itemType === "dir") {
       return encodeURI(itemName) + "/";
     } else {
@@ -60,7 +58,6 @@
       a.href = buildHref(it.name, it.type);
       a.textContent = it.displayName;
       a.setAttribute("title", it.name);
-      // Open folder links in same tab (they point to folder/ which will load index.html inside)
       div.appendChild(a);
       container.appendChild(div);
     });
@@ -157,10 +154,10 @@
     }
   }
 
-  // Try to fetch static /games.json first
+  // Try to fetch static ../games.json first (relative to Games/index.html)
   async function fetchStaticJson() {
     try {
-      const res = await fetch('/games.json', { cache: "no-store" });
+      const res = await fetch('../games.json', { cache: "no-store" });
       if (!res.ok) return null;
       const data = await res.json();
       if (!Array.isArray(data)) return null;
