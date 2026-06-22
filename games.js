@@ -2,39 +2,82 @@ const username = "Dkaus79-blip";
 const repo = "Games";
 const gamesFolder = "Games/Games";
 
+let games = [];
+let currentPage = 1;
+const perPage = 10;
+
+function renderPage() {
+  const container = document.getElementById("game-list");
+  container.innerHTML = "";
+
+  const start = (currentPage - 1) * perPage;
+  const end = start + perPage;
+  const pageGames = games.slice(start, end);
+
+  pageGames.forEach(g => {
+    container.innerHTML += `
+      <div class="game">
+        <h2>${g.title}</h2>
+        <a href="${g.file}">Play</a>
+      </div>
+    `;
+  });
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(games.length / perPage);
+  const nav = document.getElementById("pagination");
+  nav.innerHTML = "";
+
+  if (currentPage > 1) {
+    nav.innerHTML += `<button id="prevBtn">Back</button>`;
+  }
+
+  if (currentPage < totalPages) {
+    nav.innerHTML += `<button id="nextBtn">Next</button>`;
+  }
+
+  if (document.getElementById("prevBtn")) {
+    document.getElementById("prevBtn").onclick = () => {
+      currentPage--;
+      renderPage();
+    };
+  }
+
+  if (document.getElementById("nextBtn")) {
+    document.getElementById("nextBtn").onclick = () => {
+      currentPage++;
+      renderPage();
+    };
+  }
+}
+
 fetch(`https://api.github.com/repos/${username}/${repo}/contents/${gamesFolder}`)
   .then(r => r.json())
   .then(items => {
-    const container = document.getElementById("game-list");
-    container.innerHTML = "";
+    games = [];
 
     items.forEach(item => {
-      // Single HTML file (e.g., pong.html)
+      // Single HTML file
       if (item.type === "file" && item.name.endsWith(".html")) {
-        const title = item.name.replace(".html", "");
-        const file = `${gamesFolder}/${item.name}`;
-
-        container.innerHTML += `
-          <div class="game">
-            <h2>${title}</h2>
-            <a href="${file}">Play</a>
-          </div>
-        `;
+        games.push({
+          title: item.name.replace(".html", ""),
+          file: `${gamesFolder}/${item.name}`
+        });
       }
 
-      // Folder game (e.g., mario/index.html)
+      // Folder game with index.html
       if (item.type === "dir") {
-        const title = item.name;
-        const file = `${gamesFolder}/${item.name}/index.html`;
-
-        container.innerHTML += `
-          <div class="game">
-            <h2>${title}</h2>
-            <a href="${file}">Play</a>
-          </div>
-        `;
+        games.push({
+          title: item.name,
+          file: `${gamesFolder}/${item.name}/index.html`
+        });
       }
     });
+
+    renderPage();
   })
   .catch(err => {
     document.getElementById("game-list").innerText = "Error loading games.";
