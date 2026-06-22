@@ -1,18 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>My Games</title>
+
   <style>
-    body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
-    .game { margin: 15px 0; padding: 10px; background: #222; border-radius: 8px; }
-    img { width: 150px; border-radius: 6px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    #game-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .game {
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 0 10px #000;
+    }
+
+    .game h2 {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    .game a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+
+    .game a:hover {
+      background: #45a049;
+    }
   </style>
 </head>
+
 <body>
   <h1>My Games</h1>
+
   <div id="game-list">Loading games…</div>
 
-  <script src="index.js"></script>
+  <script src="games.js"></script>
 </body>
 </html>
