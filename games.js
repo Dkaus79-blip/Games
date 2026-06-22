@@ -1,13 +1,45 @@
+console.log("JS loaded!"); // DEBUG
+
 const username = "Dkaus79-blip";
 const repo = "Games";
 const branch = "main";
-const gamesFolder = "Games"; // ← FIXED PATH
+const gamesFolder = "Games"; // CORRECT FOLDER
+
+const apiURL = `https://api.github.com/repos/${username}/${repo}/contents/${gamesFolder}?ref=${branch}`;
+console.log("API URL:", apiURL); // DEBUG
 
 let games = [];
 let currentPage = 1;
 const perPage = 10;
 
+// Fetch contents of a folder and find the first HTML file
+async function findHtmlInFolder(folderPath) {
+  const url = `https://api.github.com/repos/${username}/${repo}/contents/${folderPath}?ref=${branch}`;
+  console.log("Checking folder:", url);
+
+  const res = await fetch(url);
+  const items = await res.json();
+
+  if (!Array.isArray(items)) {
+    console.warn("Folder returned non-array:", items);
+    return null;
+  }
+
+  // Find first .html file
+  const htmlFile = items.find(i => i.type === "file" && i.name.endsWith(".html"));
+
+  if (htmlFile) {
+    console.log("Found HTML in folder:", htmlFile.path);
+    return htmlFile.path;
+  }
+
+  console.warn("No HTML found in folder:", folderPath);
+  return null;
+}
+
 function renderPage() {
+  console.log("Rendering page:", currentPage);
+
   const container = document.getElementById("game-list");
   container.innerHTML = "";
 
@@ -55,39 +87,55 @@ function renderPagination() {
   }
 }
 
-fetch(`https://api.github.com/repos/${username}/${repo}/contents/${gamesFolder}?ref=${branch}`)
-  .then(r => r.json())
-  .then(items => {
-    if (!Array.isArray(items)) {
-      throw new Error("Invalid response");
+async function loadGames() {
+  const res = await fetch(apiURL);
+  const items = await res.json();
+
+  console.log("API JSON:", items);
+
+  if (!Array.isArray(items)) {
+    console.error("Invalid API response:", items);
+    document.getElementById("game-list").innerText = "Error loading games.";
+    return;
+  }
+
+  games = [];
+
+  for (const item of items) {
+    console.log("Processing:", item.name, "type:", item.type);
+
+    // Single HTML file
+    if (item.type === "file" && item.name.endsWith(".html")) {
+      games.push({
+        title: item.name.replace(".html", ""),
+        file: `${gamesFolder}/${item.name}`
+      });
     }
 
-    games = [];
+    // Folder — auto-detect HTML inside
+    if (item.type === "dir") {
+      const htmlPath = await findHtmlInFolder(`${gamesFolder}/${item.name}`);
 
-    items.forEach(item => {
-      // Single HTML file
-      if (item.type === "file" && item.name.endsWith(".html")) {
-        games.push({
-          title: item.name.replace(".html", ""),
-          file: `${gamesFolder}/${item.name}`
-        });
-      }
-
-      // Folder game with index.html
-      if (item.type === "dir") {
+      if (htmlPath) {
         games.push({
           title: item.name,
-          file: `${gamesFolder}/${item.name}/index.html`
+          file: htmlPath
         });
+      } else {
+        console.warn("Skipping folder with no HTML:", item.name);
       }
-    });
+    }
+  }
 
-    // Alphabetical sorting
-    games.sort((a, b) => a.title.localeCompare(b.title));
+  console.log("Final games list:", games);
 
-    renderPage();
-  })
-  .catch(err => {
-    document.getElementById("game-list").innerText = "Error loading games.";
-    console.error("API error:", err);
-  });
+  // Sort A–Z
+  games.sort((a, b) => a.title.localeCompare(b.title));
+
+  renderPage();
+}
+
+loadGames().catch(err => {
+  console.error("FINAL ERROR:", err);
+  document.getElementById("game-list").innerText = "Error loading games.";
+});
