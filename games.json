@@ -1,12 +1,62 @@
 [
   {
-    "title": "Game 1",
-    "file": "games/game1.html",
-    "thumbnail": "games/thumbnails/game1.png"
+    "name": "arcade_case_craze.html",
+    "type": "file"
   },
   {
-    "title": "Game 2",
-    "file": "games/game2.html",
-    "thumbnail": "games/thumbnails/game2.png"
+    "name": "bunco.html",
+    "type": "file"
+  },
+  {
+    "name": "cat war.html",
+    "type": "file"
+  },
+  {
+    "name": "Catnip Scramble.html",
+    "type": "file"
+  },
+  {
+    "name": "DrinkStandTycoon",
+    "type": "dir"
+  },
+  {
+    "name": "fishing.html",
+    "type": "file"
+  },
+  {
+    "name": "ghost_tycoon.html",
+    "type": "file"
+  },
+  {
+    "name": "haunted town.html",
+    "type": "file"
+  },
+  {
+    "name": "lunas potion class.html",
+    "type": "file"
+  },
+  {
+    "name": "neighborhood_golf_deluxe.html",
+    "type": "file"
+  },
+  {
+    "name": "number guess",
+    "type": "dir"
+  },
+  {
+    "name": "skeeters arcade.html",
+    "type": "file"
+  },
+  {
+    "name": "Spooky gacha game",
+    "type": "dir"
+  },
+  {
+    "name": "Spooky_ghost_hangman",
+    "type": "dir"
+  },
+  {
+    "name": "witches brew builder.html",
+    "type": "file"
   }
 ]
