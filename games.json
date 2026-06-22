@@ -1,62 +1,18 @@
-[
-  {
-    "name": "arcade_case_craze.html",
-    "type": "file"
-  },
-  {
-    "name": "bunco.html",
-    "type": "file"
-  },
-  {
-    "name": "cat war.html",
-    "type": "file"
-  },
-  {
-    "name": "Catnip Scramble.html",
-    "type": "file"
-  },
-  {
-    "name": "DrinkStandTycoon",
-    "type": "dir"
-  },
-  {
-    "name": "fishing.html",
-    "type": "file"
-  },
-  {
-    "name": "ghost_tycoon.html",
-    "type": "file"
-  },
-  {
-    "name": "haunted town.html",
-    "type": "file"
-  },
-  {
-    "name": "lunas potion class.html",
-    "type": "file"
-  },
-  {
-    "name": "neighborhood_golf_deluxe.html",
-    "type": "file"
-  },
-  {
-    "name": "number guess",
-    "type": "dir"
-  },
-  {
-    "name": "skeeters arcade.html",
-    "type": "file"
-  },
-  {
-    "name": "Spooky gacha game",
-    "type": "dir"
-  },
-  {
-    "name": "Spooky_ghost_hangman",
-    "type": "dir"
-  },
-  {
-    "name": "witches brew builder.html",
-    "type": "file"
-  }
-]
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Games</title>
+  <style>
+    body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
+    .game { margin: 15px 0; padding: 10px; background: #222; border-radius: 8px; }
+    img { width: 150px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>My Games</h1>
+  <div id="game-list">Loading games…</div>
+
+  <script src="index.js"></script>
+</body>
+</html>
