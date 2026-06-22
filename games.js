@@ -10,7 +10,7 @@ console.log("API URL:", apiURL); // DEBUG
 
 let games = [];
 let currentPage = 1;
-const perPage = 8;
+const perPage = 8; // ← LIMIT TO 8 PER PAGE
 
 // Fetch contents of a folder and find the first HTML file
 async function findHtmlInFolder(folderPath) {
