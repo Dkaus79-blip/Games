@@ -1,4 +1,4 @@
-// games.js - minimal, robust, non-blocking
+// games.js - final clean version
 (async function () {
   const PER_PAGE = 10;
 
@@ -72,34 +72,58 @@
       return b;
     }
 
-    nav.appendChild(btn("Prev", page <= 1, () => { const np = Math.max(1, page - 1); setPageQuery(np); render(items, np); }));
+    nav.appendChild(btn("Prev", page <= 1, () => {
+      const np = Math.max(1, page - 1);
+      setPageQuery(np);
+      render(items, np);
+    }));
 
     const maxButtons = 7;
     let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
     let endPage = startPage + maxButtons - 1;
-    if (endPage > totalPages) { endPage = totalPages; startPage = Math.max(1, endPage - maxButtons + 1); }
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
 
     if (startPage > 1) {
       nav.appendChild(btn("1", false, () => { setPageQuery(1); render(items, 1); }));
       if (startPage > 2) {
-        const dots = document.createElement("span"); dots.textContent = "…"; dots.style.padding = "6px 10px"; dots.style.color = "#aaa";
+        const dots = document.createElement("span");
+        dots.textContent = "…";
+        dots.style.padding = "6px 10px";
+        dots.style.color = "#aaa";
         nav.appendChild(dots);
       }
     }
 
     for (let i = startPage; i <= endPage; i++) {
-      nav.appendChild(btn(String(i), i === page, () => { setPageQuery(i); render(items, i); }, i === page));
+      nav.appendChild(btn(String(i), i === page, () => {
+        setPageQuery(i);
+        render(items, i);
+      }, i === page));
     }
 
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
-        const dots = document.createElement("span"); dots.textContent = "…"; dots.style.padding = "6px 10px"; dots.style.color = "#aaa";
+        const dots = document.createElement("span");
+        dots.textContent = "…";
+        dots.style.padding = "6px 10px";
+        dots.style.color = "#aaa";
         nav.appendChild(dots);
       }
-      nav.appendChild(btn(String(totalPages), false, () => { setPageQuery(totalPages); render(items, totalPages); }));
+      nav.appendChild(btn(String(totalPages), false, () => {
+        setPageQuery(totalPages);
+        render(items, totalPages);
+      }));
     }
 
-    nav.appendChild(btn("Next", page >= totalPages, () => { const np = Math.min(totalPages, page + 1); setPageQuery(np); render(items, np); }));
+    nav.appendChild(btn("Next", page >= totalPages, () => {
+      const np = Math.min(totalPages, page + 1);
+      setPageQuery(np);
+      render(items, np);
+    }));
+
     container.appendChild(nav);
   }
 
@@ -109,29 +133,16 @@
       if (!res.ok) return null;
       const data = await res.json();
       if (!Array.isArray(data)) return null;
+
       return data.map(item => {
         let display = item.name;
-        if (item.type === 'file' && display.toLowerCase().endsWith('.html')) display = display.slice(0, -5);
+        if (item.type === 'file' && display.toLowerCase().endsWith('.html'))
+          display = display.slice(0, -5);
         display = display.replace(/_/g, ' ');
         return { name: item.name, type: item.type, displayName: display };
-      }).sort((a, b) => a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()));
-    } catch {
-      return null;
-    }
-  }
-
-  function readFallback() {
-    try {
-      const el = document.getElementById("games-fallback");
-      if (!el) return null;
-      const json = JSON.parse(el.textContent || "[]");
-      if (!Array.isArray(json)) return null;
-      return json.map(item => {
-        let display = item.name;
-        if (item.type === 'file' && display.toLowerCase().endsWith('.html')) display = display.slice(0, -5);
-        display = display.replace(/_/g, ' ');
-        return { name: item.name, type: item.type, displayName: display };
-      }).sort((a, b) => a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()));
+      }).sort((a, b) =>
+        a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase())
+      );
     } catch {
       return null;
     }
@@ -140,11 +151,10 @@
   const page = getPageFromQuery();
   const container = document.querySelector(".game-list");
   if (!container) return;
+
   container.innerHTML = "<p style='color:#aaa'>Loading games…</p>";
 
   let items = await fetchStatic();
-  if (!items) items = readFallback();
-
   if (!items) {
     container.innerHTML = "<p style='color:#f88'>Could not load game list.</p>";
     return;
