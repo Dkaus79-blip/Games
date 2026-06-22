@@ -1,0 +1,61 @@
+name: Generate games.json
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate games.json from Games folder
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const path = 'Games';
+            const ref = 'main';
+            const octokit = github;
+
+            // Read folder contents
+            const resp = await octokit.rest.repos.getContent({
+              owner, repo, path, ref
+            });
+
+            // Filter and map
+            const items = resp.data
+              .filter(i => !i.name.startsWith('.') && i.name.toLowerCase() !== 'readme.md')
+              .map(i => ({ name: i.name, type: i.type }));
+
+            // Sort alphabetically (case-insensitive) by display name (strip .html)
+            items.sort((a, b) => {
+              const an = (a.type === 'file' && a.name.toLowerCase().endsWith('.html')) ? a.name.slice(0, -5) : a.name;
+              const bn = (b.type === 'file' && b.name.toLowerCase().endsWith('.html')) ? b.name.slice(0, -5) : b.name;
+              return an.toLowerCase().localeCompare(bn.toLowerCase());
+            });
+
+            const content = JSON.stringify(items, null, 2);
+
+            // Create or update games.json in repo root
+            const pathOut = 'games.json';
+            let sha;
+            try {
+              const existing = await octokit.rest.repos.getContent({ owner, repo, path: pathOut, ref });
+              sha = existing.data.sha;
+            } catch (e) {
+              sha = undefined;
+            }
+
+            await octokit.rest.repos.createOrUpdateFileContents({
+              owner,
+              repo,
+              path: pathOut,
+              message: 'Auto update games.json',
+              content: Buffer.from(content).toString('base64'),
+              branch: ref,
+              sha
+            });
