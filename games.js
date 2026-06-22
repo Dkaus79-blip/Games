@@ -1,4 +1,4 @@
-// games.js - final clean version
+// games.js - final clean version with correct paths
 (async function () {
   const PER_PAGE = 10;
 
@@ -14,8 +14,11 @@
     history.replaceState(null, "", url.toString());
   }
 
+  // FIX #1 — stay inside /Games/ so games stop 404'ing
   function buildHref(name, type) {
-    return type === "dir" ? encodeURI(name) + "/" : encodeURI(name);
+    return type === "dir"
+      ? "./" + encodeURI(name) + "/"
+      : "./" + encodeURI(name);
   }
 
   function render(items, page) {
@@ -127,6 +130,7 @@
     container.appendChild(nav);
   }
 
+  // FIX #2 — correct fetch path so pagination works
   async function fetchStatic() {
     try {
       const res = await fetch('games.json', { cache: "no-store" });
