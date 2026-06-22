@@ -1,18 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>My Games</title>
-  <style>
-    body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
-    .game { margin: 15px 0; padding: 10px; background: #222; border-radius: 8px; }
-    img { width: 150px; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <h1>My Games</h1>
-  <div id="game-list">Loading games…</div>
+fetch("games.json")
+  .then(response => response.json())
+  .then(games => {
+    const container = document.getElementById("game-list");
+    container.innerHTML = "";
 
-  <script src="index.js"></script>
-</body>
-</html>
+    games.forEach(game => {
+      const div = document.createElement("div");
+      div.className = "game";
+
+      div.innerHTML = `
+        <img src="${game.thumbnail}" alt="${game.title}">
+        <h2>${game.title}</h2>
+        <a href="${game.file}">Play</a>
+      `;
+
+      container.appendChild(div);
+    });
+  })
+  .catch(err => {
+    document.getElementById("game-list").innerText = "Error loading games.";
+    console.error(err);
+  });
