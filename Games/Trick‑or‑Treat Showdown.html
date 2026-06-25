@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Halloween Battleship</title>
+<style>
+    body {
+        background: #1a0f1f;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+    }
+    h1 { color: #ff9dfc; text-shadow: 0 0 10px #ff4dfc; margin-top: 15px; }
+
+    button {
+        margin: 5px;
+        padding: 8px 14px;
+        background: #ff9dfc;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover { filter: brightness(1.1); }
+
+    #difficultySelect, #placementArea, #gameArea {
+        margin-top: 10px;
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(10, 35px);
+        grid-template-rows: repeat(10, 35px);
+        gap: 4px;
+        margin: 10px auto;
+    }
+
+    .cell {
+        width: 35px;
+        height: 35px;
+        background: #3a2a3f;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    .cell:hover { background: #5a3a6f; }
+
+    .ship { background: #ffb347; }
+    .hit { background: #ff4d4d; box-shadow: 0 0 10px #ff0000; }
+    .miss { background: #4d6dff; box-shadow: 0 0 10px #4d6dff; }
+
+    .preview { background: #ffe066; opacity: 0.7; }
+    .preview-invalid { background: #ff6666; opacity: 0.7; }
+
+    #rotateBtn { margin-top: 10px; padding: 10px; background: #ffaaff; }
+    #startBtn { margin-top: 20px; padding: 12px; background: #00ff9d; display: none; }
+
+    #scoreBoard { margin-top: 10px; font-size: 16px; }
+
+    #boardsWrapper {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .boardContainer h2 { margin-bottom: 5px; }
+
+    /* Overlays */
+    #instructionsOverlay, #mainInstructionsOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    #instructionsBox {
+        background: #2a1630;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 400px;
+        text-align: left;
+        box-shadow: 0 0 15px #ff9dfc;
+    }
+    #instructionsBox h2 {
+        text-align: center;
+        margin-top: 0;
+        color: #ff9dfc;
+    }
+    #instructionsBox p { margin: 6px 0; font-size: 14px; }
+
+    /* SIDE-BY-SIDE SUNK PANELS */
+    #sunkPanels {
+        margin-top: 10px;
+        font-size: 14px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        flex-wrap: wrap;
+        text-align: left;
+    }
+    .sunkColumn { width: 250px; }
+    .sunkColumn h3 { margin: 6px 0 4px 0; font-size: 15px; color: #ff9dfc; }
+    .sunkColumn p { margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<h1>🎃 Halloween Battleship 👻</h1>
+
+<!-- MAIN MENU -->
+<div id="difficultySelect">
+    <h2>Select AI Difficulty</h2>
+    <button onclick="setDifficulty('easy')">Easy</button>
+    <button onclick="setDifficulty('medium')">Medium</button>
+    <button onclick="setDifficulty('hard')">Hard</button>
+    <br><br>
+    <button onclick="showMainInstructions()">📘 Instructions</button>
+</div>
+
+<!-- SHIP PLACEMENT -->
+<div id="placementArea" style="display:none;">
+    <h2>Place Your Ships</h2>
+    <div id="shipList"></div>
+    <button id="rotateBtn" onclick="rotateShip()">Rotate Ship</button>
+    <div id="playerBoard" class="board"></div>
+    <button id="startBtn" onclick="showInstructions()">Start Game</button>
+</div>
+<!-- GAME AREA -->
+<div id="gameArea" style="display:none;">
+    <div id="boardsWrapper">
+        <div class="boardContainer">
+            <h2>Your Board</h2>
+            <div id="playerBoardGame" class="board"></div>
+        </div>
+        <div class="boardContainer">
+            <h2>AI Board</h2>
+            <div id="aiBoard" class="board"></div>
+        </div>
+    </div>
+
+    <div id="scoreBoard">
+        You: <span id="youScore">0</span> | AI: <span id="aiScore">0</span>
+    </div>
+
+    <div id="sunkPanels">
+        <div class="sunkColumn">
+            <h3>Your Sunken Ships</h3>
+            <div id="yourSunkList"></div>
+        </div>
+
+        <div class="sunkColumn">
+            <h3>AI Sunken Ships</h3>
+            <div id="aiSunkList"></div>
+        </div>
+    </div>
+
+    <h2 id="status"></h2>
+
+    <button onclick="playAgain()">Play Again</button>
+    <button onclick="resetScores()">Reset Scores</button>
+</div>
+
+<!-- INSTRUCTIONS BEFORE GAME START -->
+<div id="instructionsOverlay">
+    <div id="instructionsBox">
+        <h2>🎃 How to Play 🎃</h2>
+        <p>• Place your 5 Halloween ships on your board:</p>
+        <p>&nbsp;&nbsp;🎃 Pumpkin Mansion (5)</p>
+        <p>&nbsp;&nbsp;👻 Ghost Manor (4)</p>
+        <p>&nbsp;&nbsp;🕸️ Spider Shack (3)</p>
+        <p>&nbsp;&nbsp;🧙 Witch Cottage (3)</p>
+        <p>&nbsp;&nbsp;🍬 Candy Shack (2)</p>
+        <p>• Tap a ship, then tap a tile to preview placement.</p>
+        <p>• Tap Rotate to switch horizontal/vertical.</p>
+        <p>• Yellow preview = valid, red preview = invalid.</p>
+        <p>• During the game, click the AI board to attack.</p>
+        <p>• Red = hit (emoji appears), Blue = miss.</p>
+        <p>• Sink all 5 ships to win!</p>
+        <div style="text-align:center; margin-top:10px;">
+            <button onclick="startGameReal()">Got it!</button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN MENU INSTRUCTIONS -->
+<div id="mainInstructionsOverlay">
+    <div id="instructionsBox">
+        <h2>📘 Instructions</h2>
+        <p>Welcome to Halloween Battleship!</p>
+        <p>• Choose AI difficulty to begin.</p>
+        <p>• After that, you will place your ships manually.</p>
+        <p>• Rotate ships with the Rotate button.</p>
+        <p>• Yellow preview = valid placement.</p>
+        <p>• Red preview = invalid placement.</p>
+        <p>• When the game starts, click the AI board to attack.</p>
+        <p>• Hits show cute Halloween emojis.</p>
+        <p>• First to sink all 5 ships wins.</p>
+        <div style="text-align:center; margin-top:10px;">
+            <button onclick="closeMainInstructions()">Back</button>
+        </div>
+    </div>
+</div>
+<script>
+let difficulty = "easy";
+let rotation = "horizontal";
+let selectedShipIndex = null;
+
+const shipTemplates = [
+    { name: "Pumpkin Mansion", size: 5, emoji: "🎃" },
+    { name: "Ghost Manor", size: 4, emoji: "👻" },
+    { name: "Spider Shack", size: 3, emoji: "🕸️" },
+    { name: "Witch Cottage", size: 3, emoji: "🧙" },
+    { name: "Candy Shack", size: 2, emoji: "🍬" }
+];
+
+let placementShips = JSON.parse(JSON.stringify(shipTemplates));
+
+let playerGridState;
+let aiGridState;
+let playerGridEmoji;
+let aiGridEmoji;
+
+let aiShots;
+let lastAiHit = null;
+
+let youScore = 0;
+let aiScore = 0;
+
+let yourSunkShips = [];
+let aiSunkShips = [];
+
+/* MAIN MENU INSTRUCTIONS */
+function showMainInstructions() {
+    document.getElementById("mainInstructionsOverlay").style.display = "flex";
+}
+function closeMainInstructions() {
+    document.getElementById("mainInstructionsOverlay").style.display = "none";
+}
+
+/* DIFFICULTY SELECT */
+function setDifficulty(level) {
+    difficulty = level;
+    document.getElementById("difficultySelect").style.display = "none";
+    document.getElementById("placementArea").style.display = "block";
+    initPlacement();
+}
+
+/* SHIP PLACEMENT SETUP */
+function initPlacement() {
+    playerGridState = Array(10).fill().map(()=>Array(10).fill(0));
+    aiGridState = Array(10).fill().map(()=>Array(10).fill(0));
+    playerGridEmoji = Array(10).fill().map(()=>Array(10).fill(""));
+    aiGridEmoji = Array(10).fill().map(()=>Array(10).fill(""));
+    aiShots = [];
+    lastAiHit = null;
+    placementShips = JSON.parse(JSON.stringify(shipTemplates));
+    selectedShipIndex = null;
+    document.getElementById("startBtn").style.display = "none";
+    yourSunkShips = [];
+    aiSunkShips = [];
+    renderSunkPanels();
+    buildPlacementUI();
+}
+
+function buildPlacementUI() {
+    const list = document.getElementById("shipList");
+    list.innerHTML = "";
+    placementShips.forEach((s,i)=>{
+        let btn = document.createElement("button");
+        btn.textContent = s.name + " (" + s.size + ") " + s.emoji;
+        btn.onclick = ()=>{ selectedShipIndex = i; };
+        list.appendChild(btn);
+    });
+
+    buildBoard("playerBoard", playerGridState, placeShipClick, true);
+    updateBoard("playerBoard", playerGridState, playerGridEmoji, true, false);
+}
+
+/* BOARD CREATION */
+function buildBoard(id, gridState, clickFn, enablePreview=false) {
+    const board = document.getElementById(id);
+    board.innerHTML = "";
+    for (let r=0; r<10; r++) {
+        for (let c=0; c<10; c++) {
+            let cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+            if (clickFn) cell.onclick = ()=>clickFn(r,c);
+            if (enablePreview) {
+                cell.onmouseenter = ()=>showPreview(r,c);
+                cell.onmouseleave = ()=>clearPreview();
+            }
+            board.appendChild(cell);
+        }
+    }
+}
+
+/* ROTATION */
+function rotateShip() {
+    rotation = rotation === "horizontal" ? "vertical" : "horizontal";
+}
+
+/* PREVIEW */
+function showPreview(r, c) {
+    clearPreview();
+    if (selectedShipIndex === null) return;
+    let size = placementShips[selectedShipIndex].size;
+    let valid = canPlace(playerGridState, r, c, size);
+
+    for (let i = 0; i < size; i++) {
+        let rr = r + (rotation === "vertical" ? i : 0);
+        let cc = c + (rotation === "horizontal" ? i : 0);
+        if (rr > 9 || cc > 9) continue;
+        let cell = document.querySelector(`#playerBoard .cell[data-r="${rr}"][data-c="${cc}"]`);
+        if (!cell) continue;
+        cell.classList.add(valid ? "preview" : "preview-invalid");
+    }
+}
+
+function clearPreview() {
+    document.querySelectorAll(".preview, .preview-invalid")
+        .forEach(c => c.classList.remove("preview", "preview-invalid"));
+}
+
+/* PLACE SHIP */
+function placeShipClick(r,c) {
+    if (selectedShipIndex === null) return;
+    let ship = placementShips[selectedShipIndex];
+    if (!canPlace(playerGridState, r, c, ship.size)) return;
+
+    placeShip(playerGridState, playerGridEmoji, r, c, ship.size, ship.emoji);
+    clearPreview();
+    updateBoard("playerBoard", playerGridState, playerGridEmoji, true, false);
+
+    placementShips.splice(selectedShipIndex,1);
+    selectedShipIndex = null;
+    buildPlacementUI();
+
+    if (placementShips.length === 0) {
+        document.getElementById("startBtn").style.display = "block";
+    }
+}
+
+function canPlace(gridState, r, c, size) {
+    for (let i=0; i<size; i++) {
+        let rr = r + (rotation==="vertical"?i:0);
+        let cc = c + (rotation==="horizontal"?i:0);
+        if (rr>9 || cc>9 || gridState[rr][cc] !== 0) return false;
+    }
+    return true;
+}
+
+function placeShip(gridState, gridEmoji, r, c, size, emoji) {
+    for (let i=0; i<size; i++) {
+        let rr = r + (rotation==="vertical"?i:0);
+        let cc = c + (rotation==="horizontal"?i:0);
+        gridState[rr][cc] = 1;
+        gridEmoji[rr][cc] = emoji;
+    }
+}
+/* UPDATE BOARD */
+function updateBoard(id, gridState, gridEmoji, showShips, revealEmojiOnHit) {
+    const cells = document.getElementById(id).children;
+    let idx = 0;
+    for (let r=0; r<10; r++) {
+        for (let c=0; c<10; c++) {
+            let cell = cells[idx++];
+            cell.className = "cell";
+            cell.textContent = "";
+            if (gridState[r][c] === 1 && showShips) {
+                cell.classList.add("ship");
+                cell.textContent = gridEmoji[r][c] || "";
+            }
+            if (gridState[r][c] === 2) {
+                cell.classList.add("hit");
+                if (revealEmojiOnHit) {
+                    cell.textContent = gridEmoji[r][c] || "";
+                }
+            }
+            if (gridState[r][c] === 3) {
+                cell.classList.add("miss");
+                cell.textContent = "🌫️";
+            }
+        }
+    }
+}
+
+/* INSTRUCTIONS BEFORE GAME START */
+function showInstructions() {
+    document.getElementById("instructionsOverlay").style.display = "flex";
+}
+function startGameReal() {
+    document.getElementById("instructionsOverlay").style.display = "none";
+    startGame();
+}
+
+/* START GAME */
+function startGame() {
+    autoPlaceAI();
+    document.getElementById("placementArea").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+    document.getElementById("status").textContent = "";
+
+    buildBoard("playerBoardGame", playerGridState, null, false);
+    updateBoard("playerBoardGame", playerGridState, playerGridEmoji, true, true);
+
+    buildBoard("aiBoard", aiGridState, playerAttack, false);
+    updateBoard("aiBoard", aiGridState, aiGridEmoji, false, true);
+}
+
+/* AI SHIP PLACEMENT */
+function autoPlaceAI() {
+    const aiShips = shipTemplates.map(s=>s.size);
+    const aiEmojis = shipTemplates.map(s=>s.emoji);
+    aiShips.forEach((size, index)=>{
+        let placed = false;
+        while (!placed) {
+            let r = Math.floor(Math.random()*10);
+            let c = Math.floor(Math.random()*10);
+            rotation = Math.random()>0.5 ? "horizontal" : "vertical";
+            if (canPlace(aiGridState, r, c, size)) {
+                placeShip(aiGridState, aiGridEmoji, r, c, size, aiEmojis[index]);
+                placed = true;
+            }
+        }
+    });
+}
+/* SUNK SHIP HELPERS */
+function findShipByEmoji(emoji) {
+    return shipTemplates.find(s => s.emoji === emoji);
+}
+
+function isShipSunk(gridState, gridEmoji, emoji) {
+    for (let r=0; r<10; r++) {
+        for (let c=0; c<10; c++) {
+            if (gridEmoji[r][c] === emoji && gridState[r][c] !== 2) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function addSunkShipToList(list, emoji) {
+    const ship = findShipByEmoji(emoji);
+    if (!ship) return;
+    if (list.some(s => s.emoji === emoji)) return;
+    list.push({emoji: ship.emoji, name: ship.name});
+    renderSunkPanels();
+}
+
+function renderSunkPanels() {
+    const yourDiv = document.getElementById("yourSunkList");
+    const aiDiv = document.getElementById("aiSunkList");
+    yourDiv.innerHTML = "";
+    aiDiv.innerHTML = "";
+
+    if (yourSunkShips.length === 0) {
+        yourDiv.innerHTML = "<p>(none yet)</p>";
+    } else {
+        yourSunkShips.forEach(s=>{
+            const p = document.createElement("p");
+            p.textContent = `${s.emoji} ${s.name}`;
+            yourDiv.appendChild(p);
+        });
+    }
+
+    if (aiSunkShips.length === 0) {
+        aiDiv.innerHTML = "<p>(none yet)</p>";
+    } else {
+        aiSunkShips.forEach(s=>{
+            const p = document.createElement("p");
+            p.textContent = `${s.emoji} ${s.name}`;
+            aiDiv.appendChild(p);
+        });
+    }
+}
+
+/* PLAYER ATTACK */
+function playerAttack(r,c) {
+    if (aiGridState[r][c] === 2 || aiGridState[r][c] === 3) return;
+
+    let wasShip = (aiGridState[r][c] === 1);
+    let emojiHit = aiGridEmoji[r][c];
+
+    if (wasShip) aiGridState[r][c] = 2;
+    else aiGridState[r][c] = 3;
+
+    updateBoard("aiBoard", aiGridState, aiGridEmoji, false, true);
+
+    if (wasShip && emojiHit) {
+        if (isShipSunk(aiGridState, aiGridEmoji, emojiHit)) {
+            addSunkShipToList(yourSunkShips, emojiHit);
+            const ship = findShipByEmoji(emojiHit);
+            if (ship) {
+                document.getElementById("status").textContent =
+                    `🎉 You sunk the ${ship.name}!`;
+            }
+        }
+    }
+
+    if (checkWin(aiGridState)) {
+        document.getElementById("status").textContent = "🎉 YOU WIN!";
+        youScore++;
+        updateScores();
+        return;
+    }
+
+    setTimeout(aiTurn, 500);
+}
+/* AI TURN */
+function aiTurn() {
+    let r, c;
+
+    if (difficulty === "easy") {
+        do {
+            r = Math.floor(Math.random()*10);
+            c = Math.floor(Math.random()*10);
+        } while (playerGridState[r][c] === 2 || playerGridState[r][c] === 3);
+
+    } else if (difficulty === "medium") {
+        do {
+            r = Math.floor(Math.random()*10);
+            c = Math.floor(Math.random()*10);
+        } while (playerGridState[r][c] === 2 || playerGridState[r][c] === 3);
+
+    } else { // HARD AI
+        if (lastAiHit) {
+            const dirs = [
+                {dr:-1,dc:0},{dr:1,dc:0},
+                {dr:0,dc:-1},{dr:0,dc:1}
+            ];
+            let found = false;
+
+            for (let d of dirs) {
+                let rr = lastAiHit.r + d.dr;
+                let cc = lastAiHit.c + d.dc;
+
+                if (rr>=0 && rr<10 && cc>=0 && cc<10 &&
+                    playerGridState[rr][cc] !== 2 &&
+                    playerGridState[rr][cc] !== 3) {
+
+                    r = rr;
+                    c = cc;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                do {
+                    r = Math.floor(Math.random()*10);
+                    c = Math.floor(Math.random()*10);
+                } while (playerGridState[r][c] === 2 || playerGridState[r][c] === 3);
+            }
+        } else {
+            do {
+                r = Math.floor(Math.random()*10);
+                c = Math.floor(Math.random()*10);
+            } while (playerGridState[r][c] === 2 || playerGridState[r][c] === 3);
+        }
+    }
+
+    let wasShip = (playerGridState[r][c] === 1);
+    let emojiHit = playerGridEmoji[r][c];
+
+    if (wasShip) {
+        playerGridState[r][c] = 2;
+        lastAiHit = {r,c};
+    } else {
+        playerGridState[r][c] = 3;
+    }
+
+    updateBoard("playerBoardGame", playerGridState, playerGridEmoji, true, true);
+
+    if (wasShip && emojiHit) {
+        if (isShipSunk(playerGridState, playerGridEmoji, emojiHit)) {
+            addSunkShipToList(aiSunkShips, emojiHit);
+            const ship = findShipByEmoji(emojiHit);
+            if (ship) {
+                document.getElementById("status").textContent =
+                    `💀 AI sunk your ${ship.name}!`;
+            }
+        }
+    }
+
+    if (checkWin(playerGridState)) {
+        document.getElementById("status").textContent = "💀 AI WINS!";
+        aiScore++;
+        updateScores();
+    }
+}
+
+/* WIN CHECK */
+function checkWin(gridState) {
+    for (let r=0; r<10; r++)
+        for (let c=0; c<10; c++)
+            if (gridState[r][c] === 1) return false;
+    return true;
+}
+
+/* SCORES */
+function updateScores() {
+    document.getElementById("youScore").textContent = youScore;
+    document.getElementById("aiScore").textContent = aiScore;
+}
+
+/* PLAY AGAIN / RESET */
+function playAgain() {
+    document.getElementById("gameArea").style.display = "none";
+    document.getElementById("placementArea").style.display = "block";
+    initPlacement();
+}
+function resetScores() {
+    youScore = 0;
+    aiScore = 0;
+    updateScores();
+}
+</script>
+
+</body>
+</html>
