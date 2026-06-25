@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flea Market Flipper Sim</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background:#222;
+      color:#eee;
+      margin:0;
+      padding:0;
+    }
+    #topbar {
+      background:#333;
+      padding:8px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:14px;
+    }
+    #topbar span { margin-right:12px; }
+    #container {
+      display:flex;
+      height:calc(100vh - 40px);
+    }
+    #left, #right {
+      width:22%;
+      background:#2b2b2b;
+      padding:8px;
+      overflow-y:auto;
+      box-sizing:border-box;
+    }
+    #center {
+      flex:1;
+      background:#1f1f1f;
+      padding:8px;
+      overflow-y:auto;
+      box-sizing:border-box;
+    }
+    h2, h3 {
+      margin:6px 0;
+      font-size:16px;
+    }
+    button {
+      background:#444;
+      color:#eee;
+      border:1px solid #666;
+      padding:4px 8px;
+      margin:2px 0;
+      cursor:pointer;
+      font-size:13px;
+    }
+    button:hover { background:#555; }
+    .panel {
+      border:1px solid #444;
+      padding:6px;
+      margin-bottom:8px;
+      background:#262626;
+    }
+    .item {
+      border-bottom:1px solid #444;
+      padding:4px 0;
+      font-size:13px;
+    }
+    .item:last-child { border-bottom:none; }
+    .rarity-common { color:#ccc; }
+    .rarity-uncommon { color:#6fd96f; }
+    .rarity-rare { color:#4fa9ff; }
+    .rarity-epic { color:#c678ff; }
+    .rarity-legendary { color:#ffdf6f; }
+    .small { font-size:11px; color:#aaa; }
+    .quest-complete { text-decoration:line-through; color:#6f6; }
+    .quest-special { color:#ffdf6f; }
+  </style>
+</head>
+<body>
+<div id="topbar">
+  <div>
+    <span id="daySpan">Day 1</span>
+    <span id="cashSpan">$0</span>
+    <span id="repSpan">Rep: 0</span>
+    <span id="stamSpan">Stamina: 3</span>
+  </div>
+  <div>
+    <button onclick="saveGame()">Save</button>
+    <button onclick="loadGame()">Load</button>
+    <button onclick="resetGame()">Reset</button>
+    <span id="statusSpan">Flea Market Flipper</span>
+  </div>
+</div>
+
+<div id="container">
+  <div id="left">
+    <div class="panel">
+      <h3>Menu</h3>
+      <button onclick="goScreen('map')">Map</button>
+      <button onclick="goScreen('shopView')">My Shops</button>
+      <button onclick="goScreen('inventory')">Inventory</button>
+      <button onclick="goScreen('quests')">Quests</button>
+      <button onclick="goScreen('instructions')">Instructions</button>
+      <button onclick="endDay()">End Day</button>
+    </div>
+
+    <div class="panel">
+      <h3>Locations</h3>
+      <button onclick="visitLocation('garageSale')">Garage Sale</button>
+      <button onclick="visitLocation('estateSale')">Estate Sale</button>
+      <button onclick="visitLocation('storageAuction')">Storage Auction</button>
+      <button onclick="visitLocation('roadsideFind')">Roadside Pile</button>
+      <button onclick="visitLocation('digSite')">Dig Site</button>
+    </div>
+
+    <div class="panel">
+      <h3>Tools</h3>
+      <div id="toolsList"></div>
+    </div>
+  </div>
+
+  <div id="center">
+    <div id="screen"></div>
+  </div>
+
+  <div id="right">
+    <div class="panel">
+      <h3>Selected</h3>
+      <div id="selectedPanel">Nothing selected.</div>
+    </div>
+    <div class="panel">
+      <h3>Log</h3>
+      <div id="logPanel" class="small"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- SAVE / LOAD / RESET ---------- */
+
+function saveGame() {
+  const data = JSON.stringify({
+    ...player,
+    ownedTools: Array.from(player.ownedTools)
+  });
+  localStorage.setItem("flipperSave", data);
+  setStatus("Game Saved!");
+}
+
+function loadGame() {
+  const data = localStorage.getItem("flipperSave");
+  if (!data) {
+    setStatus("No save found.");
+    return;
+  }
+  const loaded = JSON.parse(data);
+  Object.assign(player, loaded);
+  player.ownedTools = new Set(loaded.ownedTools || []);
+  // ensure quests arrays exist
+  player.dailyQuests = loaded.dailyQuests || [];
+  player.weeklyQuests = loaded.weeklyQuests || [];
+  player.specialQuest = loaded.specialQuest || null;
+  player.dailyStreak = loaded.dailyStreak || 0;
+  player.weeklyStreak = loaded.weeklyStreak || 0;
+  player.totalEarnedThisWeek = loaded.totalEarnedThisWeek || 0;
+  setStatus("Game Loaded!");
+  render();
+}
+
+function resetGame() {
+  localStorage.removeItem("flipperSave");
+  location.reload();
+}
+
+/* ---------- CORE DATA ---------- */
+
+const RARITIES = [
+  { id: "common",    weight: 55, valueMult: 1 },
+  { id: "uncommon",  weight: 25, valueMult: 1.8 },
+  { id: "rare",      weight: 12, valueMult: 3 },
+  { id: "epic",      weight: 6,  valueMult: 6 },
+  { id: "legendary", weight: 2,  valueMult: 12 }
+];
+
+const CONDITIONS = [
+  { id: "trashed",  valueMult: 0.3 },
+  { id: "worn",     valueMult: 0.6 },
+  { id: "used",     valueMult: 1 },
+  { id: "clean",    valueMult: 1.4 },
+  { id: "mint",     valueMult: 2 }
+];
+
+const ITEM_POOL = [
+  { name: "NES Console", baseValue: 120, category: "retro_gaming", restorable:true },
+  { name: "SNES Cartridge Lot", baseValue: 80, category: "retro_gaming", restorable:true },
+  { name: "Game Boy Color", baseValue: 90, category: "retro_gaming", restorable:true },
+  { name: "Arcade Joystick", baseValue: 110, category: "retro_gaming", restorable:true },
+
+  { name: "CRT TV", baseValue: 60, category: "electronics", restorable:true },
+  { name: "Boom Box", baseValue: 70, category: "electronics", restorable:true },
+
+  { name: "Rusty Tool Set", baseValue: 25, category: "tools", restorable:true },
+  { name: "Vintage Drill Press", baseValue: 150, category: "tools", restorable:true },
+
+  { name: "Oak Rocking Chair", baseValue: 90, category: "furniture", restorable:true },
+  { name: "Mid-Century Coffee Table", baseValue: 180, category: "furniture", restorable:true },
+
+  { name: "Victorian Mirror", baseValue: 220, category: "antiques", restorable:true },
+  { name: "Old Phonograph", baseValue: 260, category: "antiques", restorable:true },
+
+  { name: "Silver Dollar Roll", baseValue: 140, category: "coins", restorable:false },
+  { name: "Wheat Penny Jar", baseValue: 60, category: "coins", restorable:false },
+  { name: "Gold Coin", baseValue: 500, category: "coins", restorable:false },
+
+  { name: "Beater Sedan", baseValue: 800, category: "cars", restorable:true },
+  { name: "Classic Pickup", baseValue: 2500, category: "cars", restorable:true },
+  { name: "Barn-Find Muscle Car", baseValue: 6000, category: "cars", restorable:true },
+
+  { name: "Old Tackle Box", baseValue: 40, category: "fishing", restorable:true },
+
+  { name: "Tarnished Silver Necklace", baseValue: 90, category: "jewelry", restorable:true },
+  { name: "Gold Wedding Band", baseValue: 220, category: "jewelry", restorable:true },
+
+  { name: "Box of Paperbacks", baseValue: 30, category: "books", restorable:false },
+  { name: "First Edition Novel", baseValue: 260, category: "books", restorable:false },
+
+  { name: "Porcelain Doll", baseValue: 75, category: "toys", restorable:true },
+  { name: "Neon Beer Sign", baseValue: 110, category: "misc", restorable:true }
+];
+
+const LOCATIONS = {
+  garageSale: {
+    name: "Garage Sale",
+    minItems: 5,
+    maxItems: 12,
+    rarityBias: { common: +20, uncommon: +5, rare: -5, epic: -10, legendary: -10 },
+    priceMult: 0.7,
+    refreshDay: 0,
+    items: []
+  },
+  estateSale: {
+    name: "Estate Sale",
+    minItems: 8,
+    maxItems: 18,
+    rarityBias: { common: -10, uncommon: +10, rare: +10, epic: +5, legendary: +3 },
+    priceMult: 1.1,
+    refreshDay: 0,
+    items: []
+  },
+  roadsideFind: {
+    name: "Roadside Pile",
+    minItems: 2,
+    maxItems: 6,
+    rarityBias: { common: +30 },
+    priceMult: 0,
+    refreshDay: 0,
+    items: []
+  },
+  digSite: {
+    name: "Old Field Dig Site",
+    minItems: 1,
+    maxItems: 4,
+    rarityBias: { common: 0, uncommon: +5, rare: +5 },
+    priceMult: 0,
+    refreshDay: 0,
+    items: []
+  },
+  storageAuction: {
+    name: "Storage Auction",
+    minUnits: 3,
+    maxUnits: 6,
+    refreshDay: 0,
+    units: []
+  }
+};
+
+const SHOP_TYPES = {
+  fleaBooth: {
+    name: "Flea Market Booth",
+    baseSlots: 6,
+    baseTraffic: 1.0
+  }
+};
+
+const SHOP_UPGRADES = [
+  { level: 1, cost: 0,   slotBonus: 0,  trafficMult: 1.0 },
+  { level: 2, cost: 800, slotBonus: 4,  trafficMult: 1.1 },
+  { level: 3, cost: 2500,slotBonus: 8,  trafficMult: 1.25 }
+];
+
+const RESTORATION_TOOLS = {
+  cleaningKit: {
+    name: "Cleaning Kit",
+    cost: 100,
+    appliesTo: ["electronics","retro_gaming","toys","furniture","antiques","jewelry"],
+    stageIndex: 0
+  },
+  repairBench: {
+    name: "Repair Bench",
+    cost: 400,
+    appliesTo: ["electronics","tools","furniture","cars"],
+    stageIndex: 1,
+    breakChance: 0.08
+  },
+  polishingStation: {
+    name: "Polishing Station",
+    cost: 300,
+    appliesTo: ["jewelry","coins","antiques"],
+    stageIndex: 2
+  }
+};
+
+const RESTORE_STAGES = [
+  { name: "Cleaned", bonus: 0.20, cost: 20 },
+  { name: "Repaired", bonus: 0.10, cost: 40 },
+  { name: "Polished", bonus: 0.05, cost: 60 }
+];
+
+const CUSTOMER_TYPES = [
+  { id: "bargainHunter", name:"Bargain Hunter", payMultRange: [0.6, 0.9], haggleChance: 0.8 },
+  { id: "collector",     name:"Collector",     payMultRange: [0.9, 1.4], haggleChance: 0.5 },
+  { id: "reseller",      name:"Reseller",      payMultRange: [0.5, 0.8], haggleChance: 0.9 },
+  { id: "impulseBuyer",  name:"Impulse Buyer", payMultRange: [0.8, 1.2], haggleChance: 0.3 }
+];
+
+const player = {
+  cash: 300,
+  day: 1,
+  reputation: 0,
+  stamina: 3,
+  auctionsToday: 0,
+  inventory: [],
+  shops: [],
+  ownedTools: new Set(),
+
+  // quest state
+  dailyQuests: [],
+  weeklyQuests: [],
+  specialQuest: null,
+  dailyStreak: 0,
+  weeklyStreak: 0,
+  totalEarnedThisWeek: 0
+};
+
+let currentScreen = "map";
+let selected = null;
+
+/* ---------- UTILS ---------- */
+
+function log(msg) {
+  const el = document.getElementById("logPanel");
+  el.innerHTML = msg + "<br>" + el.innerHTML;
+}
+
+function setStatus(msg) {
+  document.getElementById("statusSpan").textContent = msg;
+}
+
+function updateTopbar() {
+  document.getElementById("daySpan").textContent = "Day " + player.day;
+  document.getElementById("cashSpan").textContent = "$" + player.cash.toFixed(0);
+  document.getElementById("repSpan").textContent = "Rep: " + player.reputation.toFixed(1);
+  document.getElementById("stamSpan").textContent = "Stamina: " + player.stamina;
+}
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickWeighted(list) {
+  const total = list.reduce((s, x) => s + x.weight, 0);
+  let roll = Math.random() * total;
+  for (const x of list) {
+    if (roll < x.weight) return x;
+    roll -= x.weight;
+  }
+}
+
+function randomCondition() {
+  return CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+}
+
+function rarityClass(r) {
+  return "rarity-" + r;
+}
+
+function applyRarityBias(base, bias) {
+  return base.map(r => ({
+    ...r,
+    weight: Math.max(1, r.weight + (bias[r.id] || 0))
+  }));
+}
+
+/* ---------- ITEM GENERATION ---------- */
+
+function generateItem(customRarities = RARITIES) {
+  const base = randomFrom(ITEM_POOL);
+  const rarity = pickWeighted(customRarities);
+  const condition = randomCondition();
+
+  const hiddenRoll = Math.random();
+  let hidden = null;
+  if (hiddenRoll < 0.05) hidden = "signed";
+  else if (hiddenRoll < 0.09) hidden = "fake";
+  else if (hiddenRoll < 0.11) hidden = "cursed";
+
+  const baseVal = base.baseValue * rarity.valueMult * condition.valueMult;
+  const value = Math.round(baseVal);
+
+  return {
+    id: "itm_" + Math.random().toString(36).slice(2),
+    name: base.name,
+    category: base.category,
+    rarity: rarity.id,
+    condition: condition.id,
+    hidden,
+    value,
+    buyPrice: Math.round(value * (0.3 + Math.random() * 0.4)),
+    restorable: base.restorable,
+    restoreLevel: 0,
+    maxRestoreLevel: base.restorable ? RESTORE_STAGES.length : 0,
+    lastHaggleDay: 0
+  };
+}
+
+/* ---------- LOCATION REFRESH ---------- */
+
+function getLocationItems(locKey) {
+  const loc = LOCATIONS[locKey];
+
+  if (loc.refreshDay !== player.day) {
+    loc.items = generateLocationItems(locKey);
+    loc.refreshDay = player.day;
+  }
+
+  return loc.items;
+}
+
+function generateLocationItems(locKey) {
+  const loc = LOCATIONS[locKey];
+  const count = loc.minItems + Math.floor(Math.random() * (loc.maxItems - loc.minItems + 1));
+  const biasedRarities = applyRarityBias(RARITIES, loc.rarityBias || {});
+  const items = [];
+
+  for (let i = 0; i < count; i++) {
+    const item = generateItem(biasedRarities);
+    item.sellerAsk = Math.round(item.value * loc.priceMult * (0.3 + Math.random() * 0.4));
+    if (locKey === "roadsideFind" || locKey === "digSite") {
+      item.sellerAsk = 0;
+      item.condition = "trashed";
+      item.value = Math.round(item.value * 0.4);
+    }
+    items.push(item);
+  }
+  return items;
+}
+
+/* ---------- AUCTIONS ---------- */
+
+function getAuctionUnits() {
+  const loc = LOCATIONS.storageAuction;
+
+  if (loc.refreshDay !== player.day) {
+    loc.units = generateAuctionUnits();
+    loc.refreshDay = player.day;
+  }
+
+  return loc.units;
+}
+
+function generateAuctionUnits() {
+  const loc = LOCATIONS.storageAuction;
+  const unitCount = loc.minUnits + Math.floor(Math.random() * (loc.maxUnits - loc.minUnits + 1));
+  const units = [];
+
+  for (let i = 0; i < unitCount; i++) {
+    const itemsInUnit = 4 + Math.floor(Math.random() * 6);
+    const biasedRarities = applyRarityBias(RARITIES, { common: +10, rare: +5 });
+    const items = [];
+    let totalValue = 0;
+
+    for (let j = 0; j < itemsInUnit; j++) {
+      const item = generateItem(biasedRarities);
+      item.arrivalDay = player.day + 1;
+      items.push(item);
+      totalValue += item.value;
+    }
+
+    const hint = {
+      visibleItems: items.slice(0, 2).map(x => x.name),
+      categories: [...new Set(items.map(x => x.category))].slice(0, 3)
+    };
+
+    const suggested = Math.round(totalValue * (0.25 + Math.random() * 0.25));
+
+    units.push({
+      id: "unit_" + i + "_" + Date.now(),
+      items,
+      hint,
+      suggestedBid: suggested,
+      currentBid: suggested,
+      owned: false
+    });
+  }
+  return units;
+}
+
+/* ---------- SHOPS ---------- */
+
+function createShop(typeId) {
+  const type = SHOP_TYPES[typeId];
+  return {
+    id: typeId + "_" + Date.now(),
+    typeId,
+    name: type.name,
+    level: 1,
+    sellingSlots: type.baseSlots,
+    trafficMult: type.baseTraffic,
+    inventory: [],
+    customersRemaining: calcDailyCustomers(1)
+  };
+}
+
+function calcDailyCustomers(level) {
+  return Math.floor(5 + level * 2);
+}
+
+function ensureStarterShop() {
+  if (player.shops.length === 0) {
+    player.shops.push(createShop("fleaBooth"));
+  }
+}
+
+function upgradeShop(shop) {
+  const next = SHOP_UPGRADES.find(u => u.level === shop.level + 1);
+  if (!next) {
+    setStatus("No further upgrades.");
+    return;
+  }
+  if (player.cash < next.cost) {
+    setStatus("Not enough cash to upgrade.");
+    return;
+  }
+  player.cash -= next.cost;
+  const type = SHOP_TYPES[shop.typeId];
+  shop.level = next.level;
+  shop.sellingSlots = type.baseSlots + next.slotBonus;
+  shop.trafficMult = type.baseTraffic * next.trafficMult;
+  shop.customersRemaining = calcDailyCustomers(shop.level);
+  log("Upgraded " + shop.name + " to level " + shop.level);
+  updateQuestProgress({ action:"shop_upgrade" });
+  render();
+}
+
+function upgradeShopById(id) {
+  const shop = player.shops.find(s => s.id === id);
+  if (shop) upgradeShop(shop);
+}
+
+function viewShop(id) {
+  currentScreen = "shop_" + id;
+  selected = null;
+  render();
+}
+
+/* ---------- RESTORATION ---------- */
+
+function buyTool(toolId) {
+  const t = RESTORATION_TOOLS[toolId];
+  if (!t) return;
+  if (player.ownedTools.has(toolId)) {
+    setStatus("You already own " + t.name);
+    return;
+  }
+  if (player.cash < t.cost) {
+    setStatus("Not enough cash for " + t.name);
+    return;
+  }
+  player.cash -= t.cost;
+  player.ownedTools.add(toolId);
+  log("Bought tool: " + t.name);
+  renderTools();
+  render();
+}
+
+function restoreItemWithTool(itemId, toolId) {
+  const t = RESTORATION_TOOLS[toolId];
+  if (!t || !player.ownedTools.has(toolId)) {
+    setStatus("You don't own that tool.");
+    return;
+  }
+  const item = player.inventory.find(i => i.id === itemId);
+  if (!item) return;
+
+  if (!item.restorable) {
+    setStatus("This item cannot be restored.");
+    return;
+  }
+
+  if (item.restoreLevel >= item.maxRestoreLevel) {
+    setStatus("This item is fully restored.");
+    return;
+  }
+
+  if (!t.appliesTo.includes(item.category)) {
+    setStatus("Tool not suitable for this item.");
+    return;
+  }
+
+  const stage = RESTORE_STAGES[item.restoreLevel];
+  if (player.cash < stage.cost) {
+    setStatus("Not enough cash to restore.");
+    return;
+  }
+  player.cash -= stage.cost;
+
+  if (t.breakChance && Math.random() < t.breakChance) {
+    item.value = Math.round(item.value * 0.5);
+    item.condition = "trashed";
+    log("You damaged " + item.name + " while restoring!");
+    updateQuestProgress({ action:"restore_fail", item });
+    render();
+    return;
+  }
+
+  item.value = Math.round(item.value * (1 + stage.bonus));
+  item.restoreLevel++;
+  log("Restored " + item.name + " (" + stage.name + ")");
+  updateQuestProgress({ action:"restore", item });
+  updateQuestProgress({ action:"restore_success", item });
+  render();
+}
+
+/* ---------- BUYING ---------- */
+
+function buyItemFromLocation(locKey, idx) {
+  const loc = LOCATIONS[locKey];
+  const item = loc.items[idx];
+  if (!item) return;
+
+  if (player.cash < item.sellerAsk) {
+    setStatus("Not enough cash.");
+    return;
+  }
+
+  player.cash -= item.sellerAsk;
+  player.inventory.push(item);
+
+  loc.items.splice(idx, 1);
+
+  log("Bought " + item.name + " for $" + item.sellerAsk);
+  updateQuestProgress({ action:"buy", item });
+  render();
+}
+
+/* ---------- AUCTION BUY ---------- */
+
+function buyAuctionUnit(idx) {
+  const loc = LOCATIONS.storageAuction;
+  const unit = loc.units[idx];
+  if (!unit || unit.owned) return;
+
+  if (player.auctionsToday >= 2) {
+    setStatus("No more auctions today.");
+    return;
+  }
+
+  const cost = unit.currentBid + 50;
+  if (player.cash < cost) {
+    setStatus("Not enough cash for this unit.");
+    return;
+  }
+
+  player.cash -= cost;
+  unit.owned = true;
+  player.auctionsToday++;
+
+  unit.items.forEach(it => player.inventory.push(it));
+
+  log("Won storage unit for $" + cost + " (" + unit.items.length + " items, usable next day)");
+  updateQuestProgress({ action:"auction_win" });
+  render();
+}
+
+/* ---------- LISTING ITEMS ---------- */
+
+function listItemInShop(itemId, shopId) {
+  const shop = player.shops.find(s => s.id === shopId);
+  if (!shop) return;
+
+  const itemIndex = player.inventory.findIndex(i => i.id === itemId);
+  if (itemIndex === -1) return;
+
+  if (shop.inventory.length >= shop.sellingSlots) {
+    setStatus("No more selling slots in this shop.");
+    return;
+  }
+
+  const item = player.inventory[itemIndex];
+  const ask = Math.round(item.value * 1.5);
+
+  shop.inventory.push({ ...item, askPrice: ask });
+  player.inventory.splice(itemIndex, 1);
+
+  log("Listed " + item.name + " in " + shop.name + " for $" + ask);
+  updateQuestProgress({ action:"list_item", item });
+  render();
+}
+
+/* ---------- CUSTOMERS & SELLING (TYPED PRICE + HAGGLE) ---------- */
+
+function generateCustomer() {
+  const c = randomFrom(CUSTOMER_TYPES);
+  return { ...c, patience: 1 };
+}
+
+function askForPrice(shopId, idx) {
+  const shop = player.shops.find(s => s.id === shopId);
+  if (!shop) return;
+  if (shop.customersRemaining <= 0) {
+    setStatus("No more customers today.");
+    return;
+  }
+
+  const item = shop.inventory[idx];
+  if (!item) return;
+
+  if (item.lastHaggleDay === player.day) {
+    setStatus("You already tried selling this today.");
+    return;
+  }
+
+  const userPrice = prompt("Enter your asking price for " + item.name + ":");
+  if (userPrice === null) {
+    setStatus("Sale cancelled.");
+    return;
+  }
+  if (userPrice.trim() === "" || isNaN(userPrice)) {
+    setStatus("Invalid price.");
+    return;
+  }
+
+  const price = parseInt(userPrice, 10);
+  attemptSaleWithPrice(shopId, idx, price);
+}
+
+function attemptSaleWithPrice(shopId, idx, ask) {
+  const shop = player.shops.find(s => s.id === shopId);
+  if (!shop) return;
+
+  const item = shop.inventory[idx];
+  if (!item) return;
+
+  const customer = generateCustomer();
+  const baseFair = item.value;
+  const [minPay, maxPay] = customer.payMultRange;
+
+  const maxWilling = Math.round(baseFair * maxPay);
+  const minWilling = Math.round(baseFair * minPay);
+
+  shop.customersRemaining--;
+  item.lastHaggleDay = player.day;
+
+  if (ask <= minWilling) {
+    completeSale(shop, idx, ask, customer);
+    return;
+  }
+
+  if (ask <= maxWilling) {
+    completeSale(shop, idx, ask, customer);
+    return;
+  }
+
+  const counter = Math.round(maxWilling);
+  selected = { type: "haggle", shopId, idx, counter, customer };
+  setStatus(customer.name + " thinks it's high, but offers $" + counter);
+  renderSelected();
+}
+
+function acceptCounter() {
+  if (!selected || selected.type !== "haggle") return;
+
+  const { shopId, idx, counter, customer } = selected;
+  const shop = player.shops.find(s => s.id === shopId);
+  if (!shop) return;
+
+  updateQuestProgress({ action:"haggle_success" });
+  completeSale(shop, idx, counter, customer);
+  selected = null;
+  renderSelected();
+}
+
+function rejectCounter() {
+  if (!selected || selected.type !== "haggle") return;
+
+  log("You rejected the offer. Customer leaves.");
+  selected = null;
+  renderSelected();
+}
+
+function completeSale(shop, idx, price, customer) {
+  const item = shop.inventory[idx];
+
+  player.cash += price;
+  shop.inventory.splice(idx, 1);
+  player.reputation += 0.3;
+
+  log(customer.name + " bought " + item.name + " for $" + price);
+
+  updateQuestProgress({ action:"sell", item, price });
+
+  render();
+}
+
+/* ---------- QUEST SYSTEM ---------- */
+
+// DAILY QUESTS (themed by day of week)
+const DAILY_QUEST_POOLS = {
+  monday: [
+    { id:"buy3", name:"Buy 3 items", type:"buy_count", amount:3, reward:{cash:150, rep:1} },
+    { id:"buyRare", name:"Buy a rare+ item", type:"buy_rarity", rarity:["rare","epic","legendary"], reward:{cash:200, rep:1} },
+    { id:"visit3", name:"Visit 3 locations", type:"visit_locations", amount:3, reward:{cash:100, rep:1} }
+  ],
+  tuesday: [
+    { id:"restore1", name:"Restore 1 item", type:"restore_count", amount:1, reward:{cash:120, rep:1} },
+    { id:"restoreFurniture", name:"Restore furniture", type:"restore_category", category:"furniture", reward:{cash:180, rep:1} },
+    { id:"clean3", name:"Restore 3 items", type:"restore_count", amount:3, reward:{cash:200, rep:1} }
+  ],
+  wednesday: [
+    { id:"sell2", name:"Sell 2 items", type:"sell_count", amount:2, reward:{cash:150, rep:1} },
+    { id:"sell100", name:"Sell item for $100+", type:"sell_value", min:100, reward:{cash:200, rep:1} },
+    { id:"haggle1", name:"Win 1 haggle", type:"haggle_success", amount:1, reward:{cash:120, rep:1} }
+  ],
+  thursday: [
+    { id:"auction1", name:"Win 1 auction", type:"auction_win", amount:1, reward:{cash:250, rep:1} },
+    { id:"auction3", name:"Win 3 auctions", type:"auction_win", amount:3, reward:{cash:400, rep:2} }
+  ],
+  friday: [
+    { id:"findRare", name:"Find rare+ item", type:"buy_rarity", rarity:["rare","epic","legendary"], reward:{cash:250, rep:2} },
+    { id:"findEpic", name:"Find epic+ item", type:"buy_rarity", rarity:["epic","legendary"], reward:{cash:400, rep:3} }
+  ],
+  saturday: [
+    { id:"list3", name:"List 3 items", type:"list_items", amount:3, reward:{cash:150, rep:1} },
+    { id:"upgradeShop", name:"Upgrade a shop", type:"shop_upgrade", amount:1, reward:{cash:300, rep:2} }
+  ],
+  sunday: [
+    { id:"mixed1", name:"Sell 1 item", type:"sell_count", amount:1, reward:{cash:200, rep:1} },
+    { id:"mixed2", name:"Restore 1 item", type:"restore_count", amount:1, reward:{cash:200, rep:1} },
+    { id:"mixed3", name:"Buy 2 items", type:"buy_count", amount:2, reward:{cash:200, rep:1} }
+  ]
+};
+
+// WEEKLY QUEST POOL
+const WEEKLY_QUEST_POOL = [
+  { id:"earn5000", name:"Earn $5000 from sales", type:"earn_total", amount:5000, reward:{cash:800, rep:3} },
+  { id:"restore10", name:"Restore 10 items", type:"restore_count", amount:10, reward:{cash:600, rep:3} },
+  { id:"sell5rare", name:"Sell 5 rare+ items", type:"sell_rarity", rarity:["rare","epic","legendary"], amount:5, reward:{cash:900, rep:4} },
+  { id:"win5auctions", name:"Win 5 auctions", type:"auction_win", amount:5, reward:{cash:1000, rep:4} }
+];
+
+// SPECIAL QUEST POOL (rare)
+const SPECIAL_QUEST_POOL = [
+  { id:"legendaryHunt", name:"Find a legendary item", type:"buy_rarity", rarity:["legendary"], reward:{cash:2000, rep:5}, daysLimit:3 },
+  { id:"sell10day", name:"Sell 10 items in a day", type:"sell_count", amount:10, reward:{cash:1500, rep:4}, daysLimit:1 },
+  { id:"restorePerfect", name:"Restore 5 items without failing", type:"restore_no_fail", amount:5, reward:{cash:1800, rep:5}, daysLimit:3 }
+];
+
+function pickRandom(arr, count) {
+  const copy = [...arr];
+  const out = [];
+  while (out.length < count && copy.length > 0) {
+    const i = Math.floor(Math.random() * copy.length);
+    out.push(copy.splice(i,1)[0]);
+  }
+  return out;
+}
+
+function generateDailyQuests() {
+  const dayNames = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+  const dayIndex = (player.day - 1) % 7;
+  const theme = dayNames[dayIndex];
+
+  const pool = DAILY_QUEST_POOLS[theme];
+  player.dailyQuests = pickRandom(pool, 3).map(q => ({
+    ...q,
+    progress:0,
+    completed:false
+  }));
+}
+
+function generateWeeklyQuests() {
+  player.weeklyQuests = pickRandom(WEEKLY_QUEST_POOL, 3).map(q => ({
+    ...q,
+    progress:0,
+    completed:false
+  }));
+  player.totalEarnedThisWeek = 0;
+}
+
+function rollSpecialQuest() {
+  if (Math.random() < 0.05) {
+    const q = randomFrom(SPECIAL_QUEST_POOL);
+    player.specialQuest = {
+      ...q,
+      progress:0,
+      completed:false,
+      expiresDay: player.day + (q.daysLimit || 3)
+    };
+  } else {
+    player.specialQuest = null;
+  }
+}
+
+function updateQuestProgress(event) {
+  updateQuestList(player.dailyQuests, event);
+  updateQuestList(player.weeklyQuests, event);
+
+  if (player.specialQuest) {
+    updateQuestList([player.specialQuest], event);
+  }
+}
+
+function updateQuestList(list, event) {
+  list.forEach(q => {
+    if (q.completed) return;
+
+    switch (q.type) {
+      case "buy_count":
+        if (event.action === "buy") q.progress++;
+        break;
+
+      case "buy_rarity":
+        if (event.action === "buy" && q.rarity.includes(event.item.rarity))
+          q.progress++;
+        break;
+
+      case "visit_locations":
+        if (event.action === "visit") q.progress++;
+        break;
+
+      case "restore_count":
+        if (event.action === "restore") q.progress++;
+        break;
+
+      case "restore_category":
+        if (event.action === "restore" && event.item.category === q.category)
+          q.progress++;
+        break;
+
+      case "sell_count":
+        if (event.action === "sell") q.progress++;
+        break;
+
+      case "sell_value":
+        if (event.action === "sell" && event.price >= q.min)
+          q.progress++;
+        break;
+
+      case "haggle_success":
+        if (event.action === "haggle_success") q.progress++;
+        break;
+
+      case "auction_win":
+        if (event.action === "auction_win") q.progress++;
+        break;
+
+      case "sell_rarity":
+        if (event.action === "sell" && q.rarity.includes(event.item.rarity))
+          q.progress++;
+        break;
+
+      case "earn_total":
+        if (event.action === "sell") {
+          player.totalEarnedThisWeek += event.price;
+          q.progress = player.totalEarnedThisWeek;
+        }
+        break;
+
+      case "list_items":
+        if (event.action === "list_item") q.progress++;
+        break;
+
+      case "shop_upgrade":
+        if (event.action === "shop_upgrade") q.progress++;
+        break;
+
+      case "restore_no_fail":
+        if (event.action === "restore_success") q.progress++;
+        if (event.action === "restore_fail") q.progress = 0;
+        break;
+    }
+
+    if (!q.completed && q.amount && q.progress >= q.amount) {
+      completeQuest(q);
+    }
+  });
+}
+
+function completeQuest(q) {
+  q.completed = true;
+
+  const repBonus = q.reward.rep || 0;
+  const cashBonus = q.reward.cash || 0;
+
+  let scale = 1;
+  if (player.reputation >= 50) scale = 2.5;
+  else if (player.reputation >= 25) scale = 1.6;
+  else if (player.reputation >= 10) scale = 1.3;
+
+  const finalCash = Math.round(cashBonus * scale);
+
+  player.cash += finalCash;
+  player.reputation += repBonus;
+
+  log(`Quest complete: ${q.name} (+$${finalCash}, +${repBonus} rep)`);
+}
+
+function handleNewDayQuests() {
+  player.dailyQuests.forEach(q => {
+    if (q.completed) player.dailyStreak++;
+  });
+  generateDailyQuests();
+
+  if ((player.day - 1) % 7 === 0) {
+    player.weeklyQuests.forEach(q => {
+      if (q.completed) player.weeklyStreak++;
+    });
+    generateWeeklyQuests();
+  }
+
+  rollSpecialQuest();
+}
+
+function checkSpecialQuestExpiration() {
+  if (player.specialQuest && player.day > player.specialQuest.expiresDay) {
+    player.specialQuest = null;
+  }
+}
+
+/* ---------- END DAY ---------- */
+
+function endDay() {
+  player.day++;
+  player.stamina = 3;
+  player.auctionsToday = 0;
+
+  player.shops.forEach(shop => {
+    shop.customersRemaining = calcDailyCustomers(shop.level);
+  });
+
+  Object.values(LOCATIONS).forEach(loc => {
+    loc.refreshDay = 0;
+  });
+
+  checkSpecialQuestExpiration();
+  handleNewDayQuests();
+
+  log("Day " + player.day + " begins.");
+  render();
+}
+
+/* ---------- NAVIGATION ---------- */
+
+function goScreen(screen) {
+  currentScreen = screen;
+  selected = null;
+  render();
+}
+
+function visitLocation(locKey) {
+  const loc = LOCATIONS[locKey];
+
+  if (locKey === "digSite") {
+    if (player.stamina <= 0) {
+      setStatus("You're too tired to dig today.");
+      return;
+    }
+    player.stamina--;
+  }
+
+  if (locKey === "storageAuction") {
+    getAuctionUnits();
+    currentScreen = "auction";
+  } else {
+    loc.items = getLocationItems(locKey);
+    currentScreen = "location_" + locKey;
+  }
+
+  selected = null;
+  setStatus("Visiting " + loc.name);
+  updateQuestProgress({ action:"visit" });
+  render();
+}
+
+/* ---------- SELECTION HELPERS ---------- */
+
+function selectItem(type, locKey, idx) {
+  if (type === "loc") {
+    const loc = LOCATIONS[locKey];
+    selected = { type: "locItem", item: loc.items[idx] };
+  }
+  renderSelected();
+}
+
+function selectUnit(idx) {
+  const loc = LOCATIONS.storageAuction;
+  selected = { type: "unit", unit: loc.units[idx] };
+  renderSelected();
+}
+
+function selectInventoryItem(id) {
+  const item = player.inventory.find(i => i.id === id);
+  selected = { type: "inventory", item };
+  renderSelected();
+}
+
+function selectShopItem(shopId, idx) {
+  const shop = player.shops.find(s => s.id === shopId);
+  selected = { type: "shopItem", item: shop.inventory[idx], shopId, idx };
+  renderSelected();
+}
+
+/* ---------- RENDER ---------- */
+
+function render() {
+  updateTopbar();
+  renderTools();
+
+  const screenEl = document.getElementById("screen");
+  let html = "";
+
+  if (currentScreen === "map") {
+    html += `<div class="panel"><h2>Town Map</h2>
+      <p>Buy, restore, and sell items. Daily/weekly quests give you goals every game day and week.</p>
+      <p>You own <b>${player.shops.length}</b> shop(s) and have <b>${player.inventory.length}</b> items.</p>
+    </div>`;
+  }
+
+  if (currentScreen.startsWith("location_")) {
+    const key = currentScreen.replace("location_", "");
+    const loc = LOCATIONS[key];
+
+    html += `<div class="panel"><h2>${loc.name}</h2>`;
+
+    if (loc.items.length === 0) {
+      html += `<p>No items left here today.</p>`;
+    } else {
+      loc.items.forEach((it, idx) => {
+        html += `<div class="item">
+          <span class="${rarityClass(it.rarity)}">${it.name}</span>
+          <span class="small">[${it.category}] (${it.condition}, ${it.rarity})</span><br>
+          <span class="small">Value: $${it.value} | Price: $${it.sellerAsk}</span><br>
+          <button onclick="buyItemFromLocation('${key}', ${idx})">Buy</button>
+          <button onclick="selectItem('loc', '${key}', ${idx})">Details</button>
+        </div>`;
+      });
+    }
+
+    html += `</div>`;
+  }
+
+  if (currentScreen === "auction") {
+    const loc = LOCATIONS.storageAuction;
+
+    html += `<div class="panel"><h2>${loc.name}</h2>`;
+
+    loc.units.forEach((u, idx) => {
+      html += `<div class="item">
+        <b>Unit ${idx + 1}</b> ${u.owned ? "(Owned)" : ""}<br>
+        <span class="small">Visible: ${u.hint.visibleItems.join(", ")}</span><br>
+        <span class="small">Categories: ${u.hint.categories.join(", ")}</span><br>
+        <span class="small">Suggested: $${u.suggestedBid} | Current Bid: $${u.currentBid}</span><br>`;
+
+      if (!u.owned) {
+        html += `<button onclick="buyAuctionUnit(${idx})">Buy Unit ($${u.currentBid}+fee)</button>`;
+      }
+
+      html += `<button onclick="selectUnit(${idx})">Details</button></div>`;
+    });
+
+    html += `</div>`;
+  }
+
+  if (currentScreen === "inventory") {
+    html += `<div class="panel"><h2>Inventory (${player.inventory.length})</h2>`;
+
+    if (player.inventory.length === 0) {
+      html += `<p>No items yet. Go hunting.</p>`;
+    } else {
+      player.inventory.forEach(it => {
+        html += `<div class="item">
+          <span class="${rarityClass(it.rarity)}">${it.name}</span>
+          <span class="small">[${it.category}] (${it.condition}, ${it.rarity})</span><br>
+          <span class="small">Value: $${it.value}</span><br>
+          <button onclick="selectInventoryItem('${it.id}')">Select</button>
+        </div>`;
+      });
+    }
+
+    html += `</div>`;
+  }
+
+  if (currentScreen === "shopView") {
+    ensureStarterShop();
+
+    html += `<div class="panel"><h2>My Shops</h2>`;
+
+    player.shops.forEach(shop => {
+      html += `<div class="item">
+        <b>${shop.name}</b> (Level ${shop.level})<br>
+        <span class="small">Slots: ${shop.inventory.length}/${shop.sellingSlots}</span><br>
+        <span class="small">Customers left today: ${shop.customersRemaining}</span><br>
+        <button onclick="upgradeShopById('${shop.id}')">Upgrade</button>
+        <button onclick="viewShop('${shop.id}')">View</button>
+      </div>`;
+    });
+
+    html += `</div>`;
+  }
+
+  if (currentScreen.startsWith("shop_")) {
+    const id = currentScreen.replace("shop_", "");
+    const shop = player.shops.find(s => s.id === id);
+
+    if (shop) {
+      html += `<div class="panel"><h2>${shop.name} (Level ${shop.level})</h2>`;
+
+      if (shop.inventory.length === 0) {
+        html += `<p>No items listed. Use Inventory to list items here.</p>`;
+      } else {
+        shop.inventory.forEach((it, idx) => {
+          html += `<div class="item">
+            <span class="${rarityClass(it.rarity)}">${it.name}</span>
+            <span class="small">[${it.category}] (${it.condition}, ${it.rarity})</span><br>
+            <span class="small">Value: $${it.value} | Last Ask: $${it.askPrice}</span><br>
+            <button onclick="askForPrice('${shop.id}', ${idx})">Try Sell</button>
+            <button onclick="selectShopItem('${shop.id}', ${idx})">Details</button>
+          </div>`;
+        });
+      }
+
+      html += `</div>`;
+    }
+  }
+
+  if (currentScreen === "quests") {
+    html += `<div class="panel"><h2>Quests</h2>
+      <p class="small">Daily quests reset every game day. Weekly quests reset every 7 game days. Special quests are rare and time-limited.</p>
+      <p class="small">Daily streak: ${player.dailyStreak} | Weekly streak: ${player.weeklyStreak}</p>
+    </div>`;
+
+    html += `<div class="panel"><h3>Daily Quests</h3>`;
+    if (player.dailyQuests.length === 0) {
+      html += `<p class="small">No daily quests (this shouldn't happen).</p>`;
+    } else {
+      player.dailyQuests.forEach(q => {
+        const done = q.completed;
+        const prog = q.amount ? `${q.progress}/${q.amount}` : q.progress;
+        html += `<div class="item ${done ? 'quest-complete' : ''}">
+          <b>${q.name}</b><br>
+          <span class="small">Progress: ${prog}</span><br>
+          <span class="small">Reward: $${q.reward.cash}, +${q.reward.rep} rep</span>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    html += `<div class="panel"><h3>Weekly Quests</h3>`;
+    if (player.weeklyQuests.length === 0) {
+      html += `<p class="small">No weekly quests (this shouldn't happen).</p>`;
+    } else {
+      player.weeklyQuests.forEach(q => {
+        const done = q.completed;
+        let prog;
+        if (q.type === "earn_total") prog = `$${q.progress}/$${q.amount}`;
+        else prog = q.amount ? `${q.progress}/${q.amount}` : q.progress;
+        html += `<div class="item ${done ? 'quest-complete' : ''}">
+          <b>${q.name}</b><br>
+          <span class="small">Progress: ${prog}</span><br>
+          <span class="small">Reward: $${q.reward.cash}, +${q.reward.rep} rep</span>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    html += `<div class="panel"><h3>Special Quest</h3>`;
+    if (!player.specialQuest) {
+      html += `<p class="small">No special quest today. You have a small chance each morning.</p>`;
+    } else {
+      const q = player.specialQuest;
+      const done = q.completed;
+      const prog = q.amount ? `${q.progress}/${q.amount}` : q.progress;
+      html += `<div class="item ${done ? 'quest-complete quest-special' : 'quest-special'}">
+        <b>${q.name}</b><br>
+        <span class="small">Progress: ${prog}</span><br>
+        <span class="small">Reward: $${q.reward.cash}, +${q.reward.rep} rep</span><br>
+        <span class="small">Expires: Day ${q.expiresDay}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  if (currentScreen === "instructions") {
+    html += `<div class="panel"><h2>Game Instructions</h2>
+
+      <h3>Goal</h3>
+      <p>Buy cheap items, restore them, and sell for profit. Grow your shop empire and complete quests.</p>
+
+      <h3>How to Play</h3>
+      <ul class="small">
+        <li>Visit locations to find items.</li>
+        <li>Buy items and they go to your inventory.</li>
+        <li>Restore items using tools (limited stages).</li>
+        <li>List items in your shop to sell.</li>
+        <li>When selling, you type the price and customers will haggle.</li>
+        <li>Each shop gets a limited number of customers per day.</li>
+        <li>Each item can only be attempted once per day.</li>
+        <li>End the day to refresh locations, quests, and stamina.</li>
+      </ul>
+
+      <h3>Quests</h3>
+      <ul class="small">
+        <li>Daily quests: 3 per game day, themed by day of week.</li>
+        <li>Weekly quests: 3 per game week (every 7 days).</li>
+        <li>Special quests: rare, time-limited, high reward.</li>
+        <li>Completing quests increases your streaks and rewards.</li>
+        <li>Rewards scale with your reputation.</li>
+      </ul>
+
+      <h3>Limits</h3>
+      <ul class="small">
+        <li>Restoration capped (no infinite value).</li>
+        <li>One sale attempt per item per day.</li>
+        <li>Customers per day limited by shop level.</li>
+        <li>Locations refresh only when the day ends.</li>
+        <li>Only 2 auctions per day.</li>
+        <li>Digging uses stamina (3 per day).</li>
+      </ul>
+
+    </div>`;
+  }
+
+  screenEl.innerHTML = html;
+  renderSelected();
+}
+
+/* ---------- SELECTED PANEL ---------- */
+
+function renderSelected() {
+  const el = document.getElementById("selectedPanel");
+
+  if (!selected) {
+    el.innerHTML = "Nothing selected.";
+    return;
+  }
+
+  let html = "";
+  const it = selected.item;
+
+  if (selected.type === "locItem" || selected.type === "inventory" || selected.type === "shopItem") {
+    html += `<b>${it.name}</b><br>
+      <span class="${rarityClass(it.rarity)}">${it.rarity}</span>,
+      <span class="small">${it.condition}</span><br>
+      <span class="small">Category: ${it.category}</span><br>
+      <span class="small">Value: $${it.value}</span><br>`;
+
+    if (it.sellerAsk !== undefined)
+      html += `<span class="small">Seller Price: $${it.sellerAsk}</span><br>`;
+
+    if (it.askPrice !== undefined)
+      html += `<span class="small">Last Ask: $${it.askPrice}</span><br>`;
+
+    if (selected.type === "inventory") {
+      html += `<hr><span class="small">Actions:</span><br>`;
+
+      if (player.shops.length > 0)
+        html += `<button onclick="listItemInShop('${it.id}', '${player.shops[0].id}')">List in ${player.shops[0].name}</button><br>`;
+
+      player.ownedTools.forEach(tid => {
+        const t = RESTORATION_TOOLS[tid];
+        html += `<button onclick="restoreItemWithTool('${it.id}', '${tid}')">Restore with ${t.name}</button><br>`;
+      });
+    }
+  }
+
+  if (selected.type === "unit") {
+    const u = selected.unit;
+    html += `<b>Storage Unit</b><br>
+      <span class="small">Visible: ${u.hint.visibleItems.join(", ")}</span><br>
+      <span class="small">Categories: ${u.hint.categories.join(", ")}</span><br>
+      <span class="small">Items inside: ${u.items.length}</span><br>
+      <span class="small">Current Bid: $${u.currentBid}</span>`;
+  }
+
+  if (selected.type === "haggle") {
+    const { counter, customer } = selected;
+    html += `<b>Haggle Offer</b><br>
+      <span class="small">${customer.name} offers $${counter}</span><br>
+      <button onclick="acceptCounter()">Accept</button>
+      <button onclick="rejectCounter()">Reject</button>`;
+  }
+
+  el.innerHTML = html;
+}
+
+/* ---------- TOOLS PANEL ---------- */
+
+function renderTools() {
+  const el = document.getElementById("toolsList");
+  let html = "";
+
+  Object.entries(RESTORATION_TOOLS).forEach(([id, t]) => {
+    const owned = player.ownedTools.has(id);
+
+    html += `<div class="item">
+      <b>${t.name}</b><br>
+      <span class="small">Cost: $${t.cost}</span><br>
+      <button onclick="buyTool('${id}')" ${owned ? "disabled" : ""}>
+        ${owned ? "Owned" : "Buy"}
+      </button>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+/* ---------- INIT ---------- */
+
+ensureStarterShop();
+generateWeeklyQuests();
+generateDailyQuests();
+rollSpecialQuest();
+render();
+log("Game loaded — typed-price selling, quests (daily/weekly/special), save/load/reset, and fixed systems.");
+</script>
+</body>
+</html>

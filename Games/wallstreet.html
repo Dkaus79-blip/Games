@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wall Street Life Sim</title>
+<style>
+  body {
+    background:#050b0a;
+    color:#d0ffb0;
+    font-family:"Consolas", monospace;
+    margin:0;
+    padding:0;
+  }
+  #topbar {
+    background:#000;
+    padding:6px 10px;
+    border-bottom:2px solid #0f3;
+    font-size:14px;
+  }
+  #ticker {
+    white-space:nowrap;
+    overflow:hidden;
+    padding:4px 8px;
+    border-bottom:1px solid #0f3;
+    background:#020805;
+  }
+  #ticker span {
+    display:inline-block;
+    padding-right:40px;
+  }
+  #container {
+    display:grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr;
+    grid-template-rows:auto auto;
+    gap:8px;
+    padding:8px;
+  }
+  .panel {
+    border:1px solid #0f3;
+    padding:6px;
+    font-size:14px;
+    background:#020805;
+  }
+  .panel h2 {
+    margin:0 0 4px 0;
+    font-size:15px;
+    color:#9eff9e;
+  }
+  button {
+    background:#021;
+    color:#9eff9e;
+    border:1px solid #0f3;
+    padding:2px 6px;
+    margin-left:4px;
+    cursor:pointer;
+    font-size:12px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:default;
+  }
+  .stock-row {
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:2px;
+  }
+  .green { color:#6fff6f; }
+  .red { color:#ff6f6f; }
+  #newsLog {
+    max-height:200px;
+    overflow-y:auto;
+    font-size:13px;
+  }
+  #questsList {
+    max-height:200px;
+    overflow-y:auto;
+    font-size:13px;
+  }
+  #gameOver {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    text-align:center;
+    z-index:10;
+  }
+  #gameOverBox {
+    border:2px solid #0f3;
+    padding:20px;
+    background:#020805;
+    max-width:400px;
+  }
+  .label {
+    color:#9eff9e;
+  }
+
+  /* Portfolio */
+  .portfolio-item {
+    display:flex;
+    justify-content:space-between;
+    border:1px solid #0f3;
+    padding:6px;
+    margin-bottom:6px;
+    background:#001a10;
+  }
+  .p-left, .p-right {
+    display:flex;
+    flex-direction:column;
+    font-size:13px;
+  }
+  .small {
+    font-size:12px;
+    opacity:0.8;
+  }
+
+  /* Life dashboard */
+  .life-box {
+    border:1px solid #0f3;
+    padding:8px;
+    margin-bottom:8px;
+    background:#001a10;
+  }
+  .life-row {
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:4px;
+    font-size:14px;
+  }
+  .life-label {
+    color:#9eff9e;
+  }
+  .life-value {
+    color:#d0ffb0;
+  }
+  .life-warning {
+    color:#ff6f6f;
+    font-weight:bold;
+  }
+  .life-good {
+    color:#6fff6f;
+    font-weight:bold;
+  }
+  .life-bar {
+    height:10px;
+    background:#003;
+    border:1px solid #0f3;
+    margin-top:6px;
+    position:relative;
+  }
+  .life-bar-fill {
+    height:100%;
+    background:#0f3;
+    width:0%;
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span id="dayInfo"></span> |
+  <span id="cycleInfo"></span> |
+  <span id="lifeInfo"></span>
+</div>
+<div id="ticker"></div>
+
+<div id="container">
+  <div class="panel" id="marketPanel">
+    <h2>Market</h2>
+    <div id="marketList"></div>
+  </div>
+
+  <div class="panel" id="portfolioPanel">
+    <h2>Portfolio & Stats</h2>
+    <div id="moneyInfo"></div>
+    <div id="netWorthInfo"></div>
+    <div id="expensesInfo"></div>
+    <hr>
+    <div id="portfolioList"></div>
+  </div>
+
+  <div class="panel" id="lifePanel">
+    <h2>Life & Expenses</h2>
+
+    <div class="life-box">
+      <div class="life-row">
+        <span class="life-label">Spouse:</span>
+        <span class="life-value">Yes</span>
+      </div>
+
+      <div class="life-row">
+        <span class="life-label">Kids:</span>
+        <span class="life-value">2</span>
+      </div>
+
+      <div class="life-row">
+        <span class="life-label">Rent (Monthly):</span>
+        <span class="life-value">$1,500</span>
+      </div>
+
+      <div class="life-row">
+        <span class="life-label">Food (Daily):</span>
+        <span class="life-value">$40</span>
+      </div>
+
+      <div class="life-row">
+        <span class="life-label">Family Misc (Daily):</span>
+        <span class="life-value">$60</span>
+      </div>
+    </div>
+
+    <div class="life-box">
+      <div id="lifeStatus"></div>
+      <div class="life-bar">
+        <div id="lifeBarFill" class="life-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="newsPanel">
+    <h2>News</h2>
+    <div id="newsLog"></div>
+  </div>
+
+  <div class="panel" id="questsPanel">
+    <h2>Quests</h2>
+    <div id="questsList"></div>
+  </div>
+
+  <div class="panel" id="controlsPanel">
+    <h2>Controls</h2>
+    <button id="btnPause">Pause</button>
+    <button id="btnResume">Resume</button>
+    <button id="btnReset">New Game</button>
+    <hr>
+    <div>Goal: Reach target net worth before going broke.</div>
+    <div id="targetInfo"></div>
+    <hr>
+    <h3>Employees</h3>
+    <button onclick="hire('analyst')">Hire Analyst ($200/day)</button>
+    <button onclick="hire('accountant')">Hire Accountant ($150/day)</button>
+    <button onclick="hire('trader')">Hire Trader Assistant ($300/day)</button>
+    <button onclick="hire('manager')">Hire Family Manager ($100/day)</button>
+    <div id="employeeStatus"></div>
+  </div>
+</div>
+
+<div id="gameOver">
+  <div id="gameOverBox">
+    <h2 id="gameOverTitle"></h2>
+    <p id="gameOverText"></p>
+    <button onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ---------- GAME STATE ----------
+const SAVE_KEY = "wallstreet_life_sim_save";
+
+const GameState = {
+  day: 0,
+  tick: 0,
+  money: 10000,
+  startingMoney: 10000,
+  cycle: 1,
+  cycleName: "Bull Market",
+  difficulty: "normal",
+  stocks: [],
+  events: [],
+  quests: [],
+  completedQuests: [],
+  targetNetWorth: 100000,
+  isGameOver: false,
+  win: false,
+  rentPerMonth: 1500,
+  foodPerDay: 40,
+  familyPerDay: 60,
+  lastRentDay: 0,
+  employees: {
+    analyst: false,
+    accountant: false,
+    trader: false,
+    manager: false
+  },
+  employeeCosts: {
+    analyst: 200,
+    accountant: 150,
+    trader: 300,
+    manager: 100
+  }
+};
+
+const SECTORS = ["Tech", "Finance", "Energy", "Industrial", "Consumer", "Healthcare", "Transportation", "Crypto", "Utilities", "Aerospace"];
+
+let onTick = null;
+let onNews = null;
+let onQuestComplete = null;
+let onGameOver = null;
+let gameInterval = null;
+
+// ---------- INIT ----------
+function createStocks() {
+  return [
+    { id:"NYT", name:"NYTech", sector:"Tech", price:120, baseVolatility:0.025, owned:0, avgBuyPrice:0, lastPrice:120 },
+    { id:"MBK", name:"MetroBank", sector:"Finance", price:80, baseVolatility:0.018, owned:0, avgBuyPrice:0, lastPrice:80 },
+    { id:"APX", name:"ApexOil", sector:"Energy", price:60, baseVolatility:0.03, owned:0, avgBuyPrice:0, lastPrice:60 },
+    { id:"STL", name:"SteelWorks", sector:"Industrial", price:45, baseVolatility:0.02, owned:0, avgBuyPrice:0, lastPrice:45 },
+    { id:"URB", name:"UrbanGoods", sector:"Consumer", price:35, baseVolatility:0.015, owned:0, avgBuyPrice:0, lastPrice:35 },
+
+    { id:"HLT", name:"HealTech", sector:"Healthcare", price:90, baseVolatility:0.02, owned:0, avgBuyPrice:0, lastPrice:90 },
+    { id:"TRN", name:"TransRail", sector:"Transportation", price:55, baseVolatility:0.018, owned:0, avgBuyPrice:0, lastPrice:55 },
+    { id:"CRP", name:"CryptoRise", sector:"Crypto", price:15, baseVolatility:0.08, owned:0, avgBuyPrice:0, lastPrice:15 },
+    { id:"WTR", name:"WaterPure", sector:"Utilities", price:40, baseVolatility:0.012, owned:0, avgBuyPrice:0, lastPrice:40 },
+    { id:"SPC", name:"SpaceFrontier", sector:"Aerospace", price:110, baseVolatility:0.04, owned:0, avgBuyPrice:0, lastPrice:110 }
+  ];
+}
+
+function createQuests() {
+  return [
+    {
+      id:"Q1",
+      title:"Tech Enthusiast",
+      description:"Own at least 50 shares of any Tech stock.",
+      type:"ownSectorShares",
+      sector:"Tech",
+      requiredShares:50,
+      rewardMoney:2000,
+      completed:false
+    },
+    {
+      id:"Q2",
+      title:"Bank Holder",
+      description:"Hold any Finance stock for 10 days.",
+      type:"holdSectorDays",
+      sector:"Finance",
+      requiredDays:10,
+      progressDays:0,
+      rewardMoney:3000,
+      completed:false
+    },
+    {
+      id:"Q3",
+      title:"Crash Survivor",
+      description:"After a crash event, keep net worth above $5,000.",
+      type:"surviveCrash",
+      triggered:false,
+      rewardMoney:4000,
+      completed:false
+    },
+    {
+      id:"Q4",
+      title:"Family Provider",
+      description:"Reach $50,000 net worth while keeping bills paid.",
+      type:"netWorthTarget",
+      target:50000,
+      rewardMoney:5000,
+      completed:false
+    }
+  ];
+}
+
+function initGame(difficulty="normal") {
+  GameState.difficulty = difficulty;
+  GameState.day = 0;
+  GameState.tick = 0;
+  GameState.cycle = 1;
+  GameState.cycleName = "Bull Market";
+  GameState.isGameOver = false;
+  GameState.win = false;
+  GameState.events = [];
+  GameState.completedQuests = [];
+  GameState.lastRentDay = 0;
+  GameState.employees = { analyst:false, accountant:false, trader:false, manager:false };
+
+  switch (difficulty) {
+    case "easy":
+      GameState.money = 20000;
+      GameState.targetNetWorth = 80000;
+      break;
+    case "hard":
+      GameState.money = 8000;
+      GameState.targetNetWorth = 150000;
+      break;
+    default:
+      GameState.money = 10000;
+      GameState.targetNetWorth = 100000;
+  }
+  GameState.startingMoney = GameState.money;
+
+  GameState.stocks = createStocks();
+  GameState.quests = createQuests();
+
+  saveGame();
+  startGameLoop();
+  renderAll();
+}
+
+// ---------- MARKET CYCLES & EVENTS ----------
+function maybeSwitchMarketCycle() {
+  const chance = 0.01;
+  if (Math.random() < chance) {
+    GameState.cycle *= -1;
+    GameState.cycleName = GameState.cycle === 1 ? "Bull Market" : "Bear Market";
+    addEvent({
+      type:"cycleChange",
+      message: GameState.cycle === 1
+        ? "Optimism surges on Wall Street. Bull market begins!"
+        : "Fear grips investors. Bear market looms.",
+      duration:10,
+      impact:{ globalTrend: GameState.cycle === 1 ? 0.01 : -0.01 }
+    });
+  }
+}
+
+function addEvent(event) {
+  GameState.events.push({
+    ...event,
+    remaining: event.duration || 5
+  });
+  if (typeof onNews === "function") onNews(event);
+}
+
+function updateEvents() {
+  GameState.events.forEach(ev => ev.remaining--);
+  GameState.events = GameState.events.filter(ev => ev.remaining > 0);
+}
+
+function maybeSpawnRandomEvent() {
+  const chance = 0.05;
+  if (Math.random() > chance) return;
+
+  const roll = Math.random();
+  if (roll < 0.4) {
+    spawnSectorEvent();
+  } else if (roll < 0.7) {
+    spawnStockEvent();
+  } else {
+    spawnCrashOrRally();
+  }
+}
+
+function randomStock() {
+  const arr = GameState.stocks;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function spawnSectorEvent() {
+  const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+  const good = Math.random() < 0.5;
+  addEvent({
+    type:"sectorNews",
+    message: good
+      ? `${sector} sector rallies on strong earnings.`
+      : `${sector} sector slumps amid regulatory fears.`,
+    duration:8,
+    impact:{
+      sector,
+      sectorTrend: good ? 0.01 : -0.01
+    }
+  });
+}
+
+function spawnStockEvent() {
+  const stock = randomStock();
+  const good = Math.random() < 0.5;
+  addEvent({
+    type:"stockNews",
+    message: good
+      ? `${stock.name} beats expectations. Analysts upgrade the stock.`
+      : `${stock.name} misses earnings. Investors flee.`,
+    duration:6,
+    impact:{
+      stockId: stock.id,
+      stockTrend: good ? 0.02 : -0.02
+    }
+  });
+}
+
+function spawnCrashOrRally() {
+  const crash = Math.random() < 0.6;
+  addEvent({
+    type: crash ? "crash" : "rally",
+    message: crash
+      ? "Panic on Wall Street! Broad market crash."
+      : "Euphoria on Wall Street! Broad market rally.",
+    duration:5,
+    impact:{
+      globalTrend: crash ? -0.03 : 0.03
+    }
+  });
+
+  if (crash) {
+    const crashQuest = GameState.quests.find(q => q.type === "surviveCrash");
+    if (crashQuest && !crashQuest.completed) crashQuest.triggered = true;
+  }
+}
+
+// ---------- PRICES ----------
+function updateStockPrices() {
+  GameState.stocks.forEach(stock => {
+    stock.lastPrice = stock.price;
+
+    const baseVol = stock.baseVolatility;
+    const randomMove = (Math.random() * 2 - 1) * baseVol;
+    const cycleTrend = GameState.cycle * 0.005;
+
+    let eventImpact = 0;
+    GameState.events.forEach(ev => {
+      if (!ev.impact) return;
+      if (ev.impact.globalTrend) eventImpact += ev.impact.globalTrend;
+      if (ev.impact.sector === stock.sector && ev.impact.sectorTrend)
+        eventImpact += ev.impact.sectorTrend;
+      if (ev.impact.stockId === stock.id && ev.impact.stockTrend)
+        eventImpact += ev.impact.stockTrend;
+    });
+
+    const totalChange = randomMove + cycleTrend + eventImpact;
+    stock.price *= (1 + totalChange);
+    if (stock.price < 1) stock.price = 1;
+  });
+}
+
+// ---------- PORTFOLIO ----------
+function buyStock(stockId, quantity=1) {
+  const stock = GameState.stocks.find(s => s.id === stockId);
+  if (!stock) return;
+  const cost = stock.price * quantity;
+  if (GameState.money < cost) return;
+
+  GameState.money -= cost;
+  const prevOwned = stock.owned;
+  const prevTotalCost = stock.avgBuyPrice * prevOwned;
+  const newTotalCost = prevTotalCost + cost;
+  stock.owned += quantity;
+  stock.avgBuyPrice = newTotalCost / stock.owned;
+
+  saveGame();
+  renderAll();
+}
+
+function sellStock(stockId, quantity=1) {
+  const stock = GameState.stocks.find(s => s.id === stockId);
+  if (!stock || stock.owned < quantity) return;
+
+  const revenue = stock.price * quantity;
+  GameState.money += revenue;
+  stock.owned -= quantity;
+  if (stock.owned === 0) stock.avgBuyPrice = 0;
+
+  saveGame();
+  renderAll();
+}
+
+function sellAll(stockId) {
+  const stock = GameState.stocks.find(s => s.id === stockId);
+  if (!stock || stock.owned <= 0) return;
+
+  const revenue = stock.price * stock.owned;
+  GameState.money += revenue;
+  stock.owned = 0;
+  stock.avgBuyPrice = 0;
+
+  saveGame();
+  renderAll();
+}
+
+function getNetWorth() {
+  let portfolioValue = 0;
+  GameState.stocks.forEach(s => {
+    portfolioValue += s.price * s.owned;
+  });
+  return GameState.money + portfolioValue;
+}
+
+// ---------- LIFE COSTS ----------
+function applyDailyCosts() {
+  const dailyRent = GameState.rentPerMonth / 30;
+  const dailyFood = GameState.foodPerDay;
+  const dailyFamily = GameState.familyPerDay;
+
+  let totalDaily = dailyRent + dailyFood + dailyFamily;
+
+  if (GameState.employees.accountant) {
+    totalDaily *= 0.90;
+  }
+  if (GameState.employees.manager) {
+    totalDaily -= 20;
+  }
+
+  GameState.money -= totalDaily;
+
+  if (GameState.employees.trader) {
+    autoTraderAssist();
+  }
+}
+
+function maybePayRent() {
+  if (GameState.day > 0 && GameState.day % 30 === 0 && GameState.lastRentDay !== GameState.day) {
+    GameState.money -= GameState.rentPerMonth;
+    GameState.lastRentDay = GameState.day;
+    addEvent({
+      type:"rent",
+      message:`Rent of $${GameState.rentPerMonth.toFixed(0)} paid.`,
+      duration:4,
+      impact:null
+    });
+  }
+}
+
+// ---------- EMPLOYEES ----------
+function hire(role) {
+  if (GameState.employees[role]) return;
+  GameState.employees[role] = true;
+  onNews({ message:`You hired a ${role}.` });
+  renderEmployees();
+  saveGame();
+}
+
+function renderEmployees() {
+  const e = GameState.employees;
+  document.getElementById("employeeStatus").innerHTML = `
+    Analyst: ${e.analyst ? "Hired" : "None"}<br>
+    Accountant: ${e.accountant ? "Hired" : "None"}<br>
+    Trader Assistant: ${e.trader ? "Hired" : "None"}<br>
+    Family Manager: ${e.manager ? "Hired" : "None"}<br>
+  `;
+}
+
+function autoTraderAssist() {
+  GameState.stocks.forEach(s => {
+    if (s.owned > 0 && s.avgBuyPrice > 0 && s.price < s.avgBuyPrice * 0.75) {
+      const revenue = s.price * s.owned;
+      GameState.money += revenue;
+      s.owned = 0;
+      s.avgBuyPrice = 0;
+      onNews({ message:`Trader Assistant auto-sold ${s.name} to prevent heavy losses.` });
+    }
+  });
+}
+
+// ---------- QUESTS ----------
+function updateQuests() {
+  GameState.quests.forEach(q => {
+    if (q.completed) return;
+    switch (q.type) {
+      case "ownSectorShares":
+        checkOwnSectorSharesQuest(q);
+        break;
+      case "holdSectorDays":
+        checkHoldSectorDaysQuest(q);
+        break;
+      case "surviveCrash":
+        checkSurviveCrashQuest(q);
+        break;
+      case "netWorthTarget":
+        checkNetWorthQuest(q);
+        break;
+    }
+  });
+}
+
+function checkOwnSectorSharesQuest(q) {
+  let total = 0;
+  GameState.stocks.forEach(s => {
+    if (s.sector === q.sector) total += s.owned;
+  });
+  if (total >= q.requiredShares) completeQuest(q);
+}
+
+function checkHoldSectorDaysQuest(q) {
+  const ownsAny = GameState.stocks.some(
+    s => s.sector === q.sector && s.owned > 0
+  );
+  if (ownsAny) {
+    q.progressDays = (q.progressDays || 0) + 1;
+    if (q.progressDays >= q.requiredDays) completeQuest(q);
+  } else {
+    q.progressDays = 0;
+  }
+}
+
+function checkSurviveCrashQuest(q) {
+  if (!q.triggered) return;
+  const netWorth = getNetWorth();
+  if (netWorth >= 5000) completeQuest(q);
+}
+
+function checkNetWorthQuest(q) {
+  const netWorth = getNetWorth();
+  if (netWorth >= q.target) completeQuest(q);
+}
+
+function completeQuest(q) {
+  q.completed = true;
+  GameState.completedQuests.push(q.id);
+  GameState.money += q.rewardMoney;
+  if (typeof onQuestComplete === "function") onQuestComplete(q);
+  saveGame();
+}
+
+// ---------- WIN / LOSE ----------
+function checkWinLose() {
+  const netWorth = getNetWorth();
+  if (netWorth >= GameState.targetNetWorth) {
+    GameState.isGameOver = true;
+    GameState.win = true;
+    if (typeof onGameOver === "function") onGameOver({ win:true, netWorth });
+  }
+  if (netWorth <= 0) {
+    GameState.isGameOver = true;
+    GameState.win = false;
+    if (typeof onGameOver === "function") onGameOver({ win:false, netWorth });
+  }
+}
+
+// ---------- SAVE / LOAD ----------
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(GameState));
+  } catch(e) {}
+}
+
+function loadGame() {
+  try {
+    const data = localStorage.getItem(SAVE_KEY);
+    if (!data) return false;
+    const parsed = JSON.parse(data);
+    Object.assign(GameState, parsed);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function resetGame() {
+  localStorage.removeItem(SAVE_KEY);
+  document.getElementById("gameOver").style.display = "none";
+  initGame(GameState.difficulty || "normal");
+}
+
+// ---------- LOOP ----------
+function startGameLoop(tickMs=1000) {
+  if (gameInterval) clearInterval(gameInterval);
+  gameInterval = setInterval(gameTick, tickMs);
+}
+
+function stopGameLoop() {
+  if (gameInterval) clearInterval(gameInterval);
+  gameInterval = null;
+}
+
+function gameTick() {
+  if (GameState.isGameOver) {
+    stopGameLoop();
+    return;
+  }
+
+  GameState.tick++;
+  if (GameState.tick % 10 === 0) {
+    GameState.day++;
+    applyDailyCosts();
+    maybePayRent();
+  }
+
+  maybeSwitchMarketCycle();
+  maybeSpawnRandomEvent();
+  updateEvents();
+  updateStockPrices();
+  updateQuests();
+  checkWinLose();
+  saveGame();
+
+  if (GameState.employees.analyst && Math.random() < 0.05) {
+    const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+    const msg = `Analyst Report: ${sector} sector may shift soon.`;
+    onNews({ message: msg });
+  }
+
+  if (typeof onTick === "function") onTick(GameState);
+}
+
+// ---------- UI RENDER ----------
+const elTicker = document.getElementById("ticker");
+const elDayInfo = document.getElementById("dayInfo");
+const elCycleInfo = document.getElementById("cycleInfo");
+const elLifeInfo = document.getElementById("lifeInfo");
+const elMarketList = document.getElementById("marketList");
+const elMoneyInfo = document.getElementById("moneyInfo");
+const elNetWorthInfo = document.getElementById("netWorthInfo");
+const elExpensesInfo = document.getElementById("expensesInfo");
+const elPortfolioList = document.getElementById("portfolioList");
+const elNewsLog = document.getElementById("newsLog");
+const elQuestsList = document.getElementById("questsList");
+const elLifeStatus = document.getElementById("lifeStatus");
+const elLifeBarFill = document.getElementById("lifeBarFill");
+const elTargetInfo = document.getElementById("targetInfo");
+
+function renderTicker() {
+  let text = GameState.stocks.map(s => {
+    const diff = s.price - s.lastPrice;
+    const sign = diff >= 0 ? "+" : "";
+    return `${s.name} $${s.price.toFixed(2)} (${sign}${diff.toFixed(2)})`;
+  }).join("   |   ");
+  elTicker.innerHTML = `<span>${text}</span>`;
+}
+
+function renderTopbar() {
+  elDayInfo.textContent = `Day ${GameState.day}`;
+  elCycleInfo.textContent = GameState.cycleName;
+  const dailyRent = GameState.rentPerMonth / 30;
+  const dailyTotal = dailyRent + GameState.foodPerDay + GameState.familyPerDay;
+  elLifeInfo.textContent = `Daily costs: $${dailyTotal.toFixed(0)}`;
+}
+
+function renderMarket() {
+  let html = "";
+  GameState.stocks.forEach(s => {
+    const diff = s.price - s.lastPrice;
+    const cls = diff >= 0 ? "green" : "red";
+    html += `
+      <div class="stock-row">
+        <span>${s.name} [$${s.price.toFixed(2)}] 
+          <span class="${cls}">${diff>=0?"+":""}${diff.toFixed(2)}</span>
+        </span>
+        <span>
+          <button onclick="buyStock('${s.id}',1)">Buy 1</button>
+          <button onclick="buyStock('${s.id}',5)">Buy 5</button>
+          <button onclick="buyStock('${s.id}',10)">Buy 10</button>
+          <button onclick="sellStock('${s.id}',1)">Sell 1</button>
+          <button onclick="sellAll('${s.id}')">Sell All</button>
+        </span>
+      </div>
+    `;
+  });
+  elMarketList.innerHTML = html;
+}
+
+function renderPortfolio() {
+  const netWorth = getNetWorth();
+  elMoneyInfo.textContent = `Cash: $${GameState.money.toFixed(2)}`;
+  elNetWorthInfo.textContent = `Net Worth: $${netWorth.toFixed(2)} (Target: $${GameState.targetNetWorth.toFixed(0)})`;
+
+  const dailyRent = GameState.rentPerMonth / 30;
+  const dailyTotal = dailyRent + GameState.foodPerDay + GameState.familyPerDay;
+  elExpensesInfo.textContent = `Approx. daily expenses: $${dailyTotal.toFixed(0)}`;
+
+  let html = "";
+
+  GameState.stocks.forEach(s => {
+    if (s.owned > 0) {
+      const value = s.price * s.owned;
+      const gain = s.price - s.avgBuyPrice;
+      const gainPct = s.avgBuyPrice > 0 ? ((s.price / s.avgBuyPrice) - 1) * 100 : 0;
+      const cls = gain >= 0 ? "green" : "red";
+
+      html += `
+        <div class="portfolio-item">
+          <div class="p-left">
+            <strong>${s.name}</strong>
+            <span class="small">Owned: ${s.owned}</span>
+            <span class="small">Avg Buy: $${s.avgBuyPrice.toFixed(2)}</span>
+          </div>
+          <div class="p-right">
+            <span class="small">Value:</span>
+            <div>$${value.toFixed(2)}</div>
+            <span class="small">P/L:</span>
+            <div class="${cls}">${gain>=0?"+":""}${gain.toFixed(2)} (${gainPct.toFixed(1)}%)</div>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  if (!html) html = "<div>No holdings yet.</div>";
+  elPortfolioList.innerHTML = html;
+}
+
+function renderNews() {
+  // news appended via onNews
+}
+
+function renderQuests() {
+  let html = "";
+  GameState.quests.forEach(q => {
+    html += `<div>
+      <strong>${q.title}</strong> ${q.completed ? "<span class='green'>(Completed)</span>" : ""}<br>
+      ${q.description}<br>
+      Reward: $${q.rewardMoney.toFixed(0)}
+    </div><hr>`;
+  });
+  elQuestsList.innerHTML = html;
+}
+
+function renderLife() {
+  const netWorth = getNetWorth();
+  const dailyRent = GameState.rentPerMonth / 30;
+  const dailyTotal = dailyRent + GameState.foodPerDay + GameState.familyPerDay;
+
+  let daysLeft = Math.floor(GameState.money / dailyTotal);
+  if (daysLeft < 0) daysLeft = 0;
+
+  let statusText = "";
+  let statusClass = "";
+
+  if (daysLeft > 30) {
+    statusText = `You can support your family for ${daysLeft} days.`;
+    statusClass = "life-good";
+  } else if (daysLeft > 7) {
+    statusText = `Warning: Only ${daysLeft} days of expenses covered.`;
+    statusClass = "life-warning";
+  } else {
+    statusText = `Critical: Only ${daysLeft} days left!`;
+    statusClass = "life-warning";
+  }
+
+  elLifeStatus.innerHTML = `
+    <div class="${statusClass}">
+      ${statusText}
+    </div>
+    <div class="life-row">
+      <span class="life-label">Daily Total:</span>
+      <span class="life-value">$${dailyTotal.toFixed(0)}</span>
+    </div>
+    <div class="life-row">
+      <span class="life-label">Net Worth:</span>
+      <span class="life-value">$${netWorth.toFixed(2)}</span>
+    </div>
+  `;
+
+  const maxDays = 60;
+  const pct = Math.min(100, (daysLeft / maxDays) * 100);
+  elLifeBarFill.style.width = pct + "%";
+}
+
+function renderControls() {
+  elTargetInfo.textContent = `Target Net Worth: $${GameState.targetNetWorth.toFixed(0)}`;
+  renderEmployees();
+}
+
+function renderAll() {
+  renderTicker();
+  renderTopbar();
+  renderMarket();
+  renderPortfolio();
+  renderNews();
+  renderQuests();
+  renderLife();
+  renderControls();
+}
+
+// ---------- HOOKS ----------
+onTick = function(state) {
+  renderAll();
+};
+
+onNews = function(event) {
+  const line = document.createElement("div");
+  line.textContent = event.message;
+  elNewsLog.prepend(line);
+};
+
+onQuestComplete = function(quest) {
+  const line = document.createElement("div");
+  line.innerHTML = `<span class="green">Quest completed:</span> ${quest.title} (+$${quest.rewardMoney.toFixed(0)})`;
+  elNewsLog.prepend(line);
+  renderQuests();
+};
+
+onGameOver = function(result) {
+  const netWorth = result.netWorth;
+  const box = document.getElementById("gameOver");
+  const title = document.getElementById("gameOverTitle");
+  const text = document.getElementById("gameOverText");
+  if (result.win) {
+    title.textContent = "You Made It!";
+    text.textContent = `You reached a net worth of $${netWorth.toFixed(2)} while supporting your family. Wall Street legend.`;
+  } else {
+    title.textContent = "Game Over";
+    text.textContent = `You went broke trying to juggle Wall Street and real life. Net worth: $${netWorth.toFixed(2)}.`;
+  }
+  box.style.display = "flex";
+};
+
+// ---------- CONTROLS ----------
+document.getElementById("btnPause").onclick = () => stopGameLoop();
+document.getElementById("btnResume").onclick = () => startGameLoop();
+document.getElementById("btnReset").onclick = () => resetGame();
+
+// ---------- START ----------
+if (!loadGame()) {
+  initGame("normal");
+} else {
+  startGameLoop();
+  renderAll();
+}
+</script>
+
+</body>
+</html>
