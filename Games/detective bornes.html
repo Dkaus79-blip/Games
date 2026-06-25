@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Detective Bornes</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#0b0c10; color:#eaeaea; margin:0; }
+  header { background:linear-gradient(90deg,#111,#1f2833); padding:10px 20px; border-bottom:2px solid #45a29e; }
+  h1 { margin:0; font-size:26px; letter-spacing:1px; }
+  #main { padding:10px; display:flex; gap:10px; }
+  button { background:#45a29e; border:none; color:#0b0c10; padding:6px 12px; border-radius:4px; cursor:pointer; margin:4px; font-weight:bold; }
+  button:hover { background:#66fcf1; }
+  button:disabled { background:#555; color:#aaa; cursor:default; }
+  .panel { background:#1f2833; border-radius:6px; padding:10px; margin-bottom:10px; border:1px solid #45a29e; }
+  .card { display:inline-block; background:linear-gradient(135deg,#0b0c10,#1f2833); border-radius:8px; border:1px solid #c5c6c7; padding:6px; margin:4px; min-width:110px; text-align:left; cursor:pointer; box-shadow:0 0 6px rgba(0,0,0,0.6); transition:transform 0.1s, background 0.1s, opacity 0.1s; }
+  .card-header { font-size:11px; opacity:0.8; margin-bottom:2px; }
+  .card-title { font-weight:bold; font-size:13px; }
+  .card-desc { font-size:11px; margin-top:2px; }
+  .card-invest { border-color:#66fcf1; }
+  .card-sabotage { border-color:#ff6b6b; }
+  .card-remedy { border-color:#feca57; }
+  .card-power { border-color:#54a0ff; }
+  .card:hover { background:#111; transform:translateY(-2px); }
+  .card.disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .flex { display:flex; gap:10px; }
+  .player-panel { flex:1; }
+  .progress-bar { width:100%; height:12px; background:#0b0c10; border-radius:6px; overflow:hidden; border:1px solid #c5c6c7; margin-top:4px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#66fcf1,#45a29e); width:0%; transition:width 0.3s; }
+  #log { max-height:200px; overflow-y:auto; font-size:12px; background:#0b0c10; padding:6px; border-radius:4px; border:1px solid #c5c6c7; }
+  #menu, #gameScreen, #instructions, #scoreboard, #setup { display:none; }
+  h2 { margin-top:0; }
+  label { font-size:13px; }
+  #sidebar { width:260px; }
+  .cheat-section { margin-bottom:10px; font-size:12px; }
+  .cheat-section b { color:#66fcf1; }
+
+  .banner {
+    margin-top:6px;
+    padding:6px 10px;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:bold;
+  }
+  .banner-red { background:#c0392b; color:#fff; }
+  .banner-green { background:#27ae60; color:#fff; }
+  .banner-blue { background:#2980b9; color:#fff; }
+  .banner-gold { background:#f1c40f; color:#000; }
+
+  .shake { animation: shake 0.2s; }
+  @keyframes shake {
+    0% { transform:translateX(0); }
+    25% { transform:translateX(-3px); }
+    50% { transform:translateX(3px); }
+    75% { transform:translateX(-3px); }
+    100% { transform:translateX(0); }
+  }
+
+  .glow-endturn { box-shadow:0 0 8px #66fcf1; }
+
+  #matchInfo {
+    margin:10px 0;
+    padding:8px;
+    background:#0b0c10;
+    border:1px solid #45a29e;
+    border-radius:6px;
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Detective Bornes</h1>
+  <div style="font-size:12px;color:#c5c6c7;">Noir × Modern Police × Cartoon Mystery</div>
+</header>
+
+<div id="main">
+  <div style="flex:1;">
+    <!-- Main Menu -->
+    <div id="menu" class="panel">
+      <h2>Main Menu</h2>
+      <button id="btnNewGame">New Game</button>
+      <button id="btnLoadGame">Load Game</button>
+      <button id="btnInstructions">Instructions</button>
+      <button id="btnScoreboard">Scoreboard</button>
+      <button id="btnResetAll">Reset All</button>
+    </div>
+
+    <!-- New Game Setup -->
+    <div id="setup" class="panel">
+      <h2>New Game Setup</h2>
+      <div><label>Player 1: Human (You)</label></div>
+      <div style="margin-top:6px;">
+        <label>Player 2 Type:</label><br>
+        <label><input type="radio" name="p2type" value="human" checked> Human (local)</label><br>
+        <label><input type="radio" name="p2type" value="ai"> AI</label>
+      </div>
+      <div id="aiOptions" style="margin-top:6px; display:none;">
+        <label>AI Difficulty:</label><br>
+        <label><input type="radio" name="aidiff" value="easy" checked> Easy</label><br>
+        <label><input type="radio" name="aidiff" value="normal"> Normal</label><br>
+        <label><input type="radio" name="aidiff" value="hard"> Hard</label>
+      </div>
+      <button id="btnStartGame">Start Game</button>
+      <button id="btnBackMenu">Back</button>
+    </div>
+
+    <!-- Instructions -->
+    <div id="instructions" class="panel">
+      <h2>How to Play</h2>
+      <p><b>Goal:</b> Win a <b>best‑of‑5 match</b> by solving 3 cases (rounds) before your opponent.</p>
+
+      <h3>Match Rules</h3>
+      <ul>
+        <li>Each match is <b>best‑of‑5</b>.</li>
+        <li>First detective to <b>3 round wins</b> wins the match.</li>
+        <li>A round ends when a detective reaches <b>100% Case Solved</b> and is not sabotaged.</li>
+        <li>After each round, everything resets and the next round begins automatically.</li>
+        <li>Winning a match increases your <b>Winning Streak</b>.</li>
+        <li>Losing a match resets your streak to 0.</li>
+      </ul>
+
+      <h3>Card Types</h3>
+      <ul>
+        <li><b>🔍 Investigation cards</b> – increase your case progress. Only <b>one card per turn</b>, and cannot be played while sabotaged.</li>
+        <li><b>🚫 Sabotage cards</b> – block or limit your opponent’s progress.</li>
+        <li><b>🛠️ Remedy cards</b> – remove sabotage.</li>
+        <li><b>⭐ Power cards</b> – permanent abilities or sabotage immunity.</li>
+      </ul>
+
+      <h3>Turn Structure</h3>
+      <ol>
+        <li><b>Draw 1 card</b> at the start of your turn.</li>
+        <li><b>Play ONE card</b>.</li>
+        <li><b>End turn</b> → draw 1 card.</li>
+      </ol>
+
+      <button id="btnInstructionsBack">Back</button>
+    </div>
+
+    <!-- Scoreboard -->
+    <div id="scoreboard" class="panel">
+      <h2>Scoreboard</h2>
+      <div id="scoreContent"></div>
+      <button id="btnScoreBack">Back</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="panel">
+      <h2>Detective Bornes – Game</h2>
+
+      <div id="matchInfo">
+        <div id="roundDisplay">Round: 1 / 5</div>
+        <div id="roundScore">Round Score: P1 0 – 0 P2</div>
+        <div id="matchStreak">Winning Streak: 0</div>
+      </div>
+
+      <div id="status"></div>
+
+      <div class="flex">
+        <div class="player-panel" id="p1Panel">
+          <h3>Player 1 (You)</h3>
+          <div>Progress: <span id="p1ProgressText">0%</span></div>
+          <div class="progress-bar"><div id="p1ProgressBar" class="progress-fill"></div></div>
+          <div>Sabotaged: <span id="p1Sabotaged">No</span></div>
+          <div>Power: <span id="p1Power">None</span></div>
+          <div id="p1Banner" class="banner banner-green">✅ CLEAR: You may play any card.</div>
+        </div>
+
+        <div class="player-panel" id="p2Panel">
+          <h3 id="p2Title">Player 2</h3>
+          <div>Progress: <span id="p2ProgressText">0%</span></div>
+          <div class="progress-bar"><div id="p2ProgressBar" class="progress-fill"></div></div>
+          <div>Sabotaged: <span id="p2Sabotaged">No</span></div>
+          <div>Power: <span id="p2Power">None</span></div>
+          <div id="p2Banner" class="banner banner-green">✅ CLEAR: You may play any card.</div>
+        </div>
+      </div>
+
+      <h3>Your Hand</h3>
+      <div id="hand"></div>
+
+      <div style="margin-top:6px;">
+        <button id="btnEndTurn">End Turn</button>
+        <button id="btnSaveGame">Save Game</button>
+        <button id="btnBackToMenu">Quit to Menu</button>
+      </div>
+
+      <h3>Turn Log</h3>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <!-- Cheat Sheet Sidebar -->
+  <div id="sidebar" class="panel">
+    <h2>Cheat Sheet</h2>
+    <div class="cheat-section">
+      <b>🔍 Investigation Cards</b><br>
+      +10 / +20 / +30 / +40%<br>
+      • Only 1 card per turn<br>
+      • Cannot play if sabotaged
+    </div>
+    <div class="cheat-section">
+      <b>🚫 Sabotage Cards</b><br>
+      • False Lead – blocks all progress<br>
+      • Locked Evidence – progress capped at +10% per turn<br>
+      • Tampered Evidence – lose 10% + blocked<br>
+      • Witness Vanishes – must fix first<br>
+      • Camera Offline – lose next turn
+    </div>
+    <div class="cheat-section">
+      <b>🛠️ Remedy Cards</b><br>
+      • Case Review – remove all sabotage<br>
+      • Corrected Evidence – remove one sabotage<br>
+      • Found Witness – fixes Witness Vanishes<br>
+      • System Reboot – fixes Camera Offline
+    </div>
+    <div class="cheat-section">
+      <b>⭐ Power Cards</b><br>
+      • Sabotage Shield – blocks next sabotage<br>
+      • Forensics Expert – immune to Tampered Evidence<br>
+      • Surveillance Access – immune to Camera Offline<br>
+      • Priority Access – immune to Locked Evidence<br>
+      • Extra Insight – draw +1 each turn
+    </div>
+    <div class="cheat-section">
+      <b>Match Summary</b><br>
+      • Best‑of‑5 rounds<br>
+      • First to 3 wins<br>
+      • Streak increases after match win
+    </div>
+  </div>
+</div>
+<script>
+// =========================
+//  GAME STATE
+// =========================
+
+let deck = [];
+let discardPile = [];
+
+let players = [];
+let currentPlayerIndex = 0;
+let gameOver = false;
+
+let roundNumber = 1;
+let roundWins = { p1: 0, p2: 0 };
+let winningStreak = 0;
+
+let scores = { p1Wins:0, p2Wins:0, gamesPlayed:0 };
+let reshuffles = 0;
+
+// =========================
+//  CARD DEFINITIONS
+// =========================
+
+const CARD_TYPES = {
+  INVEST: "investigation",
+  SABOTAGE: "sabotage",
+  REMEDY: "remedy",
+  POWER: "power"
+};
+
+const baseDeck = [
+  { id:"inv10a", type:CARD_TYPES.INVEST, value:10, title:"+10% Case", desc:"Standard investigation progress." },
+  { id:"inv10b", type:CARD_TYPES.INVEST, value:10, title:"+10% Case", desc:"Standard investigation progress." },
+  { id:"inv20a", type:CARD_TYPES.INVEST, value:20, title:"+20% Case", desc:"Solid investigation progress." },
+  { id:"inv20b", type:CARD_TYPES.INVEST, value:20, title:"+20% Case", desc:"Solid investigation progress." },
+  { id:"inv30a", type:CARD_TYPES.INVEST, value:30, title:"+30% Case", desc:"Major breakthrough." },
+  { id:"inv30b", type:CARD_TYPES.INVEST, value:30, title:"+30% Case", desc:"Major breakthrough." },
+  { id:"inv40",  type:CARD_TYPES.INVEST, value:40, title:"+40% Case", desc:"Huge breakthrough." },
+
+  { id:"sabFalseLead", type:CARD_TYPES.SABOTAGE, title:"False Lead", desc:"Blocks all progress until fixed.", effect:"block_all" },
+  { id:"sabLocked",    type:CARD_TYPES.SABOTAGE, title:"Locked Evidence", desc:"Progress capped at +10% per turn.", effect:"limit_10" },
+  { id:"sabTampered",  type:CARD_TYPES.SABOTAGE, title:"Tampered Evidence", desc:"Lose 10% and blocked.", effect:"lose10_block" },
+  { id:"sabWitness",   type:CARD_TYPES.SABOTAGE, title:"Witness Vanishes", desc:"Must fix before progressing.", effect:"block_all" },
+  { id:"sabCamera",    type:CARD_TYPES.SABOTAGE, title:"Camera Offline", desc:"Lose next turn.", effect:"lose_turn" },
+
+  { id:"remCaseReview", type:CARD_TYPES.REMEDY, title:"Case Review", desc:"Remove all sabotage.", effect:"clear_all" },
+  { id:"remCorrect",    type:CARD_TYPES.REMEDY, title:"Corrected Evidence", desc:"Remove one sabotage.", effect:"clear_one" },
+  { id:"remWitness",    type:CARD_TYPES.REMEDY, title:"Found Witness", desc:"Fixes Witness Vanishes.", effect:"fix_witness" },
+  { id:"remReboot",     type:CARD_TYPES.REMEDY, title:"System Reboot", desc:"Fixes Camera Offline.", effect:"fix_camera" },
+
+  { id:"powShield",     type:CARD_TYPES.POWER, title:"Sabotage Shield", desc:"Blocks the next sabotage.", powerType:"shield" },
+  { id:"powForensics",  type:CARD_TYPES.POWER, title:"Forensics Expert", desc:"Immune to Tampered Evidence.", powerType:"immune_tampered" },
+  { id:"powSurveillance",type:CARD_TYPES.POWER, title:"Surveillance Access", desc:"Immune to Camera Offline.", powerType:"immune_camera" },
+  { id:"powPriority",   type:CARD_TYPES.POWER, title:"Priority Access", desc:"Immune to Locked Evidence.", powerType:"immune_locked" },
+  { id:"powInsight",    type:CARD_TYPES.POWER, title:"Extra Insight", desc:"Draw +1 card each turn.", powerType:"extra_draw" }
+];
+
+// =========================
+//  UTILITY FUNCTIONS
+// =========================
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function log(msg){
+  const logDiv = document.getElementById("log");
+  const d = document.createElement("div");
+  d.textContent = msg;
+  logDiv.appendChild(d);
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function updateScoreboardUI(){
+  const div = document.getElementById("scoreContent");
+  div.innerHTML = `
+    <p>Games Played: ${scores.gamesPlayed}</p>
+    <p>Player 1 Wins: ${scores.p1Wins}</p>
+    <p>Player 2 Wins: ${scores.p2Wins}</p>
+    <p>Winning Streak: ${winningStreak}</p>
+  `;
+}
+
+// =========================
+//  UI NAVIGATION
+// =========================
+
+function showMenu(){
+  document.getElementById("menu").style.display="block";
+  document.getElementById("setup").style.display="none";
+  document.getElementById("instructions").style.display="none";
+  document.getElementById("scoreboard").style.display="none";
+  document.getElementById("gameScreen").style.display="none";
+}
+
+function showSetup(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("setup").style.display="block";
+}
+
+function showInstructions(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("instructions").style.display="block";
+}
+
+function showScoreboard(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("scoreboard").style.display="block";
+  updateScoreboardUI();
+}
+
+function showGame(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("setup").style.display="none";
+  document.getElementById("instructions").style.display="none";
+  document.getElementById("scoreboard").style.display="none";
+  document.getElementById("gameScreen").style.display="block";
+}
+
+// =========================
+//  GAME SETUP
+// =========================
+
+function createDeck(){
+  deck = baseDeck.slice();
+  shuffle(deck);
+}
+
+function ensureInvestigationInDeck(){
+  if(!deck.some(c=>c.type===CARD_TYPES.INVEST)){
+    const inv = baseDeck.find(c=>c.type===CARD_TYPES.INVEST);
+    if(inv) deck.push(inv);
+    shuffle(deck);
+  }
+}
+
+function drawCard(){
+  if(deck.length===0){
+    deck = discardPile.slice();
+    discardPile = [];
+    shuffle(deck);
+    ensureInvestigationInDeck();
+    reshuffles++;
+    log("Deck reshuffled ("+reshuffles+").");
+  }
+  return deck.pop();
+}
+
+function initPlayers(p2Type, aiDiff){
+  players = [
+    { name:"Player 1", human:true, ai:false, difficulty:null, progress:0, sabotaged:null, power:null, hand:[], loseNextTurn:false, hasPlayedCardThisTurn:false },
+    { name:p2Type==="human"?"Player 2":"AI Detective", human:p2Type==="human", ai:p2Type==="ai", difficulty:aiDiff, progress:0, sabotaged:null, power:null, hand:[], loseNextTurn:false, hasPlayedCardThisTurn:false }
+  ];
+  document.getElementById("p2Title").textContent = players[1].name + (players[1].ai ? ` (${players[1].difficulty})` : "");
+}
+
+function dealInitialHands(){
+  players.forEach(p=>{
+    p.hand = [];
+    for(let i=0;i<5;i++){
+      p.hand.push(drawCard());
+    }
+  });
+}
+
+function startGame(p2Type, aiDiff){
+  createDeck();
+  discardPile = [];
+  reshuffles = 0;
+
+  roundNumber = 1;
+  roundWins = { p1:0, p2:0 };
+
+  initPlayers(p2Type, aiDiff);
+  dealInitialHands();
+
+  currentPlayerIndex = 0;
+  gameOver = false;
+
+  document.getElementById("log").innerHTML = "";
+  updateGameUI();
+  updateMatchInfo();
+
+  log("New match started.");
+  document.getElementById("status").textContent = players[currentPlayerIndex].name + " turn.";
+
+  startTurn();
+}
+// =========================
+//  TURN HANDLING
+// =========================
+
+function startTurn(){
+  const current = players[currentPlayerIndex];
+  current.hasPlayedCardThisTurn = false;
+  document.getElementById("btnEndTurn").classList.remove("glow-endturn");
+
+  if(current.loseNextTurn){
+    log(current.name + " loses this turn due to Camera Offline.");
+    current.loseNextTurn = false;
+    currentPlayerIndex = (currentPlayerIndex+1)%2;
+    document.getElementById("status").textContent = players[currentPlayerIndex].name + " turn.";
+    startTurn();
+    return;
+  }
+
+  let drawCount = 1;
+  if(current.power && current.power.powerType==="extra_draw") drawCount++;
+
+  for(let i=0;i<drawCount;i++){
+    current.hand.push(drawCard());
+  }
+
+  log(current.name + " starts turn and draws " + drawCount + " card(s).");
+  updateGameUI();
+
+  if(current.ai && !gameOver){
+    setTimeout(aiTurn,600);
+  }
+}
+
+// =========================
+//  UI UPDATES
+// =========================
+
+function updateBanners(){
+  const p1 = players[0];
+  const p2 = players[1];
+  const p1Banner = document.getElementById("p1Banner");
+  const p2Banner = document.getElementById("p2Banner");
+
+  if(p1.sabotaged){
+    p1Banner.className = "banner banner-red";
+    p1Banner.textContent = "🚫 SABOTAGED: " + p1.sabotaged.title + " – fix this before you can investigate.";
+  } else {
+    p1Banner.className = "banner banner-green";
+    p1Banner.textContent = "✅ CLEAR: You may play any card.";
+  }
+
+  if(p2.sabotaged){
+    p2Banner.className = "banner banner-red";
+    p2Banner.textContent = "🚫 SABOTAGED: " + p2.sabotaged.title + " – fix this before you can investigate.";
+  } else {
+    p2Banner.className = "banner banner-green";
+    p2Banner.textContent = "✅ CLEAR: You may play any card.";
+  }
+}
+
+function updateMatchInfo(){
+  document.getElementById("roundDisplay").textContent = `Round: ${roundNumber} / 5`;
+  document.getElementById("roundScore").textContent = `Round Score: P1 ${roundWins.p1} – ${roundWins.p2} P2`;
+  document.getElementById("matchStreak").textContent = `Winning Streak: ${winningStreak}`;
+}
+
+function updateGameUI(){
+  const p1 = players[0];
+  const p2 = players[1];
+
+  document.getElementById("p1ProgressText").textContent = p1.progress + "%";
+  document.getElementById("p1ProgressBar").style.width = p1.progress + "%";
+  document.getElementById("p1Sabotaged").textContent = p1.sabotaged ? p1.sabotaged.title : "No";
+  document.getElementById("p1Power").textContent = p1.power ? p1.power.title : "None";
+
+  document.getElementById("p2ProgressText").textContent = p2.progress + "%";
+  document.getElementById("p2ProgressBar").style.width = p2.progress + "%";
+  document.getElementById("p2Sabotaged").textContent = p2.sabotaged ? p2.sabotaged.title : "No";
+  document.getElementById("p2Power").textContent = p2.power ? p2.power.title : "None";
+
+  updateBanners();
+  updateMatchInfo();
+  renderHand();
+}
+
+function renderHand(){
+  const handDiv = document.getElementById("hand");
+  handDiv.innerHTML = "";
+  const current = players[currentPlayerIndex];
+
+  if(!current.human){
+    handDiv.textContent = "AI is thinking...";
+    return;
+  }
+
+  const sabotaged = !!current.sabotaged;
+
+  current.hand.forEach(card=>{
+    const c = document.createElement("div");
+    c.className = "card";
+    if(card.type===CARD_TYPES.INVEST) c.classList.add("card-invest");
+    if(card.type===CARD_TYPES.SABOTAGE) c.classList.add("card-sabotage");
+    if(card.type===CARD_TYPES.REMEDY) c.classList.add("card-remedy");
+    if(card.type===CARD_TYPES.POWER) c.classList.add("card-power");
+
+    let icon = "";
+    if(card.type===CARD_TYPES.INVEST) icon = "🔍 Investigation";
+    if(card.type===CARD_TYPES.SABOTAGE) icon = "🚫 Sabotage";
+    if(card.type===CARD_TYPES.REMEDY) icon = "🛠️ Remedy";
+    if(card.type===CARD_TYPES.POWER) icon = "⭐ Power";
+
+    c.innerHTML = `
+      <div class="card-header">${icon}</div>
+      <div class="card-title">${card.title}</div>
+      <div class="card-desc">${card.desc||""}</div>
+    `;
+
+    let disabled = false;
+    if(current.hasPlayedCardThisTurn){
+      disabled = true;
+    } else if(card.type===CARD_TYPES.INVEST && sabotaged){
+      disabled = true;
+      c.title = "Blocked by sabotage — play a Remedy first.";
+    }
+
+    if(disabled){
+      c.classList.add("disabled");
+      c.onclick = ()=>{
+        if(card.type===CARD_TYPES.INVEST && sabotaged){
+          log(current.name + " is sabotaged and cannot play investigation cards.");
+          c.classList.add("shake");
+          setTimeout(()=>c.classList.remove("shake"),200);
+        } else {
+          log(current.name + " already played a card this turn.");
+        }
+      };
+    } else {
+      c.onclick = ()=>playCard(current, card, c);
+    }
+
+    handDiv.appendChild(c);
+  });
+}
+
+// =========================
+//  CARD EFFECTS
+// =========================
+
+function canPlayInvestigation(player){
+  if(player.sabotaged && player.sabotaged.effect==="block_all") return false;
+  if(player.sabotaged && player.sabotaged.effect==="lose10_block") return false;
+  return true;
+}
+
+function applySabotage(opponent, card, attacker){
+  if(opponent.sabotaged){
+    log(attacker.name + " tries to add sabotage, but " + opponent.name + " is already sabotaged.");
+    return;
+  }
+
+  if(opponent.power){
+    if(opponent.power.powerType==="shield"){
+      log(attacker.name + " plays " + card.title + " but " + opponent.name + "'s shield blocks it.");
+      opponent.power = null;
+      return;
+    }
+    if(card.id==="sabTampered" && opponent.power.powerType==="immune_tampered"){
+      log(attacker.name + " plays " + card.title + " but " + opponent.name + " is immune (Forensics Expert).");
+      return;
+    }
+    if(card.id==="sabCamera" && opponent.power.powerType==="immune_camera"){
+      log(attacker.name + " plays " + card.title + " but " + opponent.name + " is immune (Surveillance Access).");
+      return;
+    }
+    if(card.id==="sabLocked" && opponent.power.powerType==="immune_locked"){
+      log(attacker.name + " plays " + card.title + " but " + opponent.name + " is immune (Priority Access).");
+      return;
+    }
+    log(attacker.name + " plays " + card.title + " and breaks " + opponent.name + "'s power.");
+    opponent.power = null;
+  }
+
+  opponent.sabotaged = card;
+  if(card.effect==="lose10_block"){
+    opponent.progress = Math.max(0, opponent.progress - 10);
+  }
+  if(card.effect==="lose_turn"){
+    opponent.loseNextTurn = true;
+  }
+  log(attacker.name + " sabotages " + opponent.name + " with " + card.title + ".");
+}
+
+function applyRemedy(player, card){
+  if(card.effect==="clear_all"){
+    if(player.sabotaged){
+      player.sabotaged = null;
+      player.loseNextTurn = false;
+      log(player.name + " clears all sabotage with " + card.title + ".");
+    } else {
+      log(player.name + " plays " + card.title + " but had no sabotage.");
+    }
+  } else if(card.effect==="clear_one"){
+    if(player.sabotaged){
+      log(player.name + " removes sabotage ("+player.sabotaged.title+") with " + card.title + ".");
+      player.sabotaged = null;
+      player.loseNextTurn = false;
+    } else {
+      log(player.name + " plays " + card.title + " but had no sabotage.");
+    }
+  } else if(card.effect==="fix_witness"){
+    if(player.sabotaged && player.sabotaged.id==="sabWitness"){
+      log(player.name + " fixes Witness Vanishes with " + card.title + ".");
+      player.sabotaged = null;
+    } else {
+      log(player.name + " plays " + card.title + " but no Witness Vanishes sabotage.");
+    }
+  } else if(card.effect==="fix_camera"){
+    if(player.sabotaged && player.sabotaged.id==="sabCamera"){
+      log(player.name + " fixes Camera Offline with " + card.title + ".");
+      player.sabotaged = null;
+      player.loseNextTurn = false;
+    } else {
+      log(player.name + " plays " + card.title + " but no Camera Offline sabotage.");
+    }
+  }
+}
+
+// =========================
+//  PLAY CARD + WIN CHECK
+// =========================
+
+function playCard(player, card, cardElement){
+  if(gameOver) return;
+  if(player.hasPlayedCardThisTurn){
+    log(player.name + " already played a card this turn.");
+    return;
+  }
+
+  const opponent = players[(currentPlayerIndex+1)%2];
+
+  if(card.type===CARD_TYPES.INVEST){
+    if(!canPlayInvestigation(player)){
+      log(player.name + " is sabotaged and cannot play investigation cards.");
+      cardElement.classList.add("shake");
+      setTimeout(()=>cardElement.classList.remove("shake"),200);
+      return;
+    }
+
+    let gain = card.value;
+    if(player.sabotaged && player.sabotaged.effect==="limit_10"){
+      gain = Math.min(gain, 10);
+    }
+
+    player.progress = Math.min(100, player.progress + gain);
+    log(player.name + " plays " + card.title + " and reaches " + player.progress + "%.");
+  }
+  else if(card.type===CARD_TYPES.SABOTAGE){
+    applySabotage(opponent, card, player);
+  }
+  else if(card.type===CARD_TYPES.REMEDY){
+    applyRemedy(player, card);
+  }
+  else if(card.type===CARD_TYPES.POWER){
+    player.power = card;
+    log(player.name + " gains power: " + card.title + ".");
+  }
+
+  player.hand = player.hand.filter(c => c.id !== card.id);
+  discardPile.push(card);
+
+  player.hasPlayedCardThisTurn = true;
+  document.getElementById("btnEndTurn").classList.add("glow-endturn");
+
+  updateGameUI();
+  checkWinCondition();
+}
+
+function checkWinCondition(){
+  const current = players[currentPlayerIndex];
+
+  if(current.progress < 100) return;
+
+  if(current.sabotaged){
+    log(current.name + " reached 100% but is sabotaged and cannot win the round.");
+    return;
+  }
+
+  const winner = currentPlayerIndex === 0 ? "p1" : "p2";
+  roundWins[winner]++;
+
+  log("🎉 ROUND WINNER: " + current.name);
+
+  const status = document.getElementById("status");
+  status.innerHTML = `<div class="banner banner-blue">ROUND WINNER: ${current.name}</div>`;
+
+  updateMatchInfo();
+
+  if(roundWins[winner] === 3){
+    handleMatchWin(winner);
+  } else {
+    setTimeout(startNextRound, 1500);
+  }
+}
+
+function startNextRound(){
+  roundNumber++;
+
+  players.forEach(p=>{
+    p.progress = 0;
+    p.sabotaged = null;
+    p.power = null;
+    p.hand = [];
+    p.loseNextTurn = false;
+    p.hasPlayedCardThisTurn = false;
+  });
+
+  createDeck();
+  discardPile = [];
+  dealInitialHands();
+
+  currentPlayerIndex = 0;
+  updateGameUI();
+  updateMatchInfo();
+
+  log("----- NEW ROUND STARTED -----");
+  startTurn();
+}
+
+function handleMatchWin(winner){
+  const winnerName = winner === "p1" ? "Player 1" : "Player 2";
+
+  winningStreak = winner === "p1" ? winningStreak + 1 : 0;
+
+  log("🏆 MATCH WINNER: " + winnerName);
+
+  const status = document.getElementById("status");
+  status.innerHTML = `<div class="banner banner-gold">MATCH WINNER: ${winnerName}<br>Winning Streak: ${winningStreak}</div>`;
+
+  roundWins = { p1:0, p2:0 };
+  roundNumber = 1;
+
+  setTimeout(startNextRound, 2000);
+}
+
+// =========================
+//  END TURN + AI
+// =========================
+
+function endTurn(){
+  if(gameOver) return;
+  const current = players[currentPlayerIndex];
+
+  const newCard = drawCard();
+  current.hand.push(newCard);
+
+  if(current.hand.length>7){
+    const discarded = current.hand.pop();
+    discardPile.push(discarded);
+    log(current.name + " discards "+discarded.title+" (hand limit).");
+  }
+
+  log(current.name + " ends turn and draws a card.");
+  currentPlayerIndex = (currentPlayerIndex+1)%2;
+  document.getElementById("status").textContent = players[currentPlayerIndex].name + " turn.";
+  startTurn();
+}
+
+function aiTurn(){
+  const ai = players[currentPlayerIndex];
+  const opponent = players[(currentPlayerIndex+1)%2];
+  log(ai.name + " (AI) is thinking...");
+
+  let cardToPlay = null;
+
+  if(ai.difficulty==="easy"){
+    cardToPlay = ai.hand[Math.floor(Math.random()*ai.hand.length)];
+  } else {
+    if(ai.sabotaged){
+      cardToPlay = ai.hand.find(c=>c.type===CARD_TYPES.REMEDY) || ai.hand[0];
+    } else {
+      const inv = ai.hand.find(c=>c.type===CARD_TYPES.INVEST);
+      const sab = ai.hand.find(c=>c.type===CARD_TYPES.SABOTAGE);
+      const pow = ai.hand.find(c=>c.type===CARD_TYPES.POWER);
+      if(ai.difficulty==="hard"){
+        if(ai.progress>=70 && sab) cardToPlay = sab;
+        else if(inv) cardToPlay = inv;
+        else if(pow) cardToPlay = pow;
+        else cardToPlay = ai.hand[0];
+      } else {
+        cardToPlay = inv || sab || pow || ai.hand[0];
+      }
+    }
+  }
+
+  const dummyElement = document.createElement("div");
+  playCard(ai, cardToPlay, dummyElement);
+  if(!gameOver) endTurn();
+}
+
+// =========================
+//  SAVE / LOAD / RESET
+// =========================
+
+function saveGame(){
+  const state = {
+    deck, discardPile, players, currentPlayerIndex, gameOver,
+    scores, reshuffles, roundNumber, roundWins, winningStreak
+  };
+  localStorage.setItem("detectiveBornesSave", JSON.stringify(state));
+  log("Game saved.");
+}
+
+function loadGame(){
+  const data = localStorage.getItem("detectiveBornesSave");
+  if(!data){
+    alert("No saved game found.");
+    return;
+  }
+  const state = JSON.parse(data);
+  deck = state.deck;
+  discardPile = state.discardPile;
+  players = state.players.map(p=>({
+    ...p,
+    hasPlayedCardThisTurn:false
+  }));
+  currentPlayerIndex = state.currentPlayerIndex;
+  gameOver = state.gameOver;
+  scores = state.scores || scores;
+  reshuffles = state.reshuffles || 0;
+  roundNumber = state.roundNumber || 1;
+  roundWins = state.roundWins || { p1:0, p2:0 };
+  winningStreak = state.winningStreak || 0;
+
+  showGame();
+  updateGameUI();
+  log("Game loaded.");
+  document.getElementById("status").textContent = players[currentPlayerIndex].name + " turn.";
+  startTurn();
+}
+
+function saveScores(){
+  localStorage.setItem("detectiveBornesScores", JSON.stringify(scores));
+}
+
+function loadScores(){
+  const data = localStorage.getItem("detectiveBornesScores");
+  if(data){
+    scores = JSON.parse(data);
+  }
+}
+
+function resetAll(){
+  localStorage.removeItem("detectiveBornesSave");
+  localStorage.removeItem("detectiveBornesScores");
+  scores = { p1Wins:0, p2Wins:0, gamesPlayed:0 };
+  reshuffles = 0;
+  winningStreak = 0;
+  roundWins = { p1:0, p2:0 };
+  roundNumber = 1;
+  alert("All data reset.");
+}
+
+// =========================
+//  BUTTON WIRING
+// =========================
+
+document.getElementById("btnNewGame").onclick = ()=>showSetup();
+document.getElementById("btnLoadGame").onclick = ()=>loadGame();
+document.getElementById("btnInstructions").onclick = ()=>showInstructions();
+document.getElementById("btnScoreboard").onclick = ()=>showScoreboard();
+document.getElementById("btnResetAll").onclick = ()=>resetAll();
+
+document.getElementById("btnInstructionsBack").onclick = ()=>showMenu();
+document.getElementById("btnScoreBack").onclick = ()=>showMenu();
+document.getElementById("btnBackMenu").onclick = ()=>showMenu();
+
+document.getElementById("btnStartGame").onclick = ()=>{
+  const p2Type = document.querySelector('input[name="p2type"]:checked').value;
+  const aiDiff = document.querySelector('input[name="aidiff"]:checked')?.value || null;
+  showGame();
+  startGame(p2Type, aiDiff);
+};
+
+document.getElementById("btnEndTurn").onclick = ()=>endTurn();
+document.getElementById("btnSaveGame").onclick = ()=>saveGame();
+document.getElementById("btnBackToMenu").onclick = ()=>showMenu();
+
+document.querySelectorAll('input[name="p2type"]').forEach(r=>{
+  r.onchange = ()=>{
+    const val = document.querySelector('input[name="p2type"]:checked').value;
+    document.getElementById("aiOptions").style.display = val==="ai" ? "block" : "none";
+  };
+});
+
+loadScores();
+showMenu();
+</script>
+</body>
+</html>
