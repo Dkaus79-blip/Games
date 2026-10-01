@@ -1,0 +1,3282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AutoFlip Garage: Ultimate Tycoon Sim</title>
+  <style>
+    :root {
+      --bg: #090c10;
+      --bg-alt: #0d1117;
+      --panel: #161b22;
+      --panel-border: #30363d;
+      --primary: #ff5722;
+      --primary-hover: #ff7043;
+      --accent: #00e676;
+      --accent-blue: #2979ff;
+      --accent-purple: #00b8d4;
+      --gold: #ffd700;
+      --text: #f0f6fc;
+      --text-dim: #8b949e;
+      --danger: #ff5252;
+      --warning: #ffab00;
+      --nos: #00e5ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Rajdhani", "Segoe UI", sans-serif; }
+    h1, h2, h3, .brand, .car-title, .btn { font-family: "Barlow Condensed", "Rajdhani", "Segoe UI", sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; user-select: none; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #21262d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #30363d; }
+
+    /* Top Bar */
+    header {
+      background: rgba(22, 27, 34, 0.96);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 10px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      gap: 10px;
+    }
+    .brand {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+    }
+    .brand span { color: var(--primary); text-shadow: 0 0 12px rgba(255,87,34,0.6); }
+
+    .header-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .stat-badge {
+      background: var(--bg-alt);
+      border: 1px solid var(--panel-border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stat-cash { color: var(--accent); border-color: rgba(0,230,118,0.3); }
+    .stat-rep { color: var(--accent-blue); border-color: rgba(41,121,255,0.3); }
+    .stat-day { color: var(--gold); border-color: rgba(255,215,0,0.3); }
+    .stat-city { color: #f43f5e; border-color: rgba(244,63,94,0.3); }
+
+    /* Market Trend Ticker */
+    #market-ticker {
+      background: linear-gradient(90deg, #1e1e24, #131720);
+      border-bottom: 1px solid #30363d;
+      padding: 6px 16px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #cbd5e1;
+    }
+    #trend-tag { font-weight: 800; color: var(--gold); text-transform: uppercase; }
+
+    /* Navigation Bar */
+    nav {
+      display: flex;
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--panel-border);
+      gap: 4px;
+      padding: 6px 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-btn:hover { background: var(--panel); color: var(--text); }
+    .nav-btn.active { background: var(--panel); border-color: var(--primary); color: #fff; box-shadow: 0 0 10px rgba(255,87,34,0.25); }
+
+    /* Main Container */
+    main { max-width: 1300px; width: 100%; margin: 0 auto; padding: 18px 16px 80px; flex: 1; }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.22s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Grid Layouts */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+
+    /* Subheaders */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+    .section-header h2 { font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.95); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent { background: var(--accent); color: #000; }
+    .btn-blue { background: var(--accent-blue); color: #fff; }
+    .btn-purple { background: var(--accent-purple); color: #fff; }
+    .btn-gold { background: var(--gold); color: #000; }
+    .btn-nos { background: var(--nos); color: #000; font-weight: 900; }
+    .btn-secondary { background: #21262d; color: var(--text); border: 1px solid var(--panel-border); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 5px 9px; font-size: 0.78rem; }
+
+    /* Card Styling */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #484f58; }
+    .card.state-pulse { animation: statePulse 0.45s ease-out; }
+    @keyframes statePulse { 0% { transform: translateY(0); box-shadow: 0 4px 16px rgba(0,0,0,0.4); } 45% { transform: translateY(-3px); box-shadow: 0 0 0 2px rgba(0,229,255,0.45), 0 8px 24px rgba(0,229,255,0.18); } 100% { transform: translateY(0); box-shadow: 0 4px 16px rgba(0,0,0,0.4); } }
+    .vehicle-financials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 8px 0 12px; padding: 9px; background: #10151b; border: 1px solid #27313a; border-radius: 8px; font-size: 0.78rem; }
+    .vehicle-financials span { display: flex; justify-content: space-between; gap: 8px; color: var(--text-dim); }
+    .vehicle-financials strong { color: var(--text); white-space: nowrap; }
+    .vehicle-financials .profit strong { color: var(--accent); }
+    .card-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+    .tier-Junker { background: #30363d; color: #8b949e; }
+    .tier-Common { background: #1f6feb; color: #dbeafe; }
+    .tier-Muscle { background: #b25000; color: #ffedd5; }
+    .tier-Sport { background: #00897b; color: #ccfbf1; }
+    .tier-Classic { background: #7c3aed; color: #ede9fe; }
+    .tier-Exotic { background: #d97706; color: #fef3c7; }
+    .tier-Hypercar { background: linear-gradient(45deg, #ef4444, #ec4899); color: #fff; }
+    .tier-Barn { background: repeating-linear-gradient(45deg, #78350f, #78350f 8px, #451a03 8px, #451a03 16px); color: #fef08a; }
+
+    .car-canvas-wrap {
+      width: 100%;
+      height: 135px;
+      background: radial-gradient(circle at center, #1b222d 0%, #0d1117 80%);
+      border-radius: 8px;
+      border: 1px solid #21262d;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .car-title { font-size: 1.15rem; font-weight: 800; }
+    .car-subtitle { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 8px; display: flex; justify-content: space-between; }
+
+    /* Part Condition Bars */
+    .parts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+      margin: 8px 0 12px;
+      background: var(--bg-alt);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #21262d;
+    }
+    .part-meter-wrap { font-size: 0.74rem; }
+    .part-meter-label { display: flex; justify-content: space-between; margin-bottom: 3px; color: var(--text-dim); }
+    .part-track { width: 100%; height: 5px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .part-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+    .card-actions { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card-actions.full { grid-template-columns: 1fr; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: none; align-items: center; justify-content: center; z-index: 1000;
+      backdrop-filter: blur(6px);
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      width: 100%;
+      max-width: 680px;
+      border-radius: 14px;
+      padding: 22px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-header h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .close-btn { background: none; border: none; font-size: 1.6rem; color: var(--text-dim); cursor: pointer; }
+    .close-btn:hover { color: #fff; }
+
+    /* Guide & Quest Elements */
+    .guide-card, .quest-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .guide-card h4 { color: var(--primary); margin-bottom: 6px; font-size: 1rem; }
+    .guide-card p, .guide-card ul { font-size: 0.85rem; line-height: 1.45; color: var(--text-dim); }
+    .guide-card ul { padding-left: 18px; margin-top: 4px; }
+    .guide-highlight { color: #fff; font-weight: 700; }
+    .guide-alert {
+      background: rgba(255, 82, 82, 0.12);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+      color: #ff8a80;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    /* Save Slots Box */
+    .save-slot-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .save-slot-card.active-slot {
+      border-color: var(--accent);
+      background: rgba(0, 230, 118, 0.05);
+    }
+    .slot-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .slot-title { font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+    .slot-details { font-size: 0.82rem; color: var(--text-dim); }
+
+    /* Drag Strip Arena & Christmas Tree */
+    .drag-arena {
+      background: #0d1117;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .drag-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--bg-alt);
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+    }
+    .christmas-tree {
+      display: flex;
+      gap: 8px;
+      background: #111;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 2px solid #333;
+      align-items: center;
+    }
+    .tree-light {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #222;
+      box-shadow: inset 0 0 4px #000;
+      transition: all 0.1s;
+    }
+    .tree-light.yellow.on { background: #ffea00; box-shadow: 0 0 12px #ffea00; }
+    .tree-light.green.on { background: #00e676; box-shadow: 0 0 14px #00e676; }
+    .tree-light.red.on { background: #ff1744; box-shadow: 0 0 14px #ff1744; }
+
+    .track-strip {
+      height: 75px;
+      background: #12161f;
+      border-top: 2px dashed #484f58;
+      border-bottom: 2px dashed #484f58;
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .finish-line {
+      position: absolute;
+      right: 30px;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      background: repeating-linear-gradient(45deg, #fff, #fff 8px, #000 8px, #000 16px);
+      z-index: 1;
+    }
+    .racer-car {
+      position: absolute;
+      left: 10px;
+      width: 80px;
+      height: 38px;
+      transition: left 0.05s linear;
+      z-index: 2;
+    }
+
+    /* Detailing Wash Canvas */
+    #wash-canvas-wrap {
+      width: 100%;
+      height: 240px;
+      background: #161b22;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      border: 1px solid #30363d;
+      cursor: crosshair;
+    }
+    #wash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* Dyno Gauge */
+    .dyno-gauge-wrap {
+      width: 100%;
+      height: 30px;
+      background: #21262d;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      margin: 14px 0;
+    }
+    .dyno-sweetspot {
+      position: absolute;
+      left: 70%;
+      width: 16%;
+      height: 100%;
+      background: rgba(0, 230, 118, 0.45);
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+    }
+    .dyno-needle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: #ff5722;
+      box-shadow: 0 0 10px #ff5722;
+      border-radius: 3px;
+      left: 0%;
+    }
+
+    /* Swatches */
+    .swatch-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #30363d;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .swatch:hover, .swatch.active { transform: scale(1.15); border-color: #fff; }
+
+    /* Notification Center */
+    #notification-center {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--panel);
+      border-left: 4px solid var(--primary);
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.accent { border-left-color: var(--accent); }
+    .toast.gold { border-left-color: var(--gold); }
+    .toast.nos { border-left-color: var(--nos); }
+    .toast.danger { border-left-color: var(--danger); }
+    @media (max-width: 640px) { .vehicle-financials { grid-template-columns: 1fr; } .header-right { width: 100%; } .stat-badge { flex: 1 1 auto; justify-content: center; } }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-dim);
+      grid-column: 1 / -1;
+      background: var(--panel);
+      border: 1px dashed var(--panel-border);
+      border-radius: 12px;
+    }
+
+    /* Inventory parts bar */
+    .inv-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--bg-alt);
+      border: 1px solid var(--panel-border);
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 0.82rem;
+      align-items: center;
+    }
+  
+/* ===== ULTIMATE EXPANSION ===== */
+.ultimate-card{background:linear-gradient(145deg,#151b23,#0d1218);border:1px solid #39434f;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.ultimate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.ultimate-stat{background:#0b1016;border:1px solid #29323d;border-radius:10px;padding:12px}
+.ultimate-stat strong{font-size:1.35rem}
+.progress-x{height:9px;background:#202832;border-radius:99px;overflow:hidden;margin-top:7px}
+.progress-x>i{display:block;height:100%;background:linear-gradient(90deg,#ff5722,#ffd740,#00e676);border-radius:99px}
+.tag-x{display:inline-flex;padding:3px 8px;border-radius:99px;background:#202832;border:1px solid #3b4652;color:#dbeafe;font-size:.72rem;font-weight:800;margin:2px}
+.rarity-common{border-color:#64748b}.rarity-rare{border-color:#38bdf8}.rarity-epic{border-color:#a78bfa}.rarity-legendary{border-color:#fbbf24}
+.car-build-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:#0c1218;border:1px solid #29323d;border-radius:9px;padding:10px;margin:7px 0}
+.car-build-row small{color:var(--text-dim)}
+.rival-banner{background:linear-gradient(90deg,#3b0d12,#171117);border:1px solid #8f2632;border-radius:12px;padding:14px}
+.event-banner{background:linear-gradient(90deg,#13263b,#111821);border:1px solid #28618c;border-radius:12px;padding:14px}
+  .goal-banner{background:linear-gradient(90deg,#241b0b,#151a20);border:1px solid #8a6416;border-radius:12px;padding:14px;margin-bottom:14px}
+  .goal-progress{height:8px;background:#202832;border-radius:99px;overflow:hidden;margin-top:8px}
+  .goal-progress>i{display:block;height:100%;background:linear-gradient(90deg,#ff5722,#ffd700,#00e676);border-radius:99px;transition:width .3s}
+.collection-card{min-height:150px}
+.locked-x{opacity:.55;filter:saturate(.25)}
+@media(max-width:700px){.ultimate-grid{grid-template-columns:1fr}.car-build-row{grid-template-columns:1fr}.ultimate-nav-label{display:none}}
+
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="brand">
+      🏎️ AutoFlip <span>GARAGE</span>
+    </div>
+    <div class="header-right">
+      <div class="stat-badge stat-city" id="city-badge">🏙️ Detroit HQ</div>
+      <div class="stat-badge stat-cash">💰 <span id="cash-display">$6,500</span></div>
+      <div class="stat-badge stat-rep">⭐ Rep <span id="rep-level">1</span> (<span id="rep-xp">0</span> XP)</div>
+      <div class="stat-badge stat-day">📅 Day <span id="game-day">1</span></div>
+      <button class="btn btn-secondary btn-sm" id="btn-sound" onclick="toggleAudio()">🔊 Audio</button>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('howToPlayModal')">❓ Guide</button>
+      <button class="btn btn-primary btn-sm" onclick="openSaveModal()">💾 Saves (Slot <span id="current-slot-indicator">1</span>)</button>
+    </div>
+  </header>
+
+  <!-- Market Trend Ticker -->
+  <div id="market-ticker">
+    <div>📰 Economic Wire: <strong id="trend-tag">Normal Conditions</strong> - <span id="trend-desc">Standard vehicle valuation and steady parts pricing across regions.</span></div>
+    <div style="font-size:0.75rem; color:var(--text-dim);">Rotates every 2 days</div>
+  </div>
+
+  <div id="goal-banner" class="goal-banner" style="max-width:1300px; width:calc(100% - 32px); margin:14px auto 0;"></div>
+
+  <!-- Navigation Tabs -->
+  <nav id="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('marketplace')">🛒 Classifieds</button>
+    <button class="nav-btn" onclick="switchTab('workshop')">🔧 Garage Bays (<span id="garage-tab-count">0</span>/<span id="garage-capacity">3</span>)</button>
+    <button class="nav-btn" onclick="switchTab('scavenge')">🔩 Junkyard Scavenge</button>
+    <button class="nav-btn" onclick="switchTab('barnfinds')">🌾 Barn Finds</button>
+    <button class="nav-btn" onclick="switchTab('quests')">📋 Quests & Orders (<span id="quests-tab-count">4</span>)</button>
+    <button class="nav-btn" onclick="switchTab('dragstrip')">🏁 Drag Strip & Pink Slips</button>
+    <button class="nav-btn" onclick="switchTab('showroom')">🏆 Showroom & Cities (<span id="showroom-tab-count">0</span>)</button>
+    <button class="nav-btn" onclick="switchTab('upgrades')">🏢 Shop Upgrades</button>
+  </nav>
+
+  <!-- Main Container -->
+  <main>
+
+    <!-- SECTION: MARKETPLACE -->
+    <section id="view-marketplace" class="view-section active">
+      <div class="section-header">
+        <div>
+          <h2>🛒 Junkyard & Auctions Marketplace</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Distressed salvage vehicles. Watch active Market Trends to maximize flip margins!</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="generateMarket(true)">🔄 Reroll Listings ($75)</button>
+        </div>
+      </div>
+      <div class="grid" id="market-grid"></div>
+    </section>
+
+    <!-- SECTION: WORKSHOP GARAGE -->
+    <section id="view-workshop" class="view-section">
+      <div class="inv-bar">
+        <strong>📦 Salvaged Parts Inventory:</strong>
+        <span>⚙️ Engine: <strong id="inv-engine" style="color:var(--accent);">0</strong></span>
+        <span>🚗 Body: <strong id="inv-body" style="color:var(--accent);">0</strong></span>
+        <span>💺 Interior: <strong id="inv-interior" style="color:var(--accent);">0</strong></span>
+        <span>🛞 Suspension: <strong id="inv-suspension" style="color:var(--accent);">0</strong></span>
+        <span style="color:var(--text-dim); font-size:0.75rem; margin-left:auto;">(Scavenge parts in the Junkyard to repair without cash!)</span>
+      </div>
+
+      <div class="section-header">
+        <div>
+          <h2>🔧 Workshop Service Bays</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Repair, detail dirty cars for cash bonuses, spray custom enamel, or tune ECU boost.</p>
+        </div>
+        <div>
+          <button class="btn btn-accent" onclick="repairAllCarsQuick()">⚡ Repair All Cars to 100%</button>
+        </div>
+      </div>
+      <div class="grid" id="garage-grid"></div>
+    </section>
+
+    <!-- SECTION: JUNKYARD SCAVENGE -->
+    <section id="view-scavenge" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>🔩 Pick-a-Part Scrap Yard</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Pay a $200 yard permit to pick through crushed donor wrecks for free replacement parts.</p>
+        </div>
+        <button class="btn btn-accent" onclick="startScavengeRun()">🎟️ Pay $200 Entry Permit</button>
+      </div>
+
+      <div class="grid" id="scavenge-grid">
+        <div class="empty-state">Buy a scrap yard permit above to explore the yard!</div>
+      </div>
+    </section>
+
+    <!-- SECTION: BARN FINDS -->
+    <section id="view-barnfinds" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>🌾 Abandoned Barn Expeditions</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Pay scouts to locate forgotten legendary hypercars and vintage muscle. Complete chassis at 0% condition!</p>
+        </div>
+      </div>
+      <div class="grid" id="barnfinds-grid"></div>
+    </section>
+
+    <!-- SECTION: QUESTS & CONTRACTS -->
+    <section id="view-quests" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>📋 Daily Quests & VIP Contracts</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Daily bounties reward quick cash. VIP Contracts require exact models restored in your Bays.</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h3 style="font-size:1.1rem; margin-bottom:10px; color:var(--gold);">⚡ Daily Bounties</h3>
+        <div id="daily-quests-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="font-size:1.1rem; color:var(--accent);">👔 VIP Client Contracts</h3>
+          <button class="btn btn-secondary btn-sm" onclick="generateNewContract()">+ Find Client</button>
+        </div>
+        <div class="grid" id="orders-grid"></div>
+      </div>
+    </section>
+
+    <!-- SECTION: DRAG STRIP & PINK SLIPS -->
+    <section id="view-dragstrip" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>🏁 1/4 Mile Drag Racing & Pink Slips</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Time your launch on the green light! Use Nitrous Oxide (NOS) mid-race or wager your pink slip!</p>
+        </div>
+      </div>
+
+      <div class="drag-arena">
+        <div class="drag-controls-bar">
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-dim); display:block; margin-bottom:3px;">Your Race Car:</label>
+            <select id="drag-car-select" style="background:#161b22; color:#fff; border:1px solid #30363d; padding:7px 10px; border-radius:6px; font-weight:700; min-width:210px;"></select>
+          </div>
+
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-dim); display:block; margin-bottom:3px;">Wager Type:</label>
+            <select id="drag-wager" style="background:#161b22; color:#fff; border:1px solid #30363d; padding:7px 10px; border-radius:6px; font-weight:700;">
+              <option value="250">$250 Friendly</option>
+              <option value="1000" selected>$1,000 Street Match</option>
+              <option value="5000">$5,000 High Roller</option>
+              <option value="pink_slip">⚠️ PINK SLIPS (Winner Takes Rival Car!)</option>
+            </select>
+          </div>
+
+          <!-- Christmas Tree Lights -->
+          <div class="christmas-tree">
+            <div class="tree-light yellow" id="tree-y1"></div>
+            <div class="tree-light yellow" id="tree-y2"></div>
+            <div class="tree-light green" id="tree-g"></div>
+            <div class="tree-light red" id="tree-r"></div>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-nos" id="nos-btn" onclick="triggerNOS()" disabled>💥 HIT NOS</button>
+            <button class="btn btn-accent" id="start-race-btn" onclick="stageDragRace()">🚦 Stage at Tree</button>
+            <button class="btn btn-primary" id="launch-race-btn" onclick="launchDragRace()" style="display:none;">🚀 LAUNCH!</button>
+          </div>
+        </div>
+
+        <!-- Track Visual -->
+        <div class="track-strip" id="race-lane-player">
+          <div class="finish-line"></div>
+          <div class="racer-car" id="player-racer" style="left:10px;"></div>
+        </div>
+        <div class="track-strip" id="race-lane-ai">
+          <div class="finish-line"></div>
+          <div class="racer-car" id="ai-racer" style="left:10px;"></div>
+        </div>
+
+        <div id="race-status" style="font-weight:800; font-size:1.05rem; text-align:center; min-height:26px; color:var(--gold);">
+          Select your ride, choose wagers, and stage at the Christmas tree!
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: SHOWROOM & EXPANSION CITIES -->
+    <section id="view-showroom" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>🏆 Museum Showroom & Global Branches</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Display 90%+ specimens for passive spectator yield. Expand to Tokyo and Monaco!</p>
+        </div>
+        <div class="stat-badge stat-cash">
+          Passive Yield: <strong id="showroom-income" style="margin-left:4px;">$0 / 10s</strong>
+        </div>
+        <div class="stat-badge stat-rep" id="showroom-bonus">No collection bonus yet</div>
+      </div>
+
+      <!-- City Branches -->
+      <div class="grid" style="margin-bottom:24px;">
+        <div class="card" style="border-color:#38bdf8;">
+          <div class="car-title">🏙️ Detroit Starter Shop</div>
+          <p style="font-size:0.82rem; color:var(--text-dim); margin:6px 0;">Home base of American muscle and domestic tuners.</p>
+          <button class="btn btn-secondary" style="width:100%; margin-top:auto;" disabled>✅ Current Headquarters</button>
+        </div>
+
+        <div class="card" style="border-color:#f43f5e;">
+          <div class="car-title">🌸 Tokyo Akihabara Branch</div>
+          <p style="font-size:0.82rem; color:var(--text-dim); margin:6px 0;">Unlocks JDM sports cars in Classifieds and +20% Dyno ECU tuning ceiling.</p>
+          <div style="margin-top:auto;">
+            <button class="btn btn-accent" id="city-btn-tokyo" style="width:100%;" onclick="buyCityBranch('tokyo', 50000)">Unlock Tokyo Branch ($50,000)</button>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:var(--gold);">
+          <div class="car-title">💎 Monaco Yacht Harbor</div>
+          <p style="font-size:0.82rem; color:var(--text-dim); margin:6px 0;">Unlocks Hypercars, Billionaire Auctions, and doubles Showroom passive ticket yields!</p>
+          <div style="margin-top:auto;">
+            <button class="btn btn-gold" id="city-btn-monaco" style="width:100%;" onclick="buyCityBranch('monaco', 250000)">Unlock Monaco Bay ($250,000)</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom:12px;">🏆 Showroom Vehicle Collection</h3>
+      <div class="grid" id="showroom-grid"></div>
+    </section>
+
+    <!-- SECTION: UPGRADES -->
+    <section id="view-upgrades" class="view-section">
+      <div class="section-header">
+        <div>
+          <h2>🏢 Garage Facilities & Tech Equipment</h2>
+          <p style="color:var(--text-dim); font-size:0.85rem;">Permanent upgrades to unlock customization, auto-mechanics, and discounts.</p>
+        </div>
+      </div>
+      <div class="grid" id="upgrades-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: POWER WASH & DETAILING -->
+  <div class="modal-overlay" id="washModal">
+    <div class="modal" style="max-width: 620px; text-align: center;">
+      <div class="modal-header">
+        <h3>🚿 Car Detailing & Power-Wash Bay</h3>
+        <button class="close-btn" onclick="closeModal('washModal')">×</button>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:10px;">
+        Drag your mouse / finger over the muddy patches to scrub them clean for a <strong>+$1,000</strong> appraisal boost!
+      </p>
+
+      <div style="font-size:0.9rem; font-weight:800; margin-bottom:8px; color:var(--accent);">
+        Dirt Removed: <span id="wash-progress">0%</span>
+      </div>
+
+      <div id="wash-canvas-wrap">
+        <div id="wash-car-render" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"></div>
+        <canvas id="wash-canvas"></canvas>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <button class="btn btn-secondary" style="width:100%;" onclick="closeModal('washModal')">Finish Detailing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WORKSHOP INSPECTION & CUSTOMIZER -->
+  <div class="modal-overlay" id="workshopModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-car-title">Car Inspection</h3>
+        <button class="close-btn" onclick="closeModal('workshopModal')">×</button>
+      </div>
+
+      <div class="car-canvas-wrap" id="modal-car-render" style="height:170px;"></div>
+
+      <div id="modal-parts-container"></div>
+
+      <!-- Customization Paint Booth -->
+      <div id="paint-booth-section" style="margin-top:14px; background:var(--bg-alt); padding:12px; border-radius:8px; border:1px solid #30363d;">
+        <label style="font-size:0.85rem; font-weight:700; color:var(--text-dim);">🎨 Custom Paint Finish (Spray Booth):</label>
+        <div class="swatch-group" id="color-swatches"></div>
+      </div>
+
+      <!-- Dyno Tuning Mini Game Area -->
+      <div id="dyno-section" style="margin-top:14px; background:var(--bg-alt); padding:14px; border-radius:8px; border:1px solid #30363d;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="font-size:0.95rem;">⚡ ECU Stage 2 Dyno Calibration</strong>
+            <div id="dyno-help" style="font-size:0.8rem; color:var(--text-dim);">Hit "Lock In ECU Tune" when needle is in the green zone!</div>
+          </div>
+          <button class="btn btn-purple btn-sm" id="dyno-tune-btn" onclick="attemptDynoTune()">Lock In ECU Tune</button>
+        </div>
+        <div class="dyno-gauge-wrap">
+          <div class="dyno-sweetspot" id="dyno-sweetspot"></div>
+          <div class="dyno-needle" id="dyno-needle"></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 18px; display:flex; gap:10px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('workshopModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LIVE AUCTION -->
+  <div class="modal-overlay" id="auctionModal">
+    <div class="modal" style="max-width:520px; text-align:center;">
+      <div class="modal-header">
+        <h3>🔨 Live Collector Auction</h3>
+        <button class="close-btn" onclick="closeModal('auctionModal')">×</button>
+      </div>
+
+      <div class="car-canvas-wrap" id="auction-car-render" style="height:150px;"></div>
+      <h3 id="auction-car-name" style="margin-top:10px;">Car Name</h3>
+      <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:14px;">Bidders are fighting for this lot!</p>
+
+      <div style="background:var(--bg-alt); border:1px solid #30363d; padding:16px; border-radius:8px; margin-bottom:16px;">
+        <div style="font-size:0.85rem; color:var(--text-dim); text-transform:uppercase;">Current Highest Bid</div>
+        <div id="auction-current-bid" style="font-size:2.2rem; font-weight:900; color:var(--accent); margin:6px 0;">$0</div>
+        <div id="auction-timer" style="color:var(--gold); font-weight:700;">Closing in: 10s</div>
+      </div>
+
+      <div id="auction-log" style="font-size:0.85rem; color:var(--text-dim); height:60px; overflow-y:auto; margin-bottom:14px; text-align:left; background:#0d1117; padding:8px; border-radius:6px;">
+        Waiting for opening bid...
+      </div>
+
+      <button class="btn btn-accent" id="auction-accept-btn" onclick="acceptAuctionEarly()" style="width:100%;">Accept Current Bid & Hammer Down</button>
+    </div>
+  </div>
+
+  <!-- MODAL: SAVE / LOAD / RESET SLOTS -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>💾 Save, Load & Reset Profiles</h3>
+        <button class="close-btn" onclick="closeModal('saveModal')">×</button>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        Manage up to 3 separate profiles. You can switch careers, manually save, or completely reset any slot back to Day 1!
+      </p>
+
+      <div id="slots-container"></div>
+
+      <div style="margin-top: 14px; display:flex; gap:10px;">
+        <button class="btn btn-blue" style="flex:1;" onclick="exportSave()">📤 Export Save</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('import-save-file').click()">📥 Import Save</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('saveModal')">Close</button>
+      </div>
+      <input id="import-save-file" type="file" accept="application/json,.json" style="display:none" onchange="importSave(event)" />
+    </div>
+  </div>
+
+  <!-- MODAL: HOW TO PLAY FIELD GUIDE -->
+  <div class="modal-overlay" id="howToPlayModal">
+    <div class="modal" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3>📖 Tycoon Field Manual & How to Play</h3>
+        <button class="close-btn" onclick="closeModal('howToPlayModal')">×</button>
+      </div>
+
+      <div class="guide-card">
+        <h4>🛒 1. Flipping & Detailing</h4>
+        <p>Buy low, scrub clean, fix up, and sell high:</p>
+        <ul>
+          <li>Junkyard cars come dirty. Click <strong>🚿 Detail & Wash</strong> in Workshop to scrub mud off with your mouse for a free <strong>+$1,000</strong> value bonus!</li>
+          <li>Repair parts using cash OR using <strong>Salvaged Parts</strong> from the Pick-a-Part lot.</li>
+          <li>Sell at <strong>🔨 Live Auction</strong> for huge profit spikes!</li>
+        </ul>
+      </div>
+
+      <div class="guide-card">
+        <h4>📋 2. Fulfilling Customer Contracts (CRITICAL RULE)</h4>
+        <p>VIP clients pay huge bounties for exact restored rides:</p>
+        <ul>
+          <li>Find the car in Classifieds and restore the requested part to 100%.</li>
+          <li>Click <strong>Deliver Car & Collect Fee</strong> under Contracts.</li>
+        </ul>
+        <div class="guide-alert">
+          ⚠️ <strong>WARNING:</strong> Keep the car in your <strong>🔧 Garage Bays</strong>! Do <u>NOT</u> deliver it to the Showroom, or the client cannot take delivery!
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h4>🏁 3. Drag Strip, Reaction Times & Pink Slips</h4>
+        <p>Launch reaction is everything:</p>
+        <ul>
+          <li>Click <strong>🚦 Stage at Tree</strong>. The Christmas tree will flash yellow lights, then GREEN.</li>
+          <li>Click <strong>🚀 LAUNCH!</strong> exactly when green lights up. Launching during yellow results in a <strong>RED LIGHT DQ</strong>!</li>
+          <li>Hit <strong>💥 HIT NOS</strong> mid-race for an explosive surge.</li>
+          <li>In <strong>Pink Slip Mode</strong>, the winner takes the opponent's actual car!</li>
+        </ul>
+      </div>
+
+      <div class="guide-card">
+        <h4>🌾 4. Barn Finds & Global Expansion</h4>
+        <p>Pay scouts to find hidden legendary chassis at 0% condition. Rebuild them into $300k+ collector pieces. Once wealthy, expand your empire to Tokyo and Monaco!</p>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <button class="btn btn-accent" style="width:100%;" onclick="closeModal('howToPlayModal')">Understood! Back to Garage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Center -->
+  <div id="notification-center"></div>
+
+  <!-- JAVASCRIPT GAME LOGIC -->
+  <script>
+    /* ========================================================
+       1. SYNTHESIZED SOUND SYSTEM (Web Audio API)
+       ======================================================== */
+    let audioEnabled = true;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById('btn-sound').textContent = audioEnabled ? "🔊 Audio" : "🔇 Muted";
+      notify(audioEnabled ? "Sound Effects ON" : "Sound Effects MUTED");
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      initAudio();
+      const now = audioCtx.currentTime;
+
+      if (type === 'cash') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1400, now + 0.12);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+      }
+      else if (type === 'wrench') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now); osc.stop(now + 0.08);
+      }
+      else if (type === 'spray') {
+        const bufferSize = audioCtx.sampleRate * 0.15;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1600;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        noise.start(now);
+      }
+      else if (type === 'rev') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(450, now + 0.25);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.5);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+      }
+      else if (type === 'gavel') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(180, now);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+      }
+      else if (type === 'nos') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+      }
+      else if (type === 'beep') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+      }
+    }
+
+    /* ========================================================
+       2. PROCEDURAL VECTOR CAR GRAPHICS GENERATOR (SVG)
+       ======================================================== */
+    const CAR_PALETTE = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#fb8c00', '#8e24aa', '#263238', '#f5f5f5', '#00e5ff'];
+
+    function createCarSVG(car, width = 240, height = 110) {
+      const avgCond = getAvgCondition(car.parts);
+      const isRusted = avgCond < 65;
+      const rustOpacity = isRusted ? ((65 - avgCond) / 65) * 0.75 : 0;
+      const bodyColor = car.color || '#e53935';
+
+      let bodyPath = "";
+      let spoilerPath = "";
+      let wheelBaseFront = 180;
+      let wheelBaseRear = 60;
+
+      if (car.bodyType === 'coupe' || car.bodyType === 'muscle') {
+        bodyPath = `M 30,70 L 45,46 L 90,44 L 140,44 L 185,55 L 215,64 L 220,78 L 20,78 Z`;
+        if (car.tuned) spoilerPath = `<rect x="22" y="38" width="16" height="5" fill="#111"/><line x1="28" y1="43" x2="28" y2="52" stroke="#111" stroke-width="3"/>`;
+      } else if (car.bodyType === 'sport' || car.bodyType === 'exotic') {
+        bodyPath = `M 25,72 L 50,44 L 110,40 L 155,42 L 205,62 L 225,72 L 225,78 L 15,78 Z`;
+        wheelBaseFront = 185; wheelBaseRear = 55;
+        if (car.tuned) spoilerPath = `<polygon points="12,32 36,32 30,38 18,38" fill="#222"/><line x1="24" y1="38" x2="24" y2="52" stroke="#111" stroke-width="4"/>`;
+      } else if (car.bodyType === 'classic') {
+        bodyPath = `M 25,75 Q 35,45 65,48 L 120,44 L 175,50 Q 210,55 220,78 L 18,78 Z`;
+      } else {
+        bodyPath = `M 30,74 L 38,44 L 130,42 L 185,58 L 215,68 L 215,78 L 20,78 Z`;
+      }
+
+      const underglow = car.underglow 
+        ? `<ellipse cx="120" cy="85" rx="90" ry="8" fill="${car.underglow}" opacity="0.7" filter="blur(6px)"/>` 
+        : '';
+
+      const dirtVisual = (car.dirt && car.dirt > 0)
+        ? `<path d="M 40,65 Q 60,55 90,68 Q 140,58 180,68 L 210,75 L 25,75 Z" fill="#582900" opacity="${(car.dirt / 100) * 0.7}"/>`
+        : '';
+
+      return `
+        <svg viewBox="0 0 240 100" width="${width}" height="${height}" style="overflow:visible;" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bodyGrad_${car.id}" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="${bodyColor}" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#111" stop-opacity="0.6"/>
+            </linearGradient>
+            <radialGradient id="rimGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fff"/>
+              <stop offset="70%" stop-color="#9e9e9e"/>
+              <stop offset="100%" stop-color="#424242"/>
+            </radialGradient>
+          </defs>
+
+          ${underglow}
+          <ellipse cx="120" cy="84" rx="98" ry="7" fill="rgba(0,0,0,0.6)" />
+          <path d="${bodyPath}" fill="url(#bodyGrad_${car.id})" stroke="#1f242c" stroke-width="2" />
+          <path d="M 68,48 L 105,46 L 140,46 L 165,56 L 75,56 Z" fill="#0b1320" opacity="0.88" />
+          <line x1="110" y1="46" x2="110" y2="56" stroke="#21262d" stroke-width="2" />
+
+          <!-- Rust -->
+          <path d="M 35,68 Q 50,60 70,72 Q 55,76 35,68 Z" fill="#8d4004" opacity="${rustOpacity}" />
+          <circle cx="160" cy="65" r="9" fill="#78350f" opacity="${rustOpacity}" />
+          <path d="M 175,60 Q 190,58 200,68 Z" stroke="#5c2605" stroke-width="3" opacity="${rustOpacity}" />
+
+          <!-- Dirt Overlay -->
+          ${dirtVisual}
+
+          <!-- Spoiler -->
+          ${spoilerPath}
+
+          <!-- Lights -->
+          <polygon points="214,66 222,68 218,74 212,72" fill="#fff" opacity="0.9" />
+          <polygon points="20,68 24,68 22,76 18,76" fill="#f43f5e" />
+
+          <!-- Wheels -->
+          <g transform="translate(${wheelBaseRear}, 78)">
+            <circle cx="0" cy="0" r="17" fill="#18181b" stroke="#27272a" stroke-width="2" />
+            <circle cx="0" cy="0" r="10" fill="url(#rimGrad)" />
+            <circle cx="0" cy="0" r="3" fill="#18181b" />
+          </g>
+
+          <g transform="translate(${wheelBaseFront}, 78)">
+            <circle cx="0" cy="0" r="17" fill="#18181b" stroke="#27272a" stroke-width="2" />
+            <circle cx="0" cy="0" r="10" fill="url(#rimGrad)" />
+            <circle cx="0" cy="0" r="3" fill="#18181b" />
+          </g>
+        </svg>
+      `;
+    }
+
+    /* ========================================================
+       3. CAR DATA & ROSTER TEMPLATES
+       ======================================================== */
+    const CAR_CATALOG = [
+      { name: "1988 Ruston GL", tier: "Junker", bodyType: "hatchback", baseValue: 3200, hp: 85, minRep: 1 },
+      { name: "Metro Sprint 1.6", tier: "Common", bodyType: "hatchback", baseValue: 5400, hp: 110, minRep: 1 },
+      { name: "Highway Cruiser Sedan", tier: "Common", bodyType: "coupe", baseValue: 7200, hp: 140, minRep: 1 },
+      { name: "1970 Road Hammer V8", tier: "Muscle", bodyType: "muscle", baseValue: 14500, hp: 280, minRep: 2 },
+      { name: "Torque Rebel 454", tier: "Muscle", bodyType: "muscle", baseValue: 19800, hp: 320, minRep: 2 },
+      { name: "Fujita Apex Twin-Cam", tier: "Sport", bodyType: "sport", baseValue: 26000, hp: 275, minRep: 3 },
+      { name: "Silvia S-Drift Spec", tier: "Sport", bodyType: "sport", baseValue: 34000, hp: 310, minRep: 3 },
+      { name: "1962 Royale Grand Cabrio", tier: "Classic", bodyType: "classic", baseValue: 58000, hp: 210, minRep: 4 },
+      { name: "Silver Falcon 300SL", tier: "Classic", bodyType: "classic", baseValue: 82000, hp: 240, minRep: 4 },
+      { name: "Veloce Tributo V10", tier: "Exotic", bodyType: "exotic", baseValue: 145000, hp: 560, minRep: 5 },
+      { name: "Centenario Hyper-Hornet", tier: "Hypercar", bodyType: "exotic", baseValue: 320000, hp: 820, minRep: 6 }
+    ];
+
+    const BARN_CATALOG = [
+      { name: "1969 Boss Mach-V 429", tier: "Barn", bodyType: "muscle", baseValue: 110000, hp: 390, scoutCost: 3500 },
+      { name: "1994 Midnight GT-R Spec", tier: "Barn", bodyType: "sport", baseValue: 165000, hp: 420, scoutCost: 7500 },
+      { name: "1957 Speedster Carrera", tier: "Barn", bodyType: "classic", baseValue: 280000, hp: 210, scoutCost: 16000 },
+      { name: "1998 Twin-Turbo Hyper GT", tier: "Barn", bodyType: "exotic", baseValue: 460000, hp: 720, scoutCost: 32000 }
+    ];
+
+    /* ========================================================
+       4. GAME STATE FACTORY & UPGRADES
+       ======================================================== */
+    function getFreshPlayerState() {
+      return {
+        cash: 6500,
+        repLevel: 1,
+        repXP: 0,
+        day: 1,
+        maxGarageBays: 3,
+        hasPaintBooth: false,
+        hasDynoMachine: false,
+        mechanicSkill: 1,
+        apprenticeHired: false,
+        city: 'detroit',
+        inventoryParts: { engine: 0, body: 0, interior: 0, suspension: 0 },
+        garage: [],
+        showroom: [],
+        contracts: [],
+        discoveredBarns: [],
+        dailyQuests: [],
+        trendIndex: 0,
+        starterSafetyUsed: false
+      };
+    }
+
+    let activeSlot = 1;
+    let player = getFreshPlayerState();
+    let marketVehicles = [];
+    let currentModalCarId = null;
+    let dynoInterval = null;
+    let dynoNeedlePos = 0;
+    let dynoDirection = 1;
+    let activeAuction = null;
+
+    // Drag Strip Timing
+    let raceCountdownTimer = null;
+    let raceGreenLit = false;
+    let raceActive = false;
+    let playerNOSUsed = false;
+
+    // Market Trends Catalog
+    const MARKET_TRENDS = [
+      { tag: "Normal Conditions", desc: "Standard vehicle valuation and steady parts pricing across regions.", mult: { Junker:1, Common:1, Muscle:1, Sport:1, Classic:1, Exotic:1, Hypercar:1 } },
+      { tag: "🔥 JDM Sport Craze!", desc: "Japanese & Sport tier cars auction for +35% higher today!", mult: { Sport: 1.35, Exotic: 1.15 } },
+      { tag: "⚠️ Steel Supply Shortage", desc: "Replacement body & engine repair costs inflated by 30%.", repairMult: 1.3 },
+      { tag: "👑 Collector Auction Boom", desc: "Classic & Exotic vehicles fetch +40% hammer bids!", mult: { Classic: 1.4, Exotic: 1.4 } },
+      { tag: "🏎️ Muscle Car Fever", desc: "V8 Muscle car valuations surged by +30%!", mult: { Muscle: 1.3 } }
+    ];
+
+    const SHOP_UPGRADES = [
+      { id: 'bay1', name: '4th Service Bay Extension', cost: 4000, desc: 'Adds +1 Garage vehicle bay slot.', bought: () => player.maxGarageBays >= 4, apply: () => { player.maxGarageBays = 4; } },
+      { id: 'bay2', name: 'Master Garage Bay Expansion (5 Bays)', cost: 12000, desc: 'Expand shop to fit 5 cars simultaneously.', bought: () => player.maxGarageBays >= 5, apply: () => { player.maxGarageBays = 5; } },
+      { id: 'paint', name: 'Custom Spray Paint Booth', cost: 3500, desc: 'Unlock custom color changes & gloss styling in Workshop.', bought: () => player.hasPaintBooth, apply: () => { player.hasPaintBooth = true; } },
+      { id: 'dyno', name: 'Precision Dyno Computer Station', cost: 7500, desc: 'Unlock ECU Tuning mini-game to boost HP & valuation by 30%.', bought: () => player.hasDynoMachine, apply: () => { player.hasDynoMachine = true; } },
+      { id: 'apprentice', name: 'Hire Master Mechanic Hans', cost: 15000, desc: 'Hans slowly repairs damaged parts across your garage automatically.', bought: () => player.apprenticeHired, apply: () => { player.apprenticeHired = true; } },
+      { id: 'tools', name: 'Snap-Titanium Power Toolsets', cost: 6000, desc: 'Permanent 25% discount on all replacement part costs.', bought: () => player.mechanicSkill > 1, apply: () => { player.mechanicSkill = 1.35; } }
+    ];
+
+    /* ========================================================
+       5. MULTI-SLOT SAVE / LOAD / RESET SYSTEM
+       ======================================================== */
+    function getSlotKey(slot) { return `autoflip_slot_${slot}`; }
+
+    function loadGame(slot = null) {
+      if (slot) activeSlot = slot;
+      else {
+        const rememberedSlot = localStorage.getItem('autoflip_active_slot');
+        if (rememberedSlot) activeSlot = parseInt(rememberedSlot, 10);
+      }
+
+      localStorage.setItem('autoflip_active_slot', activeSlot);
+      const savedData = localStorage.getItem(getSlotKey(activeSlot));
+
+      if (savedData) {
+        try {
+          player = Object.assign(getFreshPlayerState(), JSON.parse(savedData));
+        } catch (e) {
+          console.warn("Could not parse slot data", e);
+          player = getFreshPlayerState();
+        }
+      } else {
+        player = getFreshPlayerState();
+      }
+
+      if (player.contracts.length === 0) {
+        generateNewContract();
+        generateNewContract();
+      }
+      if (!player.dailyQuests || player.dailyQuests.length === 0) {
+        generateDailyQuests();
+      }
+
+      document.getElementById('current-slot-indicator').textContent = activeSlot;
+      updateCityUI();
+      updateMarketTrendTicker();
+      generateMarket();
+      updateHeaderUI();
+      renderAllViews();
+      if (!savedData && !localStorage.getItem('autoflip_seen_guide')) {
+        localStorage.setItem('autoflip_seen_guide', '1');
+        setTimeout(() => openModal('howToPlayModal'), 250);
+      }
+    }
+
+    function saveGame(slot = activeSlot, showNotification = true) {
+      localStorage.setItem(getSlotKey(slot), JSON.stringify(player));
+      localStorage.setItem('autoflip_active_slot', activeSlot);
+      if (showNotification) notify(`Progress Saved to Slot ${slot}!`, "accent");
+      renderSlotsManager();
+    }
+
+    function exportSave() {
+      const payload = {
+        game: "AutoFlip Garage",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        player
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `autoflip-garage-slot-${activeSlot}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      notify("📤 Save exported successfully!", "accent");
+    }
+
+    function importSave(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const importedPlayer = parsed.player || parsed;
+          if (!importedPlayer || typeof importedPlayer.cash !== 'number' || !Array.isArray(importedPlayer.garage) || !Array.isArray(importedPlayer.showroom)) {
+            throw new Error('Invalid save format');
+          }
+          player = Object.assign(getFreshPlayerState(), importedPlayer);
+          saveGame(activeSlot, false);
+          updateCityUI();
+          updateMarketTrendTicker();
+          updateHeaderUI();
+          renderAllViews();
+          closeModal('saveModal');
+          notify("📥 Save imported successfully!", "gold");
+        } catch (error) {
+          notify("❌ That file is not a valid AutoFlip save.", "danger");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function switchAndLoadSlot(targetSlot) {
+      activeSlot = targetSlot;
+      loadGame(targetSlot);
+      notify(`Loaded Career Slot ${targetSlot}`, "gold");
+      playSound('rev');
+      closeModal('saveModal');
+    }
+
+    function resetSlot(slot) {
+      const confirmReset = confirm(`⚠️ Are you sure you want to completely RESET Slot ${slot}? All progress in this slot will be erased!`);
+      if (!confirmReset) return;
+
+      localStorage.removeItem(getSlotKey(slot));
+      if (activeSlot === slot) {
+        player = getFreshPlayerState();
+        generateNewContract();
+        generateNewContract();
+        generateDailyQuests();
+        generateMarket();
+        updateCityUI();
+        updateMarketTrendTicker();
+        updateHeaderUI();
+        renderAllViews();
+      }
+      notify(`Slot ${slot} has been reset to Day 1!`, "danger");
+      playSound('gavel');
+      renderSlotsManager();
+    }
+
+    function openSaveModal() {
+      renderSlotsManager();
+      openModal('saveModal');
+    }
+
+    function renderSlotsManager() {
+      const container = document.getElementById("slots-container");
+      let html = "";
+
+      for (let s = 1; s <= 3; s++) {
+        const raw = localStorage.getItem(getSlotKey(s));
+        const isActive = (s === activeSlot);
+        let info = `<span style="color:var(--text-dim);">Empty Slot (No saved career)</span>`;
+        let hasData = false;
+
+        if (raw) {
+          try {
+            const data = JSON.parse(raw);
+            hasData = true;
+            info = `
+              <span>Day: <strong style="color:var(--gold);">${data.day}</strong></span> |
+              <span>Cash: <strong style="color:var(--accent);">$${data.cash.toLocaleString()}</strong></span> |
+              <span>Rep: <strong style="color:var(--accent-blue);">Lvl ${data.repLevel}</strong></span> |
+              <span>Garage: <strong>${data.garage.length} cars</strong></span>
+            `;
+          } catch(e) {}
+        }
+
+        html += `
+          <div class="save-slot-card ${isActive ? 'active-slot' : ''}">
+            <div class="slot-meta">
+              <div class="slot-title">
+                📁 Slot ${s} ${isActive ? '<span style="color:var(--accent); font-size:0.75rem; border:1px solid var(--accent); padding:1px 6px; border-radius:10px;">PLAYING NOW</span>' : ''}
+              </div>
+              <div class="slot-details">${info}</div>
+            </div>
+            <div class="slot-actions">
+              ${isActive 
+                ? `<button class="btn btn-accent btn-sm" onclick="saveGame(${s})">💾 Quick Save Here</button>` 
+                : `<button class="btn btn-blue btn-sm" onclick="switchAndLoadSlot(${s})">📂 Load Slot ${s}</button>`
+              }
+              ${hasData 
+                ? `<button class="btn btn-danger btn-sm" onclick="resetSlot(${s})">🗑️ Reset Slot</button>`
+                : ''
+              }
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function notify(text, variant = 'primary') {
+      const center = document.getElementById("notification-center");
+      const toast = document.createElement("div");
+      toast.className = `toast ${variant}`;
+      toast.textContent = text;
+      center.appendChild(toast);
+      setTimeout(() => toast.classList.add("show"), 20);
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+      }, 2600);
+    }
+
+    function updateHeaderUI() {
+      document.getElementById("cash-display").textContent = `$${player.cash.toLocaleString()}`;
+      document.getElementById("rep-level").textContent = player.repLevel;
+      document.getElementById("rep-xp").textContent = player.repXP;
+      document.getElementById("game-day").textContent = player.day;
+      document.getElementById("garage-tab-count").textContent = player.garage.length;
+      document.getElementById("garage-capacity").textContent = player.maxGarageBays;
+      document.getElementById("quests-tab-count").textContent = player.contracts.length + player.dailyQuests.filter(q => !q.claimed).length;
+      const showroomCount = document.getElementById("showroom-tab-count");
+      if (showroomCount) showroomCount.textContent = player.showroom.length;
+
+      // Inventory
+      document.getElementById("inv-engine").textContent = player.inventoryParts.engine;
+      document.getElementById("inv-body").textContent = player.inventoryParts.body;
+      document.getElementById("inv-interior").textContent = player.inventoryParts.interior;
+      document.getElementById("inv-suspension").textContent = player.inventoryParts.suspension;
+
+      let passive = 0;
+      const cityMult = (player.city === 'monaco') ? 2 : 1;
+      const collectionMult = getShowroomCollectionMultiplier();
+      player.showroom.forEach(c => { passive += Math.round(c.baseValue * 0.006 * cityMult * collectionMult); });
+      document.getElementById("showroom-income").textContent = `$${passive.toLocaleString()} / 10s`;
+      const showroomBonus = document.getElementById("showroom-bonus");
+      if (showroomBonus) showroomBonus.textContent = collectionMult === 1 ? "No collection bonus yet" : `Collection bonus: +${Math.round((collectionMult - 1) * 100)}%`;
+      updateGoalUI();
+    }
+
+    function getShowroomCollectionMultiplier() {
+      if (player.showroom.length >= 8) return 1.5;
+      if (player.showroom.length >= 5) return 1.25;
+      if (player.showroom.length >= 3) return 1.1;
+      return 1;
+    }
+
+    function updateGoalUI() {
+      const banner = document.getElementById('goal-banner');
+      if (!banner) return;
+      const cashDone = player.cash >= 1000000;
+      const cityDone = player.city === 'monaco' || (player.unlockedCities && player.unlockedCities.includes('monaco'));
+      const collectionDone = player.garage.concat(player.showroom).length >= 20;
+      const completed = [cashDone, cityDone, collectionDone].filter(Boolean).length;
+      const progress = Math.round((completed / 3) * 100);
+      banner.innerHTML = `<strong>🏁 Final Goal: Build a World-Class Empire</strong><span style="float:right; color:var(--gold);">${completed}/3 complete</span><div style="color:var(--text-dim); font-size:.82rem; margin-top:5px;">Reach $1,000,000 cash · Unlock Monaco · Own 20 vehicles</div><div class="goal-progress"><i style="width:${progress}%"></i></div>${completed === 3 ? '<div style="color:var(--accent); font-weight:800; margin-top:7px;">🏆 Empire complete! Keep collecting, racing, and chasing records.</div>' : ''}`;
+    }
+
+    function gainReputation(xp) {
+      player.repXP += xp;
+      let levelsGained = 0;
+      while (player.repXP >= player.repLevel * 180) {
+        const target = player.repLevel * 180;
+        player.repLevel++;
+        player.repXP -= target;
+        levelsGained++;
+      }
+      if (levelsGained > 0) {
+        notify(`🎉 Garage Level Up! Reached Tier ${player.repLevel}! New sports cars unlocked!`, 'gold');
+        playSound('rev');
+      }
+      updateHeaderUI();
+    }
+
+    /* ========================================================
+       6. MARKET TRENDS & CITIES
+       ======================================================== */
+    function updateMarketTrendTicker() {
+      const trend = MARKET_TRENDS[player.trendIndex % MARKET_TRENDS.length];
+      document.getElementById("trend-tag").textContent = trend.tag;
+      document.getElementById("trend-desc").textContent = trend.desc;
+    }
+
+    function updateCityUI() {
+      const badge = document.getElementById("city-badge");
+      if (player.city === 'tokyo') badge.textContent = "🌸 Tokyo Akihabara Branch";
+      else if (player.city === 'monaco') badge.textContent = "💎 Monaco Harbor Branch";
+      else badge.textContent = "🏙️ Detroit HQ";
+
+      if (document.getElementById("city-btn-tokyo")) {
+        if (player.city === 'tokyo' || player.city === 'monaco') {
+          document.getElementById("city-btn-tokyo").textContent = "✅ Branch Open";
+          document.getElementById("city-btn-tokyo").disabled = true;
+        }
+      }
+      if (document.getElementById("city-btn-monaco")) {
+        if (player.city === 'monaco') {
+          document.getElementById("city-btn-monaco").textContent = "✅ Headquarters Established";
+          document.getElementById("city-btn-monaco").disabled = true;
+        }
+      }
+    }
+
+    function buyCityBranch(cityName, cost) {
+      if (player.cash < cost) {
+        notify("❌ Not enough funds for this international expansion!", "danger");
+        return;
+      }
+      player.cash -= cost;
+      player.city = cityName;
+      gainReputation(350);
+      playSound('cash');
+      notify(`🎉 Unlocked ${cityName.toUpperCase()} Branch! High-tier cars and bonuses now live!`, "gold");
+      updateCityUI();
+      generateMarket();
+      saveGame(activeSlot, false);
+    }
+
+    /* ========================================================
+       7. MARKETPLACE & REPAIR LOGIC
+       ======================================================== */
+    function generateMarket(manual = false) {
+      if (manual) {
+        if (player.cash < 75) {
+          notify("Not enough cash to refresh listings ($75)", "danger");
+          return;
+        }
+        player.cash -= 75;
+        playSound('cash');
+      }
+
+      marketVehicles = [];
+      const count = 4 + Math.floor(Math.random() * 3);
+      const trend = MARKET_TRENDS[player.trendIndex % MARKET_TRENDS.length];
+
+      for (let i = 0; i < count; i++) {
+        let maxRepAllowed = player.repLevel + 1;
+        if (player.city === 'tokyo') maxRepAllowed += 1;
+        if (player.city === 'monaco') maxRepAllowed += 2;
+
+        const eligible = CAR_CATALOG.filter(c => c.minRep <= maxRepAllowed);
+        const template = eligible[Math.floor(Math.random() * eligible.length)];
+        const parts = {
+          engine: Math.floor(18 + Math.random() * 55),
+          body: Math.floor(20 + Math.random() * 55),
+          interior: Math.floor(25 + Math.random() * 60),
+          suspension: Math.floor(25 + Math.random() * 55)
+        };
+
+        const avg = Math.round((parts.engine + parts.body + parts.interior + parts.suspension) / 4);
+        let valMultiplier = (trend.mult && trend.mult[template.tier]) ? trend.mult[template.tier] : 1;
+        const discountFactor = (0.25 + (avg / 100) * 0.45) * valMultiplier;
+        const purchasePrice = Math.round(template.baseValue * discountFactor);
+
+        marketVehicles.push({
+          id: 'car_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          name: template.name,
+          tier: template.tier,
+          bodyType: template.bodyType,
+          baseValue: template.baseValue,
+          hp: template.hp,
+          color: CAR_PALETTE[Math.floor(Math.random() * CAR_PALETTE.length)],
+          tuned: false,
+          underglow: null,
+          purchasePrice: purchasePrice,
+          parts: parts,
+          dirt: Math.floor(40 + Math.random() * 55)
+        });
+      }
+
+      renderMarketplace();
+      updateHeaderUI();
+    }
+
+    function buyCar(index) {
+      if (player.garage.length >= player.maxGarageBays) {
+        notify("❌ Garage full! Expand bays or sell a vehicle.", "danger");
+        return;
+      }
+      const car = marketVehicles[index];
+      if (player.cash < car.purchasePrice) {
+        notify("❌ Not enough cash!", "danger");
+        return;
+      }
+
+      player.cash -= car.purchasePrice;
+      marketVehicles.splice(index, 1);
+      player.garage.push(car);
+      if (!player.starterSafetyUsed) {
+        player.starterSafetyUsed = true;
+        if (player.cash < 2500) {
+          const starterSupport = 2500 - player.cash;
+          player.cash = 2500;
+          notify(`🛟 Starter support added $${starterSupport.toLocaleString()} so your first restoration can continue.`, "gold");
+        }
+      }
+      playSound('cash');
+      notify(`Acquired ${car.name}! Towed to garage bay.`, "accent");
+      gainReputation(25);
+      checkQuestProgress('buy_car');
+      renderMarketplace();
+      renderGarage();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function getAvgCondition(parts) {
+      return Math.round((parts.engine + parts.body + parts.interior + parts.suspension) / 4);
+    }
+
+    function calculateMarketValue(car) {
+      const avg = getAvgCondition(car.parts);
+      const trend = MARKET_TRENDS[player.trendIndex % MARKET_TRENDS.length];
+      let trendMult = (trend.mult && trend.mult[car.tier]) ? trend.mult[car.tier] : 1;
+
+      let val = car.baseValue * (0.35 + (avg / 100) * 0.75) * trendMult;
+      if (car.tuned) val *= 1.30;
+      if (car.underglow) val += 900;
+      if (car.dirt === 0) val += 1000;
+      return Math.round(val);
+    }
+
+    function calculateRepairEstimate(car) {
+      const trend = MARKET_TRENDS[player.trendIndex % MARKET_TRENDS.length];
+      const trendRepairMult = trend.repairMult || 1;
+      return Math.round(['engine', 'body', 'interior', 'suspension'].reduce((total, key) => {
+        const baseRate = { engine: 18, body: 14, interior: 10, suspension: 12 }[key];
+        return total + (100 - car.parts[key]) * baseRate * ((car.baseValue / 6000) / player.mechanicSkill) * trendRepairMult;
+      }, 0));
+    }
+
+    function calculateProjectedProfit(car) {
+      const restoredCar = {
+        ...car,
+        dirt: 0,
+        parts: { engine: 100, body: 100, interior: 100, suspension: 100 }
+      };
+      return calculateMarketValue(restoredCar) - (car.purchasePrice || 0) - calculateRepairEstimate(car);
+    }
+
+    function getConditionColor(cond) {
+      if (cond >= 80) return 'var(--accent)';
+      if (cond >= 45) return 'var(--warning)';
+      return 'var(--danger)';
+    }
+
+    /* ========================================================
+       8. WORKSHOP, DETAILING & DYNO
+       ======================================================== */
+    function openWorkshopModal(carId) {
+      const car = player.garage.find(c => c.id === carId);
+      if (!car) return;
+      currentModalCarId = carId;
+
+      document.getElementById("modal-car-title").textContent = `${car.name} (Tuned HP: ${car.hp})`;
+      document.getElementById("modal-car-render").innerHTML = createCarSVG(car, 280, 120);
+
+      const swatches = document.getElementById("color-swatches");
+      if (player.hasPaintBooth) {
+        document.getElementById("paint-booth-section").style.display = "block";
+        swatches.innerHTML = CAR_PALETTE.map(c => `
+          <div class="swatch ${car.color === c ? 'active' : ''}" style="background:${c};" onclick="paintCar('${c}')"></div>
+        `).join('');
+      } else {
+        document.getElementById("paint-booth-section").style.display = "none";
+      }
+
+      const dynoSec = document.getElementById("dyno-section");
+      const dynoButton = document.getElementById("dyno-tune-btn");
+      const dynoHelp = document.getElementById("dyno-help");
+      if (player.hasDynoMachine && !car.tuned) {
+        dynoSec.style.display = "block";
+        dynoButton.style.display = "inline-flex";
+        dynoButton.disabled = false;
+        dynoHelp.textContent = 'Hit "Lock In ECU Tune" when needle is in the green zone!';
+        dynoHelp.style.color = "var(--text-dim)";
+        startDynoAnimation();
+      } else if (car.tuned) {
+        dynoSec.style.display = "block";
+        dynoButton.style.display = "none";
+        dynoHelp.textContent = "✅ ECU Stage 2 Tune Verified (+30% Value & HP Boost)";
+        dynoHelp.style.color = "var(--accent)";
+        document.getElementById("dyno-needle").style.left = "78%";
+        stopDynoAnimation();
+      } else {
+        dynoSec.style.display = "none";
+        stopDynoAnimation();
+      }
+
+      renderModalPartsList(car);
+      openModal('workshopModal');
+    }
+
+    function renderModalPartsList(car) {
+      const container = document.getElementById("modal-parts-container");
+      const partDefs = [
+        { key: 'engine', name: 'Engine & Turbocharger', icon: '⚙️', baseRate: 18 },
+        { key: 'body', name: 'Body Panels & Clearcoat', icon: '🚗', baseRate: 14 },
+        { key: 'interior', name: 'Leather & Cockpit Cluster', icon: '💺', baseRate: 10 },
+        { key: 'suspension', name: 'Coilovers & High-Perf Wheels', icon: '🛞', baseRate: 12 }
+      ];
+
+      const trend = MARKET_TRENDS[player.trendIndex % MARKET_TRENDS.length];
+      const trendRepairMult = trend.repairMult || 1;
+
+      container.innerHTML = partDefs.map(part => {
+        const cond = car.parts[part.key];
+        const costMultiplier = ((car.baseValue / 6000) / player.mechanicSkill) * trendRepairMult;
+        const fixCost = Math.round((100 - cond) * part.baseRate * costMultiplier);
+        const isMint = cond >= 100;
+        const hasSalvagePart = player.inventoryParts[part.key] > 0;
+
+        return `
+          <div class="workshop-row">
+            <div class="workshop-left">
+              <strong>${part.icon} ${part.name}</strong>
+              <div style="font-size:0.8rem; color:${getConditionColor(cond)};">Condition: ${cond}%</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              ${isMint 
+                ? `<span style="color:var(--accent); font-weight:700; font-size:0.85rem;">MINT (100%)</span>`
+                : `
+                  <button class="btn btn-secondary btn-sm" onclick="repairCarPart('${car.id}', '${part.key}', ${fixCost})">$${fixCost.toLocaleString()}</button>
+                  ${hasSalvagePart ? `<button class="btn btn-accent btn-sm" onclick="useSalvagedPart('${car.id}', '${part.key}')">Use Salvage</button>` : ''}
+                `
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function repairCarPart(carId, partKey, cost) {
+      const car = player.garage.find(c => c.id === carId);
+      if (!car) return;
+      if (player.cash < cost) {
+        notify("❌ Cannot afford this replacement part!", "danger");
+        return;
+      }
+      player.cash -= cost;
+      car.parts[partKey] = 100;
+      gainReputation(20);
+      checkQuestProgress('repair_part');
+      playSound('wrench');
+      renderModalPartsList(car);
+      document.getElementById("modal-car-render").innerHTML = createCarSVG(car, 280, 120);
+      updateHeaderUI();
+      renderGarage();
+      saveGame(activeSlot, false);
+    }
+
+    function useSalvagedPart(carId, partKey) {
+      const car = player.garage.find(c => c.id === carId);
+      if (!car || player.inventoryParts[partKey] <= 0) return;
+      player.inventoryParts[partKey]--;
+      car.parts[partKey] = 100;
+      gainReputation(25);
+      playSound('wrench');
+      notify(`Installed salvaged ${partKey.toUpperCase()}! No cash spent.`, "accent");
+      renderModalPartsList(car);
+      document.getElementById("modal-car-render").innerHTML = createCarSVG(car, 280, 120);
+      updateHeaderUI();
+      renderGarage();
+      saveGame(activeSlot, false);
+    }
+
+    function repairAllCarsQuick() {
+      let totalCost = 0;
+      let partsToFix = [];
+
+      player.garage.forEach(car => {
+        ['engine','body','interior','suspension'].forEach(key => {
+          if (car.parts[key] < 100) {
+            const cost = Math.round((100 - car.parts[key]) * 12 * (car.baseValue / 6000) / player.mechanicSkill);
+            totalCost += cost;
+            partsToFix.push({ car, key });
+          }
+        });
+      });
+
+      if (partsToFix.length === 0) {
+        notify("All vehicles are already in 100% mint condition!");
+        return;
+      }
+      if (player.cash < totalCost) {
+        notify(`❌ Repairing all vehicles costs $${totalCost.toLocaleString()}! Not enough funds.`, "danger");
+        return;
+      }
+
+      player.cash -= totalCost;
+      partsToFix.forEach(p => p.car.parts[p.key] = 100);
+      gainReputation(partsToFix.length * 10);
+      playSound('wrench');
+      notify(`Workshop crew repaired all vehicles for $${totalCost.toLocaleString()}!`, "accent");
+      renderGarage();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function paintCar(color) {
+      const car = player.garage.find(c => c.id === currentModalCarId);
+      if (!car) return;
+      car.color = color;
+      playSound('spray');
+      notify(`Repainted ${car.name} with fresh enamel coating!`);
+      document.getElementById("modal-car-render").innerHTML = createCarSVG(car, 280, 120);
+      openWorkshopModal(car.id);
+      renderGarage();
+      saveGame(activeSlot, false);
+    }
+
+    function startDynoAnimation() {
+      stopDynoAnimation();
+      const needle = document.getElementById("dyno-needle");
+      dynoNeedlePos = 0;
+      dynoDirection = 1;
+
+      dynoInterval = setInterval(() => {
+        dynoNeedlePos += dynoDirection * 2.8;
+        if (dynoNeedlePos >= 96) dynoDirection = -1;
+        if (dynoNeedlePos <= 2) dynoDirection = 1;
+        if (needle) needle.style.left = dynoNeedlePos + '%';
+      }, 25);
+    }
+
+    function stopDynoAnimation() {
+      if (dynoInterval) clearInterval(dynoInterval);
+    }
+
+    function attemptDynoTune() {
+      const car = player.garage.find(c => c.id === currentModalCarId);
+      if (!car) return;
+
+      if (dynoNeedlePos >= 68 && dynoNeedlePos <= 88) {
+        car.tuned = true;
+        car.hp = Math.round(car.hp * 1.35);
+        gainReputation(60);
+        playSound('rev');
+        notify(`🎯 PERFECT DYNO TUNE! +${Math.round(car.hp * 0.35)} HP gained!`, 'accent');
+      } else {
+        notify("❌ Off timing! ECU rejected map. Try again!", "danger");
+      }
+      openWorkshopModal(car.id);
+      renderGarage();
+      saveGame(activeSlot, false);
+    }
+
+    /* Car Wash / Detailing Mini-Game */
+    let washCarId = null;
+    let washCanvas = null;
+    let washCtx = null;
+    let washIsDrawing = false;
+    let dirtPixelsRemoved = 0;
+    let totalDirtPixels = 1;
+
+    function openWashBay(carId) {
+      const car = player.garage.find(c => c.id === carId);
+      if (!car) return;
+      washCarId = carId;
+
+      document.getElementById("wash-car-render").innerHTML = createCarSVG({ ...car, dirt: 0 }, 320, 160);
+      openModal("washModal");
+
+      setTimeout(initWashCanvas, 100);
+    }
+
+    function initWashCanvas() {
+      washCanvas = document.getElementById("wash-canvas");
+      const wrap = document.getElementById("wash-canvas-wrap");
+      washCanvas.width = wrap.clientWidth;
+      washCanvas.height = wrap.clientHeight;
+      washCtx = washCanvas.getContext("2d");
+
+      // Paint mud patches over canvas
+      washCtx.fillStyle = "rgba(75, 40, 10, 0.85)";
+      washCtx.fillRect(0, 0, washCanvas.width, washCanvas.height);
+
+      totalDirtPixels = washCanvas.width * washCanvas.height;
+      dirtPixelsRemoved = 0;
+      document.getElementById("wash-progress").textContent = "0%";
+
+      washCanvas.onmousedown = (e) => { washIsDrawing = true; scrubMud(e); };
+      washCanvas.onmousemove = (e) => { if (washIsDrawing) scrubMud(e); };
+      window.onmouseup = () => { washIsDrawing = false; };
+
+      // Touch
+      washCanvas.ontouchstart = (e) => { washIsDrawing = true; scrubMudTouch(e); };
+      washCanvas.ontouchmove = (e) => { if (washIsDrawing) scrubMudTouch(e); };
+      window.ontouchend = () => { washIsDrawing = false; };
+    }
+
+    function scrubMud(e) {
+      if (!washCtx) return;
+      const rect = washCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      washCtx.globalCompositeOperation = "destination-out";
+      washCtx.beginPath();
+      washCtx.arc(x, y, 28, 0, Math.PI * 2);
+      washCtx.fill();
+      playSound('spray');
+
+      dirtPixelsRemoved += 400;
+      const pct = Math.min(100, Math.round((dirtPixelsRemoved / (totalDirtPixels * 0.45)) * 100));
+      document.getElementById("wash-progress").textContent = `${pct}%`;
+
+      if (pct >= 90) {
+        finishDetailingCar();
+      }
+    }
+
+    function scrubMudTouch(e) {
+      if (!e.touches[0]) return;
+      scrubMud(e.touches[0]);
+    }
+
+    function finishDetailingCar() {
+      const car = player.garage.find(c => c.id === washCarId);
+      if (car && car.dirt !== 0) {
+        car.dirt = 0;
+        gainReputation(50);
+        playSound('cash');
+        notify(`✨ Sparkle Mirror Finish! ${car.name} received +$1,000 appraisal!`, "accent");
+        checkQuestProgress('wash_car');
+        renderGarage();
+        saveGame(activeSlot, false);
+      }
+    }
+
+    /* ========================================================
+       9. JUNKYARD PICK-A-PART SCAVENGING
+       ======================================================== */
+    function startScavengeRun() {
+      if (player.cash < 200) {
+        notify("❌ Need $200 permit fee to enter the scrap yard!", "danger");
+        return;
+      }
+      player.cash -= 200;
+      playSound('wrench');
+
+      const partsPool = ['engine', 'body', 'interior', 'suspension'];
+      const wrecks = [
+        { name: "Crushed '74 Station Wagon", part: partsPool[Math.floor(Math.random() * partsPool.length)] },
+        { name: "Smashed Street Tuner", part: partsPool[Math.floor(Math.random() * partsPool.length)] },
+        { name: "Burnt Highway Cruiser", part: partsPool[Math.floor(Math.random() * partsPool.length)] }
+      ];
+
+      const grid = document.getElementById("scavenge-grid");
+      grid.innerHTML = wrecks.map(w => `
+        <div class="card" style="text-align:center;">
+          <div style="font-size:2.8rem; margin:10px 0;">🚘💥</div>
+          <div class="car-title">${w.name}</div>
+          <p style="font-size:0.85rem; color:var(--text-dim); margin:8px 0 14px;">Potential usable salvage: ${w.part.toUpperCase()}</p>
+          <button class="btn btn-accent" onclick="pullSalvagedPart('${w.part}')">🔧 Pull Salvage Part</button>
+        </div>
+      `).join('');
+
+      notify("Yard permit authorized! Select a wrecked donor car.", "accent");
+      updateHeaderUI();
+    }
+
+    function pullSalvagedPart(partKey) {
+      player.inventoryParts[partKey]++;
+      gainReputation(20);
+      playSound('wrench');
+      notify(`🧰 Successfully pulled a usable ${partKey.toUpperCase()} component! Added to inventory.`, "gold");
+      document.getElementById("scavenge-grid").innerHTML = `<div class="empty-state">Yard permit expired. Buy a new permit to search again!</div>`;
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    /* ========================================================
+       10. BARN FINDS EXPEDITIONS
+       ======================================================== */
+    function renderBarnFinds() {
+      const container = document.getElementById("barnfinds-grid");
+      container.innerHTML = BARN_CATALOG.map(barn => {
+        const alreadyDiscovered = player.discoveredBarns.includes(barn.name) || player.garage.some(c => c.name === barn.name) || player.showroom.some(c => c.name === barn.name);
+
+        return `
+          <div class="card">
+            <span class="card-badge tier-Barn">Legendary Rust Bucket</span>
+            <div class="car-canvas-wrap">${createCarSVG({ ...barn, parts: { engine:0, body:0, interior:0, suspension:0 }, color: '#78350f' })}</div>
+            <div class="car-title">${barn.name}</div>
+            <div class="car-subtitle">
+              <span>Class: <strong>${barn.tier}</strong></span>
+              <span>Potential Value: <strong style="color:var(--gold);">$${barn.baseValue.toLocaleString()}</strong></span>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:12px;">Forgotten under dust and straw. Starts at 0% complete restoration.</p>
+
+            <div class="card-actions full">
+              ${alreadyDiscovered 
+                ? `<button class="btn btn-secondary" disabled>✅ Expedition Rescued</button>`
+                : `<button class="btn btn-gold" onclick="scoutBarnCar('${barn.name}', ${barn.scoutCost})">🌾 Scout Barn ($${barn.scoutCost.toLocaleString()})</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function scoutBarnCar(name, cost) {
+      if (player.garage.length >= player.maxGarageBays) {
+        notify("❌ Garage bays full! Need a bay to haul the barn chassis.", "danger");
+        return;
+      }
+      if (player.cash < cost) {
+        notify("❌ Cannot afford the expedition search scout fee!", "danger");
+        return;
+      }
+
+      const barnTemplate = BARN_CATALOG.find(b => b.name === name);
+      if (!barnTemplate) return;
+
+      player.cash -= cost;
+      player.discoveredBarns.push(name);
+
+      const barnCar = {
+        id: 'barn_' + Date.now(),
+        name: barnTemplate.name,
+        tier: barnTemplate.tier,
+        bodyType: barnTemplate.bodyType,
+        baseValue: barnTemplate.baseValue,
+        hp: barnTemplate.hp,
+        color: '#8d4004',
+        tuned: false,
+        underglow: null,
+        purchasePrice: cost,
+        parts: { engine: 5, body: 5, interior: 5, suspension: 5 },
+        dirt: 90
+      };
+
+      player.garage.push(barnCar);
+      gainReputation(150);
+      playSound('gavel');
+      notify(`🌾 DISCOVERY! Hauled ${name} out of an abandoned silo!`, "gold");
+      renderBarnFinds();
+      renderGarage();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    /* ========================================================
+       11. DAILY QUESTS SYSTEM
+       ======================================================== */
+    function generateDailyQuests() {
+      player.dailyQuests = [
+        { id: 'q_wash', type: 'wash_car', text: 'Detail & wash 1 mud-covered car', target: 1, current: 0, reward: 1200, claimed: false },
+        { id: 'q_repair', type: 'repair_part', text: 'Restore 2 damaged car parts', target: 2, current: 0, reward: 1500, claimed: false },
+        { id: 'q_buy', type: 'buy_car', text: 'Purchase 1 car from Classifieds', target: 1, current: 0, reward: 1000, claimed: false },
+        { id: 'q_race', type: 'win_race', text: 'Win 1 Drag Strip match', target: 1, current: 0, reward: 2000, claimed: false }
+      ];
+      renderQuests();
+    }
+
+    function checkQuestProgress(actionType) {
+      if (!player.dailyQuests) return;
+      player.dailyQuests.forEach(q => {
+        if (q.type === actionType && !q.claimed) {
+          q.current = Math.min(q.target, q.current + 1);
+        }
+      });
+      renderQuests();
+    }
+
+    function claimQuestReward(questId) {
+      const q = player.dailyQuests.find(i => i.id === questId);
+      if (!q || q.claimed || q.current < q.target) return;
+      q.claimed = true;
+      player.cash += q.reward;
+      gainReputation(60);
+      playSound('cash');
+      notify(`🏆 Bounty Claimed! Pocketed +$${q.reward.toLocaleString()}!`, "gold");
+      renderQuests();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function renderQuests() {
+      const container = document.getElementById("daily-quests-list");
+      if (!container || !player.dailyQuests) return;
+
+      container.innerHTML = player.dailyQuests.map(q => {
+        const isDone = q.current >= q.target;
+        return `
+          <div class="quest-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="color:#fff;">${q.text}</strong>
+              <div style="font-size:0.8rem; color:var(--text-dim);">Progress: ${q.current}/${q.target} | Reward: <span style="color:var(--gold);">$${q.reward}</span></div>
+            </div>
+            <div>
+              ${q.claimed 
+                ? `<span style="color:var(--accent); font-weight:700; font-size:0.85rem;">✅ Claimed</span>`
+                : (isDone 
+                  ? `<button class="btn btn-gold btn-sm" onclick="claimQuestReward('${q.id}')">Claim $${q.reward}</button>`
+                  : `<span style="color:var(--text-dim); font-size:0.8rem;">In Progress</span>`
+                )
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ========================================================
+       12. CONTRACTS & VIP CLIENTS
+       ======================================================== */
+    function generateNewContract() {
+      if (player.contracts.length >= 4) {
+        notify("Contracts board full! Complete existing orders first.");
+        return;
+      }
+      const eligible = CAR_CATALOG.filter(c => c.minRep <= player.repLevel);
+      const template = eligible[Math.floor(Math.random() * eligible.length)];
+      const reqKeys = ['engine', 'body', 'suspension', 'interior'];
+      const targetPart = reqKeys[Math.floor(Math.random() * reqKeys.length)];
+
+      const clientNames = ["Lord Sterling", "Detective Miller", "Night City Racer", "Speedway Champion", "Governor Adams"];
+      const client = clientNames[Math.floor(Math.random() * clientNames.length)];
+      const bounty = Math.round(template.baseValue * 0.45);
+
+      player.contracts.push({
+        id: 'ord_' + Date.now() + Math.random().toString(36).substr(2, 4),
+        client: client,
+        carName: template.name,
+        targetPart: targetPart,
+        reward: bounty,
+        repGain: 80
+      });
+      renderContracts();
+      updateHeaderUI();
+    }
+
+    function fulfillContract(contractId) {
+      const orderIdx = player.contracts.findIndex(o => o.id === contractId);
+      if (orderIdx === -1) return;
+      const order = player.contracts[orderIdx];
+
+      // Verifies car is in workshop bay with required part at 100%
+      const carMatch = player.garage.find(c => c.name.includes(order.carName) && c.parts[order.targetPart] >= 100);
+
+      if (!carMatch) {
+        notify(`❌ You need a ${order.carName} with 100% ${order.targetPart.toUpperCase()} in your Garage Bays!`, "danger");
+        return;
+      }
+
+      const carIdx = player.garage.indexOf(carMatch);
+      player.garage.splice(carIdx, 1);
+      player.contracts.splice(orderIdx, 1);
+
+      player.cash += order.reward;
+      gainReputation(order.repGain);
+      playSound('cash');
+      notify(`🏆 Contract Fulfilled! ${order.client} paid $${order.reward.toLocaleString()}!`, "gold");
+
+      renderGarage();
+      renderContracts();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    /* ========================================================
+       13. INTERACTIVE DRAG RACING & PINK SLIPS
+       ======================================================== */
+    let rivalCarPinkSlip = null;
+
+    function updateDragCarSelect() {
+      const sel = document.getElementById("drag-car-select");
+      if (!sel) return;
+      sel.innerHTML = player.garage.map(car => `
+        <option value="${car.id}">${car.name} (${car.hp} HP)</option>
+      `).join('');
+    }
+
+    function stageDragRace() {
+      const carId = document.getElementById("drag-car-select").value;
+      const car = player.garage.find(c => c.id === carId);
+      if (!car) {
+        notify("❌ Select a vehicle first!", "danger");
+        return;
+      }
+
+      const wagerType = document.getElementById("drag-wager").value;
+      if (wagerType !== 'pink_slip') {
+        const cashWager = parseInt(wagerType, 10);
+        if (player.cash < cashWager) {
+          notify("❌ Not enough cash for this wager!", "danger");
+          return;
+        }
+      }
+
+      document.getElementById("start-race-btn").style.display = "none";
+      document.getElementById("launch-race-btn").style.display = "inline-flex";
+      document.getElementById("nos-btn").disabled = true;
+
+      const status = document.getElementById("race-status");
+      status.textContent = "🟡 STAGING... WATCH THE CHRISTMAS TREE!";
+      playSound('rev');
+
+      // AI Rival setup
+      const rivalHp = Math.round(car.hp * (0.88 + Math.random() * 0.32));
+      const rivalTemplate = CAR_CATALOG[Math.floor(Math.random() * CAR_CATALOG.length)];
+      rivalCarPinkSlip = { ...rivalTemplate, id: 'rival_' + Date.now(), hp: rivalHp, parts: { engine:100, body:100, interior:100, suspension:100 }, color:'#1e293b' };
+
+      const pRacer = document.getElementById("player-racer");
+      const aRacer = document.getElementById("ai-racer");
+      pRacer.innerHTML = createCarSVG(car, 90, 45);
+      aRacer.innerHTML = createCarSVG(rivalCarPinkSlip, 90, 45);
+      pRacer.style.left = '10px';
+      aRacer.style.left = '10px';
+
+      // Reset Tree Lights
+      document.getElementById("tree-y1").classList.remove("on");
+      document.getElementById("tree-y2").classList.remove("on");
+      document.getElementById("tree-g").classList.remove("on");
+      document.getElementById("tree-r").classList.remove("on");
+
+      raceGreenLit = false;
+      raceActive = false;
+      playerNOSUsed = false;
+
+      // Tree Sequence: 1.2s -> Yellow 1 -> 1.0s -> Yellow 2 -> 0.8s -> GREEN!
+      raceCountdownTimer = setTimeout(() => {
+        document.getElementById("tree-y1").classList.add("on");
+        playSound('beep');
+
+        raceCountdownTimer = setTimeout(() => {
+          document.getElementById("tree-y2").classList.add("on");
+          playSound('beep');
+
+          raceCountdownTimer = setTimeout(() => {
+            document.getElementById("tree-g").classList.add("on");
+            raceGreenLit = true;
+            status.textContent = "🟢 GREEN LIGHT! LAUNCH PEDAL!";
+            playSound('rev');
+          }, 800);
+        }, 1000);
+      }, 1200);
+    }
+
+    function launchDragRace() {
+      const status = document.getElementById("race-status");
+      const launchBtn = document.getElementById("launch-race-btn");
+      const carId = document.getElementById("drag-car-select").value;
+      const car = player.garage.find(c => c.id === carId);
+
+      // FALSE START CHECK (Clicked before green!)
+      if (!raceGreenLit) {
+        clearTimeout(raceCountdownTimer);
+        document.getElementById("tree-r").classList.add("on");
+        playSound('gavel');
+        status.innerHTML = `❌ <span style="color:var(--danger);">RED LIGHT / FALSE START! DISQUALIFIED!</span>`;
+        launchBtn.style.display = "none";
+        document.getElementById("start-race-btn").style.display = "inline-flex";
+
+        const wagerType = document.getElementById("drag-wager").value;
+        if (wagerType === 'pink_slip') {
+          notify(`Lost pink slip on a Red Light! Lost ${car.name}!`, "danger");
+          const idx = player.garage.findIndex(c => c.id === car.id);
+          player.garage.splice(idx, 1);
+        } else {
+          player.cash -= parseInt(wagerType, 10);
+        }
+        updateHeaderUI();
+        renderGarage();
+        saveGame(activeSlot, false);
+        return;
+      }
+
+      launchBtn.style.display = "none";
+      document.getElementById("nos-btn").disabled = false;
+      raceActive = true;
+
+      const pRacer = document.getElementById("player-racer");
+      const aRacer = document.getElementById("ai-racer");
+      const playerLane = document.getElementById("race-lane-player");
+      const trackEnd = Math.max(10, playerLane.clientWidth - 30 - 16 - pRacer.offsetWidth);
+
+      let pPos = 10;
+      let aPos = 10;
+
+      const raceInterval = setInterval(() => {
+        let pSpeed = (car.hp / 26) + (Math.random() * 5);
+        let aSpeed = (rivalCarPinkSlip.hp / 26) + (Math.random() * 5);
+
+        if (playerNOSUsed) pSpeed += 8;
+
+        pPos += pSpeed;
+        aPos += aSpeed;
+
+        pRacer.style.left = `${pPos}px`;
+        aRacer.style.left = `${aPos}px`;
+
+        if (pPos >= trackEnd || aPos >= trackEnd) {
+          clearInterval(raceInterval);
+          document.getElementById("start-race-btn").style.display = "inline-flex";
+          document.getElementById("nos-btn").disabled = true;
+
+          const wagerType = document.getElementById("drag-wager").value;
+
+          if (pPos >= aPos) {
+            checkQuestProgress('win_race');
+            gainReputation(80);
+            playSound('cash');
+
+            if (wagerType === 'pink_slip') {
+              status.innerHTML = `🏆 <span style="color:var(--accent);">PINK SLIP VICTORY! You won rival's ${rivalCarPinkSlip.name}!</span>`;
+              notify(`Won rival's pink slip! Added to garage!`, "gold");
+              if (player.garage.length < player.maxGarageBays) {
+                player.garage.push(rivalCarPinkSlip);
+              } else {
+                player.cash += Math.round(rivalCarPinkSlip.baseValue * 0.7);
+                notify(`Garage bays full! Sold won car for +$${Math.round(rivalCarPinkSlip.baseValue * 0.7).toLocaleString()}`, "gold");
+              }
+            } else {
+              const stake = parseInt(wagerType, 10);
+              player.cash += stake;
+              status.innerHTML = `🏆 <span style="color:var(--accent);">WINNER! Won match and took +$${stake.toLocaleString()}!</span>`;
+              notify(`Drag Race Victory! +$${stake.toLocaleString()}`, "gold");
+            }
+          } else {
+            playSound('gavel');
+            if (wagerType === 'pink_slip') {
+              status.innerHTML = `❌ <span style="color:var(--danger);">DEFEATED! You lost your pink slip and vehicle!</span>`;
+              notify(`Lost pink slip race! Lost ${car.name}!`, "danger");
+              const idx = player.garage.findIndex(c => c.id === car.id);
+              player.garage.splice(idx, 1);
+            } else {
+              const stake = parseInt(wagerType, 10);
+              player.cash -= stake;
+              status.innerHTML = `❌ <span style="color:var(--danger);">DEFEAT! Rival crossed first. -$${stake.toLocaleString()}</span>`;
+              notify(`Lost drag match -$${stake.toLocaleString()}`, "danger");
+            }
+          }
+
+          updateHeaderUI();
+          renderGarage();
+          saveGame(activeSlot, false);
+        }
+      }, 50);
+    }
+
+    function triggerNOS() {
+      if (playerNOSUsed || !raceActive) return;
+      playerNOSUsed = true;
+      document.getElementById("nos-btn").disabled = true;
+      playSound('nos');
+      notify("💥 NITROUS OXIDE ENGAGED!", "nos");
+    }
+
+    /* ========================================================
+       14. LIVE AUCTIONS & SHOWROOM
+       ======================================================== */
+    function startLiveAuction(carId) {
+      const car = player.garage.find(c => c.id === carId);
+      if (!car) return;
+
+      activeAuction = {
+        car: car,
+        currentBid: Math.round(calculateMarketValue(car) * 0.85),
+        timeLeft: 8,
+        interval: null
+      };
+
+      document.getElementById("auction-car-name").textContent = car.name;
+      document.getElementById("auction-car-render").innerHTML = createCarSVG(car, 260, 110);
+      document.getElementById("auction-current-bid").textContent = `$${activeAuction.currentBid.toLocaleString()}`;
+      document.getElementById("auction-log").innerHTML = `<div>Auctioneer: Opening bid for ${car.name} at $${activeAuction.currentBid.toLocaleString()}!</div>`;
+
+      openModal("auctionModal");
+      playSound('gavel');
+
+      activeAuction.interval = setInterval(() => {
+        activeAuction.timeLeft--;
+        document.getElementById("auction-timer").textContent = `Hammer Falling in: ${activeAuction.timeLeft}s`;
+
+        if (Math.random() < 0.65 && activeAuction.timeLeft > 1) {
+          const bump = Math.round(activeAuction.car.baseValue * (0.05 + Math.random() * 0.12));
+          activeAuction.currentBid += bump;
+          document.getElementById("auction-current-bid").textContent = `$${activeAuction.currentBid.toLocaleString()}`;
+          const bidderNames = ["Collector #402", "Euro Importer", "Drift Club CEO", "Vintage Museum", "Monaco Billionaire"];
+          const name = bidderNames[Math.floor(Math.random() * bidderNames.length)];
+          const log = document.getElementById("auction-log");
+          log.innerHTML = `<div>⚡ <strong>${name}</strong> bids $${activeAuction.currentBid.toLocaleString()}!</div>` + log.innerHTML;
+          playSound('wrench');
+        }
+
+        if (activeAuction.timeLeft <= 0) acceptAuctionEarly();
+      }, 1000);
+    }
+
+    function acceptAuctionEarly() {
+      if (!activeAuction) return;
+      clearInterval(activeAuction.interval);
+
+      const idx = player.garage.findIndex(c => c.id === activeAuction.car.id);
+      if (idx !== -1) player.garage.splice(idx, 1);
+
+      player.cash += activeAuction.currentBid;
+      gainReputation(75);
+      playSound('gavel');
+      notify(`🔨 SOLD! ${activeAuction.car.name} hammered for $${activeAuction.currentBid.toLocaleString()}!`, "gold");
+
+      closeModal("auctionModal");
+      activeAuction = null;
+      renderGarage();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function sendToShowroom(carId) {
+      const idx = player.garage.findIndex(c => c.id === carId);
+      if (idx === -1) return;
+      const car = player.garage[idx];
+      const avg = getAvgCondition(car.parts);
+
+      if (avg < 90) {
+        notify("❌ Cars must be restored to at least 90% condition to join the Showroom!", "danger");
+        return;
+      }
+
+      player.garage.splice(idx, 1);
+      player.showroom.push(car);
+      gainReputation(120);
+      playSound('rev');
+      notify(`🌟 ${car.name} added to your Showroom Museum!`, "gold");
+      renderGarage();
+      renderShowroom();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function sellShowroomCar(carId) {
+      const idx = player.showroom.findIndex(c => c.id === carId);
+      if (idx === -1) return;
+
+      const car = player.showroom[idx];
+      const salePrice = calculateMarketValue(car);
+      if (!confirm(`Sell ${car.name} from the showroom for $${salePrice.toLocaleString()}?`)) return;
+
+      player.showroom.splice(idx, 1);
+      player.cash += salePrice;
+      playSound('cash');
+      notify(`💰 SOLD! ${car.name} sold for $${salePrice.toLocaleString()}!`, "gold");
+      renderShowroom();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    /* ========================================================
+       15. VIEW RENDERING
+       ======================================================== */
+    function renderMarketplace() {
+      const container = document.getElementById("market-grid");
+      if (marketVehicles.length === 0) {
+        container.innerHTML = `<div class="empty-state">No listings currently available. Hit Refresh Listings!</div>`;
+        return;
+      }
+
+      container.innerHTML = marketVehicles.map((car, idx) => {
+        const avg = getAvgCondition(car.parts);
+        return `
+          <div class="card">
+            <span class="card-badge tier-${car.tier}">${car.tier}</span>
+            <div class="car-canvas-wrap">${createCarSVG(car)}</div>
+            <div class="car-title">${car.name}</div>
+            <div class="car-subtitle">
+              <span>Overall: <strong style="color:${getConditionColor(avg)};">${avg}%</strong></span>
+              <span>Stock HP: <strong>${car.hp}</strong></span>
+            </div>
+
+            <div class="vehicle-financials">
+              <span>Purchase <strong>$${car.purchasePrice.toLocaleString()}</strong></span>
+              <span>Restored value <strong>$${calculateMarketValue({ ...car, parts: { engine: 100, body: 100, interior: 100, suspension: 100 }, dirt: 0 }).toLocaleString()}</strong></span>
+              <span>Repair estimate <strong>$${calculateRepairEstimate(car).toLocaleString()}</strong></span>
+              <span>Detail bonus <strong>+$1,000</strong></span>
+              <span class="profit">Projected profit <strong>${calculateProjectedProfit(car) >= 0 ? '+' : ''}$${calculateProjectedProfit(car).toLocaleString()}</strong></span>
+            </div>
+
+            <div class="parts-grid">
+              ${renderMiniMeter('Engine', car.parts.engine)}
+              ${renderMiniMeter('Body', car.parts.body)}
+              ${renderMiniMeter('Interior', car.parts.interior)}
+              ${renderMiniMeter('Suspension', car.parts.suspension)}
+            </div>
+
+            <div class="card-actions full">
+              <button class="btn btn-accent" onclick="buyCar(${idx})">
+                🛒 Buy Distress Lot: $${car.purchasePrice.toLocaleString()}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderGarage() {
+      const container = document.getElementById("garage-grid");
+      if (player.garage.length === 0) {
+        container.innerHTML = `<div class="empty-state">No vehicles in bays! Check Classifieds or Scout Barn Finds.</div>`;
+        updateDragCarSelect();
+        return;
+      }
+
+      container.innerHTML = player.garage.map(car => {
+        const avg = getAvgCondition(car.parts);
+        const estValue = calculateMarketValue(car);
+
+        return `
+          <div class="card">
+            <span class="card-badge tier-${car.tier}">${car.tier}</span>
+            <div class="car-canvas-wrap">${createCarSVG(car)}</div>
+            <div class="car-title">${car.name} ${car.tuned ? '⚡' : ''}</div>
+            <div class="car-subtitle">
+              <span>Cond: <strong style="color:${getConditionColor(avg)};">${avg}%</strong> | HP: <strong>${car.hp}</strong></span>
+              <span>Est: <strong style="color:var(--accent);">$${estValue.toLocaleString()}</strong></span>
+            </div>
+
+            <div class="vehicle-financials">
+              <span>Purchase <strong>$${(car.purchasePrice || 0).toLocaleString()}</strong></span>
+              <span>Restored value <strong>$${calculateMarketValue({ ...car, parts: { engine: 100, body: 100, interior: 100, suspension: 100 }, dirt: 0 }).toLocaleString()}</strong></span>
+              <span>Repair estimate <strong>$${calculateRepairEstimate(car).toLocaleString()}</strong></span>
+              <span>Detail bonus <strong>+$1,000</strong></span>
+              <span class="profit">Projected profit <strong>${calculateProjectedProfit(car) >= 0 ? '+' : ''}$${calculateProjectedProfit(car).toLocaleString()}</strong></span>
+            </div>
+
+            <div class="parts-grid">
+              ${renderMiniMeter('Engine', car.parts.engine)}
+              ${renderMiniMeter('Body', car.parts.body)}
+              ${renderMiniMeter('Interior', car.parts.interior)}
+              ${renderMiniMeter('Suspension', car.parts.suspension)}
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-blue" onclick="openWorkshopModal('${car.id}')">🔧 Service Bay</button>
+              <button class="btn btn-gold" onclick="startLiveAuction('${car.id}')">🔨 Live Auction</button>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="openWashBay('${car.id}')">🚿 Detail & Wash</button>
+              <button class="btn btn-secondary" onclick="sendToShowroom('${car.id}')">🏆 Showroom (90%+)</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateDragCarSelect();
+    }
+
+    function renderContracts() {
+      const container = document.getElementById("orders-grid");
+      if (player.contracts.length === 0) {
+        container.innerHTML = `<div class="empty-state">No active VIP contracts right now. Click "+ Find Client"!</div>`;
+        return;
+      }
+
+      container.innerHTML = player.contracts.map(order => `
+        <div class="card">
+          <span class="card-badge tier-Sport">VIP Client</span>
+          <div class="car-title">${order.client}</div>
+          <div class="car-subtitle">Demands: <strong>${order.carName}</strong></div>
+
+          <div style="background:var(--bg-alt); padding:10px; border-radius:8px; margin:8px 0; font-size:0.85rem; border:1px solid #30363d;">
+            <div>Requirement: <span style="color:var(--accent); font-weight:700;">100% Mint ${order.targetPart.toUpperCase()}</span></div>
+            <div style="margin-top:4px;">Payout: <strong style="color:var(--gold); font-size:1.05rem;">$${order.reward.toLocaleString()}</strong></div>
+          </div>
+
+          <div class="card-actions full">
+            <button class="btn btn-accent" onclick="fulfillContract('${order.id}')">Deliver Car & Collect Fee</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderShowroom() {
+      const container = document.getElementById("showroom-grid");
+      if (player.showroom.length === 0) {
+        container.innerHTML = `<div class="empty-state">Showroom empty! Fully restore vehicles in your bays to generate spectator income.</div>`;
+        return;
+      }
+
+      const cityMult = (player.city === 'monaco') ? 2 : 1;
+      const collectionMult = getShowroomCollectionMultiplier();
+
+      container.innerHTML = player.showroom.map(car => {
+        const rate = Math.round(car.baseValue * 0.006 * cityMult * collectionMult);
+        return `
+          <div class="card" style="border: 1px solid var(--gold);">
+            <span class="card-badge tier-${car.tier}">${car.tier}</span>
+            <div class="car-canvas-wrap">${createCarSVG(car)}</div>
+            <div class="car-title">${car.name} ${car.tuned ? '⚡' : ''}</div>
+            <div class="car-subtitle">
+              <span>Appraisal: <strong style="color:var(--gold);">$${calculateMarketValue(car).toLocaleString()}</strong></span>
+              <span>Yield: <strong style="color:var(--accent);">+$${rate}/tick</strong></span>
+            </div>
+            <div style="background:var(--bg-alt); padding:8px; border-radius:6px; font-size:0.8rem; text-align:center; color:var(--text-dim);">
+              ⭐ Active visitor museum admission · ${collectionMult === 1 ? 'Display 3 cars for +10% yield' : `Collection bonus +${Math.round((collectionMult - 1) * 100)}%`}
+            </div>
+            <button class="btn btn-danger" style="width:100%; margin-top:10px;" onclick="sellShowroomCar('${car.id}')">
+              💰 Sell for $${calculateMarketValue(car).toLocaleString()}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderUpgrades() {
+      const container = document.getElementById("upgrades-grid");
+      container.innerHTML = SHOP_UPGRADES.map(upg => {
+        const alreadyBought = upg.bought();
+        return `
+          <div class="card">
+            <div class="car-title">${upg.name}</div>
+            <p style="font-size:0.85rem; color:var(--text-dim); margin:8px 0 14px;">${upg.desc}</p>
+            <div style="margin-top:auto;">
+              ${alreadyBought 
+                ? `<button class="btn btn-secondary" style="width:100%;" disabled>✅ Installed & Active</button>`
+                : `<button class="btn btn-accent" style="width:100%;" onclick="buyShopUpgrade('${upg.id}')">Purchase: $${upg.cost.toLocaleString()}</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function buyShopUpgrade(id) {
+      const upg = SHOP_UPGRADES.find(u => u.id === id);
+      if (!upg) return;
+      if (player.cash < upg.cost) {
+        notify("❌ Not enough funds for this upgrade!", "danger");
+        return;
+      }
+      player.cash -= upg.cost;
+      upg.apply();
+      gainReputation(120);
+      playSound('cash');
+      notify(`Installed: ${upg.name}!`, "gold");
+      renderUpgrades();
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }
+
+    function renderMiniMeter(label, value) {
+      return `
+        <div class="part-meter-wrap">
+          <div class="part-meter-label"><span>${label}</span><span>${value}%</span></div>
+          <div class="part-track">
+            <div class="part-fill" style="width:${value}%; background:${getConditionColor(value)};"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAllViews() {
+      renderMarketplace();
+      renderGarage();
+      renderQuests();
+      renderContracts();
+      renderBarnFinds();
+      renderShowroom();
+      renderUpgrades();
+    }
+
+    /* ========================================================
+       16. NAVIGATION & TABS
+       ======================================================== */
+    function switchTab(tabId) {
+      document.querySelectorAll(".view-section").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.add("active");
+
+      const navBtns = document.querySelectorAll("#nav-tabs .nav-btn");
+      navBtns.forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes(tabId)) btn.classList.add("active");
+      });
+
+      if (tabId === 'marketplace') renderMarketplace();
+      if (tabId === 'workshop') renderGarage();
+      if (tabId === 'barnfinds') renderBarnFinds();
+      if (tabId === 'quests') { renderQuests(); renderContracts(); }
+      if (tabId === 'dragstrip') updateDragCarSelect();
+      if (tabId === 'showroom') renderShowroom();
+      if (tabId === 'upgrades') renderUpgrades();
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("open"); }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+      if (id === 'workshopModal') {
+        stopDynoAnimation();
+        currentModalCarId = null;
+      }
+      if (id === 'auctionModal' && activeAuction) {
+        clearInterval(activeAuction.interval);
+        activeAuction = null;
+      }
+      renderGarage();
+      updateHeaderUI();
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+    });
+
+    /* ========================================================
+       17. GAME TICKER (SHOWROOM YIELD, APPRENTICE & DAY CLOCK)
+       ======================================================== */
+    setInterval(() => {
+      if (player.showroom.length > 0) {
+        let rev = 0;
+        const cityMult = (player.city === 'monaco') ? 2 : 1;
+        const collectionMult = getShowroomCollectionMultiplier();
+        player.showroom.forEach(c => { rev += Math.round(c.baseValue * 0.006 * cityMult * collectionMult); });
+        player.cash += rev;
+        gainReputation(player.showroom.length * 3);
+        updateHeaderUI();
+      }
+
+      if (player.apprenticeHired && player.garage.length > 0) {
+        player.garage.forEach(car => {
+          ['engine', 'body', 'interior', 'suspension'].forEach(p => {
+            if (car.parts[p] < 100) car.parts[p] = Math.min(100, car.parts[p] + 3);
+          });
+        });
+        renderGarage();
+      }
+    }, 10000);
+
+    // Day Cycle Clock (every 60s)
+    setInterval(() => {
+      player.day++;
+      if (player.day % 2 === 0) {
+        player.trendIndex++;
+        updateMarketTrendTicker();
+        generateDailyQuests();
+        notify("📰 New market economic conditions wire updated!", "gold");
+      }
+      if (Math.random() < 0.6) generateMarket(false);
+      updateHeaderUI();
+      saveGame(activeSlot, false);
+    }, 60000);
+
+    /* ========================================================
+       BOOTSTRAP
+       ======================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGame();
+    });
+  </script>
+
+<script>
+/* ============================================================
+   AUTFLIP GARAGE — ULTIMATE EXPANSION PACK
+   Adds: Car Builder, deep parts, collections, achievements,
+   career chapters, rivals, dynamic events, employees, expanded
+   cities, races, inspection, rare cars, garage empire and more.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  const U = {
+    version: 2,
+    cars: [
+      {name:"Thunderbird XR-8",tier:"Muscle",bodyType:"muscle",baseValue:26500,hp:355,minRep:2},
+      {name:"Kaze RS-7",tier:"Sport",bodyType:"sport",baseValue:39000,hp:330,minRep:3},
+      {name:"Iron Duke 440",tier:"Muscle",bodyType:"muscle",baseValue:43000,hp:410,minRep:3},
+      {name:"Riviera GT Classic",tier:"Classic",bodyType:"classic",baseValue:97000,hp:275,minRep:4},
+      {name:"Akira ZX-R",tier:"Sport",bodyType:"sport",baseValue:61000,hp:480,minRep:4},
+      {name:"Nordwerk M5R",tier:"Sport",bodyType:"sport",baseValue:74000,hp:510,minRep:4},
+      {name:"Marquee V12 Royale",tier:"Exotic",bodyType:"exotic",baseValue:185000,hp:610,minRep:5},
+      {name:"Rosso Strada V12",tier:"Exotic",bodyType:"exotic",baseValue:235000,hp:690,minRep:5},
+      {name:"Zenith X1 Hyper",tier:"Hypercar",bodyType:"exotic",baseValue:510000,hp:980,minRep:7},
+      {name:"Apex R Prototype",tier:"Hypercar",bodyType:"exotic",baseValue:760000,hp:1120,minRep:8},
+      {name:"Factory Legend GT",tier:"Classic",bodyType:"classic",baseValue:155000,hp:300,minRep:6}
+    ],
+    rare: [
+      {name:"1967 Nightbird 427",tier:"Classic",bodyType:"muscle",baseValue:310000,hp:480,rarity:"Legendary"},
+      {name:"1991 Kaze GT-R N",tier:"Sport",bodyType:"sport",baseValue:280000,hp:620,rarity:"Legendary"},
+      {name:"1970 Torino King",tier:"Muscle",bodyType:"muscle",baseValue:390000,hp:540,rarity:"Legendary"},
+      {name:"Prototype X-1",tier:"Hypercar",bodyType:"exotic",baseValue:900000,hp:1250,rarity:"Mythic"}
+    ],
+    partCatalog: {
+      engine:[
+        {name:"Stock Rebuild",hp:0,cost:900,rarity:"Common"},
+        {name:"Street V8",hp:55,cost:4500,rarity:"Common"},
+        {name:"Forged Turbo",hp:110,cost:12000,rarity:"Rare"},
+        {name:"Twin Turbo",hp:190,cost:26000,rarity:"Epic"},
+        {name:"Factory Race Engine",hp:310,cost:65000,rarity:"Legendary"}
+      ],
+      turbo:[
+        {name:"None",hp:0,cost:0,rarity:"Common"},
+        {name:"Street Boost",hp:35,cost:3500,rarity:"Common"},
+        {name:"Big Turbo",hp:90,cost:10000,rarity:"Rare"},
+        {name:"Twin Turbo Kit",hp:150,cost:24000,rarity:"Epic"},
+        {name:"Race Compound",hp:240,cost:55000,rarity:"Legendary"}
+      ],
+      exhaust:[
+        {name:"Factory",hp:0,cost:0,rarity:"Common"},
+        {name:"Sport Exhaust",hp:15,cost:1800,rarity:"Common"},
+        {name:"Cat-Back Race",hp:30,cost:5000,rarity:"Rare"},
+        {name:"Titanium System",hp:55,cost:14000,rarity:"Epic"}
+      ],
+      tires:[
+        {name:"All-Season",grip:0,cost:0,rarity:"Common"},
+        {name:"Performance",grip:8,cost:2200,rarity:"Common"},
+        {name:"Semi-Slick",grip:18,cost:6500,rarity:"Rare"},
+        {name:"Drag Radial",grip:30,cost:15000,rarity:"Epic"}
+      ],
+      suspension:[
+        {name:"Factory",handling:0,cost:0,rarity:"Common"},
+        {name:"Sport Springs",handling:5,cost:2400,rarity:"Common"},
+        {name:"Coilover Pro",handling:14,cost:7500,rarity:"Rare"},
+        {name:"Race Suspension",handling:25,cost:17000,rarity:"Epic"}
+      ],
+      transmission:[
+        {name:"Factory 5-Speed",hp:0,cost:0,rarity:"Common"},
+        {name:"Close-Ratio",hp:8,cost:4200,rarity:"Common"},
+        {name:"Race Sequential",hp:20,cost:12000,rarity:"Rare"},
+        {name:"Dual-Clutch Race",hp:35,cost:28000,rarity:"Epic"}
+      ],
+      brakes:[
+        {name:"Factory",cost:0,handling:0,rarity:"Common"},
+        {name:"Sport Brakes",cost:2200,handling:4,rarity:"Common"},
+        {name:"Big Brake Kit",cost:6500,handling:10,rarity:"Rare"},
+        {name:"Carbon Ceramic",cost:18000,handling:18,rarity:"Epic"}
+      ],
+      wheels:[
+        {name:"Factory Wheels",cost:0,value:0,rarity:"Common"},
+        {name:"Alloy Set",cost:2800,value:700,rarity:"Common"},
+        {name:"Forged Wheels",cost:9000,value:2500,rarity:"Rare"},
+        {name:"Show Car Forged",cost:22000,value:7000,rarity:"Epic"}
+      ],
+      bodykit:[
+        {name:"Factory Body",cost:0,value:0,rarity:"Common"},
+        {name:"Street Aero",cost:3500,value:1000,rarity:"Common"},
+        {name:"Widebody",cost:12000,value:5000,rarity:"Rare"},
+        {name:"Carbon Race Kit",cost:30000,value:14000,rarity:"Epic"}
+      ],
+      interior:[
+        {name:"Factory Cabin",cost:0,value:0,rarity:"Common"},
+        {name:"Leather Refresh",cost:2500,value:1500,rarity:"Common"},
+        {name:"Premium Leather",cost:7000,value:4500,rarity:"Rare"},
+        {name:"Hand-Stitched Custom",cost:18000,value:12000,rarity:"Epic"}
+      ]
+    },
+    cities:[
+      {id:"detroit",name:"Detroit HQ",icon:"🏙️",cost:0,bonus:"American muscle market"},
+      {id:"tokyo",name:"Tokyo",icon:"🌸",cost:50000,bonus:"+20% tuning ceiling; JDM cars"},
+      {id:"monaco",name:"Monaco",icon:"💎",cost:250000,bonus:"2× showroom yield; hypercars"},
+      {id:"munich",name:"Munich",icon:"🇩🇪",cost:600000,bonus:"German performance; premium parts"},
+      {id:"milan",name:"Milan",icon:"🇮🇹",cost:1200000,bonus:"Italian exotics; collector bonuses"},
+      {id:"london",name:"London",icon:"🇬🇧",cost:2500000,bonus:"Classic market; restoration bonuses"},
+      {id:"losangeles",name:"Los Angeles",icon:"🌴",cost:5000000,bonus:"Celebrity cars; race events"},
+      {id:"lasvegas",name:"Las Vegas",icon:"🎰",cost:9000000,bonus:"Mega auctions; high-stakes events"}
+    ],
+    careers:[
+      {id:"c1",name:"First Flip",desc:"Complete your first profitable flip.",need:1,reward:3000},
+      {id:"c2",name:"Shop Rat",desc:"Restore 10 cars to 90%+ condition.",need:10,reward:15000},
+      {id:"c3",name:"Street Legend",desc:"Win 10 drag races.",need:10,reward:30000},
+      {id:"c4",name:"Collector",desc:"Place 8 cars in the showroom.",need:8,reward:50000},
+      {id:"c5",name:"Millionaire",desc:"Reach $1,000,000 cash.",need:1000000,reward:100000},
+      {id:"c6",name:"Global Empire",desc:"Open 4 international cities.",need:4,reward:250000},
+      {id:"c7",name:"Master Builder",desc:"Build a car with 1000+ HP.",need:1,reward:300000},
+      {id:"c8",name:"Legendary Garage",desc:"Own 20 unique cars.",need:20,reward:500000}
+    ],
+    collections:[
+      {id:"muscle",name:"American Muscle",match:t=>t==="Muscle",need:8,reward:30000},
+      {id:"sport",name:"Street & Sport",match:t=>t==="Sport",need:8,reward:35000},
+      {id:"classic",name:"Classics",match:t=>t==="Classic",need:8,reward:50000},
+      {id:"exotic",name:"Exotics",match:t=>t==="Exotic",need:6,reward:100000},
+      {id:"hyper",name:"Hypercars",match:t=>t==="Hypercar",need:5,reward:250000},
+      {id:"barn",name:"Barn Rescue",match:t=>t==="Barn",need:6,reward:150000},
+      {id:"tuned",name:"Tuned Monsters",match:t=>!!t.tuned,need:10,reward:100000}
+    ],
+    achievements:[
+      ["flip1","💰 First Profit",()=>S.stats.profit>0,2500],
+      ["flip100","💰 $100K Lifetime Profit",()=>S.stats.profit>=100000,10000],
+      ["race10","🏁 Ten Race Wins",()=>S.stats.racesWon>=10,15000],
+      ["barn1","🌾 Barn Hunter",()=>S.stats.barns>=1,5000],
+      ["rare1","💎 Rare Find",()=>S.stats.rareFinds>=1,25000],
+      ["show8","🏆 Eight Showroom Cars",()=>S.showroom.length>=8,25000],
+      ["hp1000","⚡ 1000 HP Club",()=>S.garage.some(c=>(c.hp||0)>=1000),50000],
+      ["million","💵 Millionaire",()=>S.cash>=1000000,100000],
+      ["cities4","🌎 World Traveler",()=>S.unlockedCities.length>=4,100000]
+    ]
+  };
+
+  // Add catalog vehicles without disturbing the original roster.
+  U.cars.forEach(c=>{ if(!CAR_CATALOG.some(x=>x.name===c.name)) CAR_CATALOG.push(c); });
+
+  function ensure(){
+    const base = {
+      unlockedCities:["detroit"], city:"detroit",
+      unlockedParts:{}, carBuilds:{}, collectionsClaimed:[], achievementsClaimed:[],
+      careerClaimed:[], employees:{mechanic:0,painter:0,tuner:0,sales:0,scout:0},
+      stats:{profit:0,racesWon:0,carsBought:0,carsSold:0,barns:0,rareFinds:0,restored:0,inspections:0},
+      rivals:{}, activeEvent:null, eventExpires:0, eventHistory:[],
+      lifetimeCars:[], inspected:{}, storyStage:0, reputationBonus:0,
+      garageLevel:1, garageXP:0, lastAutoSave:Date.now()
+    };
+    Object.keys(base).forEach(k=>{
+      if(S[k]===undefined) S[k]=base[k];
+    });
+    if(!Array.isArray(S.unlockedCities)) S.unlockedCities=["detroit"];
+    if(!S.unlockedCities.includes("detroit")) S.unlockedCities.unshift("detroit");
+    S.stats=Object.assign(base.stats,S.stats||{});
+    S.employees=Object.assign(base.employees,S.employees||{});
+    if(!S.lifetimeCars) S.lifetimeCars=[];
+    S.garage.forEach(c=>normalizeCar(c));
+    S.showroom.forEach(c=>normalizeCar(c));
+  }
+  function normalizeCar(c){
+    c.mods=Object.assign({
+      engine:0,turbo:0,exhaust:0,tires:0,suspension:0,
+      transmission:0,brakes:0,wheels:0,bodykit:0,interior:0
+    },c.mods||{});
+    c.grip=c.grip||0;c.handling=c.handling||0;
+    c.history=c.history||[];
+    c.mileage=c.mileage||Math.floor(30000+Math.random()*120000);
+    c.inspected=!!c.inspected;
+    c.flooded=!!c.flooded;c.frameDamage=!!c.frameDamage;
+    c.rareOptions=c.rareOptions||[];
+  }
+
+  // Alias current player for compact code.
+  Object.defineProperty(window,"S",{get:()=>player});
+
+  // Wrap load/save so expansion state is persisted.
+  const originalLoad=loadGame;
+  window.loadGame=function(slot=null){
+    originalLoad(slot); ensure(); updateExpansionUI(); saveGame(activeSlot,false);
+  };
+  const originalSave=saveGame;
+  window.saveGame=function(slot=activeSlot,showNotification=true){
+    ensure(); S.lastAutoSave=Date.now(); originalSave(slot,showNotification);
+  };
+
+  function xp(value){
+    S.garageXP += value;
+    while(S.garageXP >= S.garageLevel*1000){
+      S.garageXP -= S.garageLevel*1000; S.garageLevel++;
+      S.maxGarageBays=Math.max(S.maxGarageBays,Math.min(12,3+Math.floor(S.garageLevel/2)));
+      notify(`🏢 Garage Empire Level ${S.garageLevel}! A new bay capacity upgrade is available.`,`gold`);
+    }
+  }
+
+  function allCars(){
+    return [...S.garage,...S.showroom];
+  }
+  function uniqueCars(){
+    return [...new Map(allCars().map(c=>[c.name,c])).values()];
+  }
+  function countType(match){return uniqueCars().filter(c=>match(c.tier,c)).length;}
+
+  function money(n){return "$"+Math.round(n).toLocaleString();}
+
+  // Add navigation buttons.
+  function addNav(){
+    const nav=document.getElementById("nav-tabs");
+    if(!nav || nav.dataset.ultimate) return;
+    nav.dataset.ultimate="1";
+    [
+      ["builder","🛠️ Builder"],
+      ["career","🎯 Career"],
+      ["collection","🏆 Collections"],
+      ["empire","🏢 Empire"]
+    ].forEach(([id,label])=>{
+      const b=document.createElement("button"); b.className="nav-btn"; b.dataset.extraTab=id;
+      b.innerHTML=label; b.onclick=()=>switchUltimateTab(id); nav.appendChild(b);
+    });
+  }
+
+  function switchUltimateTab(id){
+    document.querySelectorAll(".view-section").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+    let el=document.getElementById("view-"+id);
+    if(!el){el=document.createElement("section");el.id="view-"+id;el.className="view-section";document.querySelector("main").appendChild(el);}
+    el.classList.add("active");
+    const b=document.querySelector(`[data-extra-tab="${id}"]`); if(b)b.classList.add("active");
+    if(id==="builder") renderBuilder();
+    if(id==="career") renderCareer();
+    if(id==="collection") renderCollections();
+    if(id==="empire") renderEmpire();
+  }
+
+  function injectViews(){
+    if(document.getElementById("ultimate-event-banner")) return;
+    const main=document.querySelector("main");
+    const event=document.createElement("div");
+    event.id="ultimate-event-banner";
+    event.style.marginBottom="14px";
+    main.prepend(event);
+
+    ["builder","career","collection","empire"].forEach(id=>{
+      const s=document.createElement("section");s.id="view-"+id;s.className="view-section";
+      main.appendChild(s);
+    });
+  }
+
+  function updateExpansionUI(){
+    addNav(); injectViews(); ensure();
+    const b=document.getElementById("ultimate-event-banner");
+    if(b) b.innerHTML=renderEventBanner();
+    updateCityUI();
+  }
+
+  function renderEventBanner(){
+    if(!S.activeEvent || S.eventExpires<Date.now()){
+      if(S.activeEvent){S.activeEvent=null;S.eventExpires=0;saveGame(activeSlot,false);}
+      return `<div class="event-banner"><strong>📰 Garage Wire:</strong> The market is calm. Keep flipping, racing and hunting for rare cars.</div>`;
+    }
+    const e=S.activeEvent;
+    return `<div class="event-banner"><strong>${e.icon} ${e.name}</strong> — ${e.desc} <span class="tag-x">Ends in ${Math.max(1,Math.ceil((S.eventExpires-Date.now())/1000))}s</span></div>`;
+  }
+
+  const EVENTS=[
+    {name:"Classic Boom",icon:"👑",desc:"Classic cars sell for +40%.",duration:90,apply:c=>c.tier==="Classic"},
+    {name:"Street Race Weekend",icon:"🏁",desc:"Race winnings and XP are doubled.",duration:90},
+    {name:"Junkyard Jackpot",icon:"🔩",desc:"Scavenge runs can yield 2–3 parts.",duration:90},
+    {name:"Collector Fever",icon:"💎",desc:"Showroom income is doubled.",duration:90},
+    {name:"Turbo Shortage",icon:"⚠️",desc:"Turbo parts cost 25% more, but turbo cars sell for +25%.",duration:90}
+  ];
+  function rollEvent(){
+    const e=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+    S.activeEvent=e;S.eventExpires=Date.now()+e.duration*1000;S.eventHistory.unshift(e.name);
+    S.eventHistory=S.eventHistory.slice(0,20);
+    notify(`🌎 WORLD EVENT: ${e.name}!`,"gold"); updateExpansionUI(); saveGame(activeSlot,false);
+  }
+
+  // Car Builder
+  function renderBuilder(){
+    const el=document.getElementById("view-builder");
+    const cars=S.garage;
+    if(!cars.length){el.innerHTML=`<div class="section-header"><div><h2>🛠️ Performance & Custom Builder</h2><p style="color:var(--text-dim)">Buy a car first, then turn it into something nobody else owns.</p></div></div><div class="empty-state">No cars in the garage yet.</div>`;return;}
+    el.innerHTML=`<div class="section-header"><div><h2>🛠️ Performance & Custom Builder</h2><p style="color:var(--text-dim)">Engine swaps, boost, exhaust, tires, suspension, transmission, brakes, wheels, body kits and interiors.</p></div></div>
+      <div class="ultimate-grid">${cars.map(c=>buildCard(c)).join("")}</div>`;
+  }
+  function buildCard(c){
+    normalizeCar(c);
+    const hp=calcHP(c), value=calcBuildValue(c);
+    return `<div class="ultimate-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><h3>${c.name}</h3><small>${c.tier} • ${c.mileage.toLocaleString()} miles</small></div><span class="tag-x">${hp} HP</span></div>
+      <div class="car-canvas-wrap">${createCarSVG(c,260,115)}</div>
+      <div class="ultimate-stat"><div style="display:flex;justify-content:space-between"><span>Build Value</span><strong>${money(value)}</strong></div><div class="progress-x"><i style="width:${Math.min(100,hp/12)}%"></i></div></div>
+      ${["engine","turbo","exhaust","tires","suspension","transmission","brakes","wheels","bodykit","interior"].map(k=>partRow(c,k)).join("")}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="btn btn-blue" onclick="ultimateDyno('${c.id}')">⚡ Dyno Test</button><button class="btn btn-gold" onclick="showCarHistory('${c.id}')">📜 History</button></div>
+    </div>`;
+  }
+  function partRow(c,key){
+    const list=U.partCatalog[key];const idx=c.mods[key]||0;const item=list[idx]||list[0];const next=list[idx+1];
+    const stat=(item.hp?`+${item.hp} HP `:"")+(item.grip?`+${item.grip} Grip `:"")+(item.handling?`+${item.handling} Handling`:"");
+    return `<div class="car-build-row"><div><strong>${label(key)}</strong><br><small>${item.name} ${stat}</small></div>
+      ${next?`<button class="btn btn-accent btn-sm" onclick="installUltimatePart('${c.id}','${key}')">${next.name}<br>${money(partCost(next))}</button>`:`<span class="tag-x">MAX</span>`}</div>`;
+  }
+  function label(k){return k.charAt(0).toUpperCase()+k.slice(1).replace("bodykit"," Body Kit");}
+  function partCost(x){
+    let m=1;
+    if(S.activeEvent&&S.activeEvent.name==="Turbo Shortage")m=1.25;
+    if(S.employees.tuner>0)m*=Math.max(.7,1-S.employees.tuner*.05);
+    return Math.round(x.cost*m);
+  }
+  function calcHP(c){
+    let hp=c.hp||0;
+    ["engine","turbo","exhaust","transmission"].forEach(k=>{const i=c.mods?.[k]||0;hp+=(U.partCatalog[k][i]?.hp||0)});
+    if(c.tuned)hp=Math.round(hp*1.1);
+    return Math.round(hp);
+  }
+  function calcBuildValue(c){
+    let v=calculateMarketValue(c);
+    Object.keys(c.mods||{}).forEach(k=>{const x=U.partCatalog[k][c.mods[k]];if(x)v+=(x.value||0)+(x.cost||0)*.35});
+    return Math.round(v);
+  }
+  window.installUltimatePart=function(id,key){
+    ensure();const c=S.garage.find(x=>x.id===id);if(!c)return;
+    normalizeCar(c);const next=U.partCatalog[key][c.mods[key]+1];if(!next)return;
+    const cost=partCost(next);
+    if(S.cash<cost){notify("❌ Not enough cash for that upgrade.","danger");return;}
+    S.cash-=cost;c.mods[key]++;c.hp=calcHP(c);c.grip=(U.partCatalog.tires[c.mods.tires]?.grip||0);c.handling=(U.partCatalog.suspension[c.mods.suspension]?.handling||0)+(U.partCatalog.brakes[c.mods.brakes]?.handling||0);
+    c.history.push(`Installed ${next.name} in ${key}`);
+    xp(120);S.stats.profit-=cost;playSound("wrench");notify(`🔧 Installed ${next.name} on ${c.name}!`,"accent");
+    renderBuilder();renderGarage();updateHeaderUI();saveGame(activeSlot,false);
+  };
+  window.ultimateDyno=function(id){
+    const c=S.garage.find(x=>x.id===id);if(!c)return;
+    const hp=calcHP(c);const score=Math.round(70+Math.random()*30);
+    if(score>=92){c.hp=Math.round(hp*1.06);c.tuned=true;gainReputation(100);notify(`🏁 DYNO PERFECT! ${c.name} now reads ${c.hp} HP.`,"gold");}
+    else notify(`Dyno result: ${score}/100. Tune the build and try again.`,"accent");
+    renderBuilder();renderGarage();saveGame(activeSlot,false);
+  };
+  window.showCarHistory=function(id){
+    const c=allCars().find(x=>x.id===id);if(!c)return;
+    const lines=(c.history||[]).slice(-12).reverse();
+    alert(`${c.name}\n\n${lines.length?lines.join("\n"):"No service history yet."}`);
+  };
+
+  // Inspection mini-game
+  window.inspectListing=function(i){
+    const c=marketVehicles[i];if(!c)return;
+    S.stats.inspections++;
+    const hidden=[];
+    if(Math.random()<.22){c.frameDamage=true;hidden.push("⚠️ Frame damage");}
+    if(Math.random()<.18){c.flooded=true;hidden.push("🌊 Flood history");}
+    if(Math.random()<.25){c.rareOptions.push("Rare factory option");hidden.push("💎 Rare factory option");}
+    if(Math.random()<.35){c.mileage=Math.max(1000,c.mileage-Math.floor(Math.random()*50000));}
+    c.inspected=true;
+    saveGame(activeSlot,false);renderMarketplace();
+    notify(hidden.length?`🔍 Inspection found: ${hidden.join(" • ")}`:"🔍 Inspection clean — no hidden defects found.","gold");
+  };
+
+  // Add inspection buttons to marketplace without replacing the original.
+  const originalRenderMarket=renderMarketplace;
+  window.renderMarketplace=function(){
+    originalRenderMarket();
+    const grid=document.getElementById("market-grid");if(!grid)return;
+    [...grid.children].forEach((card,i)=>{
+      if(card.querySelector(".inspect-ultimate"))return;
+      const box=card.querySelector(".card-actions.full");
+      if(box){
+        const btn=document.createElement("button");btn.className="btn btn-secondary inspect-ultimate";btn.textContent="🔍 Inspect History ($150)";
+        btn.onclick=()=>{if(S.cash<150){notify("Need $150 for a professional inspection.","danger");return;}S.cash-=150;inspectListing(i);};
+        box.appendChild(btn);
+      }
+    });
+  };
+
+  // Career
+  function careerValue(id){
+    const s=S.stats;
+    switch(id){
+      case"c1":return s.profit>0?1:0;
+      case"c2":return s.restored;
+      case"c3":return s.racesWon;
+      case"c4":return S.showroom.length;
+      case"c5":return S.cash;
+      case"c6":return S.unlockedCities.length;
+      case"c7":return S.garage.concat(S.showroom).some(c=>calcHP(c)>=1000)?1:0;
+      case"c8":return uniqueCars().length;
+    }return 0;
+  }
+  function renderCareer(){
+    const el=document.getElementById("view-career");
+    el.innerHTML=`<div class="section-header"><div><h2>🎯 Career & Story</h2><p style="color:var(--text-dim)">Turn a tiny Detroit garage into an international automotive empire.</p></div></div>
+    <div class="rival-banner" style="margin-bottom:14px"><strong>📖 Story Chapter ${Math.min(8,S.storyStage+1)}:</strong> ${storyText()}</div>
+    <div class="ultimate-grid">${U.careers.map(c=>{
+      const v=Math.min(c.need,careerValue(c.id)),done=v>=c.need,claimed=S.careerClaimed.includes(c.id);
+      return `<div class="ultimate-card"><h3>${c.name}</h3><p style="color:var(--text-dim);margin:6px 0 10px">${c.desc}</p><div>${v.toLocaleString()} / ${c.need.toLocaleString()}</div><div class="progress-x"><i style="width:${Math.min(100,v/c.need*100)}%"></i></div><button class="btn ${done&&!claimed?"btn-gold":"btn-secondary"}" style="width:100%;margin-top:10px" ${done&&!claimed?`onclick="claimCareer('${c.id}',${c.reward})"`:"disabled"}>${claimed?"✅ Completed":done?"🏆 Claim "+money(c.reward):"In Progress"}</button></div>`;
+    }).join("")}</div>
+    <div class="ultimate-card" style="margin-top:14px"><h3>📊 Lifetime Garage Statistics</h3><div class="ultimate-grid" style="margin-top:10px">${Object.entries(S.stats).map(([k,v])=>`<div class="ultimate-stat"><small>${label(k)}</small><br><strong>${typeof v==="number"?v.toLocaleString():v}</strong></div>`).join("")}</div></div>`;
+  }
+  function storyText(){
+    const a=["Build your first profitable flip.","Become known for reliable restorations.","Beat the local street scene.","Enter the collector market.","Build your first international branch.","Chase rare and exotic inventory.","Open a world-class empire.","Become a legend of the automotive trade."];
+    return a[Math.min(a.length-1,S.storyStage)];
+  }
+  window.claimCareer=function(id,reward){
+    if(S.careerClaimed.includes(id))return;S.careerClaimed.push(id);S.cash+=reward;S.storyStage=Math.min(7,S.storyStage+1);gainReputation(200);playSound("cash");notify(`🎯 Career milestone complete! +${money(reward)}`,"gold");renderCareer();updateHeaderUI();saveGame(activeSlot,false);
+  };
+
+  // Collections + achievements
+  function renderCollections(){
+    const el=document.getElementById("view-collection");
+    const ach=U.achievements.map(a=>{
+      const done=a[2](),claimed=S.achievementsClaimed.includes(a[0]);
+      return `<div class="ultimate-stat"><strong>${a[1]}</strong><div style="margin:7px 0;color:var(--text-dim)">${done?"Requirement complete":"Not completed yet"}</div><button class="btn btn-sm ${done&&!claimed?"btn-gold":"btn-secondary"}" ${done&&!claimed?`onclick="claimAchievement('${a[0]}',${a[3]})"`:`disabled`}>${claimed?"✅ Claimed":done?"Claim "+money(a[3]):"Locked"}</button></div>`;
+    }).join("");
+    el.innerHTML=`<div class="section-header"><div><h2>🏆 Collections & Achievements</h2><p style="color:var(--text-dim)">Long-term goals give every rebuild a reason to matter.</p></div></div>
+      <div class="ultimate-card"><h3>📚 Collections</h3><div class="ultimate-grid" style="margin-top:10px">${U.collections.map(c=>{
+        const n=countType(c.match),done=n>=c.need,claimed=S.collectionsClaimed.includes(c.id);
+        return `<div class="ultimate-card collection-card"><h3>${c.name}</h3><div style="font-size:1.4rem;margin:8px 0">${Math.min(n,c.need)} / ${c.need}</div><div class="progress-x"><i style="width:${Math.min(100,n/c.need*100)}%"></i></div><button class="btn ${done&&!claimed?"btn-gold":"btn-secondary"}" style="width:100%;margin-top:10px" ${done&&!claimed?`onclick="claimCollection('${c.id}',${c.reward})"`:"disabled"}>${claimed?"✅ Claimed":done?"Claim "+money(c.reward):"Collect more cars"}</button></div>`;
+      }).join("")}</div></div>
+      <div class="ultimate-card" style="margin-top:14px"><h3>🥇 Achievements</h3><div class="ultimate-grid" style="margin-top:10px">${ach}</div></div>`;
+  }
+  window.claimCollection=function(id,reward){if(S.collectionsClaimed.includes(id))return;S.collectionsClaimed.push(id);S.cash+=reward;notify(`🏆 Collection complete! +${money(reward)}`,"gold");renderCollections();updateHeaderUI();saveGame(activeSlot,false);}
+  window.claimAchievement=function(id,reward){if(S.achievementsClaimed.includes(id))return;S.achievementsClaimed.push(id);S.cash+=reward;notify(`🥇 Achievement unlocked! +${money(reward)}`,"gold");renderCollections();updateHeaderUI();saveGame(activeSlot,false);}
+
+  // Empire / employees / cities
+  function renderEmpire(){
+    const el=document.getElementById("view-empire");
+    const emp=[
+      ["mechanic","🔧 Master Mechanics",50000,"Repairs damaged parts automatically faster."],
+      ["painter","🎨 Paint Specialist",35000,"Adds value to painted/show cars."],
+      ["tuner","⚡ Performance Tuner",80000,"Discounts performance parts and improves dyno results."],
+      ["sales","💰 Sales Director",100000,"Improves auction and selling prices."],
+      ["scout","🌾 Scout Team",75000,"Reduces barn expedition costs and finds rare chassis."],
+    ];
+    el.innerHTML=`<div class="section-header"><div><h2>🏢 Garage Empire</h2><p style="color:var(--text-dim)">Grow from a 3-bay shop into a worldwide operation.</p></div><div class="tag-x">Level ${S.garageLevel} • ${S.garageXP} XP</div></div>
+      <div class="ultimate-grid"><div class="ultimate-card"><h3>🏭 Facilities</h3><p style="color:var(--text-dim);margin:7px 0">Current capacity: ${S.maxGarageBays} bays</p><div class="progress-x"><i style="width:${Math.min(100,S.garageXP/(S.garageLevel*1000)*100)}%"></i></div></div>
+      <div class="ultimate-card"><h3>🌎 Open Cities</h3><p style="color:var(--text-dim);margin:7px 0">${S.unlockedCities.length} / ${U.cities.length} cities</p></div></div>
+      <h3 style="margin:16px 0 10px">👥 Employees</h3><div class="ultimate-grid">${emp.map(e=>{
+        const level=S.employees[e[0]]||0,cost=Math.round(e[2]*Math.pow(1.65,level));
+        return `<div class="ultimate-card"><h3>${e[1]}</h3><p style="color:var(--text-dim);margin:7px 0">${e[3]}</p><div>Level <strong>${level}</strong></div><button class="btn btn-accent" style="width:100%;margin-top:10px" onclick="hireUltimate('${e[0]}',${cost})">Hire / Level Up ${money(cost)}</button></div>`;
+      }).join("")}</div>
+      <h3 style="margin:16px 0 10px">🌎 International Expansion</h3><div class="ultimate-grid">${U.cities.map(c=>{
+        const open=S.unlockedCities.includes(c.id);
+        return `<div class="ultimate-card ${open?"":"locked-x"}"><h3>${c.icon} ${c.name}</h3><p style="color:var(--text-dim);margin:7px 0">${c.bonus}</p><button class="btn ${open?"btn-secondary":"btn-gold"}" style="width:100%" ${open?"disabled":`onclick="unlockUltimateCity('${c.id}',${c.cost})`}>${open?"✅ Open":"Unlock "+money(c.cost)}</button></div>`;
+      }).join("")}</div>`;
+  }
+  window.hireUltimate=function(type,cost){
+    if(S.cash<cost){notify("❌ Not enough cash to hire or train this employee.","danger");return;}
+    S.cash-=cost;S.employees[type]++;xp(200);notify(`👥 ${type} staff upgraded to Level ${S.employees[type]}!`,"accent");renderEmpire();updateHeaderUI();saveGame(activeSlot,false);
+  };
+  window.unlockUltimateCity=function(id,cost){
+    if(S.unlockedCities.includes(id))return;if(S.cash<cost){notify("❌ Not enough cash for this expansion.","danger");return;}
+    S.cash-=cost;S.unlockedCities.push(id);S.city=id;S.stats.rareFinds+=id==="lasvegas"?1:0;gainReputation(500);notify(`🌎 ${U.cities.find(c=>c.id===id).name} branch opened!`,"gold");renderEmpire();updateCityUI();generateMarket();updateHeaderUI();saveGame(activeSlot,false);
+  };
+
+  // Rival system
+  function rivalName(){return ["The Wrench","Chrome Queen","Big Mike","Jax","The Broker"][Math.floor(Math.random()*5)]}
+  function challengeRival(){
+    const n=rivalName();const level=Math.max(1,S.repLevel);const hp=Math.round(180+level*90+Math.random()*level*100);
+    const reward=Math.round(3000+level*4500);
+    const c=S.garage.slice().sort((a,b)=>calcHP(b)-calcHP(a))[0];
+    if(!c){notify("Buy a car before challenging a rival.","danger");return;}
+    const my=calcHP(c);const roll=my*(.75+Math.random()*.5);const rival=hp*(.85+Math.random()*.3);
+    if(roll>=rival){S.cash+=reward;S.stats.racesWon++;gainReputation(180);notify(`🏁 You beat ${n}! +${money(reward)}`,"gold");}
+    else {const loss=Math.min(S.cash,Math.round(reward*.3));S.cash-=loss;notify(`${n} beat you. Repair and tune up for a rematch. -${money(loss)}`,"danger");}
+    saveGame(activeSlot,false);updateHeaderUI();renderCareer();
+  }
+
+  // Improve original showroom income with event/employee effects.
+  const oldHeader=updateHeaderUI;
+  window.updateHeaderUI=function(){
+    ensure();oldHeader();
+    const badge=document.getElementById("city-badge");
+    if(badge){
+      const city=U.cities.find(c=>c.id===S.city);if(city)badge.textContent=`${city.icon} ${city.name}`;
+    }
+  };
+
+  // Periodic expansion systems.
+  setInterval(()=>{
+    if(!window.player)return;
+    ensure();
+    if(Math.random()<0.18) rollEvent();
+    if(S.showroom.length>=1 && S.employees.sales>0){
+      S.cash+=Math.round(S.showroom.length*S.employees.sales*120);
+    }
+    if(S.employees.mechanic>0){
+      S.garage.forEach(c=>["engine","body","interior","suspension"].forEach(p=>c.parts[p]=Math.min(100,c.parts[p]+S.employees.mechanic)));
+      renderGarage();
+    }
+    updateExpansionUI();updateHeaderUI();saveGame(activeSlot,false);
+  },30000);
+
+  // Daily rival notification / rare opportunity.
+  setInterval(()=>{
+    if(!window.player)return;
+    ensure();
+    if(Math.random()<0.45)notify(`📞 ${rivalName()} sent a challenge. Check Career for your next target!`,"gold");
+  },45000);
+
+  // Add a rival button to Career view and a quick Builder shortcut.
+  const oldRenderCareer=renderCareer;
+  window.renderCareer=function(){
+    oldRenderCareer();
+    const el=document.getElementById("view-career");if(!el)return;
+    const box=document.createElement("div");box.className="rival-banner";box.style.marginTop="14px";
+    box.innerHTML=`<strong>🏁 Rival Circuit</strong><p style="margin:6px 0;color:#cbd5e1">Recurring rivals scale with your reputation. Win for cash, XP and bragging rights.</p><button class="btn btn-primary" onclick="challengeRival()">⚔️ Challenge Random Rival</button>`;
+    el.appendChild(box);
+  };
+
+  // Start a rare opportunity occasionally.
+  function rareOpportunity(){
+    if(Math.random()>0.28)return;
+    const t=U.rare[Math.floor(Math.random()*U.rare.length)];
+    notify(`💎 RARE ALERT: ${t.name} has appeared in a private collector lead! Check Classifieds soon.`,"gold");
+    S.stats.rareFinds++;
+  }
+
+  // Upgrade original workshop display with Builder button.
+  const oldRenderGarage=renderGarage;
+  window.renderGarage=function(){
+    oldRenderGarage();
+    const grid=document.getElementById("garage-grid");if(!grid)return;
+    [...grid.children].forEach((card,i)=>{
+      const c=S.garage[i];if(!c||card.querySelector(".builder-shortcut"))return;
+      const actions=card.querySelector(".card-actions");
+      if(actions){
+        const b=document.createElement("button");b.className="btn btn-purple builder-shortcut";b.textContent="🛠️ Full Builder";
+        b.onclick=()=>switchUltimateTab("builder");actions.appendChild(b);
+      }
+    });
+  };
+
+  // Make the ultimate tabs available after the original app has initialized.
+  window.addEventListener("DOMContentLoaded",()=>{
+    setTimeout(()=>{
+      ensure();addNav();injectViews();updateExpansionUI();renderAllViews();rareOpportunity();
+      // Save an upgraded schema immediately, but never overwrite before ensure.
+      saveGame(activeSlot,false);
+    },50);
+  });
+
+})();
+</script>
+
+</body>
+</html>
+

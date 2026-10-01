@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pawn Shop & Appraiser Tycoon - Expanded Edition</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --panel-bg: #181c24;
+            --accent-color: #f39c12;
+            --accent-hover: #e67e22;
+            --text-color: #e0e0e0;
+            --text-muted: #999999;
+            --border-color: #2c3240;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --legendary-color: #9b59b6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        header h2 { margin: 0; font-size: 1.1rem; color: var(--accent-color); }
+        .stats span { margin-left: 4px; font-weight: bold; font-size: 0.82rem; }
+        .money { color: var(--success-color); }
+        .heat { color: var(--danger-color); }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 6px;
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .panel.active { display: flex; }
+
+        h3 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 1.05rem; }
+        p { margin: 4px 0 8px 0; font-size: 0.82rem; color: var(--text-muted); }
+
+        button {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin: 3px;
+        }
+
+        button:hover { background-color: var(--accent-hover); }
+        button:disabled { background-color: #444; color: #777; cursor: not-allowed; }
+
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .item-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 6px;
+            padding-right: 4px;
+        }
+
+        .item-card {
+            background: #212630;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-card.legendary { border: 2px solid var(--legendary-color); background: #221728; }
+        .item-card.fake { border: 2px solid var(--danger-color); background: #2a1515; }
+        .item-card.real-verified { border: 2px solid var(--success-color); background: #152a1a; }
+
+        .item-name { font-weight: bold; color: var(--accent-color); font-size: 0.85rem; }
+        .legendary .item-name { color: var(--legendary-color); }
+        .fake .item-name { color: var(--danger-color); }
+        .real-verified .item-name { color: var(--success-color); }
+        .item-value { font-size: 0.75rem; color: var(--text-muted); }
+
+        .customer-box {
+            background: #212630;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .dialogue {
+            font-style: italic;
+            color: var(--accent-color);
+            margin: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .log-box {
+            background: #111418;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            height: 80px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.78rem;
+            margin-bottom: 6px;
+            flex-grow: 1;
+        }
+
+        .system-controls {
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 4px;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>Pawn Shop & Appraiser Tycoon</h2>
+        <div class="stats">
+            Cash: <span id="stat-cash" class="money">$2,000</span> | 
+            Store Income: <span id="stat-income" class="money">+$0/day</span> | 
+            Heat: <span id="stat-heat" class="heat">0%</span> | 
+            Rep: <span id="stat-rep" style="color:var(--accent-color);">1</span> | 
+            Day: <span id="stat-day">1</span>
+        </div>
+    </header>
+
+    <!-- HUB PANEL -->
+    <div id="panel-hub" class="panel active">
+        <h3>Pawn Shop Lobby</h3>
+        <p>Manage daily operations, service customers, handle market trends, and review expansion upgrades.</p>
+        
+        <div style="background: #212630; border:1px solid var(--border-color); padding: 6px 10px; border-radius: 5px; margin-bottom: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items:center;">
+            <div><strong>Active Market Trend:</strong> <span id="market-trend-name" style="color: var(--accent-color);">Standard Market</span></div>
+            <div><span id="market-trend-desc" style="color: var(--text-muted);">No active shifts.</span></div>
+        </div>
+
+        <div class="nav-buttons">
+            <button onclick="openOpenStore()" style="background-color: #27ae60; color: #fff; padding: 8px 16px; font-size: 0.95rem;">🚪 Open Shop for the Day</button>
+        </div>
+
+        <div class="nav-buttons">
+            <button onclick="openInventory()">Inventory (<span id="inv-count">0</span>/15)</button>
+            <button onclick="openStorefront()" style="background-color: #27ae60; color: #fff;">Retail Racks</button>
+            <button onclick="openWorkbench()" style="background-color: #2980b9; color: #fff;">Workbench</button>
+            <button onclick="openLoans()" style="background-color: #8e44ad; color: #fff;">Loans (<span id="loan-count">0</span>)</button>
+            <button onclick="openBlackMarket()" style="background-color: var(--danger-color); color: #fff;">Black Market</button>
+            <button onclick="openStaff()" style="background-color: #d35400; color: #fff;">Staff & Specialists</button>
+            <button onclick="openCustomization()" style="background-color: #16a085; color: #fff;">Shop Layout</button>
+        </div>
+
+        <div id="bailout-container" style="text-align: center; margin-bottom: 4px; display: none;">
+            <button onclick="doOddJob()" style="background-color: #d35400; color: #fff; font-size: 0.8rem; padding: 6px 12px;">🛠️ Do Street Odd Jobs ($200 Emergency Bailout)</button>
+        </div>
+
+        <div class="log-box" id="hub-log">
+            <div>Welcome to your storefront! Click "Open Shop for the Day" to start serving customers.</div>
+        </div>
+
+        <div class="system-controls">
+            <button onclick="saveGame()" style="background-color: #2ecc71; color: #000; font-size: 0.75rem;">Save Game</button>
+            <button onclick="loadGame()" style="background-color: #3498db; color: #fff; font-size: 0.75rem;">Load Game</button>
+            <button onclick="resetGame()" style="background-color: var(--danger-color); color: #fff; font-size: 0.75rem;">Reset Save</button>
+        </div>
+    </div>
+
+    <!-- CUSTOMER COUNTER PANEL -->
+    <div id="panel-customer" class="panel">
+        <h3 id="customer-queue-title">Customer Walk-In (1 / 4)</h3>
+        <div class="customer-box">
+            <h4 id="customer-name" style="margin:0; color:#fff;">Customer Name</h4>
+            <div class="dialogue" id="customer-dialogue">"I need some quick cash, take a look at this!"</div>
+            <p><strong>Item Offered:</strong> <span id="offered-item-name" style="color:var(--accent-color);">Item</span></p>
+            <p><strong>Asking Price:</strong> <span id="offered-item-price" style="font-weight:bold; color:var(--success-color);">$0</span></p>
+            <p><strong>Estimated Market Value:</strong> <span id="offered-item-est">$0</span></p>
+        </div>
+
+        <div style="text-align: center; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;">
+            <button onclick="buyItemFromCustomer()" style="background-color: var(--success-color); color:#fff;">Accept Asking Price</button>
+            <button onclick="negotiateItem()" style="background-color: var(--accent-color); color:#000;">Lowball (-30%)</button>
+            <button onclick="offerLoan()" style="background-color: #8e44ad; color:#fff;">Offer Collateral Loan</button>
+            <button onclick="rejectCustomer()" style="background-color: var(--danger-color); color:#fff;">Turn Away</button>
+        </div>
+        <div style="text-align: center; margin-top: auto;">
+            <button onclick="endWorkDay()" style="background-color: #7f8c8d; color:#fff;">Close Shop Early</button>
+        </div>
+    </div>
+
+    <!-- INVENTORY PANEL -->
+    <div id="panel-inventory" class="panel">
+        <h3>Inventory Management</h3>
+        <p>Inspect items via appraisal, sell them directly, or send them to retail/workbench.</p>
+        <div class="item-list" id="inventory-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+
+    <!-- STOREFRONT PANEL -->
+    <div id="panel-storefront" class="panel">
+        <h3>Retail Display Racks</h3>
+        <p>Items placed here sell automatically at a markup over base value, boosted by your shop layout.</p>
+        <div style="text-align: center; margin-bottom: 6px;">
+            <p>Display Capacity: <span id="store-count">0</span> / <span id="store-max">3</span> <button onclick="upgradeStorefront()" style="margin-left:8px; padding: 2px 6px;">Expand Racks ($1,500)</button></p>
+        </div>
+        <div class="item-list" id="storefront-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+
+    <!-- WORKBENCH PANEL -->
+    <div id="panel-workbench" class="panel">
+        <h3>Restoration Workbench</h3>
+        <p>Clean up items to boost their value. Master restorer staff automates this process!</p>
+        <div class="item-list" id="workbench-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+
+    <!-- LOANS PANEL -->
+    <div id="panel-loans" class="panel">
+        <h3>Active Collateral Loans</h3>
+        <p>Borrowers hold active loans for 3 days. When due, they return to redeem or default with unique interactions.</p>
+        <div class="item-list" id="loans-list"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+
+    <!-- BLACK MARKET PANEL -->
+    <div id="panel-blackmarket" class="panel">
+        <h3>Underground Black Market</h3>
+        <p>Offload counterfeit items here. Security specialists dampen police heat generation!</p>
+        <div class="item-list" id="blackmarket-items"></div>
+        <div style="text-align: center;">
+            <button onclick="bribePolice()" style="background-color: #3498db; color: #fff;">Bribe Police ($200 to clear Heat)</button>
+            <button onclick="returnToHub()">Back to Lobby</button>
+        </div>
+    </div>
+
+    <!-- STAFF & SPECIALISTS PANEL -->
+    <div id="panel-staff" class="panel">
+        <h3>Staff & Specialists</h3>
+        <p>Hire expert employees to automate daily operations, security, and item restorations.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; margin-bottom: 8px;" id="staff-list-container"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+
+    <!-- SHOP LAYOUT PANEL -->
+    <div id="panel-customization" class="panel">
+        <h3>Dynamic Store Layout & Upgrades</h3>
+        <p>Upgrade your physical shop layout to attract high-tier clientele and improve customer patience.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; margin-bottom: 8px;" id="customization-list-container"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Lobby</button></div>
+    </div>
+</div>
+
+<script>
+    let cash = 2000;
+    let day = 1;
+    let heat = 0;
+    let rep = 1;
+    let inventory = [];
+    let storefront = [];
+    let storefrontMax = 3;
+    let activeLoans = [];
+    let workbenchTabItems = [];
+    let dailyCustomersCount = 4;
+    let currentCustomerIndex = 0;
+    let activeCustomerItem = null;
+
+    let staff = {
+        cashier: { name: "Retail Cashier", hired: false, cost: 2500, desc: "Automatically sells items from Retail Racks daily." },
+        security: { name: "Security Guard", hired: false, cost: 3000, desc: "Dampens police heat generation by 50% from black market deals." },
+        appraiser: { name: "Expert Appraiser", hired: false, cost: 5000, desc: "Instantly appraises items for free without mini-puzzles." },
+        restorer: { name: "Master Restorer", hired: false, cost: 4500, desc: "Automatically restores 1 item on your workbench at the end of each day." }
+    };
+
+    let shopUpgrades = {
+        lighting: { name: "Holographic Showcases", owned: false, cost: 3000, desc: "Attracts high-tier clientele, increasing rare item spawn rates by 25%." },
+        flooring: { name: "Velvet Waiting Lounge", owned: false, cost: 2000, desc: "Improves customer patience and disposition (+1 Rep per deal)." },
+        securityCam: { name: "Biometric Security System", owned: false, cost: 4000, desc: "Reduces base police heat generation from all activities by an additional 25%." }
+    };
+
+    let activeMarketTrend = { name: "Standard Market", desc: "Normal buying and selling conditions across all sectors.", mult: 1.0, category: "all" };
+
+    const marketTrendsPool = [
+        { name: "Retro Gaming Craze", desc: "Video games and comic books sell for +50% value!", mult: 1.5, category: "geek" },
+        { name: "Gold Rush Surge", desc: "Bullion bars and precious items sell for +60% value!", mult: 1.6, category: "luxury" },
+        { name: "Economic Slump", desc: "General market downturn. All sales values reduced by 20%.", mult: 0.8, category: "all" },
+        { name: "Standard Market", desc: "Normal buying and selling conditions across all sectors.", mult: 1.0, category: "all" }
+    ];
+
+    const earlyItemPool = [
+        { name: "Box of Vintage Comic Books", val: 250, ask: 180, isFake: false, category: "geek" },
+        { name: "Dusty Acoustic Guitar", val: 400, ask: 300, isFake: false, category: "music" },
+        { name: "Box of Retro Video Games", val: 500, ask: 350, isFake: false, category: "geek" },
+        { name: "Antique Pocket Watch", val: 1500, ask: 500, isFake: true, fakeVal: 50, category: "luxury" }
+    ];
+
+    const lateItemPool = [
+        { name: "Designer Handbag", val: 1200, ask: 900, isFake: true, fakeVal: 100, category: "luxury" },
+        { name: "Mint 1st Ed. Trading Card Pack", val: 4500, ask: 3000, isFake: false, category: "geek" },
+        { name: "Gold Bullion Bar", val: 6000, ask: 4200, isFake: true, fakeVal: 200, category: "luxury" },
+        { name: "19th Century Oil Painting", val: 3500, ask: 2200, isFake: false, category: "art" }
+    ];
+
+    const customerNames = [
+        { name: "Desperate Dave", dialogue: "Rent is due today, I just need quick cash for this!" },
+        { name: "Granny Mae", dialogue: "Cleaning out the old attic. Found this lying around." },
+        { name: "Shady Steve", dialogue: "Don't ask where I got it. Just give me a fair price." },
+        { name: "Collector Carl", dialogue: "I'm downsizing my collection. You know what this is worth." },
+        { name: "VIP Socialite Victoria", dialogue: "I only deal in absolute perfection. Make it quick." }
+    ];
+
+    function getMarketMultiplier(item) {
+        if (activeMarketTrend.category === "all") return activeMarketTrend.mult;
+        if (activeMarketTrend.category === item.category) return activeMarketTrend.mult;
+        return 1.0;
+    }
+
+    function updateStats() {
+        let storeIncome = storefront.reduce((sum, item) => {
+            let mult = getMarketMultiplier(item);
+            let markup = shopUpgrades.lighting.owned ? 1.35 : 1.25;
+            let itemVal = (item.isFake && !item.appraised) ? item.val : (item.isRealVerified ? item.val : (item.isFake && item.appraised ? item.fakeVal : item.val));
+            return sum + Math.floor(itemVal * markup * mult);
+        }, 0);
+
+        document.getElementById('stat-cash').innerText = `$${cash.toLocaleString()}`;
+        document.getElementById('stat-income').innerText = `+$${storeIncome}/day`;
+        document.getElementById('stat-heat').innerText = `${heat}%`;
+        document.getElementById('stat-rep').innerText = rep;
+        document.getElementById('stat-day').innerText = day;
+        document.getElementById('inv-count').innerText = inventory.length;
+        document.getElementById('loan-count').innerText = activeLoans.length;
+        document.getElementById('store-count').innerText = storefront.length;
+        document.getElementById('store-max').innerText = storefrontMax;
+        document.getElementById('market-trend-name').innerText = activeMarketTrend.name;
+        document.getElementById('market-trend-desc').innerText = activeMarketTrend.desc;
+
+        let bailoutDiv = document.getElementById('bailout-container');
+        if (cash === 0 && inventory.length === 0 && activeLoans.length === 0 && storefront.length === 0) {
+            bailoutDiv.style.display = 'block';
+        } else {
+            bailoutDiv.style.display = 'none';
+        }
+    }
+
+    function switchPanel(panelId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(panelId).classList.add('active');
+    }
+
+    function returnToHub() { switchPanel('panel-hub'); }
+
+    function openOpenStore() {
+        currentCustomerIndex = 0;
+        let customerPoolSize = Math.min(3 + Math.floor(rep / 2), 7);
+        dailyCustomersCount = Math.floor(Math.random() * customerPoolSize) + 3;
+        nextCustomer();
+    }
+
+    function nextCustomer() {
+        if (currentCustomerIndex >= dailyCustomersCount) {
+            finishDayCycle();
+            return;
+        }
+        currentCustomerIndex++;
+        document.getElementById('customer-queue-title').innerText = `Customer Walk-In (${currentCustomerIndex} / ${dailyCustomersCount})`;
+
+        let template;
+        let highTierChance = Math.min(0.1 + (rep * 0.08), 0.7);
+        if (shopUpgrades.lighting.owned) highTierChance += 0.25;
+
+        if (rep < 3 || Math.random() > highTierChance) {
+            template = earlyItemPool[Math.floor(Math.random() * earlyItemPool.length)];
+        } else {
+            template = lateItemPool[Math.floor(Math.random() * lateItemPool.length)];
+        }
+
+        let cust = customerNames[Math.floor(Math.random() * customerNames.length)];
+
+        let scaledVal = template.val;
+        let scaledAsk = template.ask;
+        if (rep >= 5 && Math.random() < 0.3) {
+            scaledVal = Math.floor(template.val * 1.5);
+            scaledAsk = Math.floor(template.ask * 1.4);
+        }
+
+        activeCustomerItem = {
+            name: template.name,
+            val: scaledVal,
+            ask: scaledAsk,
+            isFake: template.isFake,
+            fakeVal: template.fakeVal || 30,
+            category: template.category,
+            appraised: false,
+            isRealVerified: false,
+            restored: false
+        };
+
+        document.getElementById('customer-name').innerText = cust.name;
+        document.getElementById('customer-dialogue').innerText = `"${cust.dialogue}"`;
+        document.getElementById('offered-item-name').innerText = activeCustomerItem.name;
+        document.getElementById('offered-item-price').innerText = `$${activeCustomerItem.ask.toLocaleString()}`;
+        document.getElementById('offered-item-est').innerText = `$${activeCustomerItem.val.toLocaleString()} (Estimated)`;
+
+        switchPanel('panel-customer');
+    }
+
+    function buyItemFromCustomer() {
+        if (cash < activeCustomerItem.ask) { alert("Not enough cash!"); return; }
+        if (inventory.length >= 15) { alert("Inventory is full (Max 15 items)!"); return; }
+        cash -= activeCustomerItem.ask;
+        inventory.push(activeCustomerItem);
+        let repGain = shopUpgrades.flooring.owned ? 2 : 1;
+        rep = Math.min(10, rep + repGain);
+        updateStats();
+        logHub(`Bought "${activeCustomerItem.name}" for $${activeCustomerItem.ask}.`);
+        nextCustomer();
+    }
+
+    function negotiateItem() {
+        let counterOffer = Math.floor(activeCustomerItem.ask * 0.7);
+        if (cash < counterOffer) { alert("Not enough cash!"); return; }
+        if (inventory.length >= 15) { alert("Inventory full!"); return; }
+
+        if (Math.random() < 0.5) {
+            cash -= counterOffer;
+            inventory.push(activeCustomerItem);
+            let repGain = shopUpgrades.flooring.owned ? 2 : 1;
+            rep = Math.min(10, rep + repGain);
+            alert(`Accepted lowball offer of $${counterOffer}!`);
+            logHub(`Successfully negotiated "${activeCustomerItem.name}" down to $${counterOffer}.`);
+        } else {
+            alert("Customer rejected your lowball offer and stormed out!");
+            logHub(`Customer rejected lowball offer for "${activeCustomerItem.name}".`);
+        }
+        updateStats();
+        nextCustomer();
+    }
+
+    function offerLoan() {
+        let loanAmount = Math.floor(activeCustomerItem.ask * 0.8);
+        if (cash < loanAmount) { alert("Not enough cash to issue this loan!"); return; }
+        
+        cash -= loanAmount;
+        let paybackDueDay = day + 3;
+        let paybackAmount = Math.floor(loanAmount * 1.35);
+
+        activeLoans.push({
+            name: activeCustomerItem.name,
+            val: activeCustomerItem.val,
+            ask: activeCustomerItem.ask,
+            isFake: activeCustomerItem.isFake,
+            fakeVal: activeCustomerItem.fakeVal,
+            category: activeCustomerItem.category,
+            appraised: activeCustomerItem.appraised,
+            isRealVerified: activeCustomerItem.isRealVerified,
+            restored: activeCustomerItem.restored,
+            loanAmount: loanAmount,
+            paybackAmount: paybackAmount,
+            dueDay: paybackDueDay
+        });
+
+        updateStats();
+        logHub(`Issued a $${loanAmount} loan against "${activeCustomerItem.name}" (Due Day ${paybackDueDay}, Payback: $${paybackAmount}).`);
+        alert(`Loan issued! You gave them $${loanAmount}. If they don't repay by Day ${paybackDueDay}, you keep or negotiate the item.`);
+        nextCustomer();
+    }
+
+    function rejectCustomer() {
+        logHub(`Turned away customer offering "${activeCustomerItem.name}".`);
+        nextCustomer();
+    }
+
+    function doOddJob() {
+        cash += 200;
+        updateStats();
+        alert("You spent the day doing manual odd jobs around town and earned an emergency $200 bailout grant!");
+        logHub(`Completed emergency odd jobs for a $200 grant.`);
+    }
+
+    function endWorkDay() { finishDayCycle(); }
+
+    function finishDayCycle() {
+        day++;
+
+        if (staff.cashier.hired && storefront.length > 0) {
+            let soldItem = storefront.shift();
+            let mult = getMarketMultiplier(soldItem);
+            let markup = shopUpgrades.lighting.owned ? 1.35 : 1.25;
+            
+            let salePrice;
+            if (!soldItem.appraised && soldItem.isFake) {
+                if (Math.random() < 0.5) {
+                    heat = Math.min(100, heat + 25);
+                    alert(`⚠️ A customer discovered that "${soldItem.name}" sold on your rack was a fake! Police heat increased.`);
+                    logHub(`[Rack Fraud Discovered] Sold unappraised fake "${soldItem.name}" — customer furious, heat increased.`);
+                    salePrice = soldItem.fakeVal;
+                } else {
+                    salePrice = Math.floor(soldItem.val * markup * mult);
+                    logHub(`[Lucky Rack Sale] Sold unappraised fake "${soldItem.name}" without getting caught for $${salePrice.toLocaleString()}!`);
+                }
+            } else {
+                let actualVal = soldItem.isRealVerified ? soldItem.val : (soldItem.isFake ? soldItem.fakeVal : soldItem.val);
+                salePrice = Math.floor(actualVal * markup * mult);
+                logHub(`[Cashier Auto-Sale] Sold "${soldItem.name}" from racks for $${salePrice.toLocaleString()}!`);
+            }
+            cash += salePrice;
+        }
+
+        if (staff.restorer.hired && workbenchTabItems.length > 0) {
+            let itemToRestore = workbenchTabItems.find(i => !i.restored);
+            if (itemToRestore) {
+                itemToRestore.restored = true;
+                itemToRestore.val = Math.floor(itemToRestore.val * 1.3);
+                logHub(`[Master Restorer] Automatically restored "${itemToRestore.name}" on the workbench! Value increased by 30%.`);
+            }
+        }
+
+        let storeIncome = storefront.reduce((sum, item) => {
+            let mult = getMarketMultiplier(item);
+            let markup = shopUpgrades.lighting.owned ? 1.35 : 1.25;
+            let itemVal = (!item.appraised && item.isFake) ? item.val : (item.isRealVerified ? item.val : (item.isFake ? item.fakeVal : item.val));
+            return sum + Math.floor(itemVal * markup * mult);
+        }, 0);
+        cash += storeIncome;
+
+        let remainingLoans = [];
+        activeLoans.forEach(loan => {
+            if (day >= loan.dueDay) {
+                let outcomeRoll = Math.random();
+                if (outcomeRoll < 0.45) {
+                    cash += loan.paybackAmount;
+                    logHub(`[Loan Redemption] Borrower returned with $${loan.paybackAmount} to redeem their prized "${loan.name}"!`);
+                } else if (outcomeRoll < 0.75) {
+                    inventory.push(loan);
+                    logHub(`[Loan Default] Borrower failed to return on Day ${day}. "${loan.name}" seized.`);
+                } else {
+                    let extensionFee = Math.floor(loan.loanAmount * 0.2);
+                    cash += extensionFee;
+                    loan.dueDay = day + 2;
+                    remainingLoans.push(loan);
+                    logHub(`[Loan Extension] Extension paid ($${extensionFee}). Due Day ${loan.dueDay}.`);
+                }
+            } else {
+                remainingLoans.push(loan);
+            }
+        });
+        activeLoans = remainingLoans;
+
+        if (heat > 0) { heat = Math.max(0, heat - 5); }
+
+        activeMarketTrend = marketTrendsPool[Math.floor(Math.random() * marketTrendsPool.length)];
+
+        updateStats();
+        switchPanel('panel-hub');
+        logHub(`-- Day ${day - 1} Ended. Store racks made $${storeIncome.toLocaleString()}. Market shift: ${activeMarketTrend.name} --`);
+    }
+
+    function logHub(text) {
+        let log = document.getElementById('hub-log');
+        log.innerHTML += `<div>[Day ${day}] ${text}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function openInventory() {
+        let container = document.getElementById('inventory-items');
+        container.innerHTML = '';
+        if (inventory.length === 0) {
+            container.innerHTML = '<p>Inventory is empty.</p>';
+        } else {
+            inventory.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = item.isRealVerified ? 'item-card real-verified' : (item.isFake && item.appraised ? 'item-card fake' : 'item-card');
+                
+                let displayVal = item.val;
+                if (item.appraised) {
+                    displayVal = item.isRealVerified ? item.val : item.fakeVal;
+                }
+
+                let actionBtn = "";
+                if (!item.appraised) {
+                    if (staff.appraiser.hired) {
+                        actionBtn += `<button onclick="appraiseItemDirect(${index})" style="padding: 2px 5px; font-size: 0.7rem; background:#3498db; color:#fff;">Appraise (Free)</button> `;
+                    } else {
+                        actionBtn += `<button onclick="appraiseItemDirect(${index})" style="padding: 2px 5px; font-size: 0.7rem;">Appraise ($25)</button> `;
+                    }
+                }
+                actionBtn += `<button onclick="sellItem(${index})" style="background-color: var(--success-color); padding: 2px 5px; font-size: 0.7rem;">Sell ($${displayVal})</button>`;
+                actionBtn += ` <button onclick="sendToStorefront(${index})" style="background-color: #27ae60; color:#fff; padding: 2px 5px; font-size: 0.7rem;">Rack</button>`;
+                actionBtn += ` <button onclick="sendToWorkbench(${index})" style="background-color: #2980b9; color:#fff; padding: 2px 5px; font-size: 0.7rem;">Workbench</button>`;
+
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name} ${item.restored ? '⭐' : ''} ${!item.appraised ? '(Unappraised)' : ''}</div>
+                        <div class="item-value">Val: $${displayVal.toLocaleString()}</div>
+                    </div>
+                    <div>${actionBtn}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        switchPanel('panel-inventory');
+    }
+
+    function appraiseItemDirect(index) {
+        let cost = staff.appraiser.hired ? 0 : 25;
+        if (!staff.appraiser.hired && cash < 25) { alert("Not enough cash! ($25 required for appraisal inspection)"); return; }
+        
+        cash -= cost;
+        let item = inventory[index];
+        item.appraised = true;
+        
+        if (!item.isFake) {
+            item.isRealVerified = true;
+            alert(`"${item.name}" has been appraised and verified REAL! Value: $${item.val}`);
+        } else {
+            item.isRealVerified = false;
+            alert(`"${item.name}" has been appraised and is a COUNTERFEIT FAKE! It is only worth $${item.fakeVal}. (You can sell it here for its fake value, or take it to the Black Market to fence it).`);
+        }
+        updateStats();
+        openInventory();
+    }
+
+    function sellItem(index) {
+        let item = inventory[index];
+        
+        let price;
+        if (!item.appraised && item.isFake) {
+            if (confirm("⚠️ You haven't appraised this item, and it might be fake! Selling it blindly carries a risk of getting caught. Proceed?")) {
+                if (Math.random() < 0.5) {
+                    heat = Math.min(100, heat + 30);
+                    price = item.fakeVal;
+                    alert(`Caught! The buyer realized it was a fake. You had to settle for the fake value ($${item.fakeVal}) and police heat increased.`);
+                } else {
+                    price = item.val;
+                    alert(`Lucky! You managed to sell the unappraised fake for full estimated value ($${item.val}) without getting caught.`);
+                }
+            } else {
+                return;
+            }
+        } else if (item.appraised && item.isFake) {
+            price = item.fakeVal;
+            alert(`Sold confirmed fake "${item.name}" locally for its scrap/fake value ($${item.fakeVal}). No heat added.`);
+        } else {
+            price = item.val;
+        }
+
+        cash += price;
+        inventory.splice(index, 1);
+        updateStats();
+        openInventory();
+    }
+
+    function sendToStorefront(index) {
+        if (storefront.length >= storefrontMax) { alert("Retail display racks are full!"); return; }
+        let item = inventory.splice(index, 1)[0];
+        storefront.push(item);
+        updateStats();
+        openInventory();
+    }
+
+    function sendToWorkbench(index) {
+        let item = inventory.splice(index, 1)[0];
+        workbenchTabItems.push(item);
+        updateStats();
+        openWorkbench();
+    }
+
+    function openWorkbench() {
+        let container = document.getElementById('workbench-items');
+        container.innerHTML = '';
+        if (workbenchTabItems.length === 0) {
+            container.innerHTML = '<p>No items currently brought to the workbench.</p>';
+        } else {
+            workbenchTabItems.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = 'item-card';
+                let actionHTML = item.restored ? '<span style="color:var(--success-color); font-size:0.75rem;">Fully Restored ⭐</span>' : `<button onclick="restoreItem(${index})" style="background-color: #2980b9; color:#fff; padding: 3px 6px;">Restore ($50)</button>`;
+                actionHTML += ` <button onclick="returnWorkbenchToInv(${index})" style="background-color: #7f8c8d; color:#fff; padding: 3px 6px;">To Inv</button>`;
+
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-value">Val: $${item.val}</div>
+                    </div>
+                    <div>${actionHTML}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        switchPanel('panel-workbench');
+    }
+
+    function restoreItem(index) {
+        if (cash < 50) { alert("Not enough cash for restoration!"); return; }
+        cash -= 50;
+        let item = workbenchTabItems[index];
+        item.restored = true;
+        item.val = Math.floor(item.val * 1.3);
+        updateStats();
+        alert(`Successfully restored "${item.name}"! Its value increased by 30%.`);
+        openWorkbench();
+    }
+
+    function returnWorkbenchToInv(index) {
+        if (inventory.length >= 15) { alert("Inventory is full!"); return; }
+        let item = workbenchTabItems.splice(index, 1)[0];
+        inventory.push(item);
+        updateStats();
+        openWorkbench();
+    }
+
+    function openLoans() {
+        let container = document.getElementById('loans-list');
+        container.innerHTML = '';
+        if (activeLoans.length === 0) {
+            container.innerHTML = '<p>No active collateral loans out.</p>';
+        } else {
+            activeLoans.forEach(loan => {
+                let div = document.createElement('div');
+                div.className = 'item-card';
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${loan.name}</div>
+                        <div class="item-value">Owed: $${loan.paybackAmount} | Due Day: ${loan.dueDay}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        switchPanel('panel-loans');
+    }
+
+    function openStorefront() {
+        let container = document.getElementById('storefront-items');
+        container.innerHTML = storefront.length === 0 ? '<p>No items on display racks.</p>' : '';
+        storefront.forEach((item, index) => {
+            let div = document.createElement('div');
+            let mult = getMarketMultiplier(item);
+            let markup = shopUpgrades.lighting.owned ? 1.35 : 1.25;
+            let displayVal = Math.floor(item.val * markup * mult);
+            div.className = 'item-card real-verified';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${item.name} ${!item.appraised ? '(Unappraised Risk)' : ''}</div>
+                    <div class="item-value">Retail Price: $${displayVal.toLocaleString()}</div>
+                </div>
+                <div><button onclick="removeFromStorefront(${index})" style="background-color: var(--danger-color); color:#fff; padding: 3px 6px;">Recall</button></div>
+            `;
+            container.appendChild(div);
+        });
+        switchPanel('panel-storefront');
+    }
+
+    function removeFromStorefront(index) {
+        if (inventory.length >= 15) { alert("Inventory full!"); return; }
+        let item = storefront.splice(index, 1)[0];
+        inventory.push(item);
+        updateStats();
+        openStorefront();
+    }
+
+    function upgradeStorefront() {
+        if (cash < 1500) { alert("Not enough cash!"); return; }
+        cash -= 1500;
+        storefrontMax += 3;
+        updateStats();
+        openStorefront();
+    }
+
+    function openBlackMarket() {
+        let container = document.getElementById('blackmarket-items');
+        container.innerHTML = '';
+        inventory.forEach((item, index) => {
+            if (item.isFake && item.appraised) {
+                let div = document.createElement('div');
+                div.className = 'item-card fake';
+                let payout = Math.floor(item.val * 0.45);
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-value">Black Market Payout: $${payout}</div>
+                    </div>
+                    <div><button onclick="sellBlackMarket(${index})" style="background-color: var(--danger-color); color: #fff; padding: 3px 6px;">Fence It</button></div>
+                `;
+                container.appendChild(div);
+            }
+        });
+        if (container.innerHTML === '') container.innerHTML = '<p>No confirmed fake items to fence. The underground dealers only accept verified counterfeit fakes.</p>';
+        switchPanel('panel-blackmarket');
+    }
+
+    function sellBlackMarket(index) {
+        let item = inventory[index];
+        let payout = Math.floor(item.val * 0.45);
+        cash += payout;
+        
+        let heatReduction = 1.0;
+        if (staff.security.hired) heatReduction *= 0.5;
+        if (shopUpgrades.securityCam.owned) heatReduction *= 0.75;
+        let heatAdd = Math.round(20 * heatReduction);
+
+        heat = Math.min(100, heat + heatAdd);
+        inventory.splice(index, 1);
+        updateStats();
+
+        if (heat >= 100) {
+            triggerPoliceRaid();
+        } else {
+            openBlackMarket();
+        }
+    }
+
+    function triggerPoliceRaid() {
+        alert("🚨 POLICE RAID! Your illegal black market activity caught up with you. Officers raided your store, confiscated half your cash, and seized half your inventory!");
+        logHub(`[POLICE RAID] Store raided at 100% heat!`);
+        cash = Math.floor(cash / 2);
+        if (inventory.length > 0) {
+            let keepCount = Math.ceil(inventory.length / 2);
+            inventory = inventory.slice(0, keepCount);
+        }
+        heat = 0;
+        updateStats();
+        returnToHub();
+    }
+
+    function bribePolice() {
+        if (cash < 200) { alert("Not enough cash!"); return; }
+        cash -= 200;
+        heat = 0;
+        updateStats();
+        alert("Bribed local officers. Police heat cleared to 0%.");
+    }
+
+    function openStaff() {
+        let container = document.getElementById('staff-list-container');
+        container.innerHTML = '';
+        Object.keys(staff).forEach(key => {
+            let s = staff[key];
+            let div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${s.name} ${s.hired ? '✔️ (Hired)' : ''}</div>
+                    <div class="item-value">${s.desc}</div>
+                </div>
+                <div>${s.hired ? '<span style="color:var(--success-color); font-size:0.75rem;">Active</span>' : `<button onclick="hireStaff('${key}')" style="background-color:#d35400; color:#fff; padding:4px 8px;">Hire ($${s.cost.toLocaleString()})</button>`}</div>
+            `;
+            container.appendChild(div);
+        });
+        switchPanel('panel-staff');
+    }
+
+    function hireStaff(key) {
+        let s = staff[key];
+        if (cash < s.cost) { alert("Not enough cash to hire this employee!"); return; }
+        cash -= s.cost;
+        s.hired = true;
+        updateStats();
+        alert(`Successfully hired ${s.name}!`);
+        openStaff();
+    }
+
+    function openCustomization() {
+        let container = document.getElementById('customization-list-container');
+        container.innerHTML = '';
+        Object.keys(shopUpgrades).forEach(key => {
+            let u = shopUpgrades[key];
+            let div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${u.name} ${u.owned ? '✔️ (Installed)' : ''}</div>
+                    <div class="item-value">${u.desc}</div>
+                </div>
+                <div>${u.owned ? '<span style="color:var(--success-color); font-size:0.75rem;">Owned</span>' : `<button onclick="buyShopUpgrade('${key}')" style="background-color:#16a085; color:#fff; padding:4px 8px;">Upgrade ($${u.cost.toLocaleString()})</button>`}</div>
+            `;
+            container.appendChild(div);
+        });
+        switchPanel('panel-customization');
+    }
+
+    function buyShopUpgrade(key) {
+        let u = shopUpgrades[key];
+        if (cash < u.cost) { alert("Not enough cash for this store upgrade!"); return; }
+        cash -= u.cost;
+        u.owned = true;
+        updateStats();
+        alert(`Successfully installed ${u.name}!`);
+        openCustomization();
+    }
+
+    function saveGame() {
+        let saveData = { cash, day, heat, rep, inventory, storefront, storefrontMax, activeLoans, workbenchTabItems, staff, shopUpgrades, activeMarketTrend };
+        localStorage.setItem('pawnTycoonSaveExpandedEdition', JSON.stringify(saveData));
+        alert("Game saved successfully!");
+    }
+
+    function loadGame() {
+        let savedData = localStorage.getItem('pawnTycoonSaveExpandedEdition');
+        if (!savedData) { alert("No save file found!"); return; }
+        let data = JSON.parse(savedData);
+        cash = data.cash;
+        day = data.day;
+        heat = data.heat || 0;
+        rep = data.rep || 1;
+        inventory = data.inventory || [];
+        storefront = data.storefront || [];
+        storefrontMax = data.storefrontMax || 3;
+        activeLoans = data.activeLoans || [];
+        workbenchTabItems = data.workbenchTabItems || [];
+        if (data.staff) staff = data.staff;
+        if (data.shopUpgrades) shopUpgrades = data.shopUpgrades;
+        if (data.activeMarketTrend) activeMarketTrend = data.activeMarketTrend;
+        updateStats();
+        returnToHub();
+        alert("Game loaded successfully!");
+    }
+
+    function resetGame() {
+        if (confirm("Reset your save data?")) {
+            localStorage.removeItem('pawnTycoonSaveExpandedEdition');
+            cash = 2000; day = 1; heat = 0; rep = 1; inventory = []; storefront = []; storefrontMax = 3; activeLoans = []; workbenchTabItems = [];
+            staff = {
+                cashier: { name: "Retail Cashier", hired: false, cost: 2500, desc: "Automatically sells items from Retail Racks daily." },
+                security: { name: "Security Guard", hired: false, cost: 3000, desc: "Dampens police heat generation by 50% from black market deals." },
+                appraiser: { name: "Expert Appraiser", hired: false, cost: 5000, desc: "Instantly appraises items for free without mini-puzzles." },
+                restorer: { name: "Master Restorer", hired: false, cost: 4500, desc: "Automatically restores 1 item on your workbench at the end of each day." }
+            };
+            shopUpgrades = {
+                lighting: { name: "Holographic Showcases", owned: false, cost: 3000, desc: "Attracts high-tier clientele, increasing rare item spawn rates by 25%." },
+                flooring: { name: "Velvet Waiting Lounge", owned: false, cost: 2000, desc: "Improves customer patience and disposition (+1 Rep per deal)." },
+                securityCam: { name: "Biometric Security System", owned: false, cost: 4000, desc: "Reduces base police heat generation from all activities by an additional 25%." }
+            };
+            activeMarketTrend = { name: "Standard Market", desc: "Normal buying and selling conditions across all sectors.", mult: 1.0, category: "all" };
+            updateStats();
+            returnToHub();
+        }
+    }
+
+    updateStats();
+</script>
+
+</body>
+</html>

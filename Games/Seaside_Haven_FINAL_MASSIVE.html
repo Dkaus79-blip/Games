@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Seaside Haven: Sovereign Capital (Relaxed Edition)</title>
+<style>
+  :root {
+    --bg-dark: #080c13;
+    --sidebar-bg: #101622;
+    --panel-bg: #16202e;
+    --panel-bg-hover: #1d2a3c;
+    --panel-border: #25354b;
+    --accent: #f1b33b;
+    --accent-hover: #ffd166;
+    --accent-glow: rgba(241, 179, 59, 0.25);
+    --text: #ecf2fa;
+    --text-muted: #869cb9;
+    --danger: #ef476f;
+    --success: #06d6a0;
+    --info: #118ab2;
+    --purple: #9d4edd;
+    --sidebar-width: 400px;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; width: 100vw; display: flex; }
+
+  /* Main Viewport */
+  #game-viewport {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: #05080e;
+  }
+  #game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: default;
+  }
+
+  /* HUD Top Bar */
+  #hud-topbar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 40;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    max-width: calc(100% - 24px);
+  }
+  .hud-badge {
+    background: rgba(16, 22, 34, 0.94);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .hud-badge span.val { color: var(--accent); }
+
+  /* Speed Controls */
+  .speed-controls {
+    display: flex;
+    background: rgba(16, 22, 34, 0.94);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .speed-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-right: 1px solid var(--panel-border);
+  }
+  .speed-btn:last-child { border-right: none; }
+  .speed-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .speed-btn.active { background: var(--accent); color: #111; }
+
+  /* Event Banner */
+  #event-banner {
+    position: absolute;
+    top: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22, 32, 46, 0.97);
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text);
+    z-index: 45;
+    display: none;
+    animation: fadeInDown 0.3s ease;
+  }
+  @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  /* Navigation Hints Overlay */
+  #nav-hints {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(12, 18, 28, 0.9);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    display: flex;
+    gap: 12px;
+    z-index: 30;
+  }
+  #nav-hints span { color: var(--accent); font-weight: bold; }
+
+  /* Sidebar */
+  #sidebar {
+    width: var(--sidebar-width);
+    height: 100%;
+    background: var(--sidebar-bg);
+    border-left: 2px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: -6px 0 25px rgba(0,0,0,0.6);
+  }
+  .sidebar-header {
+    padding: 12px 16px;
+    background: #0b1018;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .town-title { font-weight: 800; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .town-level-badge { background: #1d2a3d; border: 1px solid #314765; padding: 3px 10px; border-radius: 12px; font-size: 11px; color: #fff; font-weight: 700; }
+
+  /* 2-Row Tab Navigation */
+  .tab-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: #0d131e;
+    border-bottom: 1px solid var(--panel-border);
+    gap: 1px;
+    background-color: var(--panel-border);
+  }
+  .tab-btn {
+    background: #0d131e;
+    border: none;
+    color: var(--text-muted);
+    padding: 7px 2px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .tab-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(241,179,59,0.12); }
+
+  .sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sidebar-content::-webkit-scrollbar { width: 5px; }
+  .sidebar-content::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 3px; }
+
+  /* Minimap Box */
+  .minimap-wrapper {
+    background: #060a10;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  #minimap-canvas {
+    width: 100%;
+    height: 110px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #04070c;
+  }
+  .minimap-hint { font-size: 10px; color: var(--text-muted); }
+
+  /* Resource Grid */
+  .res-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 8px;
+  }
+  .res-card {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.22);
+  }
+  .res-icon { font-size: 13px; }
+
+  /* Section Title */
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: var(--text-muted);
+    font-weight: 800;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Tool Grid */
+  .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .tool-btn {
+    background: var(--panel-bg);
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 7px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .tool-btn:hover { background: var(--panel-bg-hover); border-color: var(--accent); }
+  .tool-btn.active { background: #213045; border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 6px rgba(241,179,59,0.3); }
+
+  /* General Cards */
+  .tab-pane { display: none; flex-direction: column; gap: 10px; }
+  .tab-pane.active { display: flex; }
+  .item-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .item-card:hover { border-color: #334863; }
+  .item-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; align-items: center; }
+  .item-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+  .item-cost { font-size: 10.5px; color: var(--accent); display: flex; gap: 6px; flex-wrap: wrap; font-weight: 600; }
+  .action-btn {
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 11px;
+    align-self: flex-end;
+    transition: background 0.15s;
+  }
+  .action-btn:disabled { background: #222d3b; color: #4e5f76; cursor: not-allowed; }
+  .action-btn:not(:disabled):hover { background: var(--accent-hover); }
+  .action-btn.btn-danger { background: var(--danger); color: #fff; }
+  .action-btn.btn-success { background: var(--success); color: #111; }
+
+  /* Villager Roster */
+  .villager-row {
+    background: #0e1520;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+  }
+  .villager-meta { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .villager-job-select {
+    background: #16202e;
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    font-size: 10.5px;
+    padding: 3px 5px;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(3, 5, 8, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 500;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-box {
+    background: #121a27;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 540px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal-title { font-size: 16px; font-weight: 800; color: var(--accent); border-bottom: 1px solid var(--panel-border); padding-bottom: 6px; }
+
+  /* Tooltip */
+  #tooltip {
+    position: absolute;
+    background: rgba(8, 12, 19, 0.96);
+    border: 1px solid var(--accent);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 300;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  /* Fishing Overlay */
+  #fishing-overlay {
+    position: absolute; top: 50%; left: 40%; transform: translate(-50%, -50%);
+    background: rgba(13, 19, 29, 0.98); border: 2px solid var(--accent); border-radius: 12px;
+    padding: 16px; text-align: center; z-index: 250; display: none; width: 300px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+  }
+  .fish-bar-container { width: 100%; height: 22px; background: #070a10; border-radius: 11px; margin: 12px 0; position: relative; overflow: hidden; border: 1px solid #2b3d55; }
+  .fish-target-zone { position: absolute; height: 100%; background: rgba(6, 214, 160, 0.45); border-left: 2px solid var(--success); border-right: 2px solid var(--success); }
+  .fish-needle { position: absolute; width: 6px; height: 100%; background: var(--danger); border-radius: 3px; transform: translateX(-50%); }
+
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    #sidebar { width: 100%; height: 50vh; border-left: none; border-top: 2px solid var(--panel-border); }
+    #game-viewport { height: 50vh; }
+    #nav-hints { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Main Viewport -->
+  <div id="game-viewport">
+    <canvas id="game-canvas"></canvas>
+    <div id="tooltip"></div>
+
+    <!-- HUD Status Top Bar -->
+    <div id="hud-topbar">
+      <!-- Speed Controls -->
+      <div class="speed-controls" title="Simulation Speed">
+        <button class="speed-btn" data-speed="0" id="sp-0">⏸</button>
+        <button class="speed-btn active" data-speed="1" id="sp-1">1x</button>
+        <button class="speed-btn" data-speed="2" id="sp-2">2x</button>
+        <button class="speed-btn" data-speed="4" id="sp-4">4x</button>
+      </div>
+
+      <div class="hud-badge" title="Calendar">
+        <span id="hud-season-icon">🌸</span>
+        <span id="hud-season-text">Spring</span>, Day <span id="hud-day" class="val">1</span> (Yr <span id="hud-year" class="val">1</span>)
+      </div>
+      <div class="hud-badge" title="Clock">
+        <span id="hud-tod-icon">☀️</span> <span id="hud-time" class="val">08:00</span>
+      </div>
+      <div class="hud-badge" title="Town Happiness">
+        <span>😊</span> <span id="hud-happiness" class="val">100%</span>
+      </div>
+      <div class="hud-badge" title="Weather Forecast">
+        <span id="hud-weather-icon">☀️</span> <span id="hud-weather-text">Clear</span>
+      </div>
+      <button class="hud-badge" id="btn-open-guide" style="cursor:pointer; background:#192434; color:#fff; border-color:var(--accent);">
+        📖 Guide
+      </button>
+    </div>
+
+    <!-- Event Banner -->
+    <div id="event-banner"></div>
+
+    <!-- Navigation Control Hints -->
+    <div id="nav-hints">
+      <div><span>WASD / Arrows</span> Pan</div>
+      <div><span>Space + Drag</span> Move Camera</div>
+      <div><span>1 - 4 / P</span> Speed Controls</div>
+      <div><span>Scroll Wheel</span> Zoom</div>
+    </div>
+
+    <!-- Fishing Overlay -->
+    <div id="fishing-overlay">
+      <h3 style="color:var(--accent); font-size:14px; margin-bottom:2px;" id="fish-title">Reel In!</h3>
+      <p style="font-size:11px; color:var(--text-muted);" id="fish-sub">Catch the moving target inside the green zone</p>
+      <div class="fish-bar-container">
+        <div class="fish-target-zone" id="fish-zone"></div>
+        <div class="fish-needle" id="fish-needle"></div>
+      </div>
+      <button id="btn-reel" class="action-btn" style="width:100%; padding:8px; font-size:12px;">🎣 REEL IN!</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="town-title">
+        <span id="region-icon">🌊</span> <span id="region-name">Seaside Haven</span>
+      </div>
+      <span class="town-level-badge" id="town-level">Hamlet (Lv 1)</span>
+    </div>
+
+    <!-- 2-Row Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-colony"><span>🏛️</span><span>Colony</span></button>
+      <button class="tab-btn" data-tab="tab-citizens"><span>👥</span><span>Citizens</span></button>
+      <button class="tab-btn" data-tab="tab-crops"><span>🌱</span><span>Crops</span></button>
+      <button class="tab-btn" data-tab="tab-world"><span>🌍</span><span>World</span></button>
+      <button class="tab-btn" data-tab="tab-craft"><span>🛠️</span><span>Craft</span></button>
+      <button class="tab-btn" data-tab="tab-harbor"><span>🚢</span><span>Harbor</span></button>
+      <button class="tab-btn" data-tab="tab-market"><span>💰</span><span>Market</span></button>
+      <button class="tab-btn" data-tab="tab-museum"><span>🏛️</span><span>Museum</span></button>
+      <button class="tab-btn" data-tab="tab-quests"><span>📜</span><span>Quests</span></button>
+      <button class="tab-btn" data-tab="tab-system"><span>💾</span><span>Save</span></button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- 1. COLONY TAB -->
+      <div class="tab-pane active" id="tab-colony">
+        <div class="minimap-wrapper">
+          <canvas id="minimap-canvas"></canvas>
+          <div class="minimap-hint">Click mini-map to pan camera</div>
+        </div>
+
+        <div class="section-title">Resources Warehouse</div>
+        <div class="res-grid" id="resource-display-grid"></div>
+
+        <div class="section-title">Actions & Tools</div>
+        <div class="tool-grid">
+          <button class="tool-btn active" data-mode="interact"><span>🖐️ Gather / Harvest</span><small style="color:var(--text-muted)">Chop, mine, pick</small></button>
+          <button class="tool-btn" data-mode="till"><span>⛏️ Till Farmland</span><small style="color:var(--text-muted)">Prep fertile soil</small></button>
+          <button class="tool-btn" data-mode="fish"><span>🎣 Angling</span><small style="color:var(--text-muted)">Fish coastal waters</small></button>
+          <button class="tool-btn" data-mode="demolish"><span>🧨 Demolish</span><small style="color:var(--danger)">Clear building/path</small></button>
+        </div>
+
+        <div class="section-title">Construction Catalogue</div>
+        <div id="building-catalogue-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+        <div class="section-title">Town Hall Progression</div>
+        <div class="item-card" id="town-upgrade-card">
+          <div class="item-header">
+            <span id="town-upgrade-name">Expand to Village (Lv 2)</span>
+            <span id="town-upgrade-cost" class="item-cost"></span>
+          </div>
+          <div class="item-desc" id="town-upgrade-desc">+4 Population cap, unlocks new buildings and expedition regions.</div>
+          <button class="action-btn" id="btn-upgrade-town">Upgrade Town Hall</button>
+        </div>
+      </div>
+
+      <!-- 2. CITIZENS TAB -->
+      <div class="tab-pane" id="tab-citizens">
+        <div class="section-title">Colony Roster (<span id="roster-count">0</span>)</div>
+        <div style="font-size:11px; color:var(--text-muted);">Assign jobs to automate tasks. Citizens eat at 08:00 & 19:00.</div>
+        <div id="villager-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 3. CROPS TAB -->
+      <div class="tab-pane" id="tab-crops">
+        <div class="section-title">Active Seed Selection</div>
+        <div style="font-size:11px; color:var(--text-muted);">Choose a seed, then click Farmland tiles to sow.</div>
+        <div id="crops-seed-list" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px;"></div>
+      </div>
+
+      <!-- 4. WORLD MAP TAB -->
+      <div class="tab-pane" id="tab-world">
+        <div class="section-title">14 Archipelagos & Continents</div>
+        <div id="world-regions-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 5. CRAFTING TAB -->
+      <div class="tab-pane" id="tab-craft">
+        <div class="section-title">Crafting Workshop & Smelter</div>
+        <div id="crafting-recipe-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 6. HARBOR & EXPEDITIONS TAB -->
+      <div class="tab-pane" id="tab-harbor">
+        <div class="section-title">Naval Fleet & Shipyard</div>
+        <div id="fleet-card-container"></div>
+        <div class="section-title" style="margin-top:8px;">Dungeon Raids & Boss Encounters</div>
+        <div id="dungeon-expedition-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 7. MARKET TAB -->
+      <div class="tab-pane" id="tab-market">
+        <div class="section-title">Dynamic Trade Exchange</div>
+        <div style="font-size:11px; color:var(--text-muted);">Trade in bulk (x1, x10, or Sell All). Prices fluctuate daily.</div>
+        <div id="market-goods-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 8. MUSEUM TAB -->
+      <div class="tab-pane" id="tab-museum">
+        <div class="section-title">Grand Museum of Antiquities</div>
+        <div style="font-size:11px; color:var(--text-muted);">Collect fish, marine relics, and rare boss artifacts for tourism gold.</div>
+        <div id="museum-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px;"></div>
+      </div>
+
+      <!-- 9. QUESTS TAB -->
+      <div class="tab-pane" id="tab-quests">
+        <div class="section-title">Royal Directives & Direct Orders</div>
+        <div id="quest-list-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <div class="section-title" style="margin-top:8px;">Imperial Achievements (<span id="achieve-count">0/8</span>)</div>
+        <div id="achieve-list-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- 10. SYSTEM & SAVES TAB -->
+      <div class="tab-pane" id="tab-system">
+        <div class="section-title">Save Slots Management</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="item-card">
+            <div class="item-header"><span>💾 Slot 1</span><small id="slot-info-1" style="color:var(--text-muted)">Empty</small></div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button class="action-btn" style="flex:1" onclick="saveGameToSlot(1)">Save</button>
+              <button class="action-btn" style="flex:1" onclick="loadGameFromSlot(1)">Load</button>
+              <button class="action-btn btn-danger" onclick="clearSaveSlot(1)">🗑️</button>
+            </div>
+          </div>
+          <div class="item-card">
+            <div class="item-header"><span>💾 Slot 2</span><small id="slot-info-2" style="color:var(--text-muted)">Empty</small></div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button class="action-btn" style="flex:1" onclick="saveGameToSlot(2)">Save</button>
+              <button class="action-btn" style="flex:1" onclick="loadGameFromSlot(2)">Load</button>
+              <button class="action-btn btn-danger" onclick="clearSaveSlot(2)">🗑️</button>
+            </div>
+          </div>
+          <div class="item-card">
+            <div class="item-header"><span>💾 Slot 3</span><small id="slot-info-3" style="color:var(--text-muted)">Empty</small></div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button class="action-btn" style="flex:1" onclick="saveGameToSlot(3)">Save</button>
+              <button class="action-btn" style="flex:1" onclick="loadGameFromSlot(3)">Load</button>
+              <button class="action-btn btn-danger" onclick="clearSaveSlot(3)">🗑️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:8px;">Import & Export Save File</div>
+        <div style="display:flex; gap:6px;">
+          <button class="action-btn" style="flex:1;" onclick="exportSaveJSON()">📤 Export File</button>
+          <button class="action-btn" style="flex:1;" onclick="promptImportSave()">📥 Import File</button>
+        </div>
+
+        <div class="section-title" style="margin-top:8px; color:var(--danger);">Danger Zone</div>
+        <button class="action-btn btn-danger" style="width:100%; padding:8px;" onclick="hardResetGame()">🔄 Reset Entire Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BATTLE MODAL -->
+  <div class="modal-overlay" id="battle-modal">
+    <div class="modal-box">
+      <div class="modal-title" id="battle-title">⚔️ Dungeon Expedition</div>
+      <div id="battle-desc" style="font-size:12px; color:var(--text-muted);">Encountering fierce dungeon guardians...</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#090e15; padding:12px; border-radius:8px;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;">🛡️</div>
+          <div style="font-weight:700; font-size:12px;">Expedition Force</div>
+          <div id="battle-player-hp" style="color:var(--success); font-weight:bold; font-size:13px;">100 / 100 HP</div>
+        </div>
+        <div style="font-weight:800; font-size:16px; color:var(--accent);">VS</div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;" id="battle-enemy-icon">🐉</div>
+          <div style="font-weight:700; font-size:12px;" id="battle-enemy-name">Boss</div>
+          <div id="battle-enemy-hp" style="color:var(--danger); font-weight:bold; font-size:13px;">250 / 250 HP</div>
+        </div>
+      </div>
+      <div id="battle-log" style="height:100px; background:#090d14; border:1px solid var(--panel-border); border-radius:6px; padding:8px; overflow-y:auto; font-size:11px; line-height:1.4;"></div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;" id="battle-actions">
+        <button class="action-btn" onclick="battleAction('strike')">⚔️ Strike</button>
+        <button class="action-btn" onclick="battleAction('guard')">🛡️ Fortify</button>
+        <button class="action-btn" onclick="battleAction('potion')">🧪 Healing Draft</button>
+      </div>
+      <button class="action-btn btn-danger" id="battle-btn-close" style="display:none; width:100%;" onclick="closeBattleModal()">Close Battle</button>
+    </div>
+  </div>
+
+  <!-- GUIDE MODAL -->
+  <div class="modal-overlay" id="guide-modal">
+    <div class="modal-box" style="max-width:600px;">
+      <div class="modal-title">📖 Seaside Haven: Sovereign Guide</div>
+      <div style="font-size:12px; color:var(--text); line-height:1.6; display:flex; flex-direction:column; gap:8px;">
+        <p><strong>1. Relaxed Colonization:</strong> Days are calm (12 minutes per day). Citizens eat at 08:00 (Breakfast) and 19:00 (Dinner). Granaries protect food reserves from spoilage.</p>
+        <p><strong>2. Time Controls:</strong> Use <strong>1 - 4</strong> or <strong>Space / P</strong> to adjust simulation speed from pause to 4x speed.</p>
+        <p><strong>3. Farming & Well Irrigation:</strong> Till grass with ⛏️, sow seasonal seeds, and build Wells nearby to speed up growth by +35% and protect against summer heatwaves.</p>
+        <p><strong>4. Biome Exploration:</strong> Unlock all 14 regions. Volcanic calderas yield coal and obsidian; iron crags regenerate iron ore.</p>
+        <p><strong>5. Naval Supremacy:</strong> Build Caravels & War Galleons in the harbor to defeat dungeon bosses and unlock rare relics for your Grand Museum.</p>
+      </div>
+      <button class="action-btn" style="width:100%; margin-top:8px;" onclick="document.getElementById('guide-modal').style.display='none'">Got it!</button>
+    </div>
+  </div>
+
+  <!-- ENDGAME VICTORY MODAL -->
+  <div class="modal-overlay" id="victory-modal">
+    <div class="modal-box" style="text-align:center;">
+      <div style="font-size:48px;">👑</div>
+      <div class="modal-title" style="border:none; font-size:20px;">The Sovereign Royal Capital Ascends!</div>
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
+        Through tireless exploration, architectural mastery, and naval triumph, your colony has ascended to become the greatest empire of the realm. You hold dominion over all 14 regions!
+      </p>
+      <button class="action-btn btn-success" style="width:100%; padding:10px; margin-top:10px;" onclick="document.getElementById('victory-modal').style.display='none'">Continue Ruling</button>
+    </div>
+  </div>
+
+<script>
+/* =========================================================================
+   1. SOUND SYNTHESIS ENGINE
+   ========================================================================= */
+class SoundEngine {
+  constructor() { this.ctx = null; }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+  play(type) {
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain); gain.connect(this.ctx.destination);
+
+      if (type === 'chop') {
+        osc.type = 'square'; osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now); osc.stop(now + 0.08);
+      } else if (type === 'mine') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+      } else if (type === 'harvest' || type === 'pop') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(720, now + 0.12);
+        gain.gain.setValueAtTime(0.18, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+      } else if (type === 'build' || type === 'upgrade') {
+        [261, 329, 392, 523].forEach((f, i) => {
+          const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+          o.connect(g); g.connect(this.ctx.destination);
+          o.type = 'triangle'; o.frequency.setValueAtTime(f, now + i * 0.07);
+          g.gain.setValueAtTime(0.15, now + i * 0.07);
+          g.gain.linearRampToValueAtTime(0.01, now + i * 0.07 + 0.12);
+          o.start(now + i * 0.07); o.stop(now + i * 0.07 + 0.12);
+        });
+      } else if (type === 'combat') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(40, now + 0.15);
+        gain.gain.setValueAtTime(0.25, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+      }
+    } catch(e) {}
+  }
+}
+const sfx = new SoundEngine();
+
+/* =========================================================================
+   2. CONSTANTS & DEFINITIONS
+   ========================================================================= */
+const MAP_W = 46;
+const MAP_H = 34;
+const TILE_SIZE = 48;
+const SAVE_PREFIX = 'seaside_haven_v2_';
+
+const TILES = { WATER: 0, SAND: 1, GRASS: 2, DIRT: 3, FARMLAND: 4, ROAD: 5, DEEP_WATER: 6, SNOW: 7, OBSIDIAN: 8 };
+
+// Calm, balanced grow times in seconds
+const CROPS = {
+  wheat: { id: 'wheat', name: 'Wheat', icon: '🌾', maxStage: 3, growTime: 65, seasons: ['Spring', 'Summer'], yield: 4, item: 'food', value: 3 },
+  carrot: { id: 'carrot', name: 'Carrot', icon: '🥕', maxStage: 3, growTime: 75, seasons: ['Spring', 'Autumn'], yield: 4, item: 'food', value: 4 },
+  potato: { id: 'potato', name: 'Potato', icon: '🥔', maxStage: 3, growTime: 85, seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], yield: 6, item: 'food', value: 4 },
+  corn: { id: 'corn', name: 'Golden Corn', icon: '🌽', maxStage: 4, growTime: 95, seasons: ['Summer', 'Autumn'], yield: 5, item: 'food', value: 5 },
+  strawberry: { id: 'strawberry', name: 'Sweet Berry', icon: '🍓', maxStage: 3, growTime: 80, seasons: ['Spring'], yield: 5, item: 'food', value: 8 },
+  tomato: { id: 'tomato', name: 'Vine Tomato', icon: '🍅', maxStage: 3, growTime: 80, seasons: ['Summer'], yield: 4, item: 'food', value: 6 },
+  pumpkin: { id: 'pumpkin', name: 'Giant Pumpkin', icon: '🎃', maxStage: 4, growTime: 120, seasons: ['Autumn'], yield: 3, item: 'food', value: 14 },
+  frost_melon: { id: 'frost_melon', name: 'Frost Melon', icon: '🍈', maxStage: 3, growTime: 110, seasons: ['Winter'], yield: 4, item: 'food', value: 12 },
+  moonflower: { id: 'moonflower', name: 'Moonflower', icon: '🌸', maxStage: 3, growTime: 130, seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], yield: 3, item: 'herbs', value: 16 },
+  sun_grain: { id: 'sun_grain', name: 'Royal Sun-Grain', icon: '✨', maxStage: 4, growTime: 150, seasons: ['Summer'], yield: 6, item: 'gold', value: 20 },
+  kelp: { id: 'kelp', name: 'Sea Kelp', icon: '🌿', maxStage: 3, growTime: 70, seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], yield: 5, item: 'food', value: 4 }
+};
+
+const REGIONS = {
+  seaside: { id: 'seaside', name: 'Seaside Haven', icon: '🌊', unlocked: true, cost: {}, desc: 'Fertile starting coastal bay with timber, stone, and calm waters.' },
+  forest: { id: 'forest', name: 'Whispering Woods', icon: '🌲', unlocked: false, cost: { gold: 30, planks: 10 }, desc: 'Dense ancient grove yielding double timber & exotic herbs.' },
+  mountain: { id: 'mountain', name: 'Iron Crags', icon: '⛰️', unlocked: false, cost: { gold: 60, planks: 20 }, desc: 'Rugged peaks rich in iron veins and deep stone quarries.' },
+  coral: { id: 'coral', name: 'Coral Atoll', icon: '🏝️', unlocked: false, cost: { gold: 100, planks: 30 }, desc: 'Tropical shallows abundant in glowing pearls and exotic fish.' },
+  sunken: { id: 'sunken', name: 'Sunken Shallows', icon: '⚓', unlocked: false, cost: { gold: 150, steel: 15 }, desc: 'Submerged shipwrecks guarding lost imperial relics.' },
+  prairie: { id: 'prairie', name: 'Golden Prairie', icon: '🌾', unlocked: false, cost: { gold: 200, planks: 40 }, desc: 'Vast grasslands with 1.5x crop growth rate.' },
+  frostpeak: { id: 'frostpeak', name: 'Frostpeak Range', icon: '❄️', unlocked: false, cost: { gold: 300, steel: 30 }, desc: 'Sub-zero tundra containing rare cryo-crystals.' },
+  caldera: { id: 'caldera', name: 'Smoldering Caldera', icon: '🌋', unlocked: false, cost: { gold: 450, steel: 50 }, desc: 'Volcanic island rich with coal, obsidian, and brimstone.' },
+  mystic: { id: 'mystic', name: 'Mystic Grove', icon: '🔮', unlocked: false, cost: { gold: 600, pearls: 25 }, desc: 'Enchanted realm bursting with raw mana nodes.' },
+  siren: { id: 'siren', name: "Siren's Trench", icon: '🔱', unlocked: false, cost: { gold: 800, mana: 40 }, desc: 'Abyssal waters home to mythological leviathans.' },
+  stormy: { id: 'stormy', name: 'Storm Archipelago', icon: '⚡', unlocked: false, cost: { gold: 1000, steel: 80 }, desc: 'Tempestuous isles with pirate fortresses.' },
+  ruins: { id: 'ruins', name: 'Ancient Ruins', icon: '🏛️', unlocked: false, cost: { gold: 1300, relics: 10 }, desc: 'Forgotten temples concealing primal titan technology.' },
+  celestial: { id: 'celestial', name: 'Celestial Isle', icon: '✨', unlocked: false, cost: { gold: 1800, mana: 100 }, desc: 'Floating sanctuary producing cosmic stardust.' },
+  crownlands: { id: 'crownlands', name: 'The Royal Crownlands', icon: '👑', unlocked: false, cost: { gold: 3000, steel: 150, relics: 20 }, desc: 'Endgame throne domain. Seat of the sovereign capital!' }
+};
+
+const BUILDINGS = {
+  NONE: 0, HOUSE: 1, MANOR: 2, GRANARY: 3, FISHERY: 4, LUMBERMILL: 5, QUARRY: 6,
+  SMELTER: 7, WINDMILL: 8, MARKET_STALL: 9, HARBOR: 10, SHIPYARD: 11, BARRACKS: 12,
+  ALCHEMY: 13, TAVERN: 14, ACADEMY: 15, MUSEUM: 16, WATCHTOWER: 17, WELL: 18,
+  SHRINE: 19, BANK: 20, CITADEL: 21, ROAD: 22
+};
+
+const BUILDING_DEFS = {
+  [BUILDINGS.HOUSE]: { id: BUILDINGS.HOUSE, name: 'Thatched House', icon: '🛖', cost: { wood: 12, planks: 6 }, waterOnly: false, desc: '+2 Pop capacity & citizen housing.' },
+  [BUILDINGS.MANOR]: { id: BUILDINGS.MANOR, name: 'Stone Manor', icon: '🏡', cost: { stone: 20, planks: 15, steel: 5 }, waterOnly: false, desc: '+5 Pop capacity & boosts colony happiness.' },
+  [BUILDINGS.GRANARY]: { id: BUILDINGS.GRANARY, name: 'Food Granary', icon: '🥖', cost: { wood: 15, stone: 10 }, waterOnly: false, desc: 'Increases safe food reserves by +150 & prevents spoilage.' },
+  [BUILDINGS.FISHERY]: { id: BUILDINGS.FISHERY, name: 'Coastal Fishery', icon: '🛶', cost: { wood: 16, fish: 6 }, waterOnly: true, desc: 'Built on coastal water. Generates +2 fish every 20s.' },
+  [BUILDINGS.LUMBERMILL]: { id: BUILDINGS.LUMBERMILL, name: 'Lumber Mill', icon: '🪓', cost: { wood: 25, stone: 12 }, waterOnly: false, desc: 'Refines 2 Wood into 1 Plank every 20s.' },
+  [BUILDINGS.QUARRY]: { id: BUILDINGS.QUARRY, name: 'Stone Quarry', icon: '🏗️', cost: { wood: 20, tools: 2 }, waterOnly: false, desc: 'Passively quarries +2 Stone every 20s.' },
+  [BUILDINGS.SMELTER]: { id: BUILDINGS.SMELTER, name: 'Foundry Smelter', icon: '🔥', cost: { stone: 30, iron: 10 }, waterOnly: false, desc: 'Smelts 2 Iron + 1 Coal into 1 Steel every 20s.' },
+  [BUILDINGS.WINDMILL]: { id: BUILDINGS.WINDMILL, name: 'Grain Windmill', icon: '💨', cost: { wood: 30, planks: 12 }, waterOnly: false, desc: 'Boosts harvest yield of adjacent crops by +50%.' },
+  [BUILDINGS.MARKET_STALL]: { id: BUILDINGS.MARKET_STALL, name: 'Market Stall', icon: '🏪', cost: { planks: 15, gold: 20 }, waterOnly: false, desc: 'Generates +3 passive Gold taxes every 20s.' },
+  [BUILDINGS.HARBOR]: { id: BUILDINGS.HARBOR, name: 'Trade Harbor', icon: '⚓', cost: { wood: 40, stone: 25, gold: 50 }, waterOnly: true, desc: 'Enables maritime trade voyages & fleet staging.' },
+  [BUILDINGS.SHIPYARD]: { id: BUILDINGS.SHIPYARD, name: 'Naval Shipyard', icon: '🚢', cost: { planks: 40, steel: 15, gold: 80 }, waterOnly: true, desc: 'Constructs exploration caravels & warships.' },
+  [BUILDINGS.BARRACKS]: { id: BUILDINGS.BARRACKS, name: 'Colony Barracks', icon: '🛡️', cost: { stone: 35, steel: 15 }, waterOnly: false, desc: 'Trains Soldiers to undertake dangerous dungeon raids.' },
+  [BUILDINGS.ALCHEMY]: { id: BUILDINGS.ALCHEMY, name: 'Alchemy Lab', icon: '⚗️', cost: { stone: 25, herbs: 15, mana: 5 }, waterOnly: false, desc: 'Transmutes herbs into healing drafts and distilled mana.' },
+  [BUILDINGS.TAVERN]: { id: BUILDINGS.TAVERN, name: 'Seaside Tavern', icon: '🍺', cost: { planks: 25, gold: 40 }, waterOnly: false, desc: 'Passively maintains +15% Town Happiness.' },
+  [BUILDINGS.ACADEMY]: { id: BUILDINGS.ACADEMY, name: 'Scholars Academy', icon: '📜', cost: { stone: 30, planks: 25, mana: 10 }, waterOnly: false, desc: 'Doubles citizen XP gain and allows Scholars to produce Mana.' },
+  [BUILDINGS.MUSEUM]: { id: BUILDINGS.MUSEUM, name: 'Grand Museum', icon: '🏛️', cost: { stone: 50, steel: 20, pearls: 10 }, waterOnly: false, desc: 'Generates +3 Gold per discovered exhibit in your collection.' },
+  [BUILDINGS.WATCHTOWER]: { id: BUILDINGS.WATCHTOWER, name: 'Watchtower', icon: '🗼', cost: { stone: 20, wood: 15 }, waterOnly: false, desc: 'Defends colony from pirate raids and secures bonus salvage.' },
+  [BUILDINGS.WELL]: { id: BUILDINGS.WELL, name: 'Irrigation Well', icon: '🪣', cost: { stone: 15 }, waterOnly: false, desc: 'Speeds up adjacent crop growth by +35% & prevents heatwaves.' },
+  [BUILDINGS.SHRINE]: { id: BUILDINGS.SHRINE, name: 'Shrine of Depths', icon: '⛩️', cost: { stone: 30, pearls: 8, mana: 12 }, waterOnly: false, desc: 'Widens the fishing catch zone and increases rare relic luck.' },
+  [BUILDINGS.BANK]: { id: BUILDINGS.BANK, name: 'Royal Bank', icon: '🏦', cost: { stone: 60, steel: 30, gold: 150 }, waterOnly: false, desc: 'Generates 5% interest on total gold reserves every season.' },
+  [BUILDINGS.CITADEL]: { id: BUILDINGS.CITADEL, name: 'Grand Citadel', icon: '👑', cost: { stone: 150, steel: 80, relics: 15, gold: 1000 }, waterOnly: false, desc: 'Endgame sovereign monument. Boosts all global production +20%!' },
+  [BUILDINGS.ROAD]: { id: BUILDINGS.ROAD, name: 'Cobblestone Road', icon: '🧱', cost: { stone: 2 }, waterOnly: false, desc: 'Doubles citizen movement speed across the colony.' }
+};
+
+const FISH_SPECIES = [
+  { id: 'sardine', name: 'Silver Sardine', icon: '🐟', rarity: 'Common', value: 3, zone: 40 },
+  { id: 'herring', name: 'Coastal Herring', icon: '🐟', rarity: 'Common', value: 4, zone: 35 },
+  { id: 'salmon', name: 'Wild Salmon', icon: '🐟', rarity: 'Uncommon', value: 7, zone: 30 },
+  { id: 'tuna', name: 'Bluefin Tuna', icon: '🐟', rarity: 'Uncommon', value: 10, zone: 25 },
+  { id: 'oyster', name: 'Pearl Oyster', icon: '🦪', rarity: 'Rare', value: 20, zone: 20, givesPearl: true },
+  { id: 'swordfish', name: 'Imperial Swordfish', icon: '🗡️', rarity: 'Rare', value: 25, zone: 18 },
+  { id: 'sunfish', name: 'Luminous Sunfish', icon: '🐠', rarity: 'Epic', value: 45, zone: 15 },
+  { id: 'angler', name: 'Abyssal Angler', icon: '🐡', rarity: 'Epic', value: 60, zone: 14 },
+  { id: 'kraken_tentacle', name: 'Kraken Tentacle', icon: '🦑', rarity: 'Legendary', value: 120, zone: 10 },
+  { id: 'ancient_anchor', name: 'Sunken Anchor Relic', icon: '⚓', rarity: 'Legendary', value: 150, zone: 10, isRelic: true },
+  { id: 'leviathan_fin', name: 'Golden Leviathan Fin', icon: '✨', rarity: 'Mythic', value: 300, zone: 8, isRelic: true },
+  { id: 'sea_crown', name: 'Tide Sovereign Crown', icon: '👑', rarity: 'Mythic', value: 500, zone: 6, isRelic: true }
+];
+
+const DUNGEONS = [
+  { id: 'cove', name: "Smuggler's Cove", boss: 'Pirate Admiral Drake', bossIcon: '🏴‍☠️', hp: 200, attack: 18, reward: { gold: 120, steel: 10, relics: 1 } },
+  { id: 'vault', name: 'Forgotten Titan Vault', boss: 'Stone Colossus', bossIcon: '🗿', hp: 350, attack: 28, reward: { gold: 250, relics: 3, mana: 25 } },
+  { id: 'trench', name: 'Abyssal Trench', boss: 'The Ancient Kraken', bossIcon: '🦑', hp: 550, attack: 42, reward: { gold: 500, pearls: 20, relics: 5 } },
+  { id: 'wyrm', name: 'Glacial Cavern', boss: 'Frost Wyrm Aurelius', bossIcon: '🐉', hp: 850, attack: 60, reward: { gold: 1000, relics: 10, mana: 60 } }
+];
+
+const RECIPES = [
+  { id: 'plank', name: 'Refined Wood Planks', icon: '🧱', cost: { wood: 4 }, gives: { planks: 2 } },
+  { id: 'tools', name: 'Forged Iron Tools', icon: '⛏️', cost: { iron: 2, wood: 2 }, gives: { tools: 2 } },
+  { id: 'steel', name: 'Tempered Steel Ingot', icon: '⛓️', cost: { iron: 3, coal: 2 }, gives: { steel: 2 } },
+  { id: 'stew', name: 'Seafarer Seafood Chowder', icon: '🍲', cost: { fish: 3, food: 4 }, gives: { food: 18 } },
+  { id: 'mana_potion', name: 'Distilled Mana Essence', icon: '🧪', cost: { herbs: 3, pearls: 1 }, gives: { mana: 2 } },
+  { id: 'cloth', name: 'Woven Sailcloth', icon: '🧵', cost: { herbs: 4 }, gives: { cloth: 2 } },
+  { id: 'trade_caravel', name: 'Build Exploration Caravel', icon: '⛵', cost: { planks: 30, cloth: 10, steel: 6 }, gives: { caravel: 1 } },
+  { id: 'war_galleon', name: 'Construct Imperial War Galleon', icon: '🚢', cost: { planks: 60, steel: 25, cloth: 20, gold: 150 }, gives: { galleon: 1 } }
+];
+
+const QUESTS = [
+  { id: 'gather_wood', title: 'Timber Supply', desc: 'Harvest 20 timber from ancient trees.', target: 20, count: 0, done: false, reward: { gold: 30, tools: 2 } },
+  { id: 'harvest_crops', title: 'Master Harvester', desc: 'Harvest 12 mature food crops.', target: 12, count: 0, done: false, reward: { gold: 50, planks: 10 } },
+  { id: 'catch_fish', title: 'Ocean Bounty', desc: 'Catch 8 fish or marine creatures.', target: 8, count: 0, done: false, reward: { gold: 60, pearls: 2 } },
+  { id: 'build_houses', title: 'Flourishing Colony', desc: 'Construct 3 houses or stone manors.', target: 3, count: 0, done: false, reward: { gold: 80, steel: 5 } },
+  { id: 'defeat_boss', title: 'Slayer of the Deep', desc: 'Defeat any legendary dungeon boss.', target: 1, count: 0, done: false, reward: { gold: 200, relics: 3 } },
+  { id: 'royal_capital', title: 'Imperial Ascension', desc: 'Upgrade Town Hall to Level 5 Sovereign Capital.', target: 5, count: 1, done: false, reward: { gold: 1000, relics: 10 } }
+];
+
+const ACHIEVEMENTS = [
+  { id: 'first_blood', name: 'First Tree', desc: 'Chop down your first timber node.', done: false },
+  { id: 'green_thumb', name: 'Green Thumb', desc: 'Harvest 25 total crops.', done: false },
+  { id: 'master_angler', name: 'Master Angler', desc: 'Reel in 15 sea creatures.', done: false },
+  { id: 'industrialist', name: 'Industrialist', desc: 'Smelt over 20 Steel ingots.', done: false },
+  { id: 'voyager', name: 'World Voyager', desc: 'Unlock at least 6 unique regions.', done: false },
+  { id: 'museum_curator', name: 'Curator of Legend', desc: 'Collect 8 distinct museum relics.', done: false },
+  { id: 'conqueror', name: 'Dungeon Conqueror', desc: 'Vanquish a legendary dungeon boss.', done: false },
+  { id: 'sovereign', name: 'The Sovereign King', desc: 'Ascend to Royal Capital Level 5.', done: false }
+];
+
+const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'];
+const SEASON_ICONS = { Spring: '🌸', Summer: '☀️', Autumn: '🍂', Winter: '❄️' };
+const WEATHERS = ['Clear', 'Rain', 'Storm', 'Heatwave', 'Overcast'];
+const WEATHER_ICONS = { Clear: '☀️', Rain: '🌧️', Storm: '⛈️', Heatwave: '🔥', Overcast: '☁️', Snow: '❄️' };
+
+/* =========================================================================
+   3. GLOBAL STATE
+   ========================================================================= */
+const STATE = {
+  gameSpeed: 1,
+  currentRegion: 'seaside',
+  townLevel: 1,
+  time: 8.0,
+  day: 1,
+  seasonIndex: 0,
+  year: 1,
+  weather: 'Clear',
+  happiness: 100,
+  currentMode: 'interact',
+  selectedSeed: 'wheat',
+  camera: { x: 40, y: 40, zoom: 0.85 },
+  isDragging: false,
+  dragStart: { x: 0, y: 0 },
+  isSpacePressed: false,
+  keys: {},
+  hoverTile: { x: -1, y: -1 },
+  particles: [],
+  floatingTexts: [],
+  villagers: [],
+  maps: {},
+  ships: { sloop: 1, caravel: 0, galleon: 0 },
+  museum: {},
+  stats: { crops: 0, fish: 0, steel: 0, wood: 0 },
+  marketPrices: {
+    food: 4, wood: 3, stone: 3, planks: 8, fish: 5,
+    iron: 10, steel: 24, herbs: 12, pearls: 35, mana: 40, tools: 20
+  },
+  resources: {
+    gold: 80, food: 60, wood: 50, stone: 30, planks: 15,
+    iron: 6, steel: 0, fish: 6, pearls: 0, herbs: 4,
+    coal: 0, mana: 0, cloth: 0, tools: 4, relics: 0,
+    pop: 3, maxPop: 6
+  }
+};
+
+let lastHourInt = 8;
+
+/* =========================================================================
+   4. PROCEDURAL MAP GENERATION
+   ========================================================================= */
+function generateRegionMap(regionId) {
+  const map = [];
+  for (let y = 0; y < MAP_H; y++) {
+    const row = [];
+    for (let x = 0; x < MAP_W; x++) {
+      let type = TILES.GRASS;
+      let resource = null;
+      let building = BUILDINGS.NONE;
+      let crop = null;
+
+      if (regionId === 'seaside') {
+        if (x <= 5 || (x <= 10 && y <= 8) || (x <= 8 && y >= MAP_H - 9)) type = TILES.WATER;
+        else if (x <= 7 || (x <= 12 && y <= 9) || (x <= 10 && y >= MAP_H - 10)) type = TILES.SAND;
+        else {
+          const r = Math.random();
+          if (r < 0.12) resource = 'tree';
+          else if (r < 0.18) resource = 'rock';
+          else if (r < 0.21) resource = 'coal';
+        }
+      } else if (regionId === 'forest') {
+        if (x < 2 || y < 2 || x > MAP_W - 3 || y > MAP_H - 3) type = TILES.GRASS;
+        const r = Math.random();
+        if (r < 0.35) resource = 'tree';
+        else if (r < 0.42) resource = 'herbs';
+        else if (r < 0.47) resource = 'rock';
+      } else if (regionId === 'mountain') {
+        if (x < 4) type = TILES.SAND;
+        const r = Math.random();
+        if (r < 0.25) resource = 'rock';
+        else if (r < 0.38) resource = 'iron';
+        else if (r < 0.45) resource = 'coal';
+      } else if (regionId === 'coral') {
+        if (x < 11 || y < 8 || x > MAP_W - 11 || y > MAP_H - 8) type = TILES.WATER;
+        else type = TILES.SAND;
+      } else if (regionId === 'frostpeak') {
+        type = TILES.SNOW;
+        const r = Math.random();
+        if (r < 0.15) resource = 'rock';
+        else if (r < 0.25) resource = 'iron';
+      } else if (regionId === 'caldera') {
+        if (x > 12 && x < 32 && y > 8 && y < 24) type = TILES.OBSIDIAN;
+        const r = Math.random();
+        if (r < 0.25) resource = 'coal';
+        else if (r < 0.35) resource = 'iron';
+      } else if (regionId === 'mystic' || regionId === 'celestial') {
+        const r = Math.random();
+        if (r < 0.18) resource = 'mana';
+        else if (r < 0.30) resource = 'herbs';
+        else if (r < 0.40) resource = 'tree';
+      } else {
+        if (x <= 4 || y <= 3 || x >= MAP_W - 4 || y >= MAP_H - 3) type = TILES.WATER;
+        else {
+          const r = Math.random();
+          if (r < 0.12) resource = 'tree';
+          else if (r < 0.20) resource = 'rock';
+          else if (r < 0.25) resource = 'herbs';
+        }
+      }
+
+      row.push({ x, y, type, resource, building, crop, health: 3 });
+    }
+    map.push(row);
+  }
+  return map;
+}
+
+function initGameWorld() {
+  for (let rKey in REGIONS) {
+    STATE.maps[rKey] = generateRegionMap(rKey);
+  }
+  STATE.villagers = [
+    { id: 1, name: 'Arthur', job: 'Farmer', homeRegion: 'seaside', level: 1, xp: 0, happiness: 100, x: 14 * TILE_SIZE, y: 12 * TILE_SIZE, tx: 14, ty: 12, color: '#f39c12', workTimer: 0 },
+    { id: 2, name: 'Elenor', job: 'Lumberjack', homeRegion: 'seaside', level: 1, xp: 0, happiness: 100, x: 15 * TILE_SIZE, y: 13 * TILE_SIZE, tx: 15, ty: 13, color: '#27ae60', workTimer: 0 },
+    { id: 3, name: 'Gareth', job: 'Fisher', homeRegion: 'seaside', level: 1, xp: 0, happiness: 100, x: 16 * TILE_SIZE, y: 14 * TILE_SIZE, tx: 16, ty: 14, color: '#2980b9', workTimer: 0 }
+  ];
+}
+
+/* =========================================================================
+   5. GRAPHICS & CANVAS SYSTEM
+   ========================================================================= */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const viewport = document.getElementById('game-viewport');
+const minimapCanvas = document.getElementById('minimap-canvas');
+const miniCtx = minimapCanvas.getContext('2d');
+
+function handleResize() {
+  canvas.width = viewport.clientWidth;
+  canvas.height = viewport.clientHeight;
+  if (minimapCanvas.clientWidth > 0) {
+    minimapCanvas.width = minimapCanvas.clientWidth;
+    minimapCanvas.height = minimapCanvas.clientHeight;
+  }
+}
+window.addEventListener('resize', handleResize);
+
+function addFloatingText(text, worldX, worldY, color = '#ffd166') {
+  STATE.floatingTexts.push({ text, x: worldX, y: worldY, color, life: 1.5, vy: -20 });
+}
+
+function addParticles(x, y, color, count = 6) {
+  for (let i = 0; i < count; i++) {
+    STATE.particles.push({
+      x, y, vx: (Math.random() - 0.5) * 40, vy: (Math.random() - 0.5) * 40,
+      life: 0.6 + Math.random() * 0.4, color
+    });
+  }
+}
+
+/* =========================================================================
+   6. SIMULATION LOGIC
+   ========================================================================= */
+let lastFrameTime = performance.now();
+let productionCycleTimer = 0;
+
+function updateWeather() {
+  const r = Math.random();
+  if (STATE.seasonIndex === 3) {
+    STATE.weather = r < 0.5 ? 'Snow' : 'Clear';
+  } else if (r < 0.45) {
+    STATE.weather = 'Clear';
+  } else if (r < 0.70) {
+    STATE.weather = 'Rain';
+  } else if (r < 0.85) {
+    STATE.weather = 'Storm';
+  } else {
+    STATE.weather = 'Heatwave';
+  }
+  document.getElementById('hud-weather-icon').innerText = WEATHER_ICONS[STATE.weather] || '☀️';
+  document.getElementById('hud-weather-text').innerText = STATE.weather;
+}
+
+function checkAdjacentTile(map, x, y, buildingType) {
+  const neighbors = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  for (let [dx, dy] of neighbors) {
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H) {
+      if (map[ny][nx].building === buildingType) return true;
+    }
+  }
+  return false;
+}
+
+function checkAdjacentTileType(map, x, y, tileType) {
+  const neighbors = [[-1,0],[1,0],[0,-1],[0,1]];
+  for (let [dx, dy] of neighbors) {
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H) {
+      if (map[ny][nx].type === tileType) return true;
+    }
+  }
+  return false;
+}
+
+function triggerMealTime(mealName) {
+  const needed = Math.ceil(STATE.resources.pop * 0.5);
+  if (STATE.resources.food >= needed) {
+    STATE.resources.food -= needed;
+    STATE.happiness = Math.min(100, STATE.happiness + 2);
+  } else {
+    const unserved = needed - STATE.resources.food;
+    STATE.resources.food = 0;
+    STATE.happiness = Math.max(10, STATE.happiness - unserved * 4);
+    addFloatingText(`⚠️ Hunger during ${mealName}!`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#ef476f');
+  }
+  updateHUDValuesOnly();
+}
+
+function triggerDailyMidnightChecks() {
+  let granaries = 0;
+  for (let rKey in STATE.maps) {
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        if (STATE.maps[rKey][y][x].building === BUILDINGS.GRANARY) granaries++;
+      }
+    }
+  }
+
+  const safeFoodCap = 100 + granaries * 150;
+  if (STATE.resources.food > safeFoodCap) {
+    const excess = STATE.resources.food - safeFoodCap;
+    const spoiled = Math.ceil(excess * 0.05);
+    STATE.resources.food -= spoiled;
+    addFloatingText(`-${spoiled} Spoilage`, 20 * TILE_SIZE, 14 * TILE_SIZE, '#ef476f');
+  }
+
+  triggerDailyMarketShift();
+  triggerRandomEvent();
+}
+
+function updateSimulation(rawDt) {
+  const dt = rawDt * STATE.gameSpeed;
+
+  // Pan Camera Navigation
+  const speed = 700 * (1 / STATE.camera.zoom) * rawDt;
+  if (STATE.keys['KeyW'] || STATE.keys['ArrowUp']) STATE.camera.y += speed;
+  if (STATE.keys['KeyS'] || STATE.keys['ArrowDown']) STATE.camera.y -= speed;
+  if (STATE.keys['KeyA'] || STATE.keys['ArrowLeft']) STATE.camera.x += speed;
+  if (STATE.keys['KeyD'] || STATE.keys['ArrowRight']) STATE.camera.x -= speed;
+
+  if (STATE.gameSpeed === 0) return; // Paused
+
+  const currentMap = STATE.maps[STATE.currentRegion];
+
+  // RELAXED CLOCK: 1 In-Game Hour = 30 Real Seconds
+  STATE.time += dt * (1 / 30);
+  const currentHourInt = Math.floor(STATE.time);
+
+  if (lastHourInt !== currentHourInt) {
+    if (currentHourInt === 8) triggerMealTime('Breakfast');
+    if (currentHourInt === 19) triggerMealTime('Dinner');
+    lastHourInt = currentHourInt;
+  }
+
+  if (STATE.time >= 24) {
+    STATE.time = 0;
+    lastHourInt = 0;
+    STATE.day++;
+    updateWeather();
+    triggerDailyMidnightChecks();
+    if (STATE.day > 28) {
+      STATE.day = 1;
+      STATE.seasonIndex = (STATE.seasonIndex + 1) % 4;
+      if (STATE.seasonIndex === 0) STATE.year++;
+      applySeasonalBankInterest();
+    }
+  }
+
+  let weatherFactor = 1.0;
+  if (STATE.weather === 'Rain') weatherFactor = 1.6;
+  if (STATE.weather === 'Storm') weatherFactor = 1.3;
+  if (STATE.weather === 'Heatwave') weatherFactor = 0.7;
+
+  // Crops Growth Across All Regions
+  for (let rKey in STATE.maps) {
+    const regMap = STATE.maps[rKey];
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        const tile = regMap[y][x];
+        if (tile.crop && tile.crop.stage < tile.crop.def.maxStage) {
+          let growFactor = weatherFactor;
+          if (tile.crop.def.seasons.includes(SEASONS[STATE.seasonIndex])) growFactor *= 1.4;
+          if (rKey === 'prairie') growFactor *= 1.4;
+          if (checkAdjacentTile(regMap, x, y, BUILDINGS.WELL)) {
+            growFactor = Math.max(growFactor, 1.0) * 1.35;
+          }
+          tile.crop.progress += (dt / tile.crop.def.growTime) * growFactor;
+          if (tile.crop.progress >= 1.0) {
+            tile.crop.progress = 0;
+            tile.crop.stage++;
+          }
+        }
+      }
+    }
+  }
+
+  // Periodic Production Cycle (Every 20 Seconds)
+  productionCycleTimer += dt;
+  if (productionCycleTimer >= 20.0) {
+    productionCycleTimer = 0;
+
+    // Regrowth of natural nodes
+    for (let rKey in STATE.maps) {
+      const regMap = STATE.maps[rKey];
+      for (let i = 0; i < 2; i++) {
+        const rx = Math.floor(Math.random() * MAP_W);
+        const ry = Math.floor(Math.random() * MAP_H);
+        const rTile = regMap[ry][rx];
+
+        const isNaturalTerrain = (
+          (rTile.type === TILES.GRASS || rTile.type === TILES.SAND || rTile.type === TILES.SNOW || rTile.type === TILES.OBSIDIAN)
+          && rTile.type !== TILES.FARMLAND
+          && rTile.type !== TILES.ROAD
+        );
+
+        if (isNaturalTerrain && !rTile.resource && rTile.building === BUILDINGS.NONE && !rTile.crop) {
+          const r = Math.random();
+          if (rKey === 'caldera') {
+            rTile.resource = r < 0.60 ? 'coal' : 'iron';
+          } else if (rKey === 'mountain') {
+            rTile.resource = r < 0.45 ? 'rock' : (r < 0.78 ? 'iron' : 'coal');
+          } else if (rKey === 'forest') {
+            rTile.resource = r < 0.65 ? 'tree' : (r < 0.88 ? 'herbs' : 'rock');
+          } else if (rKey === 'mystic' || rKey === 'celestial') {
+            rTile.resource = r < 0.45 ? 'mana' : (r < 0.75 ? 'herbs' : 'tree');
+          } else if (rKey === 'frostpeak') {
+            rTile.resource = r < 0.60 ? 'rock' : 'iron';
+          } else {
+            rTile.resource = r < 0.55 ? 'tree' : (r < 0.82 ? 'rock' : (r < 0.92 ? 'coal' : 'herbs'));
+          }
+          rTile.health = 3;
+        }
+      }
+    }
+
+    // Global Building Passive Production
+    let fisheries = 0, lumbermills = 0, smelters = 0, markets = 0, quarries = 0, citadels = 0, museums = 0;
+    for (let rKey in STATE.maps) {
+      const regMap = STATE.maps[rKey];
+      for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
+          const b = regMap[y][x].building;
+          if (b === BUILDINGS.FISHERY) fisheries++;
+          if (b === BUILDINGS.LUMBERMILL) lumbermills++;
+          if (b === BUILDINGS.SMELTER) smelters++;
+          if (b === BUILDINGS.MARKET_STALL) markets++;
+          if (b === BUILDINGS.QUARRY) quarries++;
+          if (b === BUILDINGS.CITADEL) citadels++;
+          if (b === BUILDINGS.MUSEUM) museums++;
+        }
+      }
+    }
+
+    const prodMultiplier = citadels > 0 ? 1.2 : 1.0;
+
+    if (fisheries > 0) {
+      STATE.resources.fish += Math.round(fisheries * 2 * prodMultiplier);
+    }
+    if (lumbermills > 0 && STATE.resources.wood >= lumbermills * 2) {
+      STATE.resources.wood -= lumbermills * 2;
+      const pAmt = Math.round(lumbermills * 1 * prodMultiplier);
+      STATE.resources.planks += pAmt;
+    }
+    if (smelters > 0 && STATE.resources.iron >= smelters * 2 && STATE.resources.coal >= smelters) {
+      STATE.resources.iron -= smelters * 2;
+      STATE.resources.coal -= smelters;
+      const sAmt = Math.round(smelters * 1 * prodMultiplier);
+      STATE.resources.steel += sAmt;
+      STATE.stats.steel += sAmt;
+      if (STATE.stats.steel >= 20) unlockAchievement('industrialist');
+    }
+    if (markets > 0) {
+      STATE.resources.gold += Math.round(markets * 3 * prodMultiplier);
+    }
+    if (quarries > 0) {
+      STATE.resources.stone += Math.round(quarries * 2 * prodMultiplier);
+      if (Math.random() < 0.3) STATE.resources.iron += quarries;
+    }
+    if (museums > 0) {
+      const exhibits = Object.keys(STATE.museum).length;
+      const income = exhibits * 3 * museums;
+      if (income > 0) STATE.resources.gold += income;
+    }
+    updateHUDValuesOnly();
+  }
+
+  // Citizens AI
+  let hasAcademy = false;
+  for (let rKey in STATE.maps) {
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        if (STATE.maps[rKey][y][x].building === BUILDINGS.ACADEMY) hasAcademy = true;
+      }
+    }
+  }
+
+  STATE.villagers.forEach(v => {
+    if (!v.homeRegion) v.homeRegion = 'seaside';
+    if (v.homeRegion !== STATE.currentRegion) return;
+
+    const curTileX = Math.floor(v.x / TILE_SIZE);
+    const curTileY = Math.floor(v.y / TILE_SIZE);
+
+    if (!v.hasTarget || (v.tx === curTileX && v.ty === curTileY && v.workTimer <= 0)) {
+      let targetFound = false;
+
+      if (v.job === 'Farmer') {
+        for (let y = 0; y < MAP_H; y++) {
+          for (let x = 0; x < MAP_W; x++) {
+            const tile = currentMap[y][x];
+            if (tile.crop && tile.crop.stage === tile.crop.def.maxStage) {
+              v.tx = x; v.ty = y; targetFound = true; break;
+            }
+          }
+          if (targetFound) break;
+        }
+      } else if (v.job === 'Lumberjack') {
+        for (let y = 0; y < MAP_H; y++) {
+          for (let x = 0; x < MAP_W; x++) {
+            if (currentMap[y][x].resource === 'tree') {
+              v.tx = x; v.ty = y; targetFound = true; break;
+            }
+          }
+          if (targetFound) break;
+        }
+      } else if (v.job === 'Miner') {
+        for (let y = 0; y < MAP_H; y++) {
+          for (let x = 0; x < MAP_W; x++) {
+            const res = currentMap[y][x].resource;
+            if (res === 'rock' || res === 'iron' || res === 'coal') {
+              v.tx = x; v.ty = y; targetFound = true; break;
+            }
+          }
+          if (targetFound) break;
+        }
+      } else if (v.job === 'Fisher') {
+        for (let y = 1; y < MAP_H - 1; y++) {
+          for (let x = 1; x < MAP_W - 1; x++) {
+            const t = currentMap[y][x];
+            const isLand = (t.type !== TILES.WATER && t.type !== TILES.DEEP_WATER);
+            if (isLand && checkAdjacentTileType(currentMap, x, y, TILES.WATER)) {
+              v.tx = x; v.ty = y; targetFound = true; break;
+            }
+          }
+          if (targetFound) break;
+        }
+      } else if (v.job === 'Scholar') {
+        for (let y = 0; y < MAP_H; y++) {
+          for (let x = 0; x < MAP_W; x++) {
+            if (currentMap[y][x].building === BUILDINGS.ACADEMY || currentMap[y][x].resource === 'mana') {
+              v.tx = x; v.ty = y; targetFound = true; break;
+            }
+          }
+          if (targetFound) break;
+        }
+      }
+
+      if (!targetFound) {
+        v.tx = Math.max(2, Math.min(MAP_W - 3, curTileX + Math.floor((Math.random() - 0.5) * 6)));
+        v.ty = Math.max(2, Math.min(MAP_H - 3, curTileY + Math.floor((Math.random() - 0.5) * 6)));
+      }
+      v.hasTarget = true;
+      v.workTimer = 4.0;
+    }
+
+    // Speed boost on roads (both tile road or building road)
+    let moveSpeed = 2.2;
+    if (curTileX >= 0 && curTileX < MAP_W && curTileY >= 0 && curTileY < MAP_H) {
+      const tileOn = currentMap[curTileY][curTileX];
+      if (tileOn.type === TILES.ROAD || tileOn.building === BUILDINGS.ROAD) moveSpeed = 4.5;
+    }
+
+    const targetPx = v.tx * TILE_SIZE + TILE_SIZE / 2;
+    const targetPy = v.ty * TILE_SIZE + TILE_SIZE / 2;
+    const dist = Math.hypot(targetPx - v.x, targetPy - v.y);
+
+    if (dist > 4) {
+      v.x += (targetPx - v.x) * (moveSpeed * dt);
+      v.y += (targetPy - v.y) * (moveSpeed * dt);
+    } else {
+      v.workTimer -= dt;
+      if (v.workTimer <= 0) {
+        v.hasTarget = false;
+        const xpGain = hasAcademy ? 15 : 8;
+
+        if (curTileX >= 0 && curTileX < MAP_W && curTileY >= 0 && curTileY < MAP_H) {
+          const tile = currentMap[curTileY][curTileX];
+
+          if (v.job === 'Farmer' && tile.crop && tile.crop.stage === tile.crop.def.maxStage) {
+            let yieldAmt = tile.crop.def.yield + Math.floor(v.level / 2);
+            if (checkAdjacentTile(currentMap, curTileX, curTileY, BUILDINGS.WINDMILL)) yieldAmt = Math.round(yieldAmt * 1.5);
+            STATE.resources[tile.crop.def.item] += yieldAmt;
+            tile.crop.stage = 0; tile.crop.progress = 0;
+            v.xp += xpGain;
+            STATE.stats.crops++;
+            if (STATE.stats.crops >= 25) unlockAchievement('green_thumb');
+            sfx.play('harvest');
+            checkQuestProgress('harvest_crops', 1);
+            addFloatingText(`+${yieldAmt} ${tile.crop.def.name}`, v.x, v.y - 10, '#06d6a0');
+            updateHUDValuesOnly();
+          } else if (v.job === 'Lumberjack' && tile.resource === 'tree') {
+            const amt = (STATE.currentRegion === 'forest' ? 8 : 4) + v.level;
+            tile.resource = null;
+            STATE.resources.wood += amt;
+            STATE.stats.wood += amt;
+            v.xp += xpGain;
+            sfx.play('chop');
+            addParticles(tile.x * TILE_SIZE + 24, tile.y * TILE_SIZE + 24, '#27ae60');
+            addFloatingText(`+${amt} Wood`, v.x, v.y - 10, '#2ecc71');
+            checkQuestProgress('gather_wood', amt);
+            unlockAchievement('first_blood');
+            updateHUDValuesOnly();
+          } else if (v.job === 'Miner' && (tile.resource === 'rock' || tile.resource === 'iron' || tile.resource === 'coal')) {
+            if (tile.resource === 'iron') {
+              const ironAmt = 2 + Math.floor(v.level / 2);
+              STATE.resources.iron += ironAmt;
+              addFloatingText(`+${ironAmt} Iron`, v.x, v.y - 10, '#9b59b6');
+            } else if (tile.resource === 'coal') {
+              STATE.resources.coal += 3;
+              addFloatingText('+3 Coal', v.x, v.y - 10, '#636e72');
+            } else {
+              const stoneAmt = 4 + Math.floor(v.level / 2);
+              STATE.resources.stone += stoneAmt;
+              addFloatingText(`+${stoneAmt} Stone`, v.x, v.y - 10, '#bdc3c7');
+            }
+            tile.resource = null;
+            v.xp += xpGain;
+            sfx.play('mine');
+            addParticles(tile.x * TILE_SIZE + 24, tile.y * TILE_SIZE + 24, '#95a5a6');
+            updateHUDValuesOnly();
+          } else if (v.job === 'Fisher' && checkAdjacentTileType(currentMap, curTileX, curTileY, TILES.WATER)) {
+            const amt = 1 + Math.floor(v.level / 2);
+            STATE.resources.fish += amt;
+            STATE.stats.fish++;
+            if (STATE.stats.fish >= 15) unlockAchievement('master_angler');
+            if (Math.random() < 0.1) STATE.resources.pearls += 1;
+            v.xp += xpGain;
+            sfx.play('harvest');
+            addFloatingText(`+${amt} Fish`, v.x, v.y - 10, '#118ab2');
+            checkQuestProgress('catch_fish', 1);
+            updateHUDValuesOnly();
+          } else if (v.job === 'Scholar' && (tile.building === BUILDINGS.ACADEMY || tile.resource === 'mana')) {
+            STATE.resources.mana += 1;
+            v.xp += xpGain;
+            sfx.play('pop');
+            addFloatingText('+1 Mana', v.x, v.y - 10, '#a29bfe');
+            updateHUDValuesOnly();
+          }
+
+          if (v.xp >= v.level * 40) {
+            v.xp = 0;
+            v.level++;
+            sfx.play('upgrade');
+            addFloatingText(`⭐ ${v.name} Lv ${v.level}!`, v.x, v.y - 20, '#ffd166');
+          }
+        }
+      }
+    }
+  });
+
+  // Particle Physics
+  for (let i = STATE.particles.length - 1; i >= 0; i--) {
+    const p = STATE.particles[i]; p.x += p.vx * rawDt; p.y += p.vy * rawDt; p.life -= rawDt;
+    if (p.life <= 0) STATE.particles.splice(i, 1);
+  }
+  for (let i = STATE.floatingTexts.length - 1; i >= 0; i--) {
+    const ft = STATE.floatingTexts[i]; ft.y += ft.vy * rawDt; ft.life -= rawDt;
+    if (ft.life <= 0) STATE.floatingTexts.splice(i, 1);
+  }
+}
+
+/* =========================================================================
+   7. CANVAS SCENE RENDERING
+   ========================================================================= */
+function canPlaceBuilding(tile, bId) {
+  const def = BUILDING_DEFS[bId];
+  if (!def || tile.building !== BUILDINGS.NONE || tile.resource) return false;
+  const isWater = (tile.type === TILES.WATER || tile.type === TILES.DEEP_WATER);
+  if (def.waterOnly && !isWater) return false;
+  if (!def.waterOnly && isWater) return false;
+  for (let r in def.cost) {
+    if ((STATE.resources[r] || 0) < def.cost[r]) return false;
+  }
+  return true;
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(STATE.camera.x, STATE.camera.y);
+  ctx.scale(STATE.camera.zoom, STATE.camera.zoom);
+
+  const currentMap = STATE.maps[STATE.currentRegion];
+  const timeSec = performance.now() * 0.0015;
+
+  const startX = Math.max(0, Math.floor((-STATE.camera.x / STATE.camera.zoom) / TILE_SIZE) - 1);
+  const endX = Math.min(MAP_W, Math.ceil(((canvas.width - STATE.camera.x) / STATE.camera.zoom) / TILE_SIZE) + 1);
+  const startY = Math.max(0, Math.floor((-STATE.camera.y / STATE.camera.zoom) / TILE_SIZE) - 1);
+  const endY = Math.min(MAP_H, Math.ceil(((canvas.height - STATE.camera.y) / STATE.camera.zoom) / TILE_SIZE) + 1);
+
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      const tile = currentMap[y][x];
+      const px = x * TILE_SIZE;
+      const py = y * TILE_SIZE;
+
+      // Draw Ground Tile
+      if (tile.type === TILES.WATER || tile.type === TILES.DEEP_WATER) {
+        const wave = Math.sin(timeSec + x * 0.6 + y * 0.5) * 6;
+        ctx.fillStyle = tile.type === TILES.DEEP_WATER ? `rgb(10, ${38 + wave}, 85)` : `rgb(20, ${90 + wave}, 155)`;
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(px + 4, py + 12, 16, 2);
+      } else if (tile.type === TILES.SAND) {
+        ctx.fillStyle = '#e5ce83'; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      } else if (tile.type === TILES.SNOW) {
+        ctx.fillStyle = '#eef5fc'; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      } else if (tile.type === TILES.OBSIDIAN) {
+        ctx.fillStyle = '#261f33'; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      } else if (tile.type === TILES.FARMLAND) {
+        ctx.fillStyle = '#4a2e17'; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = '#341f0e';
+        ctx.fillRect(px + 2, py + 8, TILE_SIZE - 4, 3);
+        ctx.fillRect(px + 2, py + 22, TILE_SIZE - 4, 3);
+        ctx.fillRect(px + 2, py + 36, TILE_SIZE - 4, 3);
+      } else if (tile.type === TILES.ROAD) {
+        ctx.fillStyle = '#738081'; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = '#94a2a3'; ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+      } else {
+        ctx.fillStyle = STATE.currentRegion === 'forest' ? '#225220' : (STATE.seasonIndex === 3 ? '#a2c09f' : '#37702a');
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+
+      // Draw Crops
+      if (tile.crop) {
+        ctx.save();
+        const stage = tile.crop.stage;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${14 + stage * 4}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tile.crop.def.icon, px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+        ctx.restore();
+      }
+
+      // Draw Natural Resources
+      if (tile.resource === 'tree') {
+        ctx.fillStyle = '#543315'; ctx.fillRect(px + 20, py + 22, 8, 18);
+        ctx.fillStyle = '#1b6026'; ctx.beginPath(); ctx.arc(px + 24, py + 16, 16, 0, Math.PI * 2); ctx.fill();
+      } else if (tile.resource === 'rock') {
+        ctx.fillStyle = '#727e7f'; ctx.beginPath(); ctx.ellipse(px + 24, py + 26, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
+      } else if (tile.resource === 'iron') {
+        ctx.fillStyle = '#833d9f'; ctx.beginPath(); ctx.ellipse(px + 24, py + 26, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#cbabdc'; ctx.fillRect(px + 19, py + 21, 6, 6);
+      } else if (tile.resource === 'coal') {
+        ctx.fillStyle = '#171717'; ctx.beginPath(); ctx.ellipse(px + 24, py + 26, 13, 9, 0, 0, Math.PI * 2); ctx.fill();
+      } else if (tile.resource === 'herbs') {
+        ctx.save();
+        ctx.font = '22px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🌿', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+        ctx.restore();
+      } else if (tile.resource === 'mana') {
+        ctx.save();
+        ctx.font = '22px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔮', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+        ctx.restore();
+      }
+
+      // HIGH VISIBILITY BUILDING RENDERING
+      if (tile.building !== BUILDINGS.NONE) {
+        const bDef = BUILDING_DEFS[tile.building];
+        if (bDef) {
+          ctx.save();
+          if (tile.building === BUILDINGS.ROAD) {
+            // Road styled pad
+            ctx.fillStyle = '#636e72';
+            ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            ctx.strokeStyle = '#b2bec3';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+          } else {
+            // Foundation Plinth Box
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+              ctx.roundRect(px + 3, py + 3, TILE_SIZE - 6, TILE_SIZE - 6, 6);
+            } else {
+              ctx.rect(px + 3, py + 3, TILE_SIZE - 6, TILE_SIZE - 6);
+            }
+            ctx.fill();
+
+            // Accent Border
+            ctx.strokeStyle = bDef.waterOnly ? '#118ab2' : '#f1b33b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Centered High-Contrast Icon
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '26px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(bDef.icon, px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+          }
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  // Draw Citizens on current region
+  STATE.villagers.forEach(v => {
+    if (v.homeRegion !== STATE.currentRegion) return;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(v.x, v.y + 12, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = v.color; ctx.beginPath(); ctx.arc(v.x, v.y, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffeaa7'; ctx.beginPath(); ctx.arc(v.x, v.y - 6, 5, 0, Math.PI * 2); ctx.fill();
+
+    const jobIcons = { Farmer: '🌾', Lumberjack: '🪓', Miner: '⛏️', Fisher: '🎣', Soldier: '🛡️', Scholar: '📜', None: '👤' };
+    ctx.font = '10px sans-serif';
+    ctx.fillText(jobIcons[v.job] || '👤', v.x - 5, v.y - 14);
+  });
+
+  // Ghost Placement Preview
+  const hx = STATE.hoverTile.x;
+  const hy = STATE.hoverTile.y;
+  if (hx >= 0 && hx < MAP_W && hy >= 0 && hy < MAP_H) {
+    const tile = currentMap[hy][hx];
+    const px = hx * TILE_SIZE;
+    const py = hy * TILE_SIZE;
+
+    if (STATE.currentMode.startsWith('build-')) {
+      const bId = parseInt(STATE.currentMode.replace('build-', ''));
+      const valid = canPlaceBuilding(tile, bId);
+      ctx.fillStyle = valid ? 'rgba(6, 214, 160, 0.35)' : 'rgba(239, 71, 111, 0.35)';
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = valid ? '#06d6a0' : '#ef476f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+      const bDef = BUILDING_DEFS[bId];
+      if (bDef) {
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '26px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bDef.icon, px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+        ctx.restore();
+      }
+    } else if (STATE.currentMode === 'till') {
+      const valid = (tile.type === TILES.GRASS && !tile.resource && tile.building === BUILDINGS.NONE);
+      ctx.fillStyle = valid ? 'rgba(6, 214, 160, 0.35)' : 'rgba(239, 71, 111, 0.35)';
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = valid ? '#06d6a0' : '#ef476f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+    } else if (STATE.currentMode === 'plant') {
+      const valid = (tile.type === TILES.FARMLAND && !tile.crop);
+      ctx.fillStyle = valid ? 'rgba(6, 214, 160, 0.35)' : 'rgba(239, 71, 111, 0.35)';
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = valid ? '#06d6a0' : '#ef476f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.strokeStyle = '#f1b33b'; ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+
+  // World Particles
+  STATE.particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
+
+  // Floating Numbers
+  STATE.floatingTexts.forEach(ft => {
+    ctx.font = 'bold 12px system-ui';
+    ctx.fillStyle = '#05080c';
+    ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+    ctx.fillStyle = ft.color;
+    ctx.fillText(ft.text, ft.x, ft.y);
+  });
+
+  ctx.restore();
+
+  // Day/Night Atmospheric Ambient
+  const hour = STATE.time;
+  let nightAlpha = 0;
+  if (hour < 5 || hour > 21) nightAlpha = 0.55;
+  else if (hour >= 5 && hour <= 7) nightAlpha = 0.55 * ((7 - hour) / 2);
+  else if (hour >= 18 && hour <= 21) nightAlpha = 0.55 * ((hour - 18) / 3);
+
+  if (nightAlpha > 0) {
+    ctx.fillStyle = `rgba(4, 10, 24, ${nightAlpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  renderMinimap();
+
+  const now = performance.now();
+  const rawDt = Math.min((now - lastFrameTime) / 1000, 0.1);
+  lastFrameTime = now;
+  updateSimulation(rawDt);
+  requestAnimationFrame(drawScene);
+}
+
+/* =========================================================================
+   8. MINIMAP LOGIC
+   ========================================================================= */
+function renderMinimap() {
+  const mw = minimapCanvas.width;
+  const mh = minimapCanvas.height;
+  if (mw === 0 || mh === 0) return;
+  miniCtx.clearRect(0, 0, mw, mh);
+
+  const currentMap = STATE.maps[STATE.currentRegion];
+  const cellW = mw / MAP_W;
+  const cellH = mh / MAP_H;
+
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const tile = currentMap[y][x];
+      if (tile.type === TILES.WATER || tile.type === TILES.DEEP_WATER) miniCtx.fillStyle = '#0f4c7d';
+      else if (tile.type === TILES.SAND) miniCtx.fillStyle = '#e5ce83';
+      else if (tile.type === TILES.FARMLAND) miniCtx.fillStyle = '#4a2e17';
+      else if (tile.type === TILES.SNOW) miniCtx.fillStyle = '#ffffff';
+      else miniCtx.fillStyle = '#2b6021';
+
+      if (tile.building !== BUILDINGS.NONE) miniCtx.fillStyle = '#ef476f';
+      miniCtx.fillRect(x * cellW, y * cellH, cellW + 0.5, cellH + 0.5);
+    }
+  }
+
+  const camWorldX = -STATE.camera.x / (TILE_SIZE * STATE.camera.zoom);
+  const camWorldY = -STATE.camera.y / (TILE_SIZE * STATE.camera.zoom);
+  const camWorldW = canvas.width / (TILE_SIZE * STATE.camera.zoom);
+  const camWorldH = canvas.height / (TILE_SIZE * STATE.camera.zoom);
+
+  miniCtx.strokeStyle = '#f1b33b';
+  miniCtx.lineWidth = 1.5;
+  miniCtx.strokeRect(camWorldX * cellW, camWorldY * cellH, camWorldW * cellW, camWorldH * cellH);
+}
+
+minimapCanvas.addEventListener('mousedown', (e) => {
+  const rect = minimapCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const targetTileX = (mx / minimapCanvas.width) * MAP_W;
+  const targetTileY = (my / minimapCanvas.height) * MAP_H;
+
+  STATE.camera.x = canvas.width / 2 - (targetTileX * TILE_SIZE * STATE.camera.zoom);
+  STATE.camera.y = canvas.height / 2 - (targetTileY * TILE_SIZE * STATE.camera.zoom);
+});
+
+/* =========================================================================
+   9. INTERACTION & BUILDING PLACEMENT
+   ========================================================================= */
+function handleTileClick(tx, ty) {
+  sfx.init();
+  const currentMap = STATE.maps[STATE.currentRegion];
+  if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) return;
+  const tile = currentMap[ty][tx];
+  const wX = tx * TILE_SIZE + TILE_SIZE / 2;
+  const wY = ty * TILE_SIZE;
+
+  if (STATE.currentMode === 'interact') {
+    if (tile.resource === 'tree') {
+      sfx.play('chop');
+      addParticles(tile.x * TILE_SIZE + 24, tile.y * TILE_SIZE + 24, '#27ae60');
+      tile.health--;
+      if (tile.health <= 0) {
+        tile.resource = null; tile.health = 3;
+        const amt = STATE.currentRegion === 'forest' ? 10 : 5;
+        STATE.resources.wood += amt;
+        STATE.stats.wood += amt;
+        unlockAchievement('first_blood');
+        checkQuestProgress('gather_wood', amt);
+        addFloatingText(`+${amt} Wood`, wX, wY, '#2ecc71');
+      }
+    } else if (tile.resource === 'rock') {
+      sfx.play('mine');
+      addParticles(tile.x * TILE_SIZE + 24, tile.y * TILE_SIZE + 24, '#bdc3c7');
+      tile.health--;
+      if (tile.health <= 0) {
+        tile.resource = null; tile.health = 3;
+        STATE.resources.stone += 5;
+        addFloatingText('+5 Stone', wX, wY, '#dfe6e9');
+      }
+    } else if (tile.resource === 'iron') {
+      sfx.play('mine');
+      tile.health--;
+      if (tile.health <= 0) {
+        tile.resource = null; tile.health = 3;
+        STATE.resources.iron += 3;
+        addFloatingText('+3 Iron Ore', wX, wY, '#9b59b6');
+      }
+    } else if (tile.resource === 'coal') {
+      sfx.play('mine');
+      tile.health--;
+      if (tile.health <= 0) {
+        tile.resource = null; tile.health = 3;
+        STATE.resources.coal += 4;
+        addFloatingText('+4 Coal', wX, wY, '#636e72');
+      }
+    } else if (tile.resource === 'herbs') {
+      sfx.play('harvest');
+      tile.resource = null;
+      STATE.resources.herbs += 3;
+      addFloatingText('+3 Herbs', wX, wY, '#2ecc71');
+    } else if (tile.resource === 'mana') {
+      sfx.play('harvest');
+      tile.resource = null;
+      STATE.resources.mana += 2;
+      addFloatingText('+2 Mana', wX, wY, '#a29bfe');
+    } else if (tile.crop && tile.crop.stage === tile.crop.def.maxStage) {
+      let yieldAmt = tile.crop.def.yield;
+      if (checkAdjacentTile(currentMap, tx, ty, BUILDINGS.WINDMILL)) yieldAmt = Math.round(yieldAmt * 1.5);
+      STATE.resources[tile.crop.def.item] += yieldAmt;
+      tile.crop.stage = 0; tile.crop.progress = 0;
+      sfx.play('harvest');
+      STATE.stats.crops++;
+      if (STATE.stats.crops >= 25) unlockAchievement('green_thumb');
+      checkQuestProgress('harvest_crops', 1);
+      addFloatingText(`+${yieldAmt} ${tile.crop.def.name}`, wX, wY, '#06d6a0');
+    }
+  } else if (STATE.currentMode === 'till') {
+    if (tile.type === TILES.GRASS && !tile.resource && tile.building === BUILDINGS.NONE) {
+      tile.type = TILES.FARMLAND;
+      sfx.play('mine');
+    }
+  } else if (STATE.currentMode === 'plant') {
+    if (tile.type === TILES.FARMLAND && !tile.crop) {
+      const cropDef = CROPS[STATE.selectedSeed];
+      tile.crop = { def: cropDef, stage: 0, progress: 0 };
+      sfx.play('pop');
+    }
+  } else if (STATE.currentMode === 'fish') {
+    if (tile.type === TILES.WATER || tile.type === TILES.DEEP_WATER) {
+      startFishingMinigame();
+    }
+  } else if (STATE.currentMode === 'demolish') {
+    if (tile.building !== BUILDINGS.NONE) {
+      const oldBuilding = tile.building;
+      tile.building = BUILDINGS.NONE;
+      if (oldBuilding === BUILDINGS.HOUSE) {
+        STATE.resources.maxPop = Math.max(3, STATE.resources.maxPop - 2);
+        STATE.resources.pop = Math.min(STATE.resources.pop, STATE.resources.maxPop);
+      } else if (oldBuilding === BUILDINGS.MANOR) {
+        STATE.resources.maxPop = Math.max(3, STATE.resources.maxPop - 5);
+        STATE.resources.pop = Math.min(STATE.resources.pop, STATE.resources.maxPop);
+      }
+      sfx.play('chop');
+      addFloatingText('Demolished', wX, wY, '#ef476f');
+    } else if (tile.type === TILES.FARMLAND || tile.type === TILES.ROAD) {
+      tile.type = TILES.GRASS;
+      tile.crop = null;
+      sfx.play('mine');
+    }
+  } else if (STATE.currentMode.startsWith('build-')) {
+    const bId = parseInt(STATE.currentMode.replace('build-', ''));
+    if (canPlaceBuilding(tile, bId)) {
+      const def = BUILDING_DEFS[bId];
+      for (let r in def.cost) STATE.resources[r] -= def.cost[r];
+      tile.building = bId;
+      if (bId === BUILDINGS.HOUSE) {
+        STATE.resources.maxPop += 2;
+        STATE.resources.pop += 1;
+        createVillager();
+        checkQuestProgress('build_houses', 1);
+      } else if (bId === BUILDINGS.MANOR) {
+        STATE.resources.maxPop += 5;
+        STATE.resources.pop += 2;
+        createVillager();
+        createVillager();
+        checkQuestProgress('build_houses', 1);
+      } else if (bId === BUILDINGS.ROAD) {
+        tile.type = TILES.ROAD;
+      }
+      sfx.play('build');
+      addFloatingText(`Built ${def.name}!`, wX, wY, '#ffd166');
+    }
+  }
+  updateHUDValuesOnly();
+}
+
+function createVillager() {
+  const names = ['Liam', 'Emma', 'Lucas', 'Sophia', 'Rowan', 'Isla', 'Finn', 'Chloe', 'Caspian', 'Maeve'];
+  const newName = names[Math.floor(Math.random() * names.length)];
+  const colors = ['#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c'];
+  STATE.villagers.push({
+    id: Date.now() + Math.random(),
+    name: newName,
+    job: 'None',
+    homeRegion: STATE.currentRegion,
+    level: 1,
+    xp: 0,
+    happiness: 100,
+    x: 14 * TILE_SIZE,
+    y: 14 * TILE_SIZE,
+    tx: 14,
+    ty: 14,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    workTimer: 0
+  });
+  renderVillagersList();
+}
+
+/* =========================================================================
+   10. FISHING MINIGAME SYSTEM
+   ========================================================================= */
+let isFishingActive = false;
+let fishNeedlePos = 0;
+let fishNeedleDir = 1.4;
+let currentTargetFish = null;
+let fishAnimFrame = null;
+
+function startFishingMinigame() {
+  if (isFishingActive) return;
+  isFishingActive = true;
+
+  let hasShrine = false;
+  for (let r in STATE.maps) {
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        if (STATE.maps[r][y][x].building === BUILDINGS.SHRINE) hasShrine = true;
+      }
+    }
+  }
+
+  const randFish = FISH_SPECIES[Math.floor(Math.random() * FISH_SPECIES.length)];
+  currentTargetFish = randFish;
+
+  const overlay = document.getElementById('fishing-overlay');
+  overlay.style.display = 'block';
+  document.getElementById('fish-title').innerText = `Reel: ${randFish.name} (${randFish.rarity})`;
+
+  const zone = document.getElementById('fish-zone');
+  const targetStart = 15 + Math.random() * 40;
+  const zoneWidth = hasShrine ? Math.min(60, randFish.zone + 15) : randFish.zone;
+  zone.style.left = targetStart + '%';
+  zone.style.width = zoneWidth + '%';
+  fishNeedlePos = 0;
+
+  function loop() {
+    if (!isFishingActive) return;
+    fishNeedlePos += fishNeedleDir;
+    if (fishNeedlePos >= 100) { fishNeedlePos = 100; fishNeedleDir = -Math.abs(fishNeedleDir); }
+    if (fishNeedlePos <= 0) { fishNeedlePos = 0; fishNeedleDir = Math.abs(fishNeedleDir); }
+    document.getElementById('fish-needle').style.left = fishNeedlePos + '%';
+    fishAnimFrame = requestAnimationFrame(loop);
+  }
+  fishAnimFrame = requestAnimationFrame(loop);
+}
+
+document.getElementById('btn-reel').addEventListener('click', () => {
+  if (!isFishingActive || !currentTargetFish) return;
+  isFishingActive = false;
+  cancelAnimationFrame(fishAnimFrame);
+  document.getElementById('fishing-overlay').style.display = 'none';
+
+  const zone = document.getElementById('fish-zone');
+  const targetStart = parseFloat(zone.style.left);
+  const targetWidth = parseFloat(zone.style.width);
+
+  const centerWorldX = (canvas.width / 2 - STATE.camera.x) / STATE.camera.zoom;
+  const centerWorldY = (canvas.height / 2 - STATE.camera.y) / STATE.camera.zoom;
+
+  if (fishNeedlePos >= targetStart && fishNeedlePos <= (targetStart + targetWidth)) {
+    const f = currentTargetFish;
+    STATE.resources.fish += 2;
+    STATE.stats.fish++;
+    if (STATE.stats.fish >= 15) unlockAchievement('master_angler');
+    if (f.givesPearl) STATE.resources.pearls += 1;
+    if (f.isRelic) STATE.resources.relics += 1;
+    STATE.museum[f.id] = true;
+
+    sfx.play('harvest');
+    checkQuestProgress('catch_fish', 1);
+    addFloatingText(`Caught ${f.name}! ${f.icon}`, centerWorldX, centerWorldY, '#06d6a0');
+    renderMuseum();
+  } else {
+    addFloatingText('Escaped! 💨', centerWorldX, centerWorldY, '#ef476f');
+  }
+  updateHUDValuesOnly();
+});
+
+/* =========================================================================
+   11. EXPEDITIONS & BOSS BATTLES
+   ========================================================================= */
+let activeBattle = null;
+
+function launchDungeonExpedition(dungeonId) {
+  const dungeon = DUNGEONS.find(d => d.id === dungeonId);
+  if (!dungeon) return;
+
+  const soldierCount = STATE.villagers.filter(v => v.job === 'Soldier').length;
+  const fleetBonus = (STATE.ships.sloop * 20) + (STATE.ships.caravel * 60) + (STATE.ships.galleon * 150);
+  const playerBaseHP = 80 + soldierCount * 45 + fleetBonus;
+
+  activeBattle = {
+    dungeon,
+    playerHP: playerBaseHP,
+    playerMaxHP: playerBaseHP,
+    enemyHP: dungeon.hp,
+    enemyMaxHP: dungeon.hp,
+    log: []
+  };
+
+  document.getElementById('battle-modal').style.display = 'flex';
+  document.getElementById('battle-title').innerText = `⚔️ Expedition: ${dungeon.name}`;
+  document.getElementById('battle-enemy-name').innerText = dungeon.boss;
+  document.getElementById('battle-enemy-icon').innerText = dungeon.bossIcon;
+  document.getElementById('battle-btn-close').style.display = 'none';
+  document.getElementById('battle-actions').style.display = 'grid';
+
+  logBattle(`Entering ${dungeon.name}. Boss ${dungeon.boss} awaits!`);
+  updateBattleUI();
+}
+
+function logBattle(msg) {
+  activeBattle.log.push(msg);
+  const logEl = document.getElementById('battle-log');
+  logEl.innerHTML = activeBattle.log.map(l => `<div>• ${l}</div>`).join('');
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function updateBattleUI() {
+  document.getElementById('battle-player-hp').innerText = `${Math.max(0, activeBattle.playerHP)} / ${activeBattle.playerMaxHP} HP`;
+  document.getElementById('battle-enemy-hp').innerText = `${Math.max(0, activeBattle.enemyHP)} / ${activeBattle.enemyMaxHP} HP`;
+}
+
+function battleAction(type) {
+  if (!activeBattle) return;
+  sfx.play('combat');
+
+  if (type === 'strike') {
+    const soldierBonus = STATE.villagers.filter(v => v.job === 'Soldier').length * 7;
+    const dmg = 25 + soldierBonus + Math.floor(Math.random() * 20);
+    activeBattle.enemyHP -= dmg;
+    logBattle(`Soldiers strike for ${dmg} damage!`);
+  } else if (type === 'guard') {
+    activeBattle.playerHP = Math.min(activeBattle.playerMaxHP, activeBattle.playerHP + 20);
+    logBattle('Defensive phalanx formed! (+20 HP)');
+  } else if (type === 'potion') {
+    if (STATE.resources.herbs >= 2) {
+      STATE.resources.herbs -= 2;
+      activeBattle.playerHP = Math.min(activeBattle.playerMaxHP, activeBattle.playerHP + 45);
+      logBattle('Consumed Herbal Draft! (+45 HP)');
+    } else {
+      logBattle('No Herbs remaining in colony storage!');
+    }
+  }
+
+  if (activeBattle.enemyHP > 0) {
+    const bossDmg = activeBattle.dungeon.attack + Math.floor(Math.random() * 10);
+    activeBattle.playerHP -= bossDmg;
+    logBattle(`${activeBattle.dungeon.boss} attacks for ${bossDmg} damage!`);
+  }
+
+  updateBattleUI();
+
+  if (activeBattle.enemyHP <= 0) {
+    logBattle(`🎉 VICTORY! ${activeBattle.dungeon.boss} has been slain!`);
+    for (let r in activeBattle.dungeon.reward) {
+      STATE.resources[r] = (STATE.resources[r] || 0) + activeBattle.dungeon.reward[r];
+    }
+    STATE.museum[activeBattle.dungeon.id] = true;
+    checkQuestProgress('defeat_boss', 1);
+    unlockAchievement('conqueror');
+    endBattle();
+  } else if (activeBattle.playerHP <= 0) {
+    logBattle('💀 Expedition defeated. Survivors retreated to town.');
+    endBattle();
+  }
+}
+
+function endBattle() {
+  document.getElementById('battle-actions').style.display = 'none';
+  document.getElementById('battle-btn-close').style.display = 'block';
+  updateHUDValuesOnly();
+  renderMuseum();
+}
+function closeBattleModal() {
+  document.getElementById('battle-modal').style.display = 'none';
+  activeBattle = null;
+}
+
+/* =========================================================================
+   12. DYNAMIC MARKET & RANDOM EVENTS
+   ========================================================================= */
+function triggerDailyMarketShift() {
+  for (let item in STATE.marketPrices) {
+    const delta = (Math.random() - 0.48) * 3;
+    STATE.marketPrices[item] = Math.max(1, Math.min(100, Math.round(STATE.marketPrices[item] + delta)));
+  }
+  renderMarket();
+}
+
+function triggerRandomEvent() {
+  let watchtowers = 0;
+  for (let r in STATE.maps) {
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        if (STATE.maps[r][y][x].building === BUILDINGS.WATCHTOWER) watchtowers++;
+      }
+    }
+  }
+
+  const events = [
+    { text: '🌊 Bountiful High Tide! Coastal fish yields doubled today.', effect: () => { STATE.resources.fish += 8; } },
+    { text: '⛵ Merchant Galleon docked at port with foreign gold!', effect: () => { STATE.resources.gold += 35; } },
+    { text: '🎪 Seaside Carnival celebrated! Citizen happiness +15%.', effect: () => { STATE.happiness = Math.min(100, STATE.happiness + 15); } },
+    { text: '⚡ Driftwood washed ashore after a storm.', effect: () => { STATE.resources.wood += 15; } },
+    {
+      text: watchtowers > 0 ? '🗼 Watchtowers repelled a pirate raid! +40 Gold recovered.' : '🏴‍☠️ Pirates raided port! Lost 12 Food & 12 Gold.',
+      effect: () => {
+        if (watchtowers > 0) {
+          STATE.resources.gold += 40;
+        } else {
+          STATE.resources.food = Math.max(0, STATE.resources.food - 12);
+          STATE.resources.gold = Math.max(0, STATE.resources.gold - 12);
+        }
+      }
+    }
+  ];
+
+  if (Math.random() < 0.35) {
+    const ev = events[Math.floor(Math.random() * events.length)];
+    ev.effect();
+    showEventBanner(ev.text);
+    sfx.play('upgrade');
+    updateHUDValuesOnly();
+  }
+}
+
+function showEventBanner(text) {
+  const banner = document.getElementById('event-banner');
+  banner.innerText = text;
+  banner.style.display = 'block';
+  setTimeout(() => { banner.style.display = 'none'; }, 6000);
+}
+
+function applySeasonalBankInterest() {
+  let banks = 0;
+  for (let r in STATE.maps) {
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        if (STATE.maps[r][y][x].building === BUILDINGS.BANK) banks++;
+      }
+    }
+  }
+  if (banks > 0) {
+    const interest = Math.floor(STATE.resources.gold * 0.05 * banks);
+    STATE.resources.gold += interest;
+    addFloatingText(`+${interest}🪙 Bank Interest`, 20 * TILE_SIZE, 10 * TILE_SIZE, '#ffd166');
+  }
+}
+
+/* =========================================================================
+   13. SIDEBAR & TRADING RENDERING
+   ========================================================================= */
+function renderResourceGrid() {
+  const grid = document.getElementById('resource-display-grid');
+  const items = [
+    { k: 'pop', icon: '👥', label: 'Pop', val: `${STATE.resources.pop}/${STATE.resources.maxPop}` },
+    { k: 'gold', icon: '🪙', label: 'Gold', val: STATE.resources.gold },
+    { k: 'food', icon: '🍲', label: 'Food', val: STATE.resources.food },
+    { k: 'wood', icon: '🪵', label: 'Wood', val: STATE.resources.wood },
+    { k: 'stone', icon: '🪨', label: 'Stone', val: STATE.resources.stone },
+    { k: 'planks', icon: '🧱', label: 'Planks', val: STATE.resources.planks },
+    { k: 'iron', icon: '⛏️', label: 'Iron', val: STATE.resources.iron },
+    { k: 'steel', icon: '⛓️', label: 'Steel', val: STATE.resources.steel },
+    { k: 'fish', icon: '🐟', label: 'Fish', val: STATE.resources.fish },
+    { k: 'pearls', icon: '🔮', label: 'Pearls', val: STATE.resources.pearls },
+    { k: 'herbs', icon: '🌿', label: 'Herbs', val: STATE.resources.herbs },
+    { k: 'coal', icon: '⚫', label: 'Coal', val: STATE.resources.coal },
+    { k: 'mana', icon: '✨', label: 'Mana', val: STATE.resources.mana },
+    { k: 'tools', icon: '🛠️', label: 'Tools', val: STATE.resources.tools },
+    { k: 'relics', icon: '👑', label: 'Relics', val: STATE.resources.relics }
+  ];
+
+  grid.innerHTML = items.map(i => `
+    <div class="res-card" title="${i.label}">
+      <span class="res-icon">${i.icon}</span>
+      <span id="res-val-${i.k}">${i.val}</span>
+    </div>
+  `).join('');
+}
+
+function renderBuildingsCatalogue() {
+  const container = document.getElementById('building-catalogue-list');
+  container.innerHTML = '';
+  for (let bId in BUILDING_DEFS) {
+    const b = BUILDING_DEFS[bId];
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    let costArr = [];
+    for (let r in b.cost) costArr.push(`${b.cost[r]} ${r}`);
+    const isActive = STATE.currentMode === `build-${b.id}`;
+
+    card.innerHTML = `
+      <div class="item-header">
+        <span>${b.icon} ${b.name}</span>
+        <button class="action-btn ${isActive ? 'btn-success' : ''}" style="font-size:10px;">${isActive ? 'Selected' : 'Build'}</button>
+      </div>
+      <div class="item-desc">${b.desc}</div>
+      <div class="item-cost">Cost: ${costArr.join(', ')}</div>
+    `;
+
+    card.querySelector('button').onclick = () => {
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      STATE.currentMode = `build-${b.id}`;
+      renderBuildingsCatalogue();
+    };
+    container.appendChild(card);
+  }
+}
+
+function renderVillagersList() {
+  const container = document.getElementById('villager-list');
+  document.getElementById('roster-count').innerText = STATE.villagers.length;
+  container.innerHTML = '';
+
+  const jobs = ['None', 'Farmer', 'Lumberjack', 'Miner', 'Fisher', 'Soldier', 'Scholar'];
+
+  STATE.villagers.forEach(v => {
+    const row = document.createElement('div');
+    row.className = 'villager-row';
+    row.innerHTML = `
+      <div class="villager-meta">
+        <span style="color:${v.color}; font-size:14px;">●</span>
+        <span>${v.name} (Lv ${v.level})</span>
+        <small style="color:var(--text-muted); font-size:9.5px;">[${REGIONS[v.homeRegion]?.name || 'Seaside'}]</small>
+      </div>
+      <select class="villager-job-select" data-id="${v.id}">
+        ${jobs.map(j => `<option value="${j}" ${v.job === j ? 'selected' : ''}>${j}</option>`).join('')}
+      </select>
+    `;
+    row.querySelector('select').onchange = (e) => {
+      v.job = e.target.value;
+      v.hasTarget = false;
+      v.workTimer = 0;
+      updateHUDValuesOnly();
+    };
+    container.appendChild(row);
+  });
+}
+
+function renderCropsCatalogue() {
+  const container = document.getElementById('crops-seed-list');
+  container.innerHTML = '';
+  for (let cKey in CROPS) {
+    const c = CROPS[cKey];
+    const isSelected = STATE.selectedSeed === cKey && STATE.currentMode === 'plant';
+    const btn = document.createElement('button');
+    btn.className = `tool-btn ${isSelected ? 'active' : ''}`;
+    btn.innerHTML = `
+      <span>${c.icon} ${c.name}</span>
+      <small style="color:var(--text-muted)">${c.seasons.join('/')} • Val: ${c.value}🪙</small>
+    `;
+    btn.onclick = () => {
+      STATE.selectedSeed = cKey;
+      STATE.currentMode = 'plant';
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      renderCropsCatalogue();
+      renderBuildingsCatalogue();
+    };
+    container.appendChild(btn);
+  }
+}
+
+function renderWorldRegions() {
+  const container = document.getElementById('world-regions-list');
+  container.innerHTML = '';
+  for (let rKey in REGIONS) {
+    const reg = REGIONS[rKey];
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    const isCurrent = STATE.currentRegion === rKey;
+
+    let costParts = [];
+    let canAfford = true;
+    for (let r in reg.cost) {
+      costParts.push(`${reg.cost[r]} ${r}`);
+      if (STATE.resources[r] < reg.cost[r]) canAfford = false;
+    }
+
+    card.innerHTML = `
+      <div class="item-header">
+        <span>${reg.icon} ${reg.name}</span>
+        <span style="color:${isCurrent ? 'var(--accent)' : (reg.unlocked ? 'var(--success)' : 'var(--text-muted)')}">
+          ${isCurrent ? '● Active' : (reg.unlocked ? 'Unlocked' : 'Locked')}
+        </span>
+      </div>
+      <div class="item-desc">${reg.desc}</div>
+      ${!reg.unlocked ? `<div class="item-cost">Unlock: ${costParts.join(', ')}</div>` : ''}
+      <button class="action-btn" ${isCurrent ? 'disabled' : ''}>${reg.unlocked ? 'Travel' : 'Unlock Region'}</button>
+    `;
+
+    card.querySelector('button').onclick = () => {
+      if (reg.unlocked) {
+        STATE.currentRegion = rKey;
+        document.getElementById('region-icon').innerText = reg.icon;
+        document.getElementById('region-name').innerText = reg.name;
+        sfx.play('build');
+        renderWorldRegions();
+      } else if (canAfford) {
+        for (let r in reg.cost) STATE.resources[r] -= reg.cost[r];
+        reg.unlocked = true;
+        sfx.play('upgrade');
+        const unlockedRegions = Object.values(REGIONS).filter(r => r.unlocked).length;
+        if (unlockedRegions >= 6) unlockAchievement('voyager');
+        renderWorldRegions();
+        updateHUDValuesOnly();
+      }
+    };
+    container.appendChild(card);
+  }
+}
+
+function renderCraftingRecipes() {
+  const container = document.getElementById('crafting-recipe-list');
+  container.innerHTML = '';
+  RECIPES.forEach(rec => {
+    let canAfford = true;
+    let costText = [];
+    for (let r in rec.cost) {
+      costText.push(`${rec.cost[r]} ${r}`);
+      if (STATE.resources[r] < rec.cost[r]) canAfford = false;
+    }
+    let givesText = [];
+    for (let r in rec.gives) givesText.push(`+${rec.gives[r]} ${r}`);
+
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-header">
+        <span>${rec.icon} ${rec.name}</span>
+        <span style="color:var(--success);">${givesText.join(', ')}</span>
+      </div>
+      <div class="item-cost">Cost: ${costText.join(', ')}</div>
+      <button class="action-btn" ${canAfford ? '' : 'disabled'}>Craft</button>
+    `;
+    card.querySelector('button').onclick = () => {
+      if (!canAfford) return;
+      for (let r in rec.cost) STATE.resources[r] -= rec.cost[r];
+      for (let r in rec.gives) {
+        if (r === 'caravel') STATE.ships.caravel += rec.gives[r];
+        else if (r === 'galleon') STATE.ships.galleon += rec.gives[r];
+        else STATE.resources[r] = (STATE.resources[r] || 0) + rec.gives[r];
+      }
+      sfx.play('harvest');
+      if (rec.id === 'steel') {
+        STATE.stats.steel += 2;
+        if (STATE.stats.steel >= 20) unlockAchievement('industrialist');
+      }
+      updateHUDValuesOnly();
+      renderCraftingRecipes();
+      renderHarborDungeons();
+    };
+    container.appendChild(card);
+  });
+}
+
+function renderHarborDungeons() {
+  const container = document.getElementById('dungeon-expedition-list');
+  container.innerHTML = '';
+
+  document.getElementById('fleet-card-container').innerHTML = `
+    <div class="item-card">
+      <div class="item-header">
+        <span>🚢 Naval Fleet Readiness</span>
+        <span style="color:var(--accent);">Sloops: ${STATE.ships.sloop} | Caravels: ${STATE.ships.caravel} | Galleons: ${STATE.ships.galleon}</span>
+      </div>
+      <div class="item-desc">Caravels and Imperial War Galleons bolster expedition assault power and team durability.</div>
+    </div>
+  `;
+
+  DUNGEONS.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-header">
+        <span>${d.bossIcon} ${d.name}</span>
+        <span style="color:var(--danger);">Boss: ${d.boss}</span>
+      </div>
+      <div class="item-desc">Enemy Power: ${d.hp} HP • Reward: ${d.reward.gold}🪙, Relics & Resources</div>
+      <button class="action-btn" style="background:#e74c3c; color:#fff;">Launch Raid</button>
+    `;
+    card.querySelector('button').onclick = () => launchDungeonExpedition(d.id);
+    container.appendChild(card);
+  });
+}
+
+function renderMarket() {
+  const container = document.getElementById('market-goods-list');
+  container.innerHTML = '';
+  for (let item in STATE.marketPrices) {
+    const price = STATE.marketPrices[item];
+    const userHas = STATE.resources[item] || 0;
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-header">
+        <span style="text-transform:capitalize;">📦 ${item}</span>
+        <span style="color:var(--accent);">${price}🪙 / unit</span>
+      </div>
+      <div class="item-desc">In Warehouse: <strong>${userHas}</strong></div>
+      <div style="display:flex; gap:4px; align-self:flex-end; flex-wrap:wrap;">
+        <button class="action-btn" onclick="tradeMarketItem('${item}', 'buy', 1)" ${STATE.resources.gold >= price ? '' : 'disabled'}>+1</button>
+        <button class="action-btn" onclick="tradeMarketItem('${item}', 'buy', 10)" ${STATE.resources.gold >= price * 10 ? '' : 'disabled'}>+10</button>
+        <button class="action-btn btn-success" onclick="tradeMarketItem('${item}', 'sell', 1)" ${userHas >= 1 ? '' : 'disabled'}>-1</button>
+        <button class="action-btn btn-success" onclick="tradeMarketItem('${item}', 'sell', 10)" ${userHas >= 10 ? '' : 'disabled'}>-10</button>
+        <button class="action-btn btn-success" onclick="tradeMarketItem('${item}', 'sell', ${userHas})" ${userHas >= 1 ? '' : 'disabled'}>All</button>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function tradeMarketItem(item, action, qty) {
+  const price = STATE.marketPrices[item];
+  if (action === 'buy') {
+    const cost = price * qty;
+    if (STATE.resources.gold >= cost) {
+      STATE.resources.gold -= cost;
+      STATE.resources[item] = (STATE.resources[item] || 0) + qty;
+      sfx.play('harvest');
+    }
+  } else if (action === 'sell') {
+    const actualQty = Math.min(qty, STATE.resources[item] || 0);
+    if (actualQty > 0) {
+      STATE.resources[item] -= actualQty;
+      STATE.resources.gold += price * actualQty;
+      sfx.play('harvest');
+    }
+  }
+  updateHUDValuesOnly();
+  renderMarket();
+}
+
+function renderMuseum() {
+  const container = document.getElementById('museum-grid');
+  container.innerHTML = '';
+  FISH_SPECIES.forEach(f => {
+    const discovered = !!STATE.museum[f.id];
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.style.textAlign = 'center';
+    card.innerHTML = `
+      <div style="font-size:22px; filter:${discovered ? 'none' : 'grayscale(100%) opacity(0.3)'}">${f.icon}</div>
+      <div style="font-size:11px; font-weight:bold; margin-top:2px;">${discovered ? f.name : '???'}</div>
+      <div style="font-size:10px; color:var(--text-muted);">${discovered ? f.rarity : 'Undiscovered'}</div>
+    `;
+    container.appendChild(card);
+  });
+  const count = Object.keys(STATE.museum).length;
+  if (count >= 8) unlockAchievement('museum_curator');
+}
+
+function renderQuestsAndAchievements() {
+  const qContainer = document.getElementById('quest-list-container');
+  qContainer.innerHTML = '';
+  QUESTS.forEach(q => {
+    let rew = [];
+    for (let r in q.reward) rew.push(`+${q.reward[r]} ${r}`);
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-header">
+        <span>${q.title}</span>
+        <span style="color:${q.done ? 'var(--success)' : 'var(--accent)'}">${q.done ? '✅ Complete' : `${q.count}/${q.target}`}</span>
+      </div>
+      <div class="item-desc">${q.desc}</div>
+      <div class="item-cost">Reward: ${rew.join(', ')}</div>
+    `;
+    qContainer.appendChild(card);
+  });
+
+  const aContainer = document.getElementById('achieve-list-container');
+  aContainer.innerHTML = '';
+  let unlockedCount = 0;
+  ACHIEVEMENTS.forEach(a => {
+    if (a.done) unlockedCount++;
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-header">
+        <span>🏆 ${a.name}</span>
+        <span style="color:${a.done ? 'var(--success)' : 'var(--text-muted)'}">${a.done ? 'Unlocked' : 'Locked'}</span>
+      </div>
+      <div class="item-desc">${a.desc}</div>
+    `;
+    aContainer.appendChild(card);
+  });
+  document.getElementById('achieve-count').innerText = `${unlockedCount}/${ACHIEVEMENTS.length}`;
+}
+
+function checkQuestProgress(id, amt) {
+  QUESTS.forEach(q => {
+    if (q.id === id && !q.done) {
+      if (id === 'royal_capital') {
+        q.count = STATE.townLevel;
+      } else {
+        q.count += amt;
+      }
+      if (q.count >= q.target) {
+        q.done = true;
+        for (let r in q.reward) STATE.resources[r] = (STATE.resources[r] || 0) + q.reward[r];
+        sfx.play('upgrade');
+        addFloatingText(`Quest Complete: ${q.title}!`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#ffd166');
+      }
+    }
+  });
+  renderQuestsAndAchievements();
+}
+
+function unlockAchievement(id) {
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (ach && !ach.done) {
+    ach.done = true;
+    sfx.play('upgrade');
+    addFloatingText(`🏆 Achievement: ${ach.name}!`, 20 * TILE_SIZE, 10 * TILE_SIZE, '#f1b33b');
+    renderQuestsAndAchievements();
+  }
+}
+
+/* =========================================================================
+   14. TOWN LEVEL UPGRADES
+   ========================================================================= */
+const TOWN_LEVELS = [
+  { level: 1, name: 'Hamlet (Lv 1)', cost: { gold: 40, planks: 15 }, popBonus: 4 },
+  { level: 2, name: 'Village (Lv 2)', cost: { gold: 100, planks: 30, steel: 10 }, popBonus: 6 },
+  { level: 3, name: 'Township (Lv 3)', cost: { gold: 300, steel: 30, pearls: 10 }, popBonus: 8 },
+  { level: 4, name: 'Grand City (Lv 4)', cost: { gold: 800, steel: 60, relics: 8 }, popBonus: 12 },
+  { level: 5, name: 'Royal Capital (Lv 5)', cost: { gold: 2000, steel: 120, relics: 20 }, popBonus: 20 }
+];
+
+document.getElementById('btn-upgrade-town').addEventListener('click', () => {
+  if (STATE.townLevel >= 5) return;
+  const nextTier = TOWN_LEVELS[STATE.townLevel];
+  let canAfford = true;
+  for (let r in nextTier.cost) {
+    if (STATE.resources[r] < nextTier.cost[r]) canAfford = false;
+  }
+  if (canAfford) {
+    for (let r in nextTier.cost) STATE.resources[r] -= nextTier.cost[r];
+    STATE.townLevel++;
+    STATE.resources.maxPop += nextTier.popBonus;
+    document.getElementById('town-level').innerText = nextTier.name;
+    sfx.play('upgrade');
+    addFloatingText(`Town Upgraded: ${nextTier.name}!`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#f1b33b');
+
+    checkQuestProgress('royal_capital', 1);
+
+    if (STATE.townLevel === 5) {
+      unlockAchievement('sovereign');
+      document.getElementById('victory-modal').style.display = 'flex';
+    }
+    updateFullUI();
+  }
+});
+
+/* =========================================================================
+   15. SAVES, AUTOSAVE, & IMPORT/EXPORT
+   ========================================================================= */
+function getSlotKey(slotId) {
+  return `${SAVE_PREFIX}slot_${slotId}`;
+}
+
+function updateSlotBadges() {
+  [1, 2, 3].forEach(slotId => {
+    const raw = localStorage.getItem(getSlotKey(slotId));
+    const infoEl = document.getElementById(`slot-info-${slotId}`);
+    if (infoEl) {
+      if (raw) {
+        try {
+          const d = JSON.parse(raw);
+          infoEl.innerText = `Day ${d.day}, ${SEASONS[d.seasonIndex]} (Lv ${d.townLevel})`;
+          infoEl.style.color = 'var(--success)';
+        } catch(e) {
+          infoEl.innerText = 'Corrupted';
+          infoEl.style.color = 'var(--danger)';
+        }
+      } else {
+        infoEl.innerText = 'Empty';
+        infoEl.style.color = 'var(--text-muted)';
+      }
+    }
+  });
+}
+
+function saveGameToSlot(slotId) {
+  sfx.init();
+  try {
+    const data = JSON.stringify(STATE);
+    localStorage.setItem(getSlotKey(slotId), data);
+    updateSlotBadges();
+    sfx.play('upgrade');
+    addFloatingText(`Saved to Slot ${slotId}!`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#06d6a0');
+  } catch (e) {
+    alert('Failed to save. Storage might be full.');
+  }
+}
+
+function loadGameFromSlot(slotId) {
+  sfx.init();
+  const raw = localStorage.getItem(getSlotKey(slotId));
+  if (!raw) return alert(`Save Slot ${slotId} is empty!`);
+  try {
+    const loaded = JSON.parse(raw);
+    applyLoadedState(loaded);
+    sfx.play('build');
+    addFloatingText(`Loaded Slot ${slotId}!`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#06d6a0');
+  } catch (e) {
+    alert('Save file is corrupted or incompatible.');
+  }
+}
+
+function clearSaveSlot(slotId) {
+  if (confirm(`Are you sure you want to delete Save Slot ${slotId}?`)) {
+    localStorage.removeItem(getSlotKey(slotId));
+    updateSlotBadges();
+    addFloatingText(`Slot ${slotId} Cleared`, 20 * TILE_SIZE, 12 * TILE_SIZE, '#ef476f');
+  }
+}
+
+function applyLoadedState(loaded) {
+  Object.assign(STATE, loaded);
+  STATE.stats = Object.assign({ crops: 0, fish: 0, steel: 0, wood: 0 }, loaded.stats || {});
+  STATE.ships = Object.assign({ sloop: 1, caravel: 0, galleon: 0 }, loaded.ships || {});
+  
+  const curReg = REGIONS[STATE.currentRegion] || REGIONS.seaside;
+  document.getElementById('region-icon').innerText = curReg.icon;
+  document.getElementById('region-name').innerText = curReg.name;
+  
+  const tier = TOWN_LEVELS[STATE.townLevel - 1] || TOWN_LEVELS[0];
+  document.getElementById('town-level').innerText = tier.name;
+  setGameSpeed(STATE.gameSpeed || 1);
+  updateFullUI();
+}
+
+function exportSaveJSON() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(STATE));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `seaside_haven_save_day${STATE.day}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
+
+function promptImportSave() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const loaded = JSON.parse(event.target.result);
+        applyLoadedState(loaded);
+        alert('Save file imported successfully!');
+      } catch (err) { alert('Invalid save file.'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function hardResetGame() {
+  if (confirm('Are you sure you want to reset ALL progress? All saves and autosaves will be deleted.')) {
+    [1, 2, 3].forEach(id => localStorage.removeItem(getSlotKey(id)));
+    localStorage.removeItem(`${SAVE_PREFIX}autosave`);
+    location.reload();
+  }
+}
+
+function checkAutosaveOnBoot() {
+  const raw = localStorage.getItem(`${SAVE_PREFIX}autosave`);
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      if (confirm(`Autosave found from Day ${data.day}, ${SEASONS[data.seasonIndex]}. Resume game?`)) {
+        applyLoadedState(data);
+      }
+    } catch(e) {}
+  }
+}
+
+setInterval(() => {
+  try {
+    localStorage.setItem(`${SAVE_PREFIX}autosave`, JSON.stringify(STATE));
+  } catch(e) {}
+}, 60000);
+
+/* =========================================================================
+   16. CONTROLS & SPEED INTERFACE
+   ========================================================================= */
+function setGameSpeed(speed) {
+  STATE.gameSpeed = speed;
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.speed) === speed);
+  });
+}
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setGameSpeed(parseInt(btn.dataset.speed));
+  });
+});
+
+function updateHUDValuesOnly() {
+  document.getElementById('hud-season-icon').innerText = SEASON_ICONS[SEASONS[STATE.seasonIndex]];
+  document.getElementById('hud-season-text').innerText = SEASONS[STATE.seasonIndex];
+  document.getElementById('hud-day').innerText = STATE.day;
+  document.getElementById('hud-year').innerText = STATE.year;
+
+  const hr = Math.floor(STATE.time);
+  const min = Math.floor((STATE.time - hr) * 60);
+  document.getElementById('hud-time').innerText = `${hr.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+  document.getElementById('hud-tod-icon').innerText = (hr >= 6 && hr <= 18) ? '☀️' : '🌙';
+  document.getElementById('hud-happiness').innerText = `${STATE.happiness}%`;
+
+  for (let k in STATE.resources) {
+    const el = document.getElementById(`res-val-${k}`);
+    if (el) {
+      if (k === 'pop') el.innerText = `${STATE.resources.pop}/${STATE.resources.maxPop}`;
+      else el.innerText = STATE.resources[k];
+    }
+  }
+}
+
+function updateFullUI() {
+  updateHUDValuesOnly();
+  renderResourceGrid();
+  renderBuildingsCatalogue();
+  renderVillagersList();
+  renderCropsCatalogue();
+  renderCraftingRecipes();
+  renderHarborDungeons();
+  renderMarket();
+  renderMuseum();
+  renderQuestsAndAchievements();
+  renderWorldRegions();
+
+  if (STATE.townLevel < 5) {
+    const nextTier = TOWN_LEVELS[STATE.townLevel];
+    let costParts = [];
+    for (let r in nextTier.cost) costParts.push(`${nextTier.cost[r]} ${r}`);
+    document.getElementById('town-upgrade-name').innerText = `Expand to ${nextTier.name}`;
+    document.getElementById('town-upgrade-cost').innerText = `Cost: ${costParts.join(', ')}`;
+    document.getElementById('btn-upgrade-town').disabled = false;
+  } else {
+    document.getElementById('town-upgrade-name').innerText = 'Royal Sovereign (Max Level)';
+    document.getElementById('town-upgrade-cost').innerText = 'Empire Supreme';
+    document.getElementById('btn-upgrade-town').disabled = true;
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const targetPane = document.getElementById(btn.dataset.tab);
+    targetPane.classList.add('active');
+
+    if (btn.dataset.tab === 'tab-colony') {
+      setTimeout(() => {
+        minimapCanvas.width = minimapCanvas.clientWidth;
+        minimapCanvas.height = minimapCanvas.clientHeight;
+      }, 20);
+    }
+  });
+});
+
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.mode) {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE.currentMode = btn.dataset.mode;
+      renderBuildingsCatalogue();
+    }
+  });
+});
+
+document.getElementById('btn-open-guide').onclick = () => {
+  document.getElementById('guide-modal').style.display = 'flex';
+};
+
+window.addEventListener('keydown', (e) => {
+  STATE.keys[e.code] = true;
+  if (e.code === 'Space') {
+    STATE.isSpacePressed = true;
+    canvas.style.cursor = 'grab';
+  }
+  if (e.code === 'KeyP') setGameSpeed(STATE.gameSpeed === 0 ? 1 : 0);
+  if (e.code === 'Digit1') setGameSpeed(1);
+  if (e.code === 'Digit2') setGameSpeed(2);
+  if (e.code === 'Digit3' || e.code === 'Digit4') setGameSpeed(4);
+});
+
+window.addEventListener('keyup', (e) => {
+  STATE.keys[e.code] = false;
+  if (e.code === 'Space') {
+    STATE.isSpacePressed = false;
+    canvas.style.cursor = 'default';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  sfx.init();
+  if (e.button === 0 && !STATE.isSpacePressed) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left - STATE.camera.x) / STATE.camera.zoom;
+    const my = (e.clientY - rect.top - STATE.camera.y) / STATE.camera.zoom;
+    handleTileClick(Math.floor(mx / TILE_SIZE), Math.floor(my / TILE_SIZE));
+  } else if (e.button === 1 || e.button === 2 || (e.button === 0 && STATE.isSpacePressed)) {
+    STATE.isDragging = true;
+    STATE.dragStart.x = e.clientX - STATE.camera.x;
+    STATE.dragStart.y = e.clientY - STATE.camera.y;
+    canvas.style.cursor = 'grabbing';
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (STATE.isDragging) {
+    STATE.camera.x = e.clientX - STATE.dragStart.x;
+    STATE.camera.y = e.clientY - STATE.dragStart.y;
+  } else {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left - STATE.camera.x) / STATE.camera.zoom;
+    const my = (e.clientY - rect.top - STATE.camera.y) / STATE.camera.zoom;
+    STATE.hoverTile.x = Math.floor(mx / TILE_SIZE);
+    STATE.hoverTile.y = Math.floor(my / TILE_SIZE);
+
+    const tooltip = document.getElementById('tooltip');
+    const currentMap = STATE.maps[STATE.currentRegion];
+    if (STATE.hoverTile.x >= 0 && STATE.hoverTile.x < MAP_W && STATE.hoverTile.y >= 0 && STATE.hoverTile.y < MAP_H) {
+      const tile = currentMap[STATE.hoverTile.y][STATE.hoverTile.x];
+      let info = '';
+      if (tile.resource) info = `Resource: ${tile.resource.toUpperCase()}`;
+      else if (tile.crop) info = `Crop: ${tile.crop.def.name} (${tile.crop.stage === tile.crop.def.maxStage ? 'Ready!' : 'Growing'})`;
+      else if (tile.building !== BUILDINGS.NONE) info = BUILDING_DEFS[tile.building].name;
+
+      if (info) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY + 12) + 'px';
+        tooltip.innerText = info;
+      } else tooltip.style.display = 'none';
+    } else tooltip.style.display = 'none';
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  STATE.isDragging = false;
+  canvas.style.cursor = STATE.isSpacePressed ? 'grab' : 'default';
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  STATE.camera.zoom = Math.max(0.4, Math.min(2.2, STATE.camera.zoom * factor));
+}, { passive: false });
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+/* =========================================================================
+   17. INITIALIZATION
+   ========================================================================= */
+handleResize();
+initGameWorld();
+updateSlotBadges();
+checkAutosaveOnBoot();
+updateFullUI();
+requestAnimationFrame(drawScene);
+</script>
+</body>
+</html>

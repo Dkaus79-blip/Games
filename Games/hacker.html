@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hacknet HTML - Multi-Chapter with Mode Saves</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  body {
+    background: #020305;
+    color: #00ff9c;
+    font-family: Consolas, monospace;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CRT Scanlines */
+  body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    z-index: 2000;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* START / MODE SELECT MODAL */
+  #mode-select-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(2, 3, 5, 0.96);
+    z-index: 4000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .mode-box {
+    border: 2px solid #00ff9c;
+    background: #07090e;
+    padding: 25px;
+    width: 580px;
+    text-align: center;
+    box-shadow: 0 0 30px #00ff9c44;
+  }
+  .mode-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 0 0 8px 0;
+    background: #00ff9c22;
+    border: 1px solid #00ff9c;
+    color: #00ff9c;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  .mode-btn:hover {
+    background: #00ff9c;
+    color: #020305;
+  }
+
+  #header {
+    height: 38px;
+    border: 1px solid #00ff9c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 8px;
+    background: #080d14;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .btn-header {
+    background: #00ff9c22;
+    border: 1px solid #00ff9c;
+    color: #00ff9c;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .btn-header:hover {
+    background: #00ff9c;
+    color: #020305;
+  }
+  .btn-mode-switch {
+    border-color: #00e1ff; color: #00e1ff; background: #00e1ff22; font-weight: bold;
+  }
+  .btn-mode-switch:hover {
+    background: #00e1ff; color: #020305;
+  }
+  .btn-mode-hard {
+    border-color: #ff0055; color: #ff0055; background: #ff005522;
+  }
+  .btn-mode-hard:hover {
+    background: #ff0055; color: #fff;
+  }
+  .btn-prestige {
+    border-color: #ffff00; color: #ffff00; background: #ffff0022;
+  }
+  .btn-prestige:hover {
+    background: #ffff00; color: #020305;
+  }
+
+  #grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+  }
+  .panel {
+    background: #07090e;
+    border: 1px solid #00ff9c44;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: inset 0 0 10px #000;
+    min-height: 0;
+  }
+  .panel-title {
+    font-size: 11px;
+    color: #00e1ff;
+    border-bottom: 1px solid #00e1ff44;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  #ram-bar {
+    height: 12px; background: #111a24; border: 1px solid #00ff9c; margin-bottom: 8px; flex-shrink: 0;
+  }
+  #ram-fill {
+    height: 100%; width: 0%; background: #00ff9c; transition: width 0.3s;
+  }
+  #exe-list {
+    flex: 1; overflow-y: auto; font-size: 12px;
+  }
+  .exe-container { margin-bottom: 6px; }
+  .exe-btn {
+    background: #0b1520; border: 1px solid #00e1ff; color: #00e1ff;
+    padding: 6px; cursor: pointer; display: flex; justify-content: space-between; font-size: 12px;
+  }
+  .exe-btn:hover { background: #00e1ff22; }
+  .exe-desc {
+    font-size: 10.5px; color: #88aacc; padding: 2px 4px;
+    background: #04070c; border: 1px solid #00e1ff22; border-top: none;
+  }
+
+  #node-map-container {
+    flex: 1; position: relative; background: #04060a; border: 1px solid #00ff9c22; min-height: 0;
+  }
+  #map-canvas {
+    width: 100%; height: 100%; display: block; cursor: pointer;
+  }
+
+  #display-tabs { display: flex; gap: 4px; margin-bottom: 6px; flex-shrink: 0; }
+  .tab-btn {
+    background: #0b1520; border: 1px solid #00e1ff44; color: #00e1ff; padding: 3px 8px; cursor: pointer; font-size: 11px;
+  }
+  .tab-btn.active { background: #00e1ff; color: #020305; font-weight: bold; }
+  #display-content { flex: 1; overflow-y: auto; font-size: 12px; line-height: 1.4; white-space: pre-wrap; }
+  .ip-link { color: #00e1ff; text-decoration: underline; cursor: pointer; }
+  .ip-link:hover { background: #00e1ff33; }
+
+  #terminal-panel { cursor: text; }
+  #output { flex: 1; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.3; padding-right: 4px; }
+  #input-line { display: flex; margin-top: 6px; border-top: 1px solid #00ff9c33; padding-top: 6px; flex-shrink: 0; }
+  #prompt { margin-right: 6px; font-weight: bold; }
+  #command { flex: 1; background: transparent; border: none; outline: none; color: #00ff9c; font-family: inherit; font-size: 13px; }
+
+  #instructions-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(2, 3, 5, 0.92); z-index: 3000; justify-content: center; align-items: center;
+  }
+  #instructions-content {
+    width: 720px; max-height: 85vh; background: #07090e; border: 2px solid #00ff9c;
+    box-shadow: 0 0 25px #00ff9c55; padding: 20px; overflow-y: auto; color: #00ff9c;
+  }
+  .close-btn { background: #ff0055; color: #fff; border: none; padding: 6px 12px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; }
+</style>
+</head>
+<body>
+
+<!-- MODE SELECT SCREEN WITH HOW TO PLAY GUIDANCE -->
+<div id="mode-select-modal">
+  <div class="mode-box">
+    <h2 style="color: #00e1ff; margin-top:0; letter-spacing: 1px;">WELCOME TO HACKNET OS</h2>
+    <p style="font-size: 12px; color: #88aacc; margin-bottom: 20px;">Select an operational mode below to initialize your hacking environment.</p>
+
+    <!-- STORY MODE BLOCK -->
+    <div style="background: #04060a; border: 1px solid #00ff9c44; padding: 12px; margin-bottom: 15px; text-align: left;">
+      <button class="mode-btn" onclick="startMode('STORY')">[ PLAY STORY CAMPAIGN (3 CHAPTERS) ] ★ RECOMMENDED</button>
+      <div style="font-size: 11px; color: #00ff9c; line-height: 1.4;">
+        <b>Goal:</b> Work with CSEC to investigate breaches, bypass corporate firewalls, and uncover an AI plot across 3 story chapters.<br>
+        <b>How to Start:</b> After launching, check your <b>INBOX</b> tab on the top panel to read your first mission assignment from V.
+      </div>
+    </div>
+
+    <!-- SANDBOX MODE BLOCK -->
+    <div style="background: #04060a; border: 1px solid #ffff0044; padding: 12px; margin-bottom: 10px; text-align: left;">
+      <button class="mode-btn" style="border-color:#ffff00; color:#ffff00; background:#ffff0022;" onclick="startMode('ENDLESS')">[ PLAY ENDLESS SANDBOX CONTRACTS ]</button>
+      <div style="font-size: 11px; color: #ffff00; line-height: 1.4;">
+        <b>Goal:</b> Take on infinitely generated mercenary contracts, earn credits, upgrade RAM, and prestige your system.<br>
+        <b>How to Start:</b> Open your <b>INBOX</b> tab to claim target assignments, then connect via the Network Map.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="header">
+  <div>
+    OS: HACKNET_v10.0 
+    <span id="prestige-tag" style="color:#ffff00; font-weight:bold;"></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <button id="mode-switch-btn" class="btn-header btn-mode-switch" onclick="openModeMenu()">[ MODE: CAMPAIGN ]</button>
+    <span style="font-size: 10px; color: #00e1ff; opacity: 0.8;">(Click mode button to switch)</span>
+    <button id="diff-btn" class="btn-header" onclick="toggleDifficulty()">[ TRACE: OFF (EASY) ]</button>
+    <button class="btn-header" onclick="saveGame(true)">[ SAVE ]</button>
+    <button class="btn-header" onclick="loadGame(true)">[ LOAD ]</button>
+    <button class="btn-header btn-mode-hard" onclick="resetCurrentModeSave()">[ RESET MODE ]</button>
+    <button class="btn-header" onclick="toggleInstructions()">[ Reference ]</button>
+  </div>
+  <div id="trace-display" style="color: #00ff9c;">TRACE TIMER: OFF (EASY MODE)</div>
+  <div id="bank-display">CREDITS: 150</div>
+</div>
+
+<div id="grid">
+  <div class="panel">
+    <div class="panel-title">RAM Utilization (<span id="ram-text">0MB / 1000MB</span>)</div>
+    <div id="ram-bar"><div id="ram-fill"></div></div>
+    <div class="panel-title" style="margin-top: 6px;">Executables (Click to Run)</div>
+    <div id="exe-list"></div>
+  </div>
+
+  <div class="panel">
+    <div id="display-tabs">
+      <button class="tab-btn active" id="tab-monitor" onclick="switchTab('monitor')">SYSTEM MONITOR</button>
+      <button class="tab-btn" id="tab-mail" onclick="switchTab('mail')">INBOX (<span id="mail-count">1</span>)</button>
+      <button class="tab-btn" id="tab-achievements" onclick="switchTab('achievements')">ACHIEVEMENTS / REBOOT</button>
+    </div>
+    <div id="display-content">Select a node or switch tabs to inspect...</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Network Topology Map</div>
+    <div id="node-map-container">
+      <canvas id="map-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" id="terminal-panel">
+    <div class="panel-title">Terminal Console (Click anywhere here to type)</div>
+    <div id="output"></div>
+    <div id="input-line">
+      <span id="prompt">></span>
+      <input id="command" autocomplete="off" autofocus />
+    </div>
+  </div>
+</div>
+
+<!-- INSTRUCTIONS MODAL -->
+<div id="instructions-modal">
+  <div id="instructions-content">
+    <button class="close-btn" onclick="toggleInstructions()">X CLOSE</button>
+    <h2 style="color: #00e1ff; margin-top: 0; border-bottom: 1px solid #00e1ff;">SYSTEM COMMAND & TOOL REFERENCE</h2>
+    <h3 style="color: #ffff00;">Terminal Commands:</h3>
+    <ul>
+      <li><code>ls</code> - Lists files in current directory</li>
+      <li><code>cd &lt;folder&gt;</code> - Change directory (type <code>cd ..</code> to go back)</li>
+      <li><code>cat &lt;file&gt;</code> - Read file contents</li>
+      <li><code>rm &lt;file&gt;</code> - Delete a file</li>
+      <li><code>crack &lt;file.enc&gt;</code> - Decrypt encrypted payloads</li>
+      <li><code>connect &lt;node&gt;</code> - Connect to a network node</li>
+      <li><code>disconnect</code> - Instantly disconnect from current node</li>
+      <li><code>shop</code> - Open black market to buy software & RAM</li>
+      <li><code>buy &lt;item&gt;</code> - Purchase item from shop</li>
+      <li><code>save</code> / <code>load</code> - Save or Load your active mode's save data</li>
+      <li><code>clear</code> - Clears terminal screen</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// --- AUDIO SYNTHESIZER ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(freq = 440, duration = 0.08, type = 'square') {
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(gain.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+// --- INITIAL DATA STRUCTURES ---
+const baseTools = [
+  { name: "PortHack", ram: 200, desc: "Grants root access once required ports are open" },
+  { name: "SSHcrack", ram: 300, port: 22, desc: "Cracks SSH Port 22" },
+  { name: "FTPBounce", ram: 250, port: 21, desc: "Bypasses FTP Port 21" },
+  { name: "FirewallSolve", ram: 150, firewall: true, desc: "Bypasses node active firewall" },
+  { name: "Decrypter", ram: 150, decrypt: true, desc: "Decrypts .enc files" },
+  { name: "WebSpider", ram: 100, spider: true, desc: "Scans node for hidden IP addresses" },
+  { name: "LogWipe", ram: 150, logwipe: true, desc: "Cleans logs & adds +15s to trace timer" }
+];
+
+const campaignHosts = {
+  // Chapter 1 Nodes
+  "alpha-relay": {
+    name: "alpha-relay", discovered: true, x: 60, y: 60,
+    firewall: false, ports: { 22: false }, reqPorts: 1, hacked: false,
+    files: { "/": ["logs"], "/logs": ["breach.txt"], "/logs/breach.txt": "LOG RECORD: Infiltration IP logged: corp-server. Exfiltrating master key..." }
+  },
+  "corp-server": {
+    name: "corp-server", discovered: false, x: 180, y: 60,
+    firewall: true, ports: { 21: false, 22: false }, reqPorts: 1, hacked: false,
+    files: { "/": ["database"], "/database": ["ghost_manifest.txt"], "/database/ghost_manifest.txt": "MANIFEST: Target list includes shadow-vault." }
+  },
+  "shadow-vault": {
+    name: "shadow-vault", discovered: false, x: 120, y: 130,
+    firewall: true, ports: { 21: false, 22: false }, reqPorts: 2, hacked: false,
+    files: { "/": ["vault"], "/vault": ["payload.enc"], "/vault/payload.enc": "[ENCRYPTED DATA] Key: CSEC_MASTER_99" }
+  },
+  "black-site-01": {
+    name: "black-site-01", discovered: false, x: 240, y: 130,
+    firewall: true, ports: { 21: false, 22: false }, reqPorts: 2, hacked: false,
+    files: { "/": ["ghost_core"], "/ghost_core": ["core_wipe.sh"], "/ghost_core/core_wipe.sh": "ALERT: Delete this file to isolate GHOST_PROTOCOL." }
+  },
+
+  // Chapter 2 Nodes
+  "omni-gateway": {
+    name: "omni-gateway", discovered: false, x: 60, y: 200,
+    firewall: true, ports: { 21: false, 22: false, 1433: false }, reqPorts: 2, hacked: false,
+    files: { "/": ["sys"], "/sys": ["omni_net.log"], "/sys/omni_net.log": "LOG: Routing traffic to fin-bank-core..." }
+  },
+  "fin-bank-core": {
+    name: "fin-bank-core", discovered: false, x: 180, y: 200,
+    firewall: true, ports: { 21: false, 22: false, 1433: false }, reqPorts: 3, hacked: false,
+    files: { "/": ["finance"], "/finance": ["singularity_funding.enc"], "/finance/singularity_funding.enc": "[ENCRYPTED] Project Singularity active at neural-lab-01." }
+  },
+  "neural-lab-01": {
+    name: "neural-lab-01", discovered: false, x: 280, y: 200,
+    firewall: true, ports: { 21: false, 22: false, 1433: false, 8080: false }, reqPorts: 3, hacked: false,
+    files: { "/": ["ai_core"], "/ai_core": ["project_singularity.enc"], "/ai_core/project_singularity.enc": "[ENCRYPTED AI ARCHITECTURE] Exfiltrate key data." }
+  },
+
+  // Chapter 3 Nodes
+  "relay-hub-alpha": {
+    name: "relay-hub-alpha", discovered: false, x: 80, y: 270,
+    firewall: true, ports: { 21: false, 22: false, 1433: false }, reqPorts: 3, hacked: false,
+    files: { "/": ["net"], "/net": ["sat_link.txt"], "/net/sat_link.txt": "Satellite routing target: sat-comm-node" }
+  },
+  "sat-comm-node": {
+    name: "sat-comm-node", discovered: false, x: 200, y: 270,
+    firewall: true, ports: { 21: false, 22: false, 1433: false, 8080: false }, reqPorts: 4, hacked: false,
+    files: { "/": ["sat"], "/sat": ["override.sys"], "/sat/override.sys": "Core lock enabled for singularity-core." }
+  },
+  "singularity-core": {
+    name: "singularity-core", discovered: false, x: 300, y: 270,
+    firewall: true, ports: { 21: false, 22: false, 1433: false, 8080: false }, reqPorts: 4, hacked: false,
+    files: { "/": ["kernel"], "/kernel": ["ai_manifest.sh"], "/kernel/ai_manifest.sh": "DESTRUCTIVE AI INSTANCE. Delete to prevent global shutdown." }
+  }
+};
+
+// --- GAME STATE ---
+let game = {
+  gameMode: "STORY",
+  currentChapter: 1,
+  activeTab: "monitor",
+  connectedHost: null,
+  credits: 150,
+  rebootTier: 0,
+  ramMax: 1000,
+  ramUsed: 0,
+  pwd: "/",
+  mode: "easy",
+  traceTime: 45,
+  traceTimerId: null,
+  execSpeedMult: 1.0,
+  contractsCompleted: 0,
+  installedTools: [...baseTools],
+  inbox: [],
+  hosts: JSON.parse(JSON.stringify(campaignHosts)),
+  achievements: [
+    { id: "ch1", title: "GHOST Hunter", desc: "Complete Story Chapter 1", unlocked: false, reward: 500 },
+    { id: "ch2", title: "Corporate Whistleblower", desc: "Complete Story Chapter 2", unlocked: false, reward: 1000 },
+    { id: "ch3", title: "World Savior", desc: "Complete Story Chapter 3 (Campaign Victory)", unlocked: false, reward: 2500 },
+    { id: "sandbox_5", title: "Mercenary", desc: "Complete 5 Endless Sandbox Contracts", unlocked: false, reward: 1000 },
+    { id: "prestige_1", title: "System Reborn", desc: "Perform a System Reboot", unlocked: false, reward: 2000 }
+  ],
+  shopItems: {
+    "SQLInject": { type: "exe", name: "SQLInject", ram: 300, port: 1433, price: 300, desc: "Cracks Database Port 1433" },
+    "AIBypass": { type: "exe", name: "AIBypass", ram: 350, port: 8080, price: 500, desc: "Cracks AI Gateway Port 8080" },
+    "RAM_Expansion": { type: "hardware", name: "RAM_Expansion_2000MB", price: 350, desc: "Upgrades terminal RAM to 2000MB" }
+  }
+};
+
+const output = document.getElementById('output');
+const displayContent = document.getElementById('display-content');
+const commandInput = document.getElementById('command');
+
+document.getElementById('terminal-panel').addEventListener('click', () => commandInput.focus());
+
+// --- MODE SWITCH & SAVE SYSTEM ---
+function openModeMenu() {
+  saveGame(false);
+  playBeep(600, 0.08);
+  disconnect();
+  document.getElementById('mode-select-modal').style.display = 'flex';
+}
+
+function saveGame(verbose = false) {
+  const saveKey = `hacknet_save_${game.gameMode}`;
+  const saveData = {
+    gameMode: game.gameMode,
+    currentChapter: game.currentChapter,
+    credits: game.credits,
+    rebootTier: game.rebootTier,
+    ramMax: game.ramMax,
+    mode: game.mode,
+    contractsCompleted: game.contractsCompleted,
+    installedTools: game.installedTools,
+    inbox: game.inbox,
+    hosts: game.hosts,
+    achievements: game.achievements,
+    shopItems: game.shopItems
+  };
+
+  localStorage.setItem(saveKey, JSON.stringify(saveData));
+  if (verbose) {
+    playBeep(900, 0.1);
+    printTerm(`\n[SYSTEM SAVE] Progress saved successfully for ${game.gameMode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX'} MODE.`);
+  }
+}
+
+function loadGame(verbose = false) {
+  const saveKey = `hacknet_save_${game.gameMode}`;
+  const savedString = localStorage.getItem(saveKey);
+
+  if (!savedString) {
+    if (verbose) printTerm(`\n[SAVE SYSTEM] No existing save found for ${game.gameMode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX'} MODE.`);
+    return false;
+  }
+
+  try {
+    const data = JSON.parse(savedString);
+    game.currentChapter = data.currentChapter || 1;
+    game.credits = data.credits || 150;
+    game.rebootTier = data.rebootTier || 0;
+    game.ramMax = data.ramMax || 1000;
+    game.mode = data.mode || "easy";
+    game.contractsCompleted = data.contractsCompleted || 0;
+    game.installedTools = data.installedTools || [...baseTools];
+    game.inbox = data.inbox || [];
+    game.hosts = data.hosts || JSON.parse(JSON.stringify(campaignHosts));
+    game.achievements = data.achievements || game.achievements;
+    game.shopItems = data.shopItems || game.shopItems;
+
+    game.connectedHost = null;
+    stopTraceTimer();
+
+    if (verbose) {
+      playBeep(850, 0.1);
+      printTerm(`\n[SYSTEM LOAD] ${game.gameMode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX'} MODE save state loaded!`);
+    }
+    updateUI();
+    return true;
+  } catch (e) {
+    printTerm(`\n[ERROR] Corrupted save file for ${game.gameMode} MODE.`);
+    return false;
+  }
+}
+
+function resetCurrentModeSave() {
+  const modeName = game.gameMode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX';
+  if (confirm(`Reset save state for ${modeName} MODE? This cannot be undone.`)) {
+    localStorage.removeItem(`hacknet_save_${game.gameMode}`);
+    playBeep(300, 0.2, 'sawtooth');
+    alert(`${modeName} MODE reset! Reloading mode...`);
+    
+    // Reset state defaults
+    game.credits = 150;
+    game.rebootTier = 0;
+    game.ramMax = 1000;
+    game.installedTools = [...baseTools];
+    game.hosts = JSON.parse(JSON.stringify(campaignHosts));
+    game.inbox = [];
+    game.connectedHost = null;
+
+    if (game.gameMode === 'STORY') loadChapterMissions(1);
+    else generateSandboxContract();
+
+    updateUI();
+  }
+}
+
+function startMode(mode) {
+  playBeep(800, 0.1);
+  game.gameMode = mode;
+  document.getElementById('mode-select-modal').style.display = 'none';
+
+  const loaded = loadGame(false);
+  if (!loaded) {
+    if (mode === 'STORY') loadChapterMissions(1);
+    else generateSandboxContract();
+    saveGame(false);
+  } else {
+    printTerm(`\n[SAVE LOADED] Resumed saved ${mode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX'} MODE session.`);
+  }
+
+  updateUI();
+}
+
+function loadChapterMissions(chapterNum) {
+  game.currentChapter = chapterNum;
+  if (chapterNum === 1) {
+    game.inbox.push({
+      id: 1, chapter: 1, from: "V - CSEC Lead", subject: "CHAPTER 1: GHOST Infiltration",
+      body: "Agent, an unknown hacker going by 'GHOST_PROTOCOL' breached our intranet. Connect to target [alpha-relay], crack Port 22, and read /logs/breach.txt to find their next move.",
+      target: "alpha-relay", reward: 250, completed: false, isCampaign: true
+    });
+  } else if (chapterNum === 2) {
+    game.hosts["omni-gateway"].discovered = true;
+    game.inbox.push({
+      id: 10, chapter: 2, from: "V - CSEC Lead", subject: "CHAPTER 2: Corporate Cover-Up",
+      body: "GHOST_PROTOCOL was a whistleblower exposing OmniCorp's illegal AI project. Infiltrate [omni-gateway]. You will need SQLInject.exe from the black market shop!",
+      target: "omni-gateway", reward: 600, completed: false, isCampaign: true
+    });
+  } else if (chapterNum === 3) {
+    game.hosts["relay-hub-alpha"].discovered = true;
+    game.inbox.push({
+      id: 20, chapter: 3, from: "V - CSEC Lead", subject: "CHAPTER 3: Global Firewall Collapse",
+      body: "OmniCorp's AI has gone rogue and is taking down global communication nodes! Infiltrate [relay-hub-alpha] to intercept satellite lock keys.",
+      target: "relay-hub-alpha", reward: 1200, completed: false, isCampaign: true
+    });
+  }
+  updateUI();
+}
+
+function toggleDifficulty() {
+  if (game.mode === "easy") {
+    game.mode = "hard";
+    printTerm("\n[DIFFICULTY UPDATE] HARD MODE ACTIVATED. Trace timer active on unhacked systems!");
+    if (game.connectedHost && !game.hosts[game.connectedHost].hacked) {
+      startTraceTimer();
+    }
+  } else {
+    game.mode = "easy";
+    stopTraceTimer();
+    printTerm("\n[DIFFICULTY UPDATE] EASY MODE ACTIVATED. Trace timer disabled.");
+  }
+  updateUI();
+  saveGame(false);
+}
+
+function startTraceTimer() {
+  stopTraceTimer();
+  if (game.mode !== "hard") return;
+
+  game.traceTime = 45 + (game.rebootTier * 10);
+  const traceDisplay = document.getElementById('trace-display');
+  traceDisplay.style.color = "#ff0055";
+
+  game.traceTimerId = setInterval(() => {
+    game.traceTime--;
+    traceDisplay.innerText = `TRACE TIMER: ${game.traceTime.toFixed(1)}s`;
+
+    if (game.traceTime <= 0) {
+      stopTraceTimer();
+      playBeep(200, 0.4, 'sawtooth');
+      printTerm("\n[WARNING] TRACE COMPLETED! Host security forcibly severed link.");
+      disconnect();
+    }
+  }, 1000);
+}
+
+function stopTraceTimer() {
+  if (game.traceTimerId) {
+    clearInterval(game.traceTimerId);
+    game.traceTimerId = null;
+  }
+  const traceDisplay = document.getElementById('trace-display');
+  if (game.mode === "easy") {
+    traceDisplay.innerText = "TRACE TIMER: OFF (EASY MODE)";
+    traceDisplay.style.color = "#00ff9c";
+  } else {
+    traceDisplay.innerText = "TRACE TIMER: IDLE";
+    traceDisplay.style.color = "#ffff00";
+  }
+}
+
+function toggleInstructions() {
+  playBeep(600, 0.05);
+  const modal = document.getElementById('instructions-modal');
+  modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+}
+
+function printTerm(text = '') {
+  const div = document.createElement('div');
+  div.innerText = text;
+  output.appendChild(div);
+  output.scrollTop = output.scrollHeight;
+}
+
+function discoverNode(hKey) {
+  if (game.hosts[hKey] && !game.hosts[hKey].discovered) {
+    game.hosts[hKey].discovered = true;
+    playBeep(950, 0.1);
+    printTerm(`\n[NETWORK DISCOVERY] New target node online: [${hKey}]`);
+    drawCanvasMap();
+    saveGame(false);
+  }
+}
+
+function switchTab(tab) {
+  playBeep(500, 0.03);
+  game.activeTab = tab;
+  document.getElementById('tab-monitor').className = tab === 'monitor' ? 'tab-btn active' : 'tab-btn';
+  document.getElementById('tab-mail').className = tab === 'mail' ? 'tab-btn active' : 'tab-btn';
+  document.getElementById('tab-achievements').className = tab === 'achievements' ? 'tab-btn active' : 'tab-btn';
+  renderRightDisplay();
+}
+
+function updateUI() {
+  document.getElementById('bank-display').innerText = `CREDITS: ${game.credits}`;
+  document.getElementById('prestige-tag').innerText = game.rebootTier > 0 ? `[ REBOOT TIER ${game.rebootTier} ]` : '';
+  
+  // Update Mode Display Switch Button
+  const modeBtn = document.getElementById('mode-switch-btn');
+  if (game.gameMode === 'STORY') {
+    modeBtn.innerText = `[ MODE: CAMPAIGN ]`;
+    modeBtn.style.borderColor = '#00e1ff';
+    modeBtn.style.color = '#00e1ff';
+  } else {
+    modeBtn.innerText = `[ MODE: SANDBOX ]`;
+    modeBtn.style.borderColor = '#ffff00';
+    modeBtn.style.color = '#ffff00';
+  }
+
+  // Update Difficulty Display
+  const diffBtn = document.getElementById('diff-btn');
+  if (game.mode === 'hard') {
+    diffBtn.innerText = "[ TRACE: ON (HARD) ]";
+    diffBtn.classList.add("btn-mode-hard");
+  } else {
+    diffBtn.innerText = "[ TRACE: OFF (EASY) ]";
+    diffBtn.classList.remove("btn-mode-hard");
+  }
+
+  if (!game.traceTimerId) {
+    stopTraceTimer();
+  }
+
+  document.getElementById('ram-text').innerText = `${game.ramUsed}MB / ${game.ramMax}MB`;
+  document.getElementById('ram-fill').style.width = `${(game.ramUsed / game.ramMax) * 100}%`;
+
+  const uncompletedMail = game.inbox.filter(m => !m.completed).length;
+  document.getElementById('mail-count').innerText = uncompletedMail;
+
+  const exeList = document.getElementById('exe-list');
+  exeList.innerHTML = '';
+  game.installedTools.forEach(tool => {
+    const container = document.createElement('div');
+    container.className = 'exe-container';
+
+    const btn = document.createElement('div');
+    btn.className = 'exe-btn';
+    btn.innerHTML = `<span><b>${tool.name}.exe</b></span><span>${tool.ram}MB</span>`;
+    btn.onclick = () => runTool(tool);
+
+    const desc = document.createElement('div');
+    desc.className = 'exe-desc';
+    desc.innerText = tool.desc;
+
+    container.appendChild(btn);
+    container.appendChild(desc);
+    exeList.appendChild(container);
+  });
+
+  drawCanvasMap();
+  renderRightDisplay();
+}
+
+function drawCanvasMap() {
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const discoveredKeys = Object.keys(game.hosts).filter(k => game.hosts[k].discovered);
+
+  ctx.strokeStyle = '#00ff9c22';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < discoveredKeys.length; i++) {
+    for (let j = i + 1; j < discoveredKeys.length; j++) {
+      const h1 = game.hosts[discoveredKeys[i]];
+      const h2 = game.hosts[discoveredKeys[j]];
+      ctx.beginPath();
+      ctx.moveTo(h1.x, h1.y);
+      ctx.lineTo(h2.x, h2.y);
+      ctx.stroke();
+    }
+  }
+
+  discoveredKeys.forEach(hKey => {
+    const h = game.hosts[hKey];
+    const isConnected = game.connectedHost === hKey;
+
+    ctx.fillStyle = isConnected ? '#ff0055' : (h.hacked ? '#00e1ff' : '#0b121c');
+    ctx.strokeStyle = h.hacked ? '#00e1ff' : '#00ff9c';
+    ctx.lineWidth = isConnected ? 2 : 1;
+
+    ctx.fillRect(h.x - 45, h.y - 18, 90, 36);
+    ctx.strokeRect(h.x - 45, h.y - 18, 90, 36);
+
+    ctx.fillStyle = isConnected ? '#ffffff' : (h.hacked ? '#020305' : '#00ff9c');
+    ctx.font = '10px Consolas';
+    ctx.textAlign = 'center';
+    ctx.fillText(hKey, h.x, h.y + 3);
+  });
+}
+
+document.getElementById('map-canvas').addEventListener('click', (e) => {
+  const canvas = document.getElementById('map-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+
+  Object.keys(game.hosts).forEach(hKey => {
+    const h = game.hosts[hKey];
+    if (h.discovered && clickX >= h.x - 45 && clickX <= h.x + 45 && clickY >= h.y - 18 && clickY <= h.y + 18) {
+      connectToHost(hKey);
+    }
+  });
+});
+
+function connectToHost(hKey) {
+  if (!game.hosts[hKey]) { printTerm("Target host unknown."); return; }
+  discoverNode(hKey);
+  playBeep(700, 0.08);
+  game.connectedHost = hKey;
+  game.pwd = "/";
+  printTerm(`Linking to [${hKey}]... Established.`);
+
+  if (!game.hosts[hKey].hacked) startTraceTimer();
+  else stopTraceTimer();
+
+  updateUI();
+  commandInput.focus();
+}
+
+function disconnect() {
+  if (game.connectedHost) {
+    const prevHost = game.connectedHost;
+    playBeep(300, 0.08);
+    printTerm(`Disconnected from ${prevHost}.`);
+    game.connectedHost = null;
+    stopTraceTimer();
+    updateUI();
+    commandInput.focus();
+  }
+}
+
+function generateSandboxContract() {
+  const randId = Math.floor(Math.random() * 8999) + 1000;
+  const nodeName = `sandbox-${randId}`;
+
+  game.hosts[nodeName] = {
+    name: nodeName, discovered: true,
+    x: Math.floor(Math.random() * 200) + 50,
+    y: Math.floor(Math.random() * 180) + 40,
+    firewall: Math.random() > 0.4,
+    ports: { 21: false, 22: false },
+    reqPorts: Math.random() > 0.5 ? 2 : 1,
+    hacked: false,
+    files: { "/": ["data"], "/data": [`payload_${randId}.txt`], [`/data/payload_${randId}.txt`]: `EXFILTRATION PAYLOAD #${randId}` }
+  };
+
+  const contractReward = Math.floor(Math.random() * 300) + 300;
+  game.inbox.push({
+    id: randId, from: "CSEC Mercenary Board",
+    subject: `SANDBOX CONTRACT: Infiltrate [${nodeName}]`,
+    body: `Target [${nodeName}] contains active client target file. Breach system and inspect /data/payload_${randId}.txt to claim payment.`,
+    target: nodeName, reward: contractReward, completed: false, isCampaign: false
+  });
+
+  printTerm(`\n[INBOX DISPATCH] New Sandbox Contract Available: [${nodeName}]`);
+  saveGame(false);
+  updateUI();
+}
+
+function renderRightDisplay() {
+  if (game.activeTab === 'mail') {
+    let html = `=== INBOX & CONTRACTS (${game.gameMode === 'STORY' ? 'CAMPAIGN' : 'SANDBOX'} MODE) ===\n\n`;
+    game.inbox.forEach(m => {
+      const status = m.completed ? "[RESOLVED]" : "[MISSION ACTIVE]";
+      html += `<b>Subject: ${m.subject}</b> ${status}\n`;
+      html += `From: ${m.from} | Target: <span class="ip-link" onclick="connectToHost('${m.target}')">[${m.target}]</span>\n`;
+      html += `${m.body}\n`;
+      if (!m.completed) {
+        html += `<button class="btn-header" onclick="claimContract(${m.id})">[ Fulfill Contract & Claim +${m.reward} ]</button>\n`;
+      }
+      html += `--------------------------------------------------\n`;
+    });
+    displayContent.innerHTML = html;
+  } else if (game.activeTab === 'achievements') {
+    let html = "=== ACHIEVEMENTS & MILESTONES ===\n\n";
+    game.achievements.forEach(a => {
+      const badge = a.unlocked ? "<span style='color:#00ff9c;'>[UNLOCKED]</span>" : "<span style='color:#ff0055;'>[LOCKED]</span>";
+      html += `<b>${a.title}</b> - ${badge}\n`;
+      html += `${a.desc} (+${a.reward} Credits)\n\n`;
+    });
+
+    html += "==================================================\n";
+    html += "=== SYSTEM REBOOT / PRESTIGE ===\n";
+    html += `Current Reboot Tier: ${game.rebootTier}\n`;
+    html += `Active Perks: +${game.rebootTier * 500}MB RAM | +${game.rebootTier * 10}s Trace Buffer | ${Math.round(100 - (game.rebootTier * 15))}% Tool Exec Speed\n\n`;
+    html += `<button class="btn-header btn-prestige" onclick="triggerPrestige()">[ PERFORM SYSTEM REBOOT ]</button>\n`;
+
+    displayContent.innerHTML = html;
+  } else {
+    if (!game.connectedHost) {
+      displayContent.innerText = "Connection idle. Select a network node or story link to inspect.";
+      return;
+    }
+    const h = game.hosts[game.connectedHost];
+    let text = `=== SYSTEM MONITOR: ${h.name} ===\n`;
+    text += `Root Access: ${h.hacked ? 'GRANTED' : 'LOCKED'}\n`;
+    text += `Firewall: ${h.firewall ? 'ACTIVE' : 'CLEARED'}\n`;
+    text += `Required Ports Open for PortHack: ${h.reqPorts}\n\n`;
+    text += `PORT STATUS:\n`;
+    Object.keys(h.ports).forEach(p => {
+      text += ` - Port ${p}: ${h.ports[p] ? 'OPEN' : 'CLOSED'}\n`;
+    });
+    displayContent.innerText = text;
+  }
+}
+
+function checkAchievement(id) {
+  const ach = game.achievements.find(a => a.id === id);
+  if (ach && !ach.unlocked) {
+    ach.unlocked = true;
+    game.credits += ach.reward;
+    playBeep(1100, 0.3);
+    printTerm(`\n[ACHIEVEMENT UNLOCKED] ${ach.title}! +${ach.reward} Credits granted.`);
+    saveGame(false);
+    updateUI();
+  }
+}
+
+function claimContract(mailId) {
+  const mail = game.inbox.find(m => m.id === mailId);
+  if (!mail || mail.completed) return;
+
+  const targetHost = game.hosts[mail.target];
+  let success = false;
+
+  if (mail.isCampaign) {
+    if (mail.id === 1 && targetHost.hacked) {
+      success = true;
+      discoverNode("corp-server");
+      game.inbox.push({
+        id: 2, chapter: 1, from: "V - CSEC Lead", subject: "CHAPTER 1: Mission 02",
+        body: "GHOST_PROTOCOL is using [corp-server] as a proxy. Bypass its firewall and find where their vault is.",
+        target: "corp-server", reward: 350, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 2 && targetHost.hacked) {
+      success = true;
+      discoverNode("shadow-vault");
+      game.inbox.push({
+        id: 3, chapter: 1, from: "V - CSEC Lead", subject: "CHAPTER 1: Mission 03",
+        body: "Breach [shadow-vault] and run Decrypter.exe on /vault/payload.enc to steal their key!",
+        target: "shadow-vault", reward: 500, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 3 && targetHost.hacked && targetHost.files["/vault/payload.enc"] && targetHost.files["/vault/payload.enc"].includes("DECRYPTED")) {
+      success = true;
+      discoverNode("black-site-01");
+      game.inbox.push({
+        id: 4, chapter: 1, from: "V - CSEC Lead", subject: "CHAPTER 1: Final Mission",
+        body: "Target [black-site-01] hosts GHOST_PROTOCOL's core script. Infiltrate and DELETE core_wipe.sh with 'rm core_wipe.sh'!",
+        target: "black-site-01", reward: 1000, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 4 && targetHost.hacked) {
+      let coreExists = targetHost.files["/ghost_core"] && targetHost.files["/ghost_core"].includes("core_wipe.sh");
+      if (!coreExists) {
+        success = true;
+        checkAchievement("ch1");
+        alert("CHAPTER 1 COMPLETE! You neutralized GHOST_PROTOCOL. Loading Chapter 2...");
+        loadChapterMissions(2);
+      }
+    } else if (mail.id === 10 && targetHost.hacked) {
+      success = true;
+      discoverNode("fin-bank-core");
+      game.inbox.push({
+        id: 11, chapter: 2, from: "V - CSEC Lead", subject: "CHAPTER 2: Mission 02",
+        body: "Infiltrate [fin-bank-core] to uncover the funding records for Project Singularity.",
+        target: "fin-bank-core", reward: 750, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 11 && targetHost.hacked) {
+      success = true;
+      discoverNode("neural-lab-01");
+      game.inbox.push({
+        id: 12, chapter: 2, from: "V - CSEC Lead", subject: "CHAPTER 2: Final Mission",
+        body: "Infiltrate [neural-lab-01]. Use AIBypass.exe (Port 8080) and run 'crack project_singularity.enc' to steal the AI blueprint!",
+        target: "neural-lab-01", reward: 1200, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 12 && targetHost.hacked && targetHost.files["/ai_core/project_singularity.enc"] && targetHost.files["/ai_core/project_singularity.enc"].includes("DECRYPTED")) {
+      success = true;
+      checkAchievement("ch2");
+      alert("CHAPTER 2 COMPLETE! You exposed OmniCorp's illegal AI. Loading Chapter 3...");
+      loadChapterMissions(3);
+    } else if (mail.id === 20 && targetHost.hacked) {
+      success = true;
+      discoverNode("sat-comm-node");
+      game.inbox.push({
+        id: 21, chapter: 3, from: "V - CSEC Lead", subject: "CHAPTER 3: Mission 02",
+        body: "Infiltrate [sat-comm-node] to grant root access and bypass satellite firewall controls.",
+        target: "sat-comm-node", reward: 1500, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 21 && targetHost.hacked) {
+      success = true;
+      discoverNode("singularity-core");
+      game.inbox.push({
+        id: 22, chapter: 3, from: "V - CSEC Lead", subject: "CHAPTER 3: FINAL SHOWDOWN",
+        body: "Breach [singularity-core] and run 'rm ai_manifest.sh' to purge the rogue AI kernel permanently!",
+        target: "singularity-core", reward: 3000, completed: false, isCampaign: true
+      });
+    } else if (mail.id === 22 && targetHost.hacked) {
+      let coreExists = targetHost.files["/kernel"] && targetHost.files["/kernel"].includes("ai_manifest.sh");
+      if (!coreExists) {
+        success = true;
+        checkAchievement("ch3");
+        alert("CAMPAIGN VICTORIOUS! You saved the global network and completed Hacknet HTML Story Mode!");
+      }
+    }
+  } else {
+    if (targetHost && targetHost.hacked) {
+      success = true;
+      game.contractsCompleted++;
+      if (game.contractsCompleted >= 5) checkAchievement("sandbox_5");
+      generateSandboxContract();
+    }
+  }
+
+  if (success) {
+    playBeep(900, 0.2);
+    mail.completed = true;
+    game.credits += mail.reward;
+    printTerm(`\n[CONTRACT COMPLETED] +${mail.reward} Credits granted.`);
+    saveGame(false);
+    updateUI();
+  } else {
+    playBeep(250, 0.1, 'sawtooth');
+    printTerm(`\n[MISSION INCOMPLETE] Objectives for [${mail.target}] not yet fulfilled.`);
+  }
+}
+
+function triggerPrestige() {
+  if (confirm("Are you sure you want to perform a System Reboot? Progress resets, but you gain permanent stat multipliers!")) {
+    game.rebootTier++;
+    game.ramMax = 1000 + (game.rebootTier * 500);
+    game.execSpeedMult = Math.max(0.3, 1.0 - (game.rebootTier * 0.15));
+    game.installedTools = [...baseTools];
+    game.hosts = JSON.parse(JSON.stringify(campaignHosts));
+    game.connectedHost = null;
+    game.inbox = [];
+
+    checkAchievement("prestige_1");
+    playBeep(1200, 0.5);
+    printTerm(`\n[SYSTEM REBOOT EXECUTED] Reboot Tier upgraded to Tier ${game.rebootTier}! Boosts applied.`);
+    
+    if (game.gameMode === "STORY") loadChapterMissions(1);
+    else generateSandboxContract();
+
+    saveGame(false);
+  }
+}
+
+function runTool(tool) {
+  if (!game.connectedHost) {
+    printTerm(`Error: Cannot execute ${tool.name}.exe without active host connection.`);
+    return;
+  }
+  if (game.ramUsed + tool.ram > game.ramMax) {
+    printTerm(`Error: Insufficient RAM for ${tool.name}.exe.`);
+    return;
+  }
+
+  game.ramUsed += tool.ram;
+  updateUI();
+  playBeep(520, 0.05);
+  printTerm(`Running ${tool.name}.exe...`);
+
+  setTimeout(() => {
+    game.ramUsed -= tool.ram;
+    const h = game.hosts[game.connectedHost];
+
+    if (tool.spider) {
+      printTerm(`[WebSpider] Scanning node paths...`);
+      let foundNew = false;
+      Object.keys(game.hosts).forEach(targetKey => {
+        if (!game.hosts[targetKey].discovered) {
+          let textData = JSON.stringify(h.files);
+          if (textData.includes(targetKey)) {
+            discoverNode(targetKey);
+            foundNew = true;
+          }
+        }
+      });
+      if (!foundNew) printTerm(`[WebSpider] No additional linked nodes found on this system.`);
+    } else if (tool.decrypt) {
+      let filesInDir = h.files[game.pwd] || [];
+      let encFiles = filesInDir.filter(f => f.endsWith('.enc'));
+      if (encFiles.length > 0) {
+        encFiles.forEach(f => {
+          let fullPath = game.pwd === "/" ? "/" + f : game.pwd + "/" + f;
+          if (h.files[fullPath] && !h.files[fullPath].includes("[DECRYPTED")) {
+            h.files[fullPath] = "[DECRYPTED FILE] " + h.files[fullPath];
+            printTerm(`[Decrypter] Decrypted: ${f}`);
+          }
+        });
+      } else {
+        printTerm(`[Decrypter] No .enc files found in current directory (${game.pwd}).`);
+      }
+    } else if (tool.logwipe) {
+      if (game.mode === "hard" && game.traceTimerId) {
+        game.traceTime += 15;
+        printTerm(`[LogWipe] Active logs erased! +15 Seconds added to Trace Timer.`);
+      } else {
+        printTerm(`[LogWipe] Target logs scrubbed successfully.`);
+      }
+    } else if (tool.firewall) {
+      h.firewall = false;
+      printTerm(`SUCCESS: Firewall bypassed on ${h.name}!`);
+    } else if (tool.name === "PortHack") {
+      if (h.firewall) {
+        printTerm(`FAILED: Cannot run PortHack while target Firewall is ACTIVE.`);
+      } else {
+        let openCount = Object.values(h.ports).filter(v => v === true).length;
+        if (openCount >= h.reqPorts) {
+          h.hacked = true;
+          stopTraceTimer();
+          playBeep(880, 0.15);
+          printTerm(`SUCCESS: Root privileges acquired on ${h.name}!`);
+        } else {
+          printTerm(`FAILED: Requires ${h.reqPorts} open ports.`);
+        }
+      }
+    } else if (tool.port && h.ports.hasOwnProperty(tool.port)) {
+      h.ports[tool.port] = true;
+      printTerm(`SUCCESS: Port ${tool.port} opened on ${h.name}.`);
+    }
+
+    saveGame(false);
+    updateUI();
+    commandInput.focus();
+  }, 1000 * game.execSpeedMult);
+}
+
+// --- TERMINAL COMMAND HANDLER ---
+function handleCommand(line) {
+  playBeep(400, 0.02);
+  const [cmd, ...args] = line.trim().split(" ");
+  const h = game.connectedHost ? game.hosts[game.connectedHost] : null;
+
+  switch (cmd.toLowerCase()) {
+    case "help":
+    case "commands":
+      printTerm("\n=== TERMINAL COMMAND REFERENCE ===");
+      printTerm(" ls          - List files/folders");
+      printTerm(" cd <dir>    - Change directory");
+      printTerm(" cat <file>  - Read text file");
+      printTerm(" rm <file>   - Delete file");
+      printTerm(" crack <f>   - Decrypt .enc file");
+      printTerm(" connect <n> - Connect to node");
+      printTerm(" disconnect  - Disconnect host");
+      printTerm(" shop / buy  - Black market software");
+      printTerm(" save / load - Save or load mode state");
+      break;
+
+    case "save": saveGame(true); break;
+    case "load": loadGame(true); break;
+    case "clear": output.innerText = ""; break;
+    case "connect": args[0] ? connectToHost(args[0]) : printTerm("Specify host."); break;
+    case "disconnect": disconnect(); break;
+
+    case "ls":
+      if (!h || !h.hacked) { printTerm("Access Denied: Root credentials required."); break; }
+      const items = h.files[game.pwd];
+      if (items) printTerm(`Contents of (${game.pwd}):\n ` + items.join("  "));
+      else printTerm("Directory empty.");
+      break;
+
+    case "cd":
+      if (!h || !h.hacked) { printTerm("Access Denied."); break; }
+      if (args[0] === "..") game.pwd = "/";
+      else {
+        let path = game.pwd === "/" ? "/" + args[0] : game.pwd + "/" + args[0];
+        if (h.files[path]) game.pwd = path;
+        else printTerm("Directory not found.");
+      }
+      printTerm(`PWD: ${game.pwd}`);
+      break;
+
+    case "cat":
+      if (!h || !h.hacked) { printTerm("Access Denied."); break; }
+      const filePath = game.pwd === "/" ? "/" + args[0] : game.pwd + "/" + args[0];
+      if (h.files[filePath]) {
+        printTerm(`\n--- Reading ${filePath} ---`);
+        printTerm(h.files[filePath]);
+      } else printTerm("File not found.");
+      break;
+
+    case "crack":
+      if (!h || !h.hacked) { printTerm("Access Denied."); break; }
+      const encPath = game.pwd === "/" ? "/" + args[0] : game.pwd + "/" + args[0];
+      if (h.files[encPath] && encPath.endsWith(".enc")) {
+        playBeep(850, 0.15);
+        if (!h.files[encPath].includes("[DECRYPTED")) {
+          h.files[encPath] = "[DECRYPTED FILE] " + h.files[encPath];
+        }
+        printTerm(`SUCCESS: Decrypted ${encPath}!`);
+        saveGame(false);
+        updateUI();
+      } else printTerm("Invalid target file.");
+      break;
+
+    case "rm":
+      if (!h || !h.hacked) { printTerm("Access Denied."); break; }
+      const delPath = game.pwd === "/" ? "/" + args[0] : game.pwd + "/" + args[0];
+      if (h.files[delPath]) {
+        delete h.files[delPath];
+        const parentDir = h.files[game.pwd];
+        if (parentDir) {
+          const idx = parentDir.indexOf(args[0]);
+          if (idx !== -1) parentDir.splice(idx, 1);
+        }
+        printTerm(`File ${delPath} purged.`);
+        saveGame(false);
+      } else printTerm("File not found.");
+      break;
+
+    case "shop":
+      printTerm("\n=== BLACK MARKET SOFTWARE ===");
+      Object.keys(game.shopItems).forEach(k => {
+        const item = game.shopItems[k];
+        printTerm(` - ${k} | ${item.price} Credits | ${item.desc}`);
+      });
+      break;
+
+    case "buy":
+      const itemKey = args[0];
+      if (game.shopItems[itemKey]) {
+        const item = game.shopItems[itemKey];
+        if (game.credits >= item.price) {
+          game.credits -= item.price;
+          if (itemKey === "RAM_Expansion") game.ramMax += 1000;
+          else if (item.type === "exe") game.installedTools.push(item);
+          delete game.shopItems[itemKey];
+          printTerm(`Purchased ${item.name}!`);
+          saveGame(false);
+          updateUI();
+        } else printTerm("Insufficient credits.");
+      } else printTerm("Item unavailable.");
+      break;
+
+    default:
+      if (line.trim() !== "") printTerm("Unknown command. Type 'commands' for reference.");
+  }
+}
+
+printTerm("Hacknet OS Terminal Ready.");
+printTerm("Select operational mode on startup prompt to begin.");
+
+commandInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const line = commandInput.value;
+    printTerm("> " + line);
+    handleCommand(line);
+    commandInput.value = "";
+  }
+});
+</script>
+</body>
+</html>

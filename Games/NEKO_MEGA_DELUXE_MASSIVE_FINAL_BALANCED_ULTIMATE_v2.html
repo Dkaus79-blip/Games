@@ -1,0 +1,3535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neko Gacha Sanctuary: Ultra Evolution Deluxe</title>
+    <style>
+        :root {
+            --bg-main: #0c0a14;
+            --panel-bg: rgba(20, 17, 34, 0.92);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --primary: #ff5e84;
+            --primary-glow: rgba(255, 94, 132, 0.4);
+            --accent: #ffb830;
+            --gem-color: #a55eea;
+            --yarn-color: #ff9f43;
+            --nip-color: #20bf6b;
+            --relic-color: #00d2d3;
+            --text-main: #f8f9fa;
+            --text-sub: #9ea0b8;
+            
+            --common: #8395a7;
+            --rare: #2e86de;
+            --epic: #8854d0;
+            --legendary: #ff9f43;
+            --mythic: #ee5253;
+            --divine: #00d2d3;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 10%, #231540, #08070d 80%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Themes */
+        body.theme-neon { background: radial-gradient(circle at 50% 10%, #08294a, #030814 80%); --primary: #00d2d3; --accent: #ff3bd4; }
+        body.theme-forest { background: radial-gradient(circle at 50% 10%, #102e1c, #040d07 80%); --primary: #20bf6b; --accent: #badc58; }
+        body.theme-sunset { background: radial-gradient(circle at 50% 10%, #4a1d27, #13060a 80%); --primary: #ff7675; --accent: #fdcb6e; }
+        body.theme-void { background: radial-gradient(circle at 50% 10%, #200636, #05010a 80%); --primary: #a55eea; --accent: #70a1ff; }
+
+        #toast-container {
+            position: fixed;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+            max-width: 90vw;
+        }
+        .toast-msg {
+            background: rgba(14, 12, 24, 0.96);
+            border: 1.5px solid var(--accent);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            animation: toastPop 0.25s ease-out, toastFade 0.3s ease-in 2.4s forwards;
+            text-align: center;
+        }
+        @keyframes toastPop { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes toastFade { to { opacity: 0; transform: translateY(-15px); } }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 330px 1fr;
+            gap: 12px;
+            max-width: 1440px;
+            width: 100%;
+            height: calc(100vh - 20px);
+            max-height: 1080px;
+        }
+
+        @media (max-width: 980px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .left-panel {
+            overflow-y: auto;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header Utility Ribbon */
+        .top-utility-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .util-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-main);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .util-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+
+        /* Currency Hub */
+        .currency-hub {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            background: rgba(10, 8, 18, 0.7);
+            padding: 8px 4px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .stat-val { font-size: 0.82rem; font-weight: 900; color: var(--primary); }
+        .stat-val.gems { color: var(--gem-color); }
+        .stat-val.nip { color: var(--nip-color); }
+        .stat-val.yarn { color: var(--yarn-color); }
+        .stat-val.relics { color: var(--relic-color); }
+        .stat-sub { font-size: 0.62rem; color: var(--text-sub); text-transform: uppercase; font-weight: 700; margin-top: 1px; }
+
+        /* Interactive Pet Stage */
+        .pet-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            background: radial-gradient(circle, rgba(255,94,132,0.12) 0%, transparent 70%);
+            border-radius: 14px;
+            position: relative;
+        }
+
+        .cat-avatar-wrap {
+            position: relative;
+            cursor: pointer;
+            width: 95px;
+            height: 95px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .big-pet-cat {
+            font-size: 4.2rem;
+            transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.6));
+        }
+
+        .cat-avatar-wrap:hover .big-pet-cat { transform: scale(1.06); }
+        .cat-avatar-wrap:active .big-pet-cat { transform: scale(0.92) rotate(-6deg); }
+
+        /* Frenzy Gauge */
+        .fever-container {
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            height: 7px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 6px;
+        }
+
+        .fever-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff5e84, #ffb830, #ee5253);
+            transition: width 0.1s linear;
+        }
+
+        .fever-text {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-align: center;
+            margin-top: 4px;
+            color: var(--accent);
+        }
+
+        body.fever-active {
+            animation: frenzyPulse 0.5s infinite alternate;
+        }
+        @keyframes frenzyPulse {
+            from { filter: drop-shadow(0 0 10px rgba(255,94,132,0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(255,184,48,0.5)); }
+        }
+
+        /* Synergy Team Strip */
+        .team-bar {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-around;
+            gap: 4px;
+        }
+        .team-slot {
+            flex: 1;
+            max-width: 52px;
+            height: 42px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px dashed rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .team-slot:hover { border-color: var(--accent); transform: scale(1.04); background: rgba(255,255,255,0.1); }
+
+        /* Buttons & Actions */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 8px var(--primary-glow);
+        }
+
+        .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: #262233 !important; color: #5f5c6e !important; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .btn-gold { background: linear-gradient(45deg, #f39c12, #e67e22); box-shadow: 0 3px 8px rgba(243, 156, 18, 0.35); }
+        .btn-gem { background: linear-gradient(45deg, #8e44ad, #a55eea); box-shadow: 0 3px 8px rgba(165, 94, 234, 0.35); }
+        .btn-nip { background: linear-gradient(45deg, #20bf6b, #0fb9b1); box-shadow: 0 3px 8px rgba(32, 191, 107, 0.35); }
+        .btn-divine { background: linear-gradient(45deg, #eb3b5a, #fa8231); box-shadow: 0 3px 8px rgba(235, 59, 90, 0.35); }
+        .btn-relic { background: linear-gradient(45deg, #0fb9b1, #2e86de); box-shadow: 0 3px 8px rgba(15, 185, 177, 0.35); }
+        .btn-danger { background: linear-gradient(45deg, #d63031, #e17055); box-shadow: 0 3px 8px rgba(214, 48, 49, 0.35); }
+
+        /* Navigation Tabs Ribbon */
+        .nav-tabs-wrapper {
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 6px;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            padding-bottom: 2px;
+        }
+        .nav-tabs::-webkit-scrollbar { height: 4px; }
+        .nav-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        .tab-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid transparent;
+            color: var(--text-sub);
+            padding: 5px 9px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .tab-content { display: none; height: 100%; overflow-y: auto; padding-right: 2px; }
+        .tab-content.active { display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.15s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Habitat Canvas */
+        #playpen-canvas {
+            width: 100%;
+            height: 90px;
+            min-height: 90px;
+            background: rgba(8, 6, 16, 0.65);
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            cursor: crosshair;
+        }
+
+        /* SANCTUARY CONTROLS & FILTER BAR */
+        .sanctuary-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        .pill-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-sub);
+            border-radius: 5px;
+            padding: 3px 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.12s;
+        }
+        .pill-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .pill-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .search-box {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 3px 8px;
+            font-size: 0.68rem;
+            border-radius: 5px;
+            outline: none;
+            max-width: 120px;
+        }
+
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .page-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            color: #fff;
+            padding: 2px 7px;
+            font-size: 0.68rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-indicator { font-size: 0.68rem; font-weight: 800; color: var(--accent); }
+
+        /* RESPONSIVE CAT GRID */
+        .cat-grid-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 220px;
+        }
+
+        .cat-grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 6px;
+            padding-bottom: 8px;
+        }
+
+        .cat-card-mini {
+            background: rgba(14, 12, 24, 0.88);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 6px 5px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 105px;
+        }
+        .cat-card-mini:hover { transform: translateY(-2px) scale(1.02); z-index: 2; border-color: rgba(255,255,255,0.3); }
+        .cat-card-mini.locked { opacity: 0.28; filter: grayscale(1); cursor: default; }
+
+        .cat-card-mini.common { border-color: var(--common); }
+        .cat-card-mini.rare { border-color: var(--rare); background: rgba(46, 134, 222, 0.08); }
+        .cat-card-mini.epic { border-color: var(--epic); background: rgba(136, 84, 208, 0.12); }
+        .cat-card-mini.legendary { border-color: var(--legendary); background: rgba(255, 159, 67, 0.14); box-shadow: 0 0 8px rgba(255, 159, 67, 0.18); }
+        .cat-card-mini.mythic { border-color: var(--mythic); background: rgba(238, 82, 83, 0.16); box-shadow: 0 0 10px rgba(238, 82, 83, 0.25); }
+        .cat-card-mini.divine { border-color: var(--divine); background: rgba(0, 210, 211, 0.2); box-shadow: 0 0 12px rgba(0, 210, 211, 0.35); animation: divineGlow 2s infinite alternate; }
+
+        .cat-card-mini.prismatic { animation: rainbowBorder 3s infinite linear, divineGlow 2s infinite alternate; }
+        @keyframes rainbowBorder {
+            0% { border-color: #ff5e84; } 33% { border-color: #00d2d3; } 66% { border-color: #ffb830; } 100% { border-color: #ff5e84; }
+        }
+        @keyframes divineGlow {
+            from { box-shadow: 0 0 6px rgba(0, 210, 211, 0.2); }
+            to { box-shadow: 0 0 14px rgba(0, 210, 211, 0.5); }
+        }
+
+        .cat-card-mini .top-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.58rem;
+            color: var(--accent);
+            padding: 0 2px;
+        }
+        .cat-card-mini .icon { font-size: 1.5rem; margin: 2px 0; line-height: 1.1; }
+        .cat-card-mini .name { font-size: 0.65rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .cat-card-mini .element-pill { font-size: 0.52rem; padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,0.08); margin: 2px 0; color: #ced6e0; }
+        .cat-card-mini .fps { font-size: 0.6rem; color: #00d2d3; font-weight: 800; }
+        .cat-card-mini .equipped-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #20bf6b;
+            color: #fff;
+            font-size: 0.48rem;
+            font-weight: 900;
+            padding: 1px 4px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Gacha Banners */
+        .gacha-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 8px;
+        }
+
+        .banner-card {
+            background: rgba(14, 12, 24, 0.85);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .banner-card h3 { font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .banner-desc { font-size: 0.68rem; color: var(--text-sub); min-height: 24px; }
+        .banner-rates { font-size: 0.62rem; color: #ced6e0; background: rgba(0,0,0,0.35); padding: 4px 6px; border-radius: 6px; }
+
+        /* Generic Lists */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .list-entry {
+            background: rgba(14, 12, 24, 0.75);
+            border: 1px solid var(--panel-border);
+            padding: 8px 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .entry-info h4 { font-size: 0.8rem; margin-bottom: 1px; }
+        .entry-info p { font-size: 0.66rem; color: var(--text-sub); }
+
+        /* Dungeon Arena */
+        .dungeon-arena {
+            background: rgba(0,0,0,0.4);
+            border-radius: 14px;
+            border: 1px solid var(--panel-border);
+            padding: 12px;
+            text-align: center;
+            position: relative;
+        }
+        .boss-hp-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 6px 0;
+        }
+        .boss-hp-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ee5253, #ff7675);
+            transition: width 0.1s;
+        }
+
+        /* Floating & Entities */
+        .golden-mouse {
+            position: fixed;
+            z-index: 999;
+            cursor: pointer;
+            font-size: 2rem;
+            animation: wiggle 0.4s infinite alternate;
+            filter: drop-shadow(0 0 10px #ffb830);
+        }
+        @keyframes wiggle { from { transform: rotate(-10deg) scale(1); } to { transform: rotate(10deg) scale(1.15); } }
+
+        .floating-bubble {
+            position: fixed;
+            animation: floatFade 0.85s ease-out forwards;
+            font-weight: 900;
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+            font-size: 0.85rem;
+        }
+        @keyframes floatFade {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.15); }
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 4, 10, 0.85);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 12px;
+        }
+        .modal-box {
+            background: #191629;
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.85);
+            animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .summon-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+            gap: 6px;
+            margin: 10px 0;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .mini-card {
+            background: rgba(0,0,0,0.35);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1.5px solid #444;
+        }
+
+        .exp-grid, .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+        .big-card { background: rgba(20,16,35,.75); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 8px; }
+        .big-card h3 { margin: 0 0 4px; font-size: 0.82rem; }
+        .big-card p { margin: 3px 0; color: var(--text-sub); font-size: 0.66rem; line-height: 1.3; }
+        .progress-mini { height: 6px; background: #171322; border-radius: 6px; overflow: hidden; margin: 4px 0; }
+        .progress-mini > div { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+        .badge-mini { display: inline-block; padding: 2px 5px; border-radius: 6px; background: rgba(255,255,255,.08); font-size: 0.58rem; margin: 1px; }
+        .expansion-header { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .expansion-header h2 { font-size: 0.92rem; margin: 0; }
+        .subtle { color: var(--text-sub); font-size: 0.65rem; }
+        .choice-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+        .choice-row .btn { flex: 1; min-width: 80px; }
+        .locked-panel { opacity: 0.55; filter: saturate(0.5); }
+        .statline { display: flex; justify-content: space-between; gap: 6px; font-size: 0.66rem; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+        .season-track { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; margin-top: 6px; }
+        .season-tier { background: rgba(0,0,0,0.3); border: 1px solid var(--panel-border); border-radius: 8px; padding: 6px; text-align: center; font-size: 0.68rem; }
+        .season-tier.ready { border-color: var(--accent); background: rgba(255,184,48,0.1); }
+        .season-tier.claimed { opacity: 0.6; }
+        .wardrobe-swatch { height: 35px; border-radius: 6px; margin-bottom: 4px; }
+
+        /* Save Slots UI */
+        .slot-card {
+            background: rgba(14, 12, 24, 0.9);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 8px;
+            text-align: left;
+            position: relative;
+        }
+        .slot-card.active-slot {
+            border-color: var(--nip-color);
+            box-shadow: 0 0 10px rgba(32, 191, 107, 0.3);
+        }
+        .slot-title { font-size: 0.85rem; font-weight: 800; color: var(--accent); display:flex; justify-content:space-between; align-items:center; }
+        .slot-meta { font-size: 0.68rem; color: var(--text-sub); margin: 4px 0 8px; line-height: 1.4; }
+
+        /* Help Accordion */
+        .help-section {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+        .help-section h4 { color: var(--accent); font-size: 0.82rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .help-section p { font-size: 0.7rem; color: #ced6e0; line-height: 1.4; }
+        .help-section ul { font-size: 0.68rem; color: var(--text-sub); margin-left: 16px; margin-top: 4px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="game-layout">
+    <!-- LEFT PANEL: TAPPING HUB, STATS, TEAM -->
+    <div class="panel left-panel">
+        
+        <!-- Utility Header -->
+        <div class="top-utility-bar">
+            <div style="display:flex; gap:4px;">
+                <button class="util-btn" onclick="openModal('help-modal')">❓ How to Play</button>
+                <button class="util-btn" onclick="openModal('slots-modal')">💾 Slots (<span id="cur-slot-label">1</span>)</button>
+            </div>
+            <div style="display:flex; gap:4px;">
+                <button class="util-btn" id="sfx-toggle-btn" onclick="toggleSFX()">🔊 SFX: ON</button>
+                <button class="util-btn" onclick="openModal('settings-modal')">⚙️</button>
+            </div>
+        </div>
+
+        <div class="currency-hub">
+            <div class="stat-card">
+                <span class="stat-val" id="fish-val">0</span>
+                <span class="stat-sub">🐟 Fish</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val gems" id="gems-val">20</span>
+                <span class="stat-sub">💎 Gems</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val nip" id="nip-val">3</span>
+                <span class="stat-sub">🌿 Nip</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val yarn" id="yarn-val">0</span>
+                <span class="stat-sub">🧶 Yarn</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val relics" id="relics-val">0</span>
+                <span class="stat-sub">🏺 Relic</span>
+            </div>
+        </div>
+
+        <div class="pet-stage">
+            <div class="cat-avatar-wrap" id="main-cat-tap">
+                <div class="big-pet-cat" id="pet-emoji">🐱</div>
+            </div>
+            <div class="fever-container">
+                <div class="fever-bar" id="fever-bar"></div>
+            </div>
+            <div class="fever-text" id="fever-status">Tap cat to trigger MEOW FRENZY!</div>
+        </div>
+
+        <!-- Active Resonance Team (5 Slots) -->
+        <div>
+            <div style="font-size:0.68rem; color:var(--text-sub); display:flex; justify-content:space-between; margin-bottom:3px; align-items:center;">
+                <span>Active Battle Team</span>
+                <b id="active-synergy-title" style="color:var(--accent); font-size:0.65rem;">No Synergies</b>
+            </div>
+            <div class="team-bar" id="team-slots-bar">
+                <div class="team-slot" onclick="switchTab('sanctuary')">➕</div>
+                <div class="team-slot" onclick="switchTab('sanctuary')">➕</div>
+                <div class="team-slot" onclick="switchTab('sanctuary')">➕</div>
+                <div class="team-slot" onclick="switchTab('sanctuary')">➕</div>
+                <div class="team-slot" onclick="switchTab('sanctuary')">➕</div>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:4px;">
+                <button class="btn btn-nip" style="flex:1; justify-content:center; padding:4px 6px; font-size:0.65rem;" onclick="autoOptimizeTeam()">⚡ Auto-Best Team</button>
+                <button class="btn btn-gold" style="flex:1; justify-content:center; padding:4px 6px; font-size:0.65rem;" onclick="bulkLevelTeam()">🍣 Level Team</button>
+            </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 6px 8px; font-size: 0.7rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>Total Production:</span>
+                <b id="fps-val" style="color: #00d2d3;">0 /s</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>Tap Power:</span>
+                <b id="click-val" style="color: var(--primary);">1 /tap</b>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>Resonance Buff:</span>
+                <b id="synergy-buff-val" style="color: var(--accent);">1.0x</b>
+            </div>
+        </div>
+
+        <button class="btn btn-gold" onclick="switchTab('gacha')">
+            <span>✨ Summoning Banners</span>
+            <span>Pull Cats »</span>
+        </button>
+
+        <div style="display: flex; gap: 4px; margin-top: auto;">
+            <button class="btn" style="flex: 1; background:#221e33; font-size:0.68rem; justify-content:center;" onclick="saveGame(true)">💾 Quick Save</button>
+            <button class="btn" style="flex: 1; background:#221e33; font-size:0.68rem; justify-content:center;" onclick="exportSave()">📤 Export</button>
+            <button class="btn" style="flex: 1; background:#221e33; font-size:0.68rem; justify-content:center;" onclick="importSave()">📥 Import</button>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: TABBED INTERFACES -->
+    <div class="panel right-panel">
+        <div class="nav-tabs-wrapper">
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('sanctuary')">🐾 Sanctuary</button>
+                <button class="tab-btn" onclick="switchTab('gacha')">🌌 Gacha Altar</button>
+                <button class="tab-btn" onclick="switchTab('bakery')">🍣 Bakery</button>
+                <button class="tab-btn" onclick="switchTab('upgrades')">⚡ Upgrades</button>
+                <button class="tab-btn" onclick="switchTab('dungeon')">⚔️ Tower Raid</button>
+                <button class="tab-btn" onclick="switchTab('quests')">📜 Quests (<span id="quest-count">0</span>)</button>
+                <button class="tab-btn" onclick="switchTab('expeditions')">🧭 Expeditions</button>
+                <button class="tab-btn" onclick="switchTab('astral')">🔮 Astral Tree</button>
+                <button class="tab-btn" onclick="switchTab('regions')">🌎 Regions</button>
+                <button class="tab-btn" onclick="switchTab('mastery')">⭐ Mastery</button>
+                <button class="tab-btn" onclick="switchTab('research')">🔬 Research</button>
+                <button class="tab-btn" onclick="switchTab('collection')">🏺 Collection</button>
+                <button class="tab-btn" onclick="switchTab('daily')">📅 Challenges</button>
+                <button class="tab-btn" onclick="switchTab('merchant')">🏪 Merchant</button>
+                <button class="tab-btn" onclick="switchTab('lab')">🧬 Cat Lab</button>
+                <button class="tab-btn" onclick="switchTab('trials')">🎲 Endless Trials</button>
+                <button class="tab-btn" onclick="switchTab('season')">🏆 Season</button>
+                <button class="tab-btn" onclick="switchTab('wardrobe')">🎨 Wardrobe</button>
+                <button class="tab-btn" onclick="switchTab('ascension')">🌟 Ascension</button>
+            </div>
+        </div>
+
+        <!-- TAB 1: SANCTUARY & HABITAT -->
+        <div id="tab-sanctuary" class="tab-content active">
+            <div style="font-size:0.7rem; color:var(--text-sub); display:flex; justify-content:space-between; align-items:center;">
+                <span>🐾 Interactive Playpen (Click toys/cats to bounce!)</span>
+                <span id="compendium-tally" style="font-weight:700; color:var(--accent);">Discovered: 0 / 100</span>
+            </div>
+            
+            <canvas id="playpen-canvas"></canvas>
+
+            <!-- Sanctuary Controls & Navigation -->
+            <div class="sanctuary-controls">
+                <div class="control-row">
+                    <div class="filter-pills" id="rarity-filter-group">
+                        <button class="pill-btn active" onclick="setSanctuaryFilter('all')">All</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('common')">Common</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('rare')">Rare</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('epic')">Epic</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('legendary')">Legend</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('mythic')">Mythic</button>
+                        <button class="pill-btn" onclick="setSanctuaryFilter('divine')">Divine</button>
+                    </div>
+
+                    <input type="text" class="search-box" id="sanc-search" placeholder="🔍 Search cat..." oninput="onSanctuarySearch(this.value)">
+                </div>
+
+                <div class="control-row">
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <span style="font-size:0.65rem; color:var(--text-sub);">Sort:</span>
+                        <select id="sanc-sort-select" onchange="onSanctuarySortChange(this.value)" style="background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:4px; font-size:0.65rem; padding:2px;">
+                            <option value="id">Number (#)</option>
+                            <option value="unlocked">Discovered First</option>
+                            <option value="rarity">Rarity (High→Low)</option>
+                            <option value="level">Level (High→Low)</option>
+                            <option value="fps">Output DPS</option>
+                            <option value="name">Name (A-Z)</option>
+                        </select>
+
+                        <span style="font-size:0.65rem; color:var(--text-sub); margin-left:6px;">View:</span>
+                        <select id="sanc-pagesize-select" onchange="onSanctuaryPageSizeChange(this.value)" style="background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:4px; font-size:0.65rem; padding:2px;">
+                            <option value="12">12 / page</option>
+                            <option value="24" selected>24 / page</option>
+                            <option value="48">48 / page</option>
+                            <option value="100">Show All (100)</option>
+                        </select>
+                    </div>
+
+                    <div class="pagination-bar" id="sanc-pagination-container">
+                        <button class="page-btn" id="sanc-first-btn" onclick="goSanctuaryPage(1)">«</button>
+                        <button class="page-btn" id="sanc-prev-btn" onclick="changeSanctuaryPage(-1)">‹</button>
+                        <span class="page-indicator" id="sanc-page-info">Page 1 / 5</span>
+                        <button class="page-btn" id="sanc-next-btn" onclick="changeSanctuaryPage(1)">›</button>
+                        <button class="page-btn" id="sanc-last-btn" onclick="goSanctuaryPage(9999)">»</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsive Cat Grid Container -->
+            <div class="cat-grid-wrapper">
+                <div class="cat-grid-responsive" id="sanctuary-grid"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: GACHA ALTAR -->
+        <div id="tab-gacha" class="tab-content">
+            <div class="gacha-grid">
+                <!-- Standard Box -->
+                <div class="banner-card">
+                    <h3><span>📦 Alleyway Box</span> <small style="color:var(--primary);">🐟 Fish</small></h3>
+                    <p class="banner-desc">Neighborhood strays and friendly domestic companions.</p>
+                    <div class="banner-rates">Common: 70% | Rare: 25% | Epic: 5%</div>
+                    <div style="font-size:0.68rem; color:var(--accent);">Pity to 4★+: <span id="pity-standard">0</span>/30</div>
+                    <div style="display:flex; gap:4px; margin-top:auto;">
+                        <button class="btn" style="flex:1;" id="btn-pull-std-1" onclick="summonCat('standard', 1)">1x (<span id="cost-std-1">250</span> 🐟)</button>
+                        <button class="btn btn-gold" style="flex:1.2;" id="btn-pull-std-10" onclick="summonCat('standard', 10)">10x (<span id="cost-std-10">2.25k</span> 🐟)</button>
+                    </div>
+                </div>
+
+                <!-- Jewel Vault -->
+                <div class="banner-card" style="border-color: rgba(165,94,234,0.4);">
+                    <h3><span>💎 Royal Jewel Vault</span> <small style="color:var(--gem-color);">💎 Gems</small></h3>
+                    <p class="banner-desc">High chance for Knights, Royal felines, and Cyborg masters.</p>
+                    <div class="banner-rates">Rare: 55% | Epic: 34% | Legendary: 10% | Mythic: 1%</div>
+                    <div style="font-size:0.68rem; color:var(--accent);">Pity to 5★: <span id="pity-jewel">0</span>/25</div>
+                    <div style="display:flex; gap:4px; margin-top:auto;">
+                        <button class="btn btn-gem" style="flex:1;" id="btn-pull-gem-1" onclick="summonCat('jewel', 1)">1x (20 💎)</button>
+                        <button class="btn btn-gem" style="flex:1.2;" id="btn-pull-gem-10" onclick="summonCat('jewel', 10)">10x (180 💎)</button>
+                    </div>
+                </div>
+
+                <!-- Elemental Catnip -->
+                <div class="banner-card" style="border-color: rgba(32,191,107,0.4);">
+                    <h3><span>🌿 Elemental Nexus</span> <small style="color:var(--nip-color);">🌿 Catnip</small></h3>
+                    <p class="banner-desc">Elemental spirits that unlock powerful team resonance perks.</p>
+                    <div class="banner-rates">Epic: 65% | Legendary: 28% | Mythic: 7%</div>
+                    <div style="font-size:0.68rem; color:var(--accent);">Pity: <span id="pity-nip">0</span>/15</div>
+                    <div style="display:flex; gap:4px; margin-top:auto;">
+                        <button class="btn btn-nip" style="flex:1;" id="btn-pull-nip-1" onclick="summonCat('elemental', 1)">1x (4 🌿)</button>
+                        <button class="btn btn-nip" style="flex:1.2;" id="btn-pull-nip-5" onclick="summonCat('elemental', 5)">5x (18 🌿)</button>
+                    </div>
+                </div>
+
+                <!-- Astral Pantheon -->
+                <div class="banner-card" style="border-color: rgba(235,59,90,0.4);">
+                    <h3><span>🧶 Astral Pantheon</span> <small style="color:var(--yarn-color);">🧶 Yarn</small></h3>
+                    <p class="banner-desc">Transcendent beings and Divine cosmic deities from beyond.</p>
+                    <div class="banner-rates">Legendary: 40% | Mythic: 45% | Divine: 15%</div>
+                    <div style="font-size:0.68rem; color:var(--accent);">Guaranteed High Tier</div>
+                    <div style="display:flex; gap:4px; margin-top:auto;">
+                        <button class="btn btn-divine" style="width:100%; justify-content:center;" id="btn-pull-yarn-1" onclick="summonCat('astral', 1)">1x Astral Pull (2 🧶)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.04); font-size:0.75rem; color:var(--accent); font-weight:700; margin-top:4px;">
+                🎪 Rotating Specialty Banners
+            </div>
+
+            <div class="gacha-grid">
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🧸 Cozy Parade</b><span class="badge-mini">FISH</span></div><p class="banner-desc">Common and Rare comfort cats with Epic potential.</p><div class="choice-row"><button class="btn" onclick="summonSpecialBanner('cozy',1)">1x 2.5k 🐟</button><button class="btn btn-gold" onclick="summonSpecialBanner('cozy',10)">10x 22.5k 🐟</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🎉 Grand Festival</b><span class="badge-mini">FISH</span></div><p class="banner-desc">High Rare/Epic odds and a direct path to Legendaries.</p><div class="choice-row"><button class="btn" onclick="summonSpecialBanner('festival',1)">1x 250k 🐟</button><button class="btn btn-gold" onclick="summonSpecialBanner('festival',10)">10x 2.25M 🐟</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🌊 Tidal Treasury</b><span class="badge-mini">NIP</span></div><p class="banner-desc">Aquatic spirit pool with strong Legendary drop rates.</p><div class="choice-row"><button class="btn btn-nip" onclick="summonSpecialBanner('tidal',1)">1x 8 🌿</button><button class="btn btn-nip" onclick="summonSpecialBanner('tidal',10)">10x 72 🌿</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🔮 Mystic Archive</b><span class="badge-mini">GEMS</span></div><p class="banner-desc">Mystic and Void cats with Mythic potential.</p><div class="choice-row"><button class="btn btn-gem" onclick="summonSpecialBanner('mystic',1)">1x 35 💎</button><button class="btn btn-gem" onclick="summonSpecialBanner('mystic',10)">10x 315 💎</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🤖 Cyber Circuit</b><span class="badge-mini">GEMS</span></div><p class="banner-desc">Cyber cats and high-tech builds dominate this pool.</p><div class="choice-row"><button class="btn btn-gem" onclick="summonSpecialBanner('cyber',1)">1x 35 💎</button><button class="btn btn-gem" onclick="summonSpecialBanner('cyber',10)">10x 315 💎</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>👑 Royal Hunt</b><span class="badge-mini">GEMS</span></div><p class="banner-desc">Epic-heavy banner with frequent Legendary drops.</p><div class="choice-row"><button class="btn btn-gem" onclick="summonSpecialBanner('royal',1)">1x 50 💎</button><button class="btn btn-gem" onclick="summonSpecialBanner('royal',10)">10x 450 💎</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>🌌 Mythic Frontier</b><span class="badge-mini">YARN</span></div><p class="banner-desc">Legendary and Mythic cats with Divine jackpot chance.</p><div class="choice-row"><button class="btn btn-divine" onclick="summonSpecialBanner('mythic',1)">1x 4 🧶</button><button class="btn btn-divine" onclick="summonSpecialBanner('mythic',10)">10x 36 🧶</button></div></div>
+                <div class="banner-card"><div style="display:flex;justify-content:space-between"><b>✨ Divine Gate</b><span class="badge-mini">YARN</span></div><p class="banner-desc">Endgame banner built around Mythic & Divine gods.</p><div class="choice-row"><button class="btn btn-divine" onclick="summonSpecialBanner('divine',1)">1x 8 🧶</button><button class="btn btn-divine" onclick="summonSpecialBanner('divine',10)">10x 72 🧶</button></div></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: BAKERY -->
+        <div id="tab-bakery" class="tab-content">
+            <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:6px 8px; font-size:0.72rem; color:var(--text-sub);">
+                👨‍🍳 Craft gourmet cat food to activate temporary global feasting buffs or gain instant boosts!
+            </div>
+            <div class="item-list" id="bakery-recipes-container"></div>
+        </div>
+
+        <!-- TAB 4: UPGRADES -->
+        <div id="tab-upgrades" class="tab-content">
+            <div class="item-list" id="upgrades-container"></div>
+        </div>
+
+        <!-- TAB 5: NEKO TOWER RAID -->
+        <div id="tab-dungeon" class="tab-content">
+            <div class="dungeon-arena">
+                <h3 id="dungeon-boss-name" style="font-size:0.95rem; color:var(--mythic);">Floor 1: The Roaring Vacuum Monster</h3>
+                <div style="font-size:3rem; margin:6px 0;" id="dungeon-boss-icon">🧹⚡</div>
+                <div class="boss-hp-bar">
+                    <div class="boss-hp-fill" id="boss-hp-fill"></div>
+                </div>
+                <div style="font-size:0.72rem; display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span id="boss-hp-text">HP: 1,000 / 1,000</span>
+                    <span id="dungeon-team-dps" style="color:var(--relic-color);">Team ATK: 50 /s</span>
+                </div>
+                <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="attackBossManual()">⚔️ Attack Monster!</button>
+            </div>
+            <div style="margin-top:6px;">
+                <h4 style="font-size:0.8rem; margin-bottom:4px;">Dungeon Relic Upgrades</h4>
+                <div class="item-list" id="relic-upgrades-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 6: QUESTS -->
+        <div id="tab-quests" class="tab-content">
+            <div class="item-list" id="quests-container"></div>
+        </div>
+
+        <!-- TAB 7: EXPEDITIONS -->
+        <div id="tab-expeditions" class="tab-content">
+            <div class="item-list" id="expeditions-container"></div>
+        </div>
+
+        <!-- TAB 8: ASTRAL TREE -->
+        <div id="tab-astral" class="tab-content">
+            <div style="text-align:center; padding:10px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:6px;">
+                <div style="font-size:1.8rem;">🌌</div>
+                <h3 style="font-size:0.9rem;">Cosmic Transcension</h3>
+                <p style="font-size:0.7rem; color:var(--text-sub); margin:3px 0 6px;">
+                    Sacrifice temporary fish and standard upgrades to weave permanent <b>Golden Yarn</b>.
+                </p>
+                <div style="font-size:1rem; font-weight:900; color:var(--yarn-color);" id="pending-yarn">Pending Yarn: +0 🧶</div>
+                <button class="btn btn-divine" style="margin: 6px auto 0; width: 100%; max-width: 260px; justify-content:center;" onclick="performRebirth()">
+                    Perform Astral Rebirth
+                </button>
+            </div>
+            <h4 style="margin-bottom:4px; font-size:0.8rem;">Astral Constellations</h4>
+            <div class="item-list" id="astral-container"></div>
+        </div>
+
+        <!-- TAB 9: REGIONS -->
+        <div id="tab-regions" class="tab-content">
+            <div class="expansion-header"><h2>🌎 Sanctuary Regions</h2><span class="subtle" id="region-status">Restore the world one sanctuary at a time.</span></div>
+            <div class="exp-grid" id="regions-container"></div>
+        </div>
+
+        <!-- TAB 10: MASTERY -->
+        <div id="tab-mastery" class="tab-content">
+            <div class="expansion-header"><h2>⭐ Cat Mastery & Traits</h2><span class="subtle">Train cats to permanently strengthen your sanctuary.</span></div>
+            <div class="big-card"><div class="statline"><span>Mastery Points</span><b id="mastery-points">0</b></div><div class="statline"><span>Best Mastery</span><b id="best-mastery">0</b></div></div>
+            <div class="card-grid" id="mastery-container" style="margin-top:6px"></div>
+        </div>
+
+        <!-- TAB 11: RESEARCH -->
+        <div id="tab-research" class="tab-content">
+            <div class="expansion-header"><h2>🔬 Research Laboratory</h2><span class="subtle">Research is permanent and persists through prestiges.</span></div>
+            <div class="big-card"><div class="statline"><span>Research Points</span><b id="research-points">0</b></div><div class="choice-row"><button class="btn" onclick="setBuild('economy')">🐟 Economy</button><button class="btn" onclick="setBuild('combat')">⚔️ Combat</button><button class="btn" onclick="setBuild('gacha')">🎰 Gacha</button><button class="btn" onclick="setBuild('explorer')">🧭 Explorer</button></div><div class="subtle" id="build-status" style="margin-top:4px"></div></div>
+            <div class="card-grid" id="research-container" style="margin-top:6px"></div>
+        </div>
+
+        <!-- TAB 12: COLLECTION -->
+        <div id="tab-collection" class="tab-content">
+            <div class="expansion-header"><h2>🏺 Grand Collection</h2><span class="subtle">Artifacts & Achievements</span></div>
+            <div class="card-grid" id="collection-container"></div>
+        </div>
+
+        <!-- TAB 13: DAILY CHALLENGES -->
+        <div id="tab-daily" class="tab-content">
+            <div class="expansion-header"><h2>📅 Challenges</h2><span class="subtle" id="streak-status">Return daily for streak rewards.</span></div>
+            <div class="card-grid" id="daily-container"></div>
+        </div>
+
+        <!-- TAB 14: MERCHANT -->
+        <div id="tab-merchant" class="tab-content">
+            <div class="expansion-header"><h2>🏪 Traveling Cat Merchant</h2><span class="subtle" id="merchant-timer">Refreshes periodically</span></div>
+            <div class="card-grid" id="merchant-container"></div>
+        </div>
+
+        <!-- TAB 15: LAB -->
+        <div id="tab-lab" class="tab-content">
+            <div class="expansion-header"><h2>🧬 Cat Evolution Lab</h2><span class="subtle">Push your favorite felines to awakened status.</span></div>
+            <div class="big-card">
+                <div class="statline"><span>Awakened Cats</span><b id="awakened-count">0</b></div>
+                <div class="statline"><span>Lab Level</span><b id="lab-level">1</b></div>
+                <p class="subtle">Awakened cats gain massive combat and production multipliers.</p>
+            </div>
+            <div class="card-grid" id="lab-container"></div>
+        </div>
+
+        <!-- TAB 16: TRIALS -->
+        <div id="tab-trials" class="tab-content">
+            <div class="expansion-header"><h2>🎲 Endless Trials</h2><span class="subtle" id="trial-status">Procedural combat trials with rotating modifiers.</span></div>
+            <div class="big-card">
+                <div class="statline"><span>Current Floor</span><b id="trial-floor">1</b></div>
+                <div class="statline"><span>Best Floor</span><b id="trial-best">1</b></div>
+                <div class="statline"><span>Tickets</span><b id="trial-tickets">3</b></div>
+                <div id="trial-modifier" class="badge-mini" style="margin:4px 0;">Modifier</div>
+                <div id="trial-enemy" style="font-size:1.6rem; margin:4px 0;">🎲🐱</div>
+                <div class="progress-mini"><div id="trial-progress" style="width:0%"></div></div>
+                <p id="trial-desc" class="subtle"></p>
+                <div class="choice-row">
+                    <button class="btn btn-gold" onclick="runTrial()">⚔️ Challenge</button>
+                    <button class="btn" onclick="rerollTrialModifier()">🔄 Reroll (1 💎)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 17: SEASON -->
+        <div id="tab-season" class="tab-content">
+            <div class="expansion-header"><h2>🏆 Neko Season</h2><span class="subtle">Earn Season XP from all activities.</span></div>
+            <div class="big-card">
+                <div class="statline"><span>Season XP</span><b id="season-xp">0</b></div>
+                <div class="statline"><span>Tier</span><b id="season-tier">1 / 30</b></div>
+                <div class="progress-mini"><div id="season-progress" style="width:0%"></div></div>
+            </div>
+            <div class="season-track" id="season-container"></div>
+        </div>
+
+        <!-- TAB 18: WARDROBE -->
+        <div id="tab-wardrobe" class="tab-content">
+            <div class="expansion-header"><h2>🎨 Sanctuary Themes</h2><span class="subtle">Customize your sanctuary look.</span></div>
+            <div class="card-grid" id="wardrobe-container"></div>
+        </div>
+
+        <!-- TAB 19: ASCENSION -->
+        <div id="tab-ascension" class="tab-content">
+            <div class="expansion-header"><h2>🌟 Cosmic Ascension</h2><span class="subtle">The ultimate second prestige layer.</span></div>
+            <div class="big-card">
+                <div class="statline"><span>Ascensions</span><b id="ascension-count">0</b></div>
+                <div class="statline"><span>Cosmic Cores</span><b id="core-count">0</b></div>
+                <p class="subtle">Requires 5 Golden Yarn and 25M lifetime fish. Grants permanent Cosmic Cores.</p>
+                <button class="btn btn-divine" style="margin-top:6px; width:100%; justify-content:center;" onclick="performAscension()">🌟 Ascend</button>
+            </div>
+            <div class="card-grid" id="ascension-container" style="margin-top:6px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Modal: Cat Details & Equip -->
+<div class="modal-overlay" id="cat-modal" onclick="if(event.target===this)closeModal('cat-modal')">
+    <div class="modal-box" id="cat-modal-content"></div>
+</div>
+
+<!-- Modal: Summon Reveal -->
+<div class="modal-overlay" id="summon-modal" onclick="if(event.target===this)closeModal('summon-modal')">
+    <div class="modal-box">
+        <h2 id="modal-title" style="color: var(--accent); font-size:1.1rem;">Summon Results</h2>
+        <div class="summon-results-grid" id="summon-results"></div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+            <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="closeModal('summon-modal')">Confirm & Collect</button>
+            <button class="btn" style="width: 100%; justify-content: center; background:#2c2840;" onclick="closeModal('summon-modal'); switchTab('sanctuary');">🐾 View in Sanctuary</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: HOW TO PLAY / DETAILED GUIDE -->
+<div class="modal-overlay" id="help-modal" onclick="if(event.target===this)closeModal('help-modal')">
+    <div class="modal-box" style="text-align:left;">
+        <h2 style="color:var(--accent); font-size:1.15rem; margin-bottom:8px; text-align:center;">📖 Sanctuary Caretaker's Codex</h2>
+        
+        <div class="help-section">
+            <h4>🐟 1. Economy & Manual Tapping</h4>
+            <p>Tap the big pet cat to generate <b>Fish</b>. Tapping rapidly fills the <b>Meow Frenzy gauge</b>—triggering a 10-second frenzy multiplying all production by <b>2.5x</b>!</p>
+        </div>
+
+        <div class="help-section">
+            <h4>🌌 2. Gacha Banners & Pity System</h4>
+            <p>Spend Fish, Gems, Catnip, and Golden Yarn to summon 100 unique cat species across 6 rarity tiers (Common to Divine). Each banner has guaranteed pity counter mechanics for high-star cats.</p>
+            <ul>
+                <li><b>Duplicate Copies:</b> Every 5 copies automatically promote a cat to a higher Star Rank (up to 5★).</li>
+                <li><b>Prismatic Awakening:</b> 10 excess copies at 5★ unlock a rainbow Prismatic evolution (+120% Output)!</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>⚔️ 3. Team Synergies & Tower Raids</h4>
+            <p>Equip up to 5 cats in your active Battle Team. Matching elemental felines activates powerful sanctuary-wide resonance multipliers:</p>
+            <ul>
+                <li><b>2+ Celestial:</b> +35% Global Production</li>
+                <li><b>2+ Mystic:</b> +30% Global Production</li>
+                <li><b>2+ Cyber:</b> +25% Global Production</li>
+                <li><b>2+ Void:</b> +45% Global Production</li>
+                <li><b>2+ Aquatic:</b> +20% Global Production</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>🔮 4. Dual Prestige Hierarchy</h4>
+            <p><b>Layer 1 (Astral Rebirth):</b> Trade temporary fish for permanent <b>Golden Yarn</b> to unlock cosmic perks and pull on the Astral Pantheon banner.</p>
+            <p><b>Layer 2 (Cosmic Ascension):</b> The ultimate endgame reset. Sacrifice Yarn & fish for <b>Cosmic Cores</b> that grant permanent core multiplicative multipliers.</p>
+        </div>
+
+        <div class="help-section">
+            <h4>🧬 5. Lab, Trials & Expeditions</h4>
+            <p>Assign cats to time-based expeditions, roll procedural modifiers in Endless Trials, unlock research trees, and awaken custom traits in the Cat Evolution Lab!</p>
+        </div>
+
+        <button class="btn btn-gold" style="width: 100%; justify-content: center; margin-top:8px;" onclick="closeModal('help-modal')">Got it, Let's Play!</button>
+    </div>
+</div>
+
+<!-- Modal: SAVE SLOTS & PROFILES -->
+<div class="modal-overlay" id="slots-modal" onclick="if(event.target===this)closeModal('slots-modal')">
+    <div class="modal-box">
+        <h2 style="color:var(--accent); font-size:1.15rem; margin-bottom:8px;">💾 Save Profiles & Slots</h2>
+        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Switch profiles, create new runs, or manage your backups.</p>
+
+        <div id="slots-list-container"></div>
+
+        <div style="display:flex; flex-direction:column; gap:4px; margin-top:8px;">
+            <button class="btn btn-danger" style="justify-content:center;" onclick="confirmHardReset()">⚠️ Hard Reset Current Slot</button>
+            <button class="btn" style="justify-content:center; background:#302b42;" onclick="closeModal('slots-modal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: SETTINGS & PREFERENCES -->
+<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeModal('settings-modal')">
+    <div class="modal-box">
+        <h2 style="color:var(--accent); font-size:1.15rem; margin-bottom:12px;">⚙️ Game Settings</h2>
+        
+        <div class="item-list">
+            <div class="list-entry">
+                <div class="entry-info">
+                    <h4>Sound Effects (SFX)</h4>
+                    <p>Meows, chimes, and tap audio effects.</p>
+                </div>
+                <button class="btn" id="cfg-sfx-btn" onclick="toggleSFX()">🔊 Enabled</button>
+            </div>
+
+            <div class="list-entry">
+                <div class="entry-info">
+                    <h4>Fast Gacha Summons</h4>
+                    <p>Skips summon delays for instant multi-pulls.</p>
+                </div>
+                <button class="btn" id="cfg-fastgacha-btn" onclick="toggleFastGacha()">⚡ OFF</button>
+            </div>
+
+            <div class="list-entry">
+                <div class="entry-info">
+                    <h4>Auto-Save Interval</h4>
+                    <p>Saves progress to local storage automatically.</p>
+                </div>
+                <span class="badge-mini" style="font-size:0.7rem; padding:4px 8px;">Every 20s</span>
+            </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:4px; margin-top:12px;">
+            <button class="btn btn-gold" style="justify-content:center;" onclick="saveGame(true)">💾 Save Game Now</button>
+            <button class="btn" style="justify-content:center; background:#302b42;" onclick="closeModal('settings-modal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: OFFLINE WELCOME -->
+<div class="modal-overlay" id="offline-modal" onclick="if(event.target===this)closeModal('offline-modal')">
+    <div class="modal-box">
+        <div style="font-size:2.8rem; margin-bottom:4px;">💤🍣</div>
+        <h2 style="color:var(--accent); font-size:1.15rem;">Welcome Back, Caretaker!</h2>
+        <p style="font-size:0.75rem; color:var(--text-sub); margin:6px 0 12px;" id="offline-msg">
+            Your cats worked hard while you were resting!
+        </p>
+        <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px; margin-bottom:12px;">
+            <div class="statline"><span>Time Away:</span><b id="offline-time">0s</b></div>
+            <div class="statline"><span>Fish Gathered:</span><b id="offline-fish" style="color:var(--primary);">+0 🐟</b></div>
+        </div>
+        <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="closeModal('offline-modal')">Collect Fish!</button>
+    </div>
+</div>
+
+<script>
+/* =========================================================================
+   1. SOUND FX ENGINE & AUDIO CONTROLS
+   ========================================================================= */
+let audioCtx = null;
+let soundEnabled = true;
+let fastGacha = false;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function playAudio(type) {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const t = ctx.currentTime;
+
+        if (type === 'tap') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(320, t);
+            osc.frequency.exponentialRampToValueAtTime(640, t + 0.04);
+            gain.gain.setValueAtTime(0.08, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(t); osc.stop(t + 0.04);
+        } else if (type === 'jackpot' || type === 'fever') {
+            [440, 554, 659, 880].forEach((f, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = f;
+                gain.gain.setValueAtTime(0.07, t + i * 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.05 + 0.2);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(t + i * 0.05); osc.stop(t + i * 0.05 + 0.2);
+            });
+        }
+    } catch(e) {}
+}
+
+function toggleSFX() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sfx-toggle-btn').innerText = soundEnabled ? '🔊 SFX: ON' : '🔇 SFX: OFF';
+    const cfgBtn = document.getElementById('cfg-sfx-btn');
+    if (cfgBtn) cfgBtn.innerText = soundEnabled ? '🔊 Enabled' : '🔇 Disabled';
+    showToast(soundEnabled ? "Sound Effects Enabled" : "Sound Muted");
+}
+
+function toggleFastGacha() {
+    fastGacha = !fastGacha;
+    const cfgBtn = document.getElementById('cfg-fastgacha-btn');
+    if (cfgBtn) cfgBtn.innerText = fastGacha ? '⚡ ON' : '⚡ OFF';
+    showToast(fastGacha ? "Fast Gacha ON (Instant Result)" : "Fast Gacha OFF");
+}
+
+/* =========================================================================
+   2. DATABASE (100 CATS FULL COMPENDIUM - REBALANCED PROGRESSION)
+   ========================================================================= */
+const RARITY_COST_MULTIPLIER = {
+    common: 1,
+    rare: 2.2,
+    epic: 6,
+    legendary: 20,
+    mythic: 80,
+    divine: 350
+};
+
+const CAT_DB = [
+    // COMMON (1-10) -> [Base: 1 - 15 FPS]
+    { id: 1, name: "Cardboard Stray", rarity: "common", element: "Normal", icon: "📦🐱", baseFps: 1, atk: 2 },
+    { id: 2, name: "Calico Kitten", rarity: "common", element: "Normal", icon: "🐈", baseFps: 2, atk: 3 },
+    { id: 3, name: "Tubby Tabby", rarity: "common", element: "Normal", icon: "😼", baseFps: 3, atk: 5 },
+    { id: 4, name: "Barista Whiskers", rarity: "common", element: "Normal", icon: "☕🐱", baseFps: 4, atk: 7 },
+    { id: 5, name: "Snoozy Loaf", rarity: "common", element: "Normal", icon: "🍞🐱", baseFps: 5, atk: 9 },
+    { id: 6, name: "Alley Scrapper", rarity: "common", element: "Normal", icon: "🩹🐱", baseFps: 7, atk: 12 },
+    { id: 7, name: "Puddle Pouncer", rarity: "common", element: "Aquatic", icon: "🐾🌊", baseFps: 9, atk: 15 },
+    { id: 8, name: "Blanket Bean", rarity: "common", element: "Normal", icon: "🛏️🐱", baseFps: 11, atk: 18 },
+    { id: 9, name: "Mochi Muncher", rarity: "common", element: "Normal", icon: "🍡🐱", baseFps: 13, atk: 22 },
+    { id: 10, name: "Sock Bandit", rarity: "common", element: "Normal", icon: "🧦🐱", baseFps: 15, atk: 26 },
+
+    // RARE (11-26) -> [Base: 22 - 120 FPS]
+    { id: 11, name: "Sushi Apprentice", rarity: "rare", element: "Aquatic", icon: "🍣🐱", baseFps: 22, atk: 35 },
+    { id: 12, name: "Lucky Maneki", rarity: "rare", element: "Mystic", icon: "🪙🐱", baseFps: 26, atk: 42 },
+    { id: 13, name: "Gamer Mew", rarity: "rare", element: "Cyber", icon: "🎮🐱", baseFps: 31, atk: 50 },
+    { id: 14, name: "Samurai Paw", rarity: "rare", element: "Normal", icon: "⚔️🐱", baseFps: 36, atk: 60 },
+    { id: 15, name: "Chef Purr-dee", rarity: "rare", element: "Normal", icon: "👨‍🍳🐱", baseFps: 42, atk: 70 },
+    { id: 16, name: "Gardener Sprout", rarity: "rare", element: "Mystic", icon: "🌱🐱", baseFps: 48, atk: 80 },
+    { id: 17, name: "Sailor Paws", rarity: "rare", element: "Aquatic", icon: "⛵🐱", baseFps: 55, atk: 92 },
+    { id: 18, name: "Detective Sherlock", rarity: "rare", element: "Mystic", icon: "🔍🐱", baseFps: 62, atk: 105 },
+    { id: 19, name: "Bubble Diver", rarity: "rare", element: "Aquatic", icon: "🤿🐱", baseFps: 70, atk: 120 },
+    { id: 20, name: "Moon Baker", rarity: "rare", element: "Mystic", icon: "🌙🥐", baseFps: 78, atk: 135 },
+    { id: 21, name: "Arcade Ace", rarity: "rare", element: "Cyber", icon: "🕹️🐱", baseFps: 86, atk: 150 },
+    { id: 22, name: "Forest Ranger", rarity: "rare", element: "Mystic", icon: "🏕️🐱", baseFps: 94, atk: 165 },
+    { id: 23, name: "Harbor Captain", rarity: "rare", element: "Aquatic", icon: "⚓🐱", baseFps: 102, atk: 180 },
+    { id: 24, name: "Lucky Dealer", rarity: "rare", element: "Mystic", icon: "🎴🐱", baseFps: 110, atk: 195 },
+    { id: 25, name: "Ramen Runner", rarity: "rare", element: "Normal", icon: "🍜🐱", baseFps: 118, atk: 210 },
+    { id: 26, name: "Drone Tamer", rarity: "rare", element: "Cyber", icon: "🚁🐱", baseFps: 126, atk: 225 },
+
+    // EPIC (27-50) -> [Base: 150 - 1,200 FPS]
+    { id: 27, name: "Cyber Meowcha", rarity: "epic", element: "Cyber", icon: "🤖🐱", baseFps: 160, atk: 280 },
+    { id: 28, name: "Astro Whiskers", rarity: "epic", element: "Celestial", icon: "👨‍🚀🐱", baseFps: 190, atk: 330 },
+    { id: 29, name: "Arcane Mage", rarity: "epic", element: "Mystic", icon: "🧙‍♂️🐱", baseFps: 225, atk: 390 },
+    { id: 30, name: "Inferno Tiger", rarity: "epic", element: "Mystic", icon: "🔥🐱", baseFps: 265, atk: 450 },
+    { id: 31, name: "Frostbite Yeti", rarity: "epic", element: "Aquatic", icon: "❄️🐱", baseFps: 310, atk: 520 },
+    { id: 32, name: "Valkyrie Wing", rarity: "epic", element: "Celestial", icon: "🪽🐱", baseFps: 360, atk: 600 },
+    { id: 33, name: "Shadow Ninja", rarity: "epic", element: "Void", icon: "🥷🐱", baseFps: 415, atk: 690 },
+    { id: 34, name: "Techno DJ", rarity: "epic", element: "Cyber", icon: "🎧🐱", baseFps: 475, atk: 780 },
+    { id: 35, name: "Thunder Pouncer", rarity: "epic", element: "Celestial", icon: "⚡🐱", baseFps: 540, atk: 880 },
+    { id: 36, name: "Volcano Chef", rarity: "epic", element: "Mystic", icon: "🌋🐱", baseFps: 610, atk: 990 },
+    { id: 37, name: "Glacier Guardian", rarity: "epic", element: "Aquatic", icon: "🧊🐱", baseFps: 685, atk: 1100 },
+    { id: 38, name: "Cyber Ronin", rarity: "epic", element: "Cyber", icon: "🦾🐱", baseFps: 765, atk: 1220 },
+    { id: 39, name: "Phantom Archer", rarity: "epic", element: "Void", icon: "🏹🐱", baseFps: 850, atk: 1350 },
+    { id: 40, name: "Starship Pilot", rarity: "epic", element: "Celestial", icon: "🚀🐱", baseFps: 940, atk: 1490 },
+    { id: 41, name: "Jade Alchemist", rarity: "epic", element: "Mystic", icon: "🧪🐱", baseFps: 1035, atk: 1640 },
+    { id: 42, name: "Neon Racer", rarity: "epic", element: "Cyber", icon: "🏎️🐱", baseFps: 1135, atk: 1800 },
+    { id: 43, name: "Deep Sea Witch", rarity: "epic", element: "Aquatic", icon: "🧜🐱", baseFps: 1240, atk: 1960 },
+    { id: 44, name: "Dream Weaver", rarity: "epic", element: "Mystic", icon: "💤🐱", baseFps: 1350, atk: 2130 },
+    { id: 45, name: "Shadow Hacker", rarity: "epic", element: "Void", icon: "💻🐱", baseFps: 1465, atk: 2310 },
+    { id: 46, name: "Solar Knight", rarity: "epic", element: "Celestial", icon: "☀️🐱", baseFps: 1585, atk: 2500 },
+    { id: 47, name: "Comet Surfer", rarity: "epic", element: "Celestial", icon: "☄️🐱", baseFps: 1710, atk: 2700 },
+    { id: 48, name: "Crystal Guardian", rarity: "epic", element: "Void", icon: "💎🐱", baseFps: 1840, atk: 2910 },
+    { id: 49, name: "Stargazer", rarity: "epic", element: "Celestial", icon: "🔭🐱", baseFps: 1975, atk: 3130 },
+    { id: 50, name: "Toy Engineer", rarity: "epic", element: "Cyber", icon: "🧸🐱", baseFps: 2115, atk: 3360 },
+
+    // LEGENDARY (51-74) -> [Base: 2,500 - 18,000 FPS]
+    { id: 51, name: "Pharaoh Bastet", rarity: "legendary", element: "Mystic", icon: "👑🐱", baseFps: 2600, atk: 4200 },
+    { id: 52, name: "Cyber Overlord", rarity: "legendary", element: "Cyber", icon: "🕶️🐱", baseFps: 3000, atk: 4800 },
+    { id: 53, name: "Seraphim Angel", rarity: "legendary", element: "Celestial", icon: "👼🐱", baseFps: 3450, atk: 5500 },
+    { id: 54, name: "Abyssal Leviathan", rarity: "legendary", element: "Aquatic", icon: "🦑🐱", baseFps: 3950, atk: 6300 },
+    { id: 55, name: "Void Phantom", rarity: "legendary", element: "Void", icon: "🔮🐱", baseFps: 4500, atk: 7200 },
+    { id: 56, name: "Solar Flare Lion", rarity: "legendary", element: "Celestial", icon: "🦁✨", baseFps: 5100, atk: 8200 },
+    { id: 57, name: "Ember Emperor", rarity: "legendary", element: "Mystic", icon: "🔥👑", baseFps: 5750, atk: 9300 },
+    { id: 58, name: "Tidal Empress", rarity: "legendary", element: "Aquatic", icon: "🌊👑", baseFps: 6450, atk: 10500 },
+    { id: 59, name: "Cyber Valkyrie", rarity: "legendary", element: "Cyber", icon: "🤖🪽", baseFps: 7200, atk: 11800 },
+    { id: 60, name: "Void Samurai", rarity: "legendary", element: "Void", icon: "🗡️🌑", baseFps: 8000, atk: 13200 },
+    { id: 61, name: "Astral Chef", rarity: "legendary", element: "Celestial", icon: "🌌👨‍🍳", baseFps: 8850, atk: 14700 },
+    { id: 62, name: "Crystal Oracle", rarity: "legendary", element: "Void", icon: "🔮👁️", baseFps: 9750, atk: 16300 },
+    { id: 63, name: "Thunder Dragon", rarity: "legendary", element: "Celestial", icon: "🐉⚡", baseFps: 10700, atk: 18000 },
+    { id: 64, name: "Moonlit Assassin", rarity: "legendary", element: "Void", icon: "🌙🥷", baseFps: 11700, atk: 19800 },
+    { id: 65, name: "Royal Botanist", rarity: "legendary", element: "Mystic", icon: "👑🌿", baseFps: 12750, atk: 21700 },
+    { id: 66, name: "Neon Overdrive", rarity: "legendary", element: "Cyber", icon: "💿⚡", baseFps: 13850, atk: 23700 },
+    { id: 67, name: "Leviathan Rider", rarity: "legendary", element: "Aquatic", icon: "🐋🐱", baseFps: 15000, atk: 25800 },
+    { id: 68, name: "Sun King Neko", rarity: "legendary", element: "Celestial", icon: "☀️👑", baseFps: 16200, atk: 28000 },
+    { id: 69, name: "Festival Dancer", rarity: "legendary", element: "Normal", icon: "🎉🐱", baseFps: 17450, atk: 30300 },
+    { id: 70, name: "Coral Guardian", rarity: "legendary", element: "Aquatic", icon: "🪸🐱", baseFps: 18750, atk: 32700 },
+    { id: 71, name: "Window Watcher", rarity: "legendary", element: "Mystic", icon: "🪟🐱", baseFps: 20100, atk: 35200 },
+    { id: 72, name: "Book Nook", rarity: "legendary", element: "Mystic", icon: "📚🐱", baseFps: 21500, atk: 37800 },
+    { id: 73, name: "Pizza Paws", rarity: "legendary", element: "Normal", icon: "🍕🐱", baseFps: 22950, atk: 40500 },
+    { id: 74, name: "Raincoat Roo", rarity: "legendary", element: "Aquatic", icon: "🧥🐱", baseFps: 24450, atk: 43300 },
+
+    // MYTHIC (75-90) -> [Base: 30,000 - 350,000 FPS]
+    { id: 75, name: "Nyan Cosmic God", rarity: "mythic", element: "Celestial", icon: "🌌🐱", baseFps: 32000, atk: 55000 },
+    { id: 76, name: "Chronos Time-Weaver", rarity: "mythic", element: "Mystic", icon: "⌛🐱", baseFps: 40000, atk: 68000 },
+    { id: 77, name: "Black Hole Singularity", rarity: "mythic", element: "Void", icon: "🕳️🐱", baseFps: 50000, atk: 84000 },
+    { id: 78, name: "Genesis World-Tree", rarity: "mythic", element: "Mystic", icon: "🌳🐱", baseFps: 63000, atk: 104000 },
+    { id: 79, name: "Quantum Matrix", rarity: "mythic", element: "Cyber", icon: "🧬🐱", baseFps: 78000, atk: 128000 },
+    { id: 80, name: "Galaxy Tiger", rarity: "mythic", element: "Celestial", icon: "🌌🐯", baseFps: 96000, atk: 156000 },
+    { id: 81, name: "Eternal Tide", rarity: "mythic", element: "Aquatic", icon: "♾️🌊", baseFps: 118000, atk: 190000 },
+    { id: 82, name: "Time Cat Prime", rarity: "mythic", element: "Mystic", icon: "⏳👑", baseFps: 144000, atk: 230000 },
+    { id: 83, name: "Null Walker", rarity: "mythic", element: "Void", icon: "0️⃣🐱", baseFps: 174000, atk: 276000 },
+    { id: 84, name: "Quantum Kitsune", rarity: "mythic", element: "Cyber", icon: "🦊⚡", baseFps: 208000, atk: 330000 },
+    { id: 85, name: "Dream Planet", rarity: "mythic", element: "Celestial", icon: "🪐💤", baseFps: 246000, atk: 390000 },
+    { id: 86, name: "World Forge", rarity: "mythic", element: "Mystic", icon: "🌍🔥", baseFps: 288000, atk: 456000 },
+    { id: 87, name: "Singularity Mage", rarity: "mythic", element: "Void", icon: "🕳️🧙", baseFps: 334000, atk: 528000 },
+    { id: 88, name: "Starlight Leviathan", rarity: "mythic", element: "Aquatic", icon: "🌟🐋", baseFps: 384000, atk: 606000 },
+    { id: 89, name: "Omni Circuit", rarity: "mythic", element: "Cyber", icon: "♾️⚡", baseFps: 438000, atk: 690000 },
+    { id: 90, name: "Tiny Mechanic", rarity: "mythic", element: "Cyber", icon: "🔧🐱", baseFps: 496000, atk: 780000 },
+
+    // DIVINE (91-100) -> [Base: 650,000 - 5,000,000 FPS]
+    { id: 91, name: "Omniscient Cat God", rarity: "divine", element: "Celestial", icon: "👁️🐱", baseFps: 650000, atk: 1050000 },
+    { id: 92, name: "Multiverse Sovereign", rarity: "divine", element: "Void", icon: "🪐🐱", baseFps: 850000, atk: 1350000 },
+    { id: 93, name: "Infinite Starlight Neko", rarity: "divine", element: "Celestial", icon: "🌠😻", baseFps: 1100000, atk: 1720000 },
+    { id: 94, name: "Celestial Emperor", rarity: "divine", element: "Celestial", icon: "👑🌌", baseFps: 1400000, atk: 2160000 },
+    { id: 95, name: "Void Empress", rarity: "divine", element: "Void", icon: "🌑👑", baseFps: 1780000, atk: 2680000 },
+    { id: 96, name: "Infinite Ocean", rarity: "divine", element: "Aquatic", icon: "🌊♾️", baseFps: 2240000, atk: 3300000 },
+    { id: 97, name: "Genesis Neko", rarity: "divine", element: "Mystic", icon: "🌱🌌", baseFps: 2800000, atk: 4050000 },
+    { id: 98, name: "Quantum Deity", rarity: "divine", element: "Cyber", icon: "🧬👁️", baseFps: 3480000, atk: 4950000 },
+    { id: 99, name: "Eternal Starlight", rarity: "divine", element: "Celestial", icon: "✨🌠", baseFps: 4280000, atk: 6000000 },
+    { id: 100, name: "Garden Napper Supreme", rarity: "divine", element: "Mystic", icon: "🌼😻", baseFps: 5200000, atk: 7200000 }
+];
+
+const UPGRADES_DB = [
+    { id: 'catnip_drops', name: 'Catnip Drops', cost: 50, scale: 1.65, desc: 'Increases manual tap power by +1 base' },
+    { id: 'auto_scratcher', name: 'Auto-Scratcher Post', cost: 250, scale: 1.60, desc: 'Generates +1 automatic tap per second' },
+    { id: 'sonar_radar', name: 'Fish Radar Sonar', cost: 1200, scale: 1.75, desc: 'Boosts all Cat production by +6%' },
+    { id: 'golden_lure', name: 'Golden Lure', cost: 5000, scale: 1.90, desc: 'Tapping has +1% chance to find Cat Gems' },
+    { id: 'nip_harvester', name: 'Hydroponic Garden', cost: 25000, scale: 2.10, desc: 'Passively produces Catnip periodically' },
+    { id: 'gourmet_pantry', name: 'Gourmet Salmon Pantry', cost: 120000, scale: 2.25, desc: 'Increases all global Fish gains by +15%' },
+    { id: 'auto_feeder', name: 'Auto-Dispenser Hub', cost: 650000, scale: 2.40, desc: 'Automated feedings boost overall sanctuary DPS by +20%' },
+    { id: 'thermal_lounge', name: 'Thermal Lounges', cost: 3500000, scale: 2.60, desc: 'Cozy warming beds boost passive fish output by +30%' }
+];
+
+const DUNGEON_BOSSES = [
+    { floor: 1, name: "The Roaring Vacuum Monster", icon: "🧹⚡", maxHp: 1200, relicReward: 5, gemReward: 5 },
+    { floor: 2, name: "The Elusive Red Laser Dot", icon: "🔴✨", maxHp: 6500, relicReward: 12, gemReward: 12 },
+    { floor: 3, name: "The Bath Tub Wave Fiend", icon: "🛁🌊", maxHp: 32000, relicReward: 25, gemReward: 25 },
+    { floor: 4, name: "The Giant Cosmic Yarn Titan", icon: "🧶👹", maxHp: 160000, relicReward: 60, gemReward: 60 },
+    { floor: 5, name: "Mecha Cucumbers from Space", icon: "🥒🤖", maxHp: 800000, relicReward: 150, gemReward: 150 }
+];
+
+const RELIC_UPGRADES_DB = [
+    { id: 'boss_slayer', name: 'Neko Battle Paws', cost: 5, scale: 1.7, desc: 'Increases active team attack power by +20%' },
+    { id: 'fish_relic', name: 'Golden Tuna Amulet', cost: 8, scale: 1.65, desc: 'Increases all global Fish gains by +15%' },
+    { id: 'relic_crit', name: 'Laser Focus Rune', cost: 12, scale: 1.85, desc: 'Gives a 5% chance for 3x Critical Taps' }
+];
+
+const BAKERY_RECIPES = [
+    { id: 'sashimi', name: 'Tuna Sashimi Roll', costFish: 5000, costNip: 1, duration: 60, buff: '2x Fish production for 60s', type: 'fish_buff' },
+    { id: 'brownie', name: 'Catnip Brownie', costFish: 30000, costNip: 4, duration: 60, buff: 'Auto-fills Frenzy Meter instantly', type: 'frenzy' },
+    { id: 'star_candy', name: 'Starlight Candy', costFish: 150000, costNip: 8, duration: 0, buff: 'Permanently grant +5 Gems & +1 Relic', type: 'instant' }
+];
+
+const EXPEDITIONS_DB = [
+    { id: 1, name: "Garden Insect Safari", duration: 30, reqCats: 2, reward: { fish: 400, gems: 3, nip: 1 } },
+    { id: 2, name: "Night Market Fish Raid", duration: 90, reqCats: 5, reward: { fish: 3500, gems: 12, nip: 2 } },
+    { id: 3, name: "Cyber Alley Infiltration", duration: 240, reqCats: 10, reward: { fish: 28000, gems: 40, nip: 6, relics: 2 } },
+    { id: 4, name: "Cosmic Nebula Cruise", duration: 600, reqCats: 18, reward: { fish: 220000, gems: 150, nip: 15, yarn: 1, relics: 8 } }
+];
+
+const QUESTS_DB = [
+    { id: 'tap_50', name: 'Swift Paws', desc: 'Tap the main cat 50 times', target: 50, type: 'taps', reward: { gems: 10, nip: 1 } },
+    { id: 'cats_5', name: 'Feline Crew', desc: 'Unlock 5 unique Cat species', target: 5, type: 'cats', reward: { gems: 20, nip: 3 } },
+    { id: 'cats_20', name: 'Full Sanctuary', desc: 'Unlock 20 unique Cat species', target: 20, type: 'cats', reward: { gems: 50, nip: 8 } },
+    { id: 'cats_50', name: 'Cat Megacity', desc: 'Unlock 50 unique Cat species', target: 50, type: 'cats', reward: { gems: 150, yarn: 2 } },
+    { id: 'pulls_20', name: 'Gacha Enthusiast', desc: 'Perform 20 total gacha summons', target: 20, type: 'summons', reward: { gems: 35, nip: 5 } },
+    { id: 'boss_1', name: 'Courageous Hunter', desc: 'Defeat Floor 1 in the Tower Raid', target: 1, type: 'boss_floor', reward: { gems: 30, relics: 5 } }
+];
+
+const ASTRAL_DB = [
+    { id: 'yarn_power', name: 'Cosmic Resonance', cost: 1, maxLvl: 10, desc: 'Increases all fish production by +25% per level' },
+    { id: 'gacha_luck', name: 'Fates Alignment', cost: 2, maxLvl: 5, desc: 'Increases high-tier Gacha pull rates by +5% per level' },
+    { id: 'speedy_paws', name: 'Warp Expeditions', cost: 2, maxLvl: 5, desc: 'Reduces all expedition durations by -10% per level' },
+    { id: 'team_harmony', name: 'Sanctuary Harmony', cost: 3, maxLvl: 5, desc: 'Increases all team elemental synergy bonuses by +15%' }
+];
+
+const REGION_DB = [
+    { id: 'valley', name: 'Meow Valley', icon: '🌳', req: 0, bonus: 0.05, desc: 'Starter sanctuary. Peaceful meadows.', reward: '+5% global fish output' },
+    { id: 'neon', name: 'Neon City', icon: '🌃', req: 25000, bonus: 0.08, desc: 'High-tech metropolis for cyber felines.', reward: '+8% cyber mastery & fish' },
+    { id: 'harbor', name: 'Moonlit Harbor', icon: '🌊', req: 200000, bonus: 0.10, desc: 'Aquatic expeditions yield greater treasure.', reward: '+10% expedition rewards' },
+    { id: 'ruins', name: 'Mystic Ruins', icon: '🏛️', req: 1500000, bonus: 0.12, desc: 'Ancient relic hunters gather here.', reward: '+12% relic yields' },
+    { id: 'observatory', name: 'Void Observatory', icon: '🔭', req: 12000000, bonus: 0.15, desc: 'Look deep into cosmic mystery.', reward: '+15% research point gains' },
+    { id: 'palace', name: 'Celestial Palace', icon: '🏰', req: 100000000, bonus: 0.20, desc: 'Sanctuary of the ultimate Cat Gods.', reward: '+20% permanent global production' }
+];
+
+const RESEARCH_DB = [
+    { id: 'econ', name: 'Efficient Fishery', cost: 2, max: 20, desc: '+3% fish production per level' },
+    { id: 'tap', name: 'Precision Paws', cost: 2, max: 15, desc: '+4% tap power per level' },
+    { id: 'combat', name: 'Battle Training', cost: 2, max: 20, desc: '+4% tower attack per level' },
+    { id: 'gacha', name: 'Fortune Studies', cost: 3, max: 15, desc: '+1% better-tier chance per level' },
+    { id: 'explore', name: 'Expedition Science', cost: 3, max: 15, desc: '+3% expedition rewards per level' },
+    { id: 'artifact', name: 'Artifact Analysis', cost: 4, max: 12, desc: '+2.5% artifact find chance per level' }
+];
+
+const TRAITS = ['Lucky', 'Fierce', 'Swift', 'Collector', 'Ancient', 'Focused'];
+
+const ARTIFACT_DB = [
+    ['goldfish', 'Golden Fish', '🐟', '+3% fish production'],
+    ['yarnball', 'Infinite Yarn Ball', '🧶', '+3% rebirth rewards'],
+    ['crown', 'Ancient Crown', '👑', '+4% boss rewards'],
+    ['key', 'Forgotten Key', '🗝️', '+4% expedition rewards'],
+    ['crystal', 'Void Crystal', '🔮', '+3% gacha luck'],
+    ['cartridge', 'Retro Cartridge', '🎮', '+3% mastery gain'],
+    ['feather', 'Lucky Feather', '🪶', '+2% rare event chance'],
+    ['bell', 'Celestial Bell', '🔔', '+3% challenge rewards']
+];
+
+const ACH_DB = [
+    ['first', 'First Friend', 'Unlock your first cat', 1],
+    ['collector', 'Cat Collector', 'Unlock 25 different cats', 25],
+    ['centurion', 'Century Sanctuary', 'Unlock all 100 cats', 100],
+    ['master', 'Master Trainer', 'Reach 50 total mastery levels', 50],
+    ['tower', 'Tower Climber', 'Reach Tower Floor 5', 5],
+    ['rich', 'Fish Tycoon', 'Earn 5,000,000 lifetime fish', 5000000],
+    ['astral', 'Star Walker', 'Perform 3 Astral rebirths', 3],
+    ['prismatic', 'Prismatic Pride', 'Awaken a Prismatic cat', 1]
+];
+
+const TRIAL_MODS = [
+    { name: '🐢 Heavy Armor', desc: 'Enemy HP +60%, rewards +50%', hp: 1.6, reward: 1.5 },
+    { name: '⚡ Overcharged', desc: 'Enemy ATK +50%, rewards +60%', hp: 1.3, reward: 1.6 },
+    { name: '💰 Treasure Run', desc: 'Enemy HP +30%, rewards +100%', hp: 1.3, reward: 2.0 },
+    { name: '🌑 Shadow Floor', desc: 'Team ATK -20%, rewards +80%', hp: 1.4, reward: 1.8 }
+];
+
+const WARDROBE_DB = [
+    { id: 'classic', name: 'Classic Night', icon: '🌙', desc: 'Original cozy sanctuary look.' },
+    { id: 'neon', name: 'Neon City', icon: '🌃', desc: 'Cyberpunk electric styling.' },
+    { id: 'forest', name: 'Moon Forest', icon: '🌲', desc: 'Serene emerald woodland.' },
+    { id: 'sunset', name: 'Golden Sunset', icon: '🌅', desc: 'Warm dusk twilight.' },
+    { id: 'void', name: 'Deep Void', icon: '🕳️', desc: 'Mystic cosmic void.' }
+];
+
+const SPECIAL_BANNERS = {
+    cozy: { currency: 'fish', one: 2500, ten: 22500, pity: 25, rarities: ['common','rare','epic'], weights: [55, 35, 10] },
+    festival: { currency: 'fish', one: 250000, ten: 2250000, pity: 20, rarities: ['rare','epic','legendary'], weights: [55, 35, 10] },
+    tidal: { currency: 'nip', one: 8, ten: 72, pity: 15, rarities: ['rare','epic','legendary'], weights: [45, 40, 15], elements: ['Aquatic'] },
+    mystic: { currency: 'gems', one: 35, ten: 315, pity: 20, rarities: ['rare','epic','legendary','mythic'], weights: [40, 40, 17, 3], elements: ['Mystic','Void'] },
+    cyber: { currency: 'gems', one: 35, ten: 315, pity: 20, rarities: ['rare','epic','legendary','mythic'], weights: [40, 40, 17, 3], elements: ['Cyber'] },
+    royal: { currency: 'gems', one: 50, ten: 450, pity: 15, rarities: ['epic','legendary','mythic'], weights: [55, 35, 10] },
+    mythic: { currency: 'yarn', one: 4, ten: 36, pity: 10, rarities: ['legendary','mythic','divine'], weights: [55, 40, 5] },
+    divine: { currency: 'yarn', one: 8, ten: 72, pity: 8, rarities: ['mythic','divine'], weights: [65, 35] }
+};
+
+const SEASON_REWARDS = [
+    ['💎', '25 Gems', 25], ['🐟', '10k Fish', 10000], ['🌿', '5 Catnip', 5], ['🧶', '1 Yarn', 1], ['💎', '50 Gems', 50],
+    ['🏺', '5 Relics', 5], ['🐟', '50k Fish', 50000], ['🌿', '10 Catnip', 10], ['💎', '80 Gems', 80], ['🧶', '2 Yarn', 2],
+    ['💎', '120 Gems', 120], ['🏺', '10 Relics', 10], ['🐟', '200k Fish', 200000], ['🌿', '20 Catnip', 20], ['🧶', '3 Yarn', 3],
+    ['💎', '200 Gems', 200], ['🏺', '15 Relics', 15], ['🐟', '1M Fish', 1000000], ['🌿', '30 Catnip', 30], ['🧶', '4 Yarn', 4],
+    ['💎', '300 Gems', 300], ['🏺', '25 Relics', 25], ['🐟', '5M Fish', 5000000], ['🧶', '6 Yarn', 6], ['💎', '500 Gems', 500],
+    ['🏺', '40 Relics', 40], ['🐟', '20M Fish', 20000000], ['🌿', '50 Catnip', 50], ['🧶', '10 Yarn', 10], ['🌟', 'Cosmic Core', 1]
+];
+
+/* =========================================================================
+   3. GAME STATE & SAVE SLOTS MANAGER
+   ========================================================================= */
+let activeSlotId = 1;
+
+function getFreshState() {
+    return {
+        fish: 0,
+        totalFishEarned: 0,
+        gems: 20,
+        nip: 3,
+        yarn: 0,
+        relics: 0,
+        taps: 0,
+        summons: 0,
+        fevers: 0,
+        feverGauge: 0,
+        standardPullCount: 0,
+        pity: { standard: 0, jewel: 0, nip: 0 },
+        bannerPity: {},
+        team: [1, 0, 0, 0, 0],
+        dungeon: { floor: 1, currentHp: 1200 },
+        cats: {},
+        upgrades: {},
+        relicUpgrades: {},
+        expeditions: {},
+        quests: {},
+        astral: {},
+        regions: { restored: { valley: 100 } },
+        mastery: {},
+        research: { points: 0, levels: {} },
+        build: 'economy',
+        artifacts: {},
+        daily: { day: '', progress: 0, claimed: false, streak: 0, week: '', weekly: 0, weeklyClaimed: false },
+        merchant: { seed: 0, refreshAt: 0, purchases: {} },
+        lab: { level: 1 },
+        trials: { floor: 1, best: 1, tickets: 3, lastDay: '', modifier: 0 },
+        season: { xp: 0, claimed: [] },
+        wardrobe: { equipped: 'classic' },
+        prestige: { ascension: 0, cores: 0, a0: 0, a1: 0, a2: 0, a3: 0 },
+        stats: { bosses: 0, expeditions: 0, rebirths: 0 }
+    };
+}
+
+let state = getFreshState();
+
+function initDefaults() {
+    CAT_DB.forEach(c => {
+        if (!state.cats[c.id]) {
+            state.cats[c.id] = { count: 0, stars: 1, level: 1, prismatic: false, awakened: false, awakenLevel: 0 };
+        }
+        if (!state.mastery[c.id]) {
+            state.mastery[c.id] = { xp: 0, level: 0, trait: null, traitRolls: 0 };
+        }
+    });
+    UPGRADES_DB.forEach(u => { if (state.upgrades[u.id] === undefined) state.upgrades[u.id] = 0; });
+    RELIC_UPGRADES_DB.forEach(r => { if (state.relicUpgrades[r.id] === undefined) state.relicUpgrades[r.id] = 0; });
+    EXPEDITIONS_DB.forEach(e => { if (!state.expeditions[e.id]) state.expeditions[e.id] = { active: false, remaining: 0 }; });
+    QUESTS_DB.forEach(q => { if (state.quests[q.id] === undefined) state.quests[q.id] = false; });
+    ASTRAL_DB.forEach(a => { if (state.astral[a.id] === undefined) state.astral[a.id] = 0; });
+    RESEARCH_DB.forEach(r => { if (state.research.levels[r.id] === undefined) state.research.levels[r.id] = 0; });
+    ARTIFACT_DB.forEach(a => { if (state.artifacts[a[0]] === undefined) state.artifacts[a[0]] = 0; });
+    REGION_DB.forEach(r => { if (state.regions.restored[r.id] === undefined) state.regions.restored[r.id] = r.id === 'valley' ? 100 : 0; });
+
+    // Starter Cat Guarantee
+    if (state.cats[1].count === 0) state.cats[1].count = 1;
+}
+
+let isFever = false;
+let feverDuration = 0;
+let feastBuffDuration = 0;
+let currentTab = 'sanctuary';
+
+// Sanctuary View Control
+let sancCurrentPage = 1;
+let sancPageSize = 24;
+let sancFilter = 'all';
+let sancSearchQuery = '';
+let sancSortMode = 'id';
+
+/* =========================================================================
+   4. STATS & MULTIPLIERS
+   ========================================================================= */
+function getCatLevelUpCost(catId) {
+    const cat = CAT_DB.find(c => c.id === catId);
+    const data = state.cats[catId];
+    if (!cat || !data) return 999999999;
+    const rarityMul = RARITY_COST_MULTIPLIER[cat.rarity] || 1;
+    return Math.floor(180 * rarityMul * Math.pow(1.36, data.level - 1));
+}
+
+function getTeamSynergies() {
+    const activeCats = state.team.filter(id => id > 0).map(id => CAT_DB.find(c => c.id === id)).filter(Boolean);
+    const elemCounts = {};
+    activeCats.forEach(c => { elemCounts[c.element] = (elemCounts[c.element] || 0) + 1; });
+
+    let synergyMult = 1.0;
+    const desc = [];
+    const harmonyBonus = 1 + ((state.astral['team_harmony'] || 0) * 0.15);
+
+    if ((elemCounts['Celestial'] || 0) >= 2) { synergyMult += (0.35 * harmonyBonus); desc.push("✨ Celestial (+35%)"); }
+    if ((elemCounts['Cyber'] || 0) >= 2) { synergyMult += (0.25 * harmonyBonus); desc.push("🤖 Cyber (+25%)"); }
+    if ((elemCounts['Aquatic'] || 0) >= 2) { synergyMult += (0.20 * harmonyBonus); desc.push("🌊 Aquatic (+20%)"); }
+    if ((elemCounts['Mystic'] || 0) >= 2) { synergyMult += (0.30 * harmonyBonus); desc.push("🔮 Mystic (+30%)"); }
+    if ((elemCounts['Void'] || 0) >= 2) { synergyMult += (0.45 * harmonyBonus); desc.push("🕳️ Void (+45%)"); }
+
+    return { mult: synergyMult, title: desc.length ? desc.join(", ") : "No Synergies" };
+}
+
+function getFishMultiplier() {
+    let mult = 1.0;
+    mult *= 1 + (state.yarn * 0.08) + ((state.astral['yarn_power'] || 0) * 0.25);
+    mult *= 1 + ((state.upgrades['sonar_radar'] || 0) * 0.06);
+    mult *= 1 + ((state.upgrades['gourmet_pantry'] || 0) * 0.15);
+    mult *= 1 + ((state.upgrades['auto_feeder'] || 0) * 0.20);
+    mult *= 1 + ((state.upgrades['thermal_lounge'] || 0) * 0.30);
+    mult *= 1 + ((state.relicUpgrades['fish_relic'] || 0) * 0.15);
+    mult *= 1 + ((state.research.levels['econ'] || 0) * 0.03);
+    
+    // Region bonus
+    REGION_DB.forEach(r => {
+        if ((state.regions.restored[r.id] || 0) >= 100) mult += r.bonus;
+    });
+
+    // Artifact bonus
+    if ((state.artifacts['goldfish'] || 0) > 0) mult += state.artifacts['goldfish'] * 0.03;
+
+    // Buffs
+    if (isFever) mult *= 2.5;
+    if (feastBuffDuration > 0) mult *= 2.0;
+
+    // Synergy
+    mult *= getTeamSynergies().mult;
+
+    // Ascension prestige
+    if (state.prestige.ascension > 0) {
+        mult *= 1 + (state.prestige.ascension * 0.05);
+        mult *= 1 + ((state.prestige.a0 || 0) * 0.04);
+        mult *= 1 + ((state.prestige.a1 || 0) * 0.06);
+        mult *= 1 + ((state.prestige.a2 || 0) * 0.08);
+    }
+
+    return mult;
+}
+
+function getTotalFPS() {
+    let rawFps = 0;
+    CAT_DB.forEach(cat => {
+        const cData = state.cats[cat.id];
+        if (cData && cData.count > 0) {
+            const starMult = 1 + ((cData.stars - 1) * 0.30);
+            const levelMult = 1 + ((cData.level - 1) * 0.10);
+            const prismMult = cData.prismatic ? 2.2 : 1;
+            const awakenMult = cData.awakened ? (1.3 + (cData.awakenLevel * 0.05)) : 1;
+            const masteryMult = 1 + ((state.mastery[cat.id]?.level || 0) * 0.02);
+            rawFps += (cat.baseFps * starMult * levelMult * prismMult * awakenMult * masteryMult);
+        }
+    });
+
+    return rawFps * getFishMultiplier();
+}
+
+function getTeamAttackPower() {
+    let baseAtk = 10;
+    state.team.forEach(catId => {
+        if (catId > 0) {
+            const cat = CAT_DB.find(c => c.id === catId);
+            const data = state.cats[catId];
+            if (cat && data) {
+                const starMult = 1 + ((data.stars - 1) * 0.35);
+                const lvlMult = 1 + ((data.level - 1) * 0.12);
+                const prismMult = data.prismatic ? 2.0 : 1;
+                const awakenMult = data.awakened ? (1.3 + (data.awakenLevel * 0.05)) : 1;
+                baseAtk += (cat.atk * starMult * lvlMult * prismMult * awakenMult);
+            }
+        }
+    });
+
+    const slayerBuff = 1 + ((state.relicUpgrades['boss_slayer'] || 0) * 0.20);
+    const researchBuff = 1 + ((state.research.levels['combat'] || 0) * 0.04);
+    const buildBuff = state.build === 'combat' ? 1.15 : 1.0;
+    const artBuff = 1 + ((state.artifacts['crown'] || 0) * 0.04);
+    const ascensionBuff = 1 + ((state.prestige.a3 || 0) * 0.1);
+
+    return baseAtk * slayerBuff * researchBuff * buildBuff * artBuff * ascensionBuff;
+}
+
+function getClickPower() {
+    const tapUpg = state.upgrades['catnip_drops'] || 0;
+    const tapResearch = 1 + ((state.research.levels['tap'] || 0) * 0.04);
+    const baseClick = (1 + tapUpg) * tapResearch;
+    // Diminishing exponent on fish multiplier so clicks scale naturally without exploding
+    return Math.max(1, Math.floor(baseClick * Math.pow(getFishMultiplier(), 0.65)));
+}
+
+function getStandardPullCost(count = 1) {
+    const base = 250 * Math.pow(1.08, Math.floor((state.standardPullCount || 0) / 5));
+    const cost = state.build === 'gacha' ? base * 0.9 : base;
+    return Math.floor(count === 10 ? cost * 9 : cost);
+}
+
+function getRebirthYarnReward() {
+    if (state.fish < 250000) return 0;
+    return Math.floor(Math.sqrt(state.fish / 250000));
+}
+
+/* =========================================================================
+   5. TAPPING & PET INTERACTION
+   ========================================================================= */
+const tapZone = document.getElementById('main-cat-tap');
+tapZone.addEventListener('pointerdown', (e) => {
+    playAudio('tap');
+    state.taps++;
+    let gain = getClickPower();
+
+    const critLvl = state.relicUpgrades['relic_crit'] || 0;
+    if (Math.random() < (critLvl * 0.05)) {
+        gain *= 3;
+        spawnBubble(e.clientX, e.clientY - 25, '💥 3x CRIT!', '#ff5e84');
+    }
+
+    state.fish += gain;
+    state.totalFishEarned += gain;
+
+    const gemChance = (state.upgrades['golden_lure'] || 0) * 0.01;
+    if (Math.random() < gemChance) {
+        state.gems += 1;
+        spawnBubble(e.clientX, e.clientY - 40, '+1 💎', 'var(--gem-color)');
+    }
+
+    if (!isFever) {
+        state.feverGauge = Math.min(100, state.feverGauge + 3);
+        if (state.feverGauge >= 100) triggerMeowFrenzy();
+    }
+
+    addSeasonXP(1);
+    spawnBubble(e.clientX, e.clientY, `+${formatCompact(gain)} 🐟`);
+    updateUI();
+});
+
+function triggerMeowFrenzy() {
+    isFever = true;
+    feverDuration = 10;
+    state.fevers++;
+    document.body.classList.add('fever-active');
+    playAudio('fever');
+    showToast("🔥 MEOW FRENZY! 2.5x PRODUCTION! 🔥");
+}
+
+function spawnBubble(x, y, text, color = 'var(--primary)') {
+    const el = document.createElement('div');
+    el.className = 'floating-bubble';
+    el.innerText = text;
+    el.style.color = color;
+    el.style.left = `${Math.max(10, Math.min(window.innerWidth - 80, x - 20))}px`;
+    el.style.top = `${Math.max(10, y - 25)}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 850);
+}
+
+/* =========================================================================
+   6. GACHA SUMMONING
+   ========================================================================= */
+function summonCat(banner, count) {
+    let cost = 0;
+
+    if (banner === 'standard') {
+        cost = getStandardPullCost(count);
+        if (state.fish < cost) { showToast("Not enough fish!"); return; }
+        state.fish -= cost;
+        state.standardPullCount += count;
+    } else if (banner === 'jewel') {
+        cost = count === 10 ? 180 : 20;
+        if (state.gems < cost) { showToast("Not enough gems!"); return; }
+        state.gems -= cost;
+    } else if (banner === 'elemental') {
+        cost = count === 5 ? 18 : 4;
+        if (state.nip < cost) { showToast("Not enough catnip!"); return; }
+        state.nip -= cost;
+    } else if (banner === 'astral') {
+        cost = 2;
+        if (state.yarn < cost) { showToast("Not enough Golden Yarn!"); return; }
+        state.yarn -= cost;
+    }
+
+    state.summons += count;
+    const results = [];
+    const luckBuff = ((state.astral['gacha_luck'] || 0) * 0.04) + ((state.research.levels['gacha'] || 0) * 0.01) + (state.build === 'gacha' ? 0.03 : 0);
+
+    for (let i = 0; i < count; i++) {
+        let rolledRarity = 'common';
+
+        if (banner === 'astral') {
+            const r = Math.random();
+            if (r < 0.15) rolledRarity = 'divine';
+            else if (r < 0.60) rolledRarity = 'mythic';
+            else rolledRarity = 'legendary';
+        } else if (banner === 'elemental') {
+            state.pity.nip++;
+            if (state.pity.nip >= 15) { rolledRarity = 'mythic'; state.pity.nip = 0; }
+            else {
+                const r = Math.random();
+                if (r < 0.07 + luckBuff) rolledRarity = 'mythic';
+                else if (r < 0.35 + luckBuff) rolledRarity = 'legendary';
+                else rolledRarity = 'epic';
+            }
+        } else if (banner === 'jewel') {
+            state.pity.jewel++;
+            if (state.pity.jewel >= 25) { rolledRarity = 'legendary'; state.pity.jewel = 0; }
+            else {
+                const r = Math.random();
+                if (r < 0.012 + luckBuff) rolledRarity = 'mythic';
+                else if (r < 0.12 + luckBuff) rolledRarity = 'legendary';
+                else if (r < 0.45) rolledRarity = 'epic';
+                else rolledRarity = 'rare';
+            }
+        } else {
+            state.pity.standard++;
+            if (state.pity.standard >= 30) { rolledRarity = 'epic'; state.pity.standard = 0; }
+            else {
+                const r = Math.random();
+                if (count === 10 && i === 9 && r >= 0.25) rolledRarity = 'rare';
+                else if (r < 0.05 + luckBuff) rolledRarity = 'epic';
+                else if (r < 0.30 + luckBuff) rolledRarity = 'rare';
+                else rolledRarity = 'common';
+            }
+        }
+
+        const pool = CAT_DB.filter(c => c.rarity === rolledRarity);
+        const cat = pool[Math.floor(Math.random() * pool.length)] || CAT_DB[0];
+        const catData = state.cats[cat.id];
+        const isNew = catData.count === 0;
+
+        catData.count++;
+        if (!isNew && catData.count % 5 === 0 && catData.stars < 5) {
+            catData.stars++;
+        }
+
+        // Auto-assign to empty team slot
+        for (let s = 0; s < 5; s++) {
+            if (state.team[s] === 0) { state.team[s] = cat.id; break; }
+        }
+
+        results.push({ cat, isNew, stars: catData.stars });
+    }
+
+    playAudio('jackpot');
+    addSeasonXP(count * 30);
+    
+    if (fastGacha) {
+        showToast(`Summoned ${count} cats!`);
+    } else {
+        showSummonModal(results);
+    }
+
+    renderSanctuary();
+    renderTeamBar();
+    updateUI();
+}
+
+function summonSpecialBanner(key, count) {
+    const cfg = SPECIAL_BANNERS[key];
+    if (!cfg) return;
+    state.bannerPity[key] = state.bannerPity[key] || 0;
+    const cost = count === 10 ? cfg.ten : cfg.one;
+
+    if ((state[cfg.currency] || 0) < cost) {
+        showToast(`Not enough ${cfg.currency}!`);
+        return;
+    }
+
+    state[cfg.currency] -= cost;
+    state.summons += count;
+    const results = [];
+
+    for (let i = 0; i < count; i++) {
+        state.bannerPity[key]++;
+        let rolledRarity = cfg.rarities[0];
+
+        if (state.bannerPity[key] >= cfg.pity) {
+            state.bannerPity[key] = 0;
+            rolledRarity = cfg.rarities[cfg.rarities.length - 1];
+        } else {
+            let r = Math.random() * 100, acc = 0;
+            for (let j = 0; j < cfg.weights.length; j++) {
+                acc += cfg.weights[j];
+                if (r < acc) { rolledRarity = cfg.rarities[j]; break; }
+            }
+        }
+
+        let pool = CAT_DB.filter(c => c.rarity === rolledRarity && (!cfg.elements || cfg.elements.includes(c.element)));
+        if (!pool.length) pool = CAT_DB.filter(c => c.rarity === rolledRarity);
+        const cat = pool[Math.floor(Math.random() * pool.length)] || CAT_DB[0];
+        const d = state.cats[cat.id];
+        const isNew = d.count === 0;
+
+        d.count++;
+        if (!isNew && d.count % 5 === 0 && d.stars < 5) d.stars++;
+
+        for (let s = 0; s < 5; s++) {
+            if (state.team[s] === 0) { state.team[s] = cat.id; break; }
+        }
+
+        results.push({ cat, isNew, stars: d.stars });
+    }
+
+    playAudio('jackpot');
+    addSeasonXP(count * 35);
+
+    if (fastGacha) {
+        showToast(`Summoned ${count} cats!`);
+    } else {
+        showSummonModal(results);
+    }
+
+    renderSanctuary();
+    renderTeamBar();
+    updateUI();
+}
+
+function showSummonModal(results) {
+    const grid = document.getElementById('summon-results');
+    grid.innerHTML = '';
+
+    results.forEach(res => {
+        const div = document.createElement('div');
+        div.className = `mini-card cat-card-mini ${res.cat.rarity}`;
+        div.innerHTML = `
+            <div class="top-row"><span>${res.cat.rarity.slice(0,3).toUpperCase()}</span><span>${'★'.repeat(res.stars)}</span></div>
+            <div class="icon">${res.cat.icon}</div>
+            <div class="name">${res.cat.name}</div>
+            <div style="font-size:0.6rem; font-weight:800; color:${res.isNew ? 'var(--nip-color)' : '#9ea0b8'};">
+                ${res.isNew ? '✨ NEW!' : 'DUPE +1'}
+            </div>
+        `;
+        grid.appendChild(div);
+    });
+
+    document.getElementById('summon-modal').style.display = 'flex';
+}
+
+/* =========================================================================
+   7. SANCTUARY GRID, COMPENDIUM & FILTERS
+   ========================================================================= */
+function setSanctuaryFilter(filter) {
+    sancFilter = filter;
+    sancCurrentPage = 1;
+    document.querySelectorAll('#rarity-filter-group .pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(filter) || (filter === 'all' && btn.innerText === 'All'));
+    });
+    renderSanctuary();
+}
+
+function onSanctuarySearch(query) {
+    sancSearchQuery = query.toLowerCase().trim();
+    sancCurrentPage = 1;
+    renderSanctuary();
+}
+
+function onSanctuarySortChange(mode) {
+    sancSortMode = mode;
+    sancCurrentPage = 1;
+    renderSanctuary();
+}
+
+function onSanctuaryPageSizeChange(size) {
+    sancPageSize = Number(size) || 24;
+    sancCurrentPage = 1;
+    renderSanctuary();
+}
+
+function changeSanctuaryPage(delta) {
+    sancCurrentPage += delta;
+    renderSanctuary();
+}
+
+function goSanctuaryPage(page) {
+    sancCurrentPage = Math.max(1, page);
+    renderSanctuary();
+}
+
+function getSanctuaryDisplayCats() {
+    let list = CAT_DB.slice();
+
+    if (sancFilter !== 'all') {
+        list = list.filter(c => c.rarity === sancFilter);
+    }
+
+    if (sancSearchQuery) {
+        list = list.filter(c => c.name.toLowerCase().includes(sancSearchQuery) || c.element.toLowerCase().includes(sancSearchQuery));
+    }
+
+    const rarityWeight = { common: 1, rare: 2, epic: 3, legendary: 4, mythic: 5, divine: 6 };
+    list.sort((a, b) => {
+        const da = state.cats[a.id], db = state.cats[b.id];
+        if (sancSortMode === 'unlocked') {
+            const ua = da.count > 0 ? 1 : 0, ub = db.count > 0 ? 1 : 0;
+            if (ua !== ub) return ub - ua;
+            return a.id - b.id;
+        } else if (sancSortMode === 'rarity') {
+            return rarityWeight[b.rarity] - rarityWeight[a.rarity] || a.id - b.id;
+        } else if (sancSortMode === 'level') {
+            return (db.level - da.level) || a.id - b.id;
+        } else if (sancSortMode === 'fps') {
+            return (b.baseFps - a.baseFps);
+        } else if (sancSortMode === 'name') {
+            return a.name.localeCompare(b.name);
+        }
+        return a.id - b.id;
+    });
+
+    return list;
+}
+
+function renderSanctuary() {
+    const grid = document.getElementById('sanctuary-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    let discovered = 0;
+    CAT_DB.forEach(c => { if (state.cats[c.id]?.count > 0) discovered++; });
+    document.getElementById('compendium-tally').innerText = `Discovered: ${discovered} / ${CAT_DB.length}`;
+
+    const filtered = getSanctuaryDisplayCats();
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / sancPageSize));
+    sancCurrentPage = Math.max(1, Math.min(sancCurrentPage, totalPages));
+
+    const startIdx = (sancCurrentPage - 1) * sancPageSize;
+    const endIdx = Math.min(startIdx + sancPageSize, totalItems);
+    const pageCats = filtered.slice(startIdx, endIdx);
+
+    document.getElementById('sanc-page-info').innerText = totalItems > 0 
+        ? `Page ${sancCurrentPage}/${totalPages} (${startIdx + 1}-${endIdx} of ${totalItems})`
+        : `0 Cats Found`;
+
+    document.getElementById('sanc-prev-btn').disabled = sancCurrentPage === 1;
+    document.getElementById('sanc-first-btn').disabled = sancCurrentPage === 1;
+    document.getElementById('sanc-next-btn').disabled = sancCurrentPage === totalPages;
+    document.getElementById('sanc-last-btn').disabled = sancCurrentPage === totalPages;
+
+    if (pageCats.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 20px; color:var(--text-sub); font-size:0.8rem;">No cats match your current filter or search.</div>`;
+        return;
+    }
+
+    pageCats.forEach(cat => {
+        const data = state.cats[cat.id];
+        const isUnlocked = data && data.count > 0;
+        const isEquipped = state.team.includes(cat.id);
+
+        const card = document.createElement('div');
+        card.className = `cat-card-mini ${cat.rarity} ${isUnlocked ? '' : 'locked'} ${data?.prismatic ? 'prismatic' : ''}`;
+        if (isUnlocked) card.onclick = () => inspectCat(cat.id);
+
+        const starMult = isUnlocked ? (1 + (data.stars - 1) * 0.30) : 1;
+        const lvlMult = isUnlocked ? (1 + (data.level - 1) * 0.10) : 1;
+        const prismMult = data?.prismatic ? 2.2 : 1;
+        const awakenMult = data?.awakened ? (1.3 + (data.awakenLevel * 0.05)) : 1;
+        const output = isUnlocked ? cat.baseFps * starMult * lvlMult * prismMult * awakenMult : 0;
+
+        card.innerHTML = `
+            ${isEquipped ? '<span class="equipped-badge">EQUIP</span>' : ''}
+            <div class="top-row">
+                <span>#${cat.id} ${isUnlocked ? `Lv.${data.level}` : ''}</span>
+                <span>${isUnlocked ? '★'.repeat(data.stars) : '☆'}</span>
+            </div>
+            <div class="icon">${isUnlocked ? cat.icon : '❓'}</div>
+            <div class="name">${isUnlocked ? cat.name : '???'}</div>
+            <div class="element-pill">${cat.element}</div>
+            <div class="fps">${isUnlocked ? `+${formatCompact(output)}/s` : '0/s'}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function inspectCat(catId) {
+    const cat = CAT_DB.find(c => c.id === catId);
+    const data = state.cats[catId];
+    if (!data || data.count === 0) return;
+
+    const modal = document.getElementById('cat-modal');
+    const content = document.getElementById('cat-modal-content');
+    const treatCost = getCatLevelUpCost(catId);
+    const isEquipped = state.team.includes(catId);
+    const canPrism = data.stars >= 5 && !data.prismatic && data.count >= 10;
+
+    content.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom:4px;">${cat.icon}</div>
+        <h3 style="font-size:1.1rem; color:var(--accent);">${cat.name} ${data.prismatic ? '🌈[Prismatic]' : ''}</h3>
+        <div style="color:var(--accent); font-size:0.8rem; margin-bottom:6px;">${'★'.repeat(data.stars)} (Level ${data.level})</div>
+        <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:10px; line-height:1.4;">
+            Element: <b style="color:#00d2d3;">${cat.element}</b> | Rarity: <b style="text-transform:uppercase;">${cat.rarity}</b><br>
+            Owned Copies: <b>${data.count}</b> | Base ATK: <b>${cat.atk}</b><br>
+            Current Output: <b>+${formatCompact(cat.baseFps * (1 + (data.stars-1)*0.30) * (1 + (data.level-1)*0.10) * (data.prismatic ? 2.2 : 1))}/s</b>
+        </p>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <button class="btn btn-gold" style="justify-content:center;" onclick="feedCat(${cat.id})">
+                🐟 Level Up (Cost: ${formatCompact(treatCost)} 🐟)
+            </button>
+            <button class="btn ${isEquipped ? 'btn-nip' : ''}" style="justify-content:center;" onclick="toggleEquipTeam(${cat.id})">
+                ${isEquipped ? '⚔️ Remove from Battle Team' : '➕ Equip to Battle Team'}
+            </button>
+            ${canPrism ? `
+                <button class="btn btn-divine" style="justify-content:center;" onclick="fusePrismatic(${cat.id})">
+                    🌈 Awaken Prismatic Evolution (10 Dupes)
+                </button>
+            ` : ''}
+            <button class="btn" style="justify-content:center; background:#302b42;" onclick="closeModal('cat-modal')">Close</button>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+function feedCat(catId) {
+    const data = state.cats[catId];
+    const treatCost = getCatLevelUpCost(catId);
+
+    if (state.fish >= treatCost && data.level < 100) {
+        state.fish -= treatCost;
+        data.level++;
+        gainMastery(catId, 5);
+        playAudio('tap');
+        inspectCat(catId);
+        renderSanctuary();
+        updateUI();
+    } else {
+        showToast(data.level >= 100 ? "Cat is at MAX level!" : "Not enough fish!");
+    }
+}
+
+function toggleEquipTeam(catId) {
+    const idx = state.team.indexOf(catId);
+    if (idx !== -1) {
+        state.team[idx] = 0;
+        showToast("Removed from Battle Team");
+    } else {
+        const emptyIdx = state.team.indexOf(0);
+        if (emptyIdx !== -1) {
+            state.team[emptyIdx] = catId;
+            showToast("Equipped to Battle Team!");
+        } else {
+            state.team[0] = catId;
+            showToast("Replaced Slot 1 on Battle Team!");
+        }
+    }
+    playAudio('tap');
+    inspectCat(catId);
+    renderTeamBar();
+    renderSanctuary();
+    updateUI();
+}
+
+function fusePrismatic(catId) {
+    const data = state.cats[catId];
+    if (data.count >= 10 && !data.prismatic) {
+        data.count -= 10;
+        data.prismatic = true;
+        playAudio('jackpot');
+        showToast("🌈 PRISMATIC EVOLUTION AWAKENED! +120% Output!");
+        inspectCat(catId);
+        renderSanctuary();
+        updateUI();
+    }
+}
+
+function autoOptimizeTeam() {
+    const unlocked = CAT_DB.filter(c => (state.cats[c.id]?.count || 0) > 0);
+    unlocked.sort((a, b) => {
+        const da = state.cats[a.id], db = state.cats[b.id];
+        const pa = a.atk * (1 + (da.stars - 1) * 0.35) * (1 + (da.level - 1) * 0.12) * (da.prismatic ? 2 : 1);
+        const pb = b.atk * (1 + (db.stars - 1) * 0.35) * (1 + (db.level - 1) * 0.12) * (db.prismatic ? 2 : 1);
+        return pb - pa;
+    });
+
+    for (let i = 0; i < 5; i++) {
+        state.team[i] = unlocked[i] ? unlocked[i].id : 0;
+    }
+
+    showToast("⚡ Optimized: Highest DPS Team Equipped!");
+    playAudio('jackpot');
+    renderTeamBar();
+    renderSanctuary();
+    updateUI();
+}
+
+function bulkLevelTeam() {
+    let leveledCount = 0;
+    state.team.forEach(catId => {
+        if (catId > 0) {
+            const data = state.cats[catId];
+            const cost = getCatLevelUpCost(catId);
+            if (state.fish >= cost && data.level < 100) {
+                state.fish -= cost;
+                data.level++;
+                leveledCount++;
+            }
+        }
+    });
+
+    if (leveledCount > 0) {
+        playAudio('tap');
+        showToast(`🍣 Leveled up active team cats (+${leveledCount} Levels)!`);
+        renderSanctuary();
+        updateUI();
+    } else {
+        showToast("Not enough fish to level up the team!");
+    }
+}
+
+function renderTeamBar() {
+    const bar = document.getElementById('team-slots-bar');
+    bar.innerHTML = '';
+
+    for (let i = 0; i < 5; i++) {
+        const catId = state.team[i];
+        const cat = CAT_DB.find(c => c.id === catId);
+        const div = document.createElement('div');
+        div.className = 'team-slot';
+        div.onclick = () => {
+            if (catId > 0) inspectCat(catId);
+            else switchTab('sanctuary');
+        };
+        div.innerHTML = cat ? `${cat.icon}` : '➕';
+        bar.appendChild(div);
+    }
+
+    const syn = getTeamSynergies();
+    document.getElementById('active-synergy-title').innerText = syn.title;
+    document.getElementById('synergy-buff-val').innerText = `${syn.mult.toFixed(2)}x`;
+}
+
+/* =========================================================================
+   8. PLAYPEN CANVAS ANIMATION
+   ========================================================================= */
+const canvas = document.getElementById('playpen-canvas');
+const ctx = canvas.getContext('2d');
+let physicalEntities = [];
+
+function resizeCanvas() {
+    if (!canvas) return;
+    canvas.width = canvas.clientWidth || 300;
+    canvas.height = canvas.clientHeight || 90;
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 60);
+
+function syncPhysicalCats() {
+    resizeCanvas();
+    const active = state.team.filter(id => id > 0).map(id => CAT_DB.find(c => c.id === id)).filter(Boolean);
+    physicalEntities = active.map(c => ({
+        icon: c.icon,
+        x: Math.random() * (canvas.width - 40) + 20,
+        y: Math.random() * (canvas.height - 40) + 20,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        size: 18
+    }));
+}
+
+function updatePlaypen() {
+    if (!ctx || !canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    physicalEntities.forEach(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+
+        if (c.x < 10 || c.x > canvas.width - 25) c.vx *= -1;
+        if (c.y < 20 || c.y > canvas.height - 10) c.vy *= -1;
+
+        ctx.font = `${c.size}px serif`;
+        ctx.fillText(c.icon, c.x, c.y);
+    });
+
+    requestAnimationFrame(updatePlaypen);
+}
+requestAnimationFrame(updatePlaypen);
+
+canvas.addEventListener('pointerdown', (e) => {
+    playAudio('tap');
+    const gain = Math.max(1, Math.floor(getClickPower() * 1.2));
+    state.fish += gain;
+    state.totalFishEarned += gain;
+    spawnBubble(e.clientX, e.clientY, '🧶 Toy toss bonus!', 'var(--accent)');
+
+    physicalEntities.forEach(c => {
+        c.vx = (Math.random() - 0.5) * 3;
+        c.vy = (Math.random() - 0.5) * 3;
+    });
+});
+
+/* =========================================================================
+   9. TOWER RAID / DUNGEON
+   ========================================================================= */
+function updateDungeonUI() {
+    const boss = DUNGEON_BOSSES[state.dungeon.floor - 1] || DUNGEON_BOSSES[DUNGEON_BOSSES.length - 1];
+    document.getElementById('dungeon-boss-name').innerText = `Floor ${state.dungeon.floor}: ${boss.name}`;
+    document.getElementById('dungeon-boss-icon').innerText = boss.icon;
+    document.getElementById('boss-hp-text').innerText = `HP: ${formatCompact(Math.ceil(state.dungeon.currentHp))} / ${formatCompact(boss.maxHp)}`;
+    document.getElementById('boss-hp-fill').style.width = `${Math.max(0, (state.dungeon.currentHp / boss.maxHp) * 100)}%`;
+    document.getElementById('dungeon-team-dps').innerText = `Team ATK: ${formatCompact(getTeamAttackPower())} /s`;
+}
+
+function attackBossManual() {
+    playAudio('tap');
+    damageBoss(getTeamAttackPower() * 0.4);
+}
+
+function damageBoss(amount) {
+    const boss = DUNGEON_BOSSES[state.dungeon.floor - 1] || DUNGEON_BOSSES[DUNGEON_BOSSES.length - 1];
+    state.dungeon.currentHp -= amount;
+
+    if (state.dungeon.currentHp <= 0) {
+        playAudio('jackpot');
+        state.relics += boss.relicReward;
+        state.gems += boss.gemReward;
+        state.stats.bosses++;
+        state.research.points += 1;
+        showToast(`🏆 Boss Defeated! Earned +${boss.relicReward} 🏺 & +${boss.gemReward} 💎!`);
+
+        if (state.dungeon.floor < DUNGEON_BOSSES.length) {
+            state.dungeon.floor++;
+        }
+        const nextBoss = DUNGEON_BOSSES[state.dungeon.floor - 1];
+        state.dungeon.currentHp = nextBoss.maxHp;
+    }
+    updateDungeonUI();
+}
+
+function renderRelicUpgrades() {
+    const container = document.getElementById('relic-upgrades-list');
+    container.innerHTML = '';
+
+    RELIC_UPGRADES_DB.forEach(r => {
+        const lvl = state.relicUpgrades[r.id] || 0;
+        const cost = Math.floor(r.cost * Math.pow(r.scale, lvl));
+        const canAfford = state.relics >= cost;
+
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${r.name} (Lv. ${lvl})</h4>
+                <p>${r.desc}</p>
+            </div>
+            <button class="btn btn-relic" ${canAfford ? '' : 'disabled'} onclick="buyRelicUpgrade('${r.id}')">
+                ${cost} 🏺
+            </button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function buyRelicUpgrade(id) {
+    const r = RELIC_UPGRADES_DB.find(item => item.id === id);
+    const lvl = state.relicUpgrades[id] || 0;
+    const cost = Math.floor(r.cost * Math.pow(r.scale, lvl));
+
+    if (state.relics >= cost) {
+        state.relics -= cost;
+        state.relicUpgrades[id] = lvl + 1;
+        playAudio('jackpot');
+        renderRelicUpgrades();
+        updateUI();
+    }
+}
+
+/* =========================================================================
+   10. BAKERY, UPGRADES, QUESTS, EXPEDITIONS & ASTRAL
+   ========================================================================= */
+function renderBakery() {
+    const container = document.getElementById('bakery-recipes-container');
+    container.innerHTML = '';
+
+    BAKERY_RECIPES.forEach(rec => {
+        const canAfford = state.fish >= rec.costFish && state.nip >= rec.costNip;
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${rec.name}</h4>
+                <p>${rec.buff}</p>
+                <div style="font-size:0.65rem; color:var(--accent);">Cost: ${formatCompact(rec.costFish)} 🐟 & ${rec.costNip} 🌿</div>
+            </div>
+            <button class="btn btn-nip" ${canAfford ? '' : 'disabled'} onclick="craftRecipe('${rec.id}')">
+                Bake & Feed
+            </button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function craftRecipe(id) {
+    const rec = BAKERY_RECIPES.find(r => r.id === id);
+    if (state.fish >= rec.costFish && state.nip >= rec.costNip) {
+        state.fish -= rec.costFish;
+        state.nip -= rec.costNip;
+
+        playAudio('jackpot');
+        if (rec.type === 'fish_buff') {
+            feastBuffDuration = 60;
+            showToast("🍣 Sashimi Feast Active! 2x Fish for 60s!");
+        } else if (rec.type === 'frenzy') {
+            triggerMeowFrenzy();
+        } else if (rec.type === 'instant') {
+            state.gems += 5;
+            state.relics += 1;
+            showToast("✨ Starlight Candy consumed: +5 💎 & +1 🏺!");
+        }
+        renderBakery();
+        updateUI();
+    }
+}
+
+function renderUpgrades() {
+    const container = document.getElementById('upgrades-container');
+    container.innerHTML = '';
+
+    UPGRADES_DB.forEach(upg => {
+        const lvl = state.upgrades[upg.id] || 0;
+        const cost = Math.floor(upg.cost * Math.pow(upg.scale, lvl));
+        const canAfford = state.fish >= cost;
+
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${upg.name} (Lv. ${lvl})</h4>
+                <p>${upg.desc}</p>
+            </div>
+            <button class="btn" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${upg.id}')">
+                ${formatCompact(cost)} 🐟
+            </button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function buyUpgrade(id) {
+    const upg = UPGRADES_DB.find(u => u.id === id);
+    const lvl = state.upgrades[id] || 0;
+    const cost = Math.floor(upg.cost * Math.pow(upg.scale, lvl));
+
+    if (state.fish >= cost) {
+        state.fish -= cost;
+        state.upgrades[id] = lvl + 1;
+        playAudio('tap');
+        renderUpgrades();
+        updateUI();
+    }
+}
+
+function renderQuests() {
+    const container = document.getElementById('quests-container');
+    container.innerHTML = '';
+    let readyCount = 0;
+
+    QUESTS_DB.forEach(q => {
+        const isClaimed = state.quests[q.id];
+        let currentProgress = 0;
+
+        if (q.type === 'taps') currentProgress = state.taps;
+        if (q.type === 'cats') currentProgress = Object.values(state.cats).filter(c => c.count > 0).length;
+        if (q.type === 'summons') currentProgress = state.summons;
+        if (q.type === 'boss_floor') currentProgress = state.dungeon.floor - 1;
+
+        const isReady = !isClaimed && currentProgress >= q.target;
+        if (isReady) readyCount++;
+
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${q.name}</h4>
+                <p>${q.desc} (${Math.min(currentProgress, q.target)}/${q.target})</p>
+                <div style="font-size:0.65rem; color:var(--accent);">
+                    Rewards: ${q.reward.gems ? `+${q.reward.gems} 💎 ` : ''}${q.reward.nip ? `+${q.reward.nip} 🌿 ` : ''}${q.reward.yarn ? `+${q.reward.yarn} 🧶 ` : ''}${q.reward.relics ? `+${q.reward.relics} 🏺` : ''}
+                </div>
+            </div>
+            <button class="btn ${isReady ? 'btn-gold' : ''}" ${isReady ? '' : 'disabled'} onclick="claimQuest('${q.id}')">
+                ${isClaimed ? 'Claimed' : (isReady ? 'Claim!' : 'In Progress')}
+            </button>
+        `;
+        container.appendChild(div);
+    });
+
+    document.getElementById('quest-count').innerText = readyCount;
+}
+
+function claimQuest(qId) {
+    const q = QUESTS_DB.find(item => item.id === qId);
+    if (!q || state.quests[qId]) return;
+
+    state.quests[qId] = true;
+    if (q.reward.gems) state.gems += q.reward.gems;
+    if (q.reward.nip) state.nip += q.reward.nip;
+    if (q.reward.yarn) state.yarn += q.reward.yarn;
+    if (q.reward.relics) state.relics += q.reward.relics;
+
+    playAudio('jackpot');
+    showToast(`📜 Quest "${q.name}" Claimed!`);
+    renderQuests();
+    updateUI();
+}
+
+function renderExpeditions() {
+    const container = document.getElementById('expeditions-container');
+    container.innerHTML = '';
+    const ownedCatsCount = Object.values(state.cats).filter(c => c.count > 0).length;
+    const speedBuff = 1 - ((state.astral['speedy_paws'] || 0) * 0.10);
+
+    EXPEDITIONS_DB.forEach(exp => {
+        const expState = state.expeditions[exp.id] || { active: false, remaining: 0 };
+        const adjustedDuration = Math.ceil(exp.duration * speedBuff);
+
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${exp.name}</h4>
+                <p>Req: ${exp.reqCats} Cats | Time: ${adjustedDuration}s</p>
+                <p style="color:var(--accent);">Rewards: +${exp.reward.fish} 🐟, +${exp.reward.gems} 💎, +${exp.reward.nip} 🌿</p>
+            </div>
+            <div>
+                ${expState.active 
+                    ? `<button class="btn" disabled style="background:#555;">⏳ ${Math.ceil(expState.remaining)}s</button>` 
+                    : `<button class="btn btn-nip" ${ownedCatsCount >= exp.reqCats ? '' : 'disabled'} onclick="startExpedition(${exp.id})">Deploy</button>`
+                }
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function startExpedition(id) {
+    const exp = EXPEDITIONS_DB.find(e => e.id === id);
+    const speedBuff = 1 - ((state.astral['speedy_paws'] || 0) * 0.10);
+    state.expeditions[id] = { active: true, remaining: exp.duration * speedBuff };
+    playAudio('tap');
+    renderExpeditions();
+}
+
+function renderAstralTree() {
+    const container = document.getElementById('astral-container');
+    container.innerHTML = '';
+
+    ASTRAL_DB.forEach(ast => {
+        const currentLvl = state.astral[ast.id] || 0;
+        const isMax = currentLvl >= ast.maxLvl;
+        const canAfford = state.yarn >= ast.cost && !isMax;
+
+        const div = document.createElement('div');
+        div.className = 'list-entry';
+        div.innerHTML = `
+            <div class="entry-info">
+                <h4>${ast.name} (${currentLvl}/${ast.maxLvl})</h4>
+                <p>${ast.desc}</p>
+            </div>
+            <button class="btn btn-divine" ${canAfford ? '' : 'disabled'} onclick="buyAstralPerk('${ast.id}')">
+                ${isMax ? 'MAX' : `${ast.cost} 🧶`}
+            </button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function buyAstralPerk(id) {
+    const ast = ASTRAL_DB.find(a => a.id === id);
+    const currentLvl = state.astral[id] || 0;
+
+    if (state.yarn >= ast.cost && currentLvl < ast.maxLvl) {
+        state.yarn -= ast.cost;
+        state.astral[id] = currentLvl + 1;
+        playAudio('jackpot');
+        renderAstralTree();
+        updateUI();
+    }
+}
+
+function performRebirth() {
+    const reward = getRebirthYarnReward();
+    if (reward <= 0) {
+        showToast("Need at least 250,000 Fish to transcend!");
+        return;
+    }
+
+    if (confirm(`Transcending will weave +${reward} Golden Yarn, resetting temporary Fish and standard upgrades. Proceed?`)) {
+        state.yarn += reward;
+        state.fish = 0;
+        state.stats.rebirths = (state.stats.rebirths || 0) + 1;
+        UPGRADES_DB.forEach(u => state.upgrades[u.id] = 0);
+        playAudio('jackpot');
+        showToast(`🔮 Cosmic Transcension Complete! +${reward} Yarn Added!`);
+        switchTab('astral');
+        updateUI();
+    }
+}
+
+/* =========================================================================
+   11. EXPANSION SYSTEMS (REGIONS, MASTERY, LAB, TRIALS, SEASONS)
+   ========================================================================= */
+function renderRegions() {
+    const el = document.getElementById('regions-container');
+    el.innerHTML = REGION_DB.map(r => {
+        const val = state.regions.restored[r.id] || 0;
+        const un = state.totalFishEarned >= r.req;
+        const cost = Math.max(1000, Math.floor(r.req * 0.12) || 1000);
+        return `
+            <div class="big-card ${un ? '' : 'locked-panel'}">
+                <h3>${r.icon} ${r.name}</h3>
+                <p>${r.desc}</p>
+                <div class="progress-mini"><div style="width:${val}%"></div></div>
+                <div class="statline"><span>Restoration</span><b>${val}%</b></div>
+                <div class="statline"><span>Requirement</span><b>${formatCompact(r.req)} fish</b></div>
+                <p style="color:var(--accent);">Reward: ${r.reward}</p>
+                <button class="btn ${un && val < 100 ? 'btn-gold' : ''}" ${un && val < 100 ? '' : 'disabled'} onclick="restoreRegion('${r.id}')">
+                    ${val >= 100 ? 'RESTORED' : `Restore +10% (${formatCompact(cost)} 🐟)`}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function restoreRegion(id) {
+    const r = REGION_DB.find(x => x.id === id);
+    const val = state.regions.restored[id] || 0;
+    const cost = Math.max(1000, Math.floor(r.req * 0.12) || 1000);
+
+    if (state.totalFishEarned < r.req) {
+        showToast('Earn more lifetime fish to unlock this region!');
+        return;
+    }
+    if (val >= 100) return;
+
+    if (state.fish >= cost) {
+        state.fish -= cost;
+        state.regions.restored[id] = Math.min(100, val + 10);
+        showToast(`🌎 ${r.name} restored +10%!`);
+        renderRegions();
+        updateUI();
+    } else {
+        showToast('Not enough fish!');
+    }
+}
+
+function gainMastery(id, xp) {
+    const m = state.mastery[id];
+    if (!m) return;
+    m.xp += xp;
+    while (m.xp >= 100) {
+        m.xp -= 100;
+        m.level++;
+        state.research.points += 1;
+    }
+}
+
+function renderMastery() {
+    const el = document.getElementById('mastery-container');
+    const owned = CAT_DB.filter(c => state.cats[c.id]?.count > 0).sort((a, b) => (state.mastery[b.id]?.level || 0) - (state.mastery[a.id]?.level || 0));
+
+    el.innerHTML = owned.map(c => {
+        const m = state.mastery[c.id] || { xp: 0, level: 0 };
+        return `
+            <div class="big-card">
+                <h3>${c.icon} ${c.name}</h3>
+                <span class="badge-mini">Lv ${m.level}</span>
+                <span class="badge-mini">${m.trait || 'Untrained'}</span>
+                <div class="progress-mini"><div style="width:${m.xp}%"></div></div>
+                <p>${m.xp}/100 XP • +${(m.level * 2)}% Personal DPS</p>
+                <button class="btn" onclick="gainMastery(${c.id}, 30); renderMastery(); updateUI();">Train +30 XP</button>
+            </div>
+        `;
+    }).join('') || '<div class="big-card">Unlock cats to begin mastery training.</div>';
+
+    document.getElementById('mastery-points').innerText = state.research.points;
+    document.getElementById('best-mastery').innerText = Math.max(0, ...Object.values(state.mastery).map(x => x.level || 0));
+}
+
+function setBuild(b) {
+    state.build = b;
+    showToast(`🎯 Specialization set to ${b.toUpperCase()}!`);
+    renderResearch();
+    updateUI();
+}
+
+function renderResearch() {
+    document.getElementById('research-points').innerText = state.research.points;
+    document.getElementById('build-status').innerText = `Current Focus: ${state.build.toUpperCase()}`;
+
+    document.getElementById('research-container').innerHTML = RESEARCH_DB.map(r => {
+        const lv = state.research.levels[r.id] || 0;
+        const cost = r.cost + lv;
+        return `
+            <div class="big-card">
+                <h3>🔬 ${r.name}</h3>
+                <p>${r.desc}</p>
+                <div class="statline"><span>Level</span><b>${lv}/${r.max}</b></div>
+                <button class="btn btn-gold" ${state.research.points >= cost && lv < r.max ? '' : 'disabled'} onclick="buyResearch('${r.id}')">
+                    ${lv >= r.max ? 'MAX' : `Research (${cost} RP)`}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function buyResearch(id) {
+    const r = RESEARCH_DB.find(x => x.id === id);
+    const lv = state.research.levels[id] || 0;
+    const cost = r.cost + lv;
+
+    if (lv < r.max && state.research.points >= cost) {
+        state.research.points -= cost;
+        state.research.levels[id] = lv + 1;
+        playAudio('jackpot');
+        renderResearch();
+        updateUI();
+    }
+}
+
+function renderCollection() {
+    const arts = ARTIFACT_DB.map(a => `
+        <div class="big-card">
+            <div style="font-size:1.6rem; text-align:center;">${a[2]}</div>
+            <h3>${a[1]}</h3>
+            <p>${a[3]}</p>
+            <div class="statline"><span>Discovered</span><b>${state.artifacts[a[0]] || 0}</b></div>
+            <button class="btn" onclick="findArtifact('${a[0]}')">Search Expeditions</button>
+        </div>
+    `).join('');
+
+    const ach = ACH_DB.map(a => {
+        const done = achievementDone(a[0]);
+        return `
+            <div class="big-card">
+                <h3>${done ? '🏆' : '🔒'} ${a[1]}</h3>
+                <p>${a[2]}</p>
+                <div class="statline"><span>Status</span><b>${done ? 'COMPLETED' : 'In Progress'}</b></div>
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('collection-container').innerHTML = arts + ach;
+}
+
+function findArtifact(id) {
+    const chance = 0.05 + ((state.research.levels['artifact'] || 0) * 0.025);
+    if (Math.random() < chance) {
+        state.artifacts[id] = (state.artifacts[id] || 0) + 1;
+        showToast('🏺 Artifact found in the field!');
+        playAudio('jackpot');
+        renderCollection();
+    } else {
+        showToast('Nothing discovered yet. Keep trying!');
+    }
+}
+
+function achievementDone(id) {
+    const c = CAT_DB.filter(x => state.cats[x.id]?.count > 0).length;
+    const m = Object.values(state.mastery).reduce((a, x) => a + (x.level || 0), 0);
+    const map = {
+        first: c >= 1,
+        collector: c >= 25,
+        centurion: c >= 100,
+        master: m >= 50,
+        tower: state.dungeon.floor >= 5,
+        rich: state.totalFishEarned >= 5000000,
+        astral: (state.stats.rebirths || 0) >= 3,
+        prismatic: Object.values(state.cats).some(x => x.prismatic)
+    };
+    return !!map[id];
+}
+
+function renderDaily() {
+    const now = new Date();
+    const day = now.toISOString().slice(0, 10);
+    const week = `${now.getUTCFullYear()}-${Math.floor((Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - Date.UTC(now.getUTCFullYear(), 0, 1)) / 604800000)}`;
+
+    if (state.daily.day !== day) {
+        state.daily.day = day;
+        state.daily.progress = 0;
+        state.daily.claimed = false;
+    }
+    if (state.daily.week !== week) {
+        state.daily.week = week;
+        state.daily.weekly = 0;
+        state.daily.weeklyClaimed = false;
+    }
+
+    document.getElementById('streak-status').innerText = `🔥 Streak: ${state.daily.streak} Days | Daily: ${state.daily.progress}/20 | Weekly: ${state.daily.weekly}/100`;
+
+    document.getElementById('daily-container').innerHTML = `
+        <div class="big-card">
+            <h3>📅 Daily Activity</h3>
+            <p>Perform 20 manual taps today.</p>
+            <div class="progress-mini"><div style="width:${Math.min(100, (state.daily.progress / 20) * 100)}%"></div></div>
+            <button class="btn btn-gold" ${state.daily.progress >= 20 && !state.daily.claimed ? '' : 'disabled'} onclick="claimDaily()">
+                ${state.daily.claimed ? 'Claimed' : 'Claim 25 💎 + 3 🌿'}
+            </button>
+        </div>
+        <div class="big-card">
+            <h3>🏆 Weekly Marathon</h3>
+            <p>Accumulate 100 taps over the week.</p>
+            <div class="progress-mini"><div style="width:${Math.min(100, state.daily.weekly)}%"></div></div>
+            <button class="btn btn-gold" ${state.daily.weekly >= 100 && !state.daily.weeklyClaimed ? '' : 'disabled'} onclick="claimWeekly()">
+                ${state.daily.weeklyClaimed ? 'Claimed' : 'Claim 5 🧶 + 100 💎'}
+            </button>
+        </div>
+    `;
+}
+
+function claimDaily() {
+    state.daily.claimed = true;
+    state.daily.streak++;
+    state.gems += 25;
+    state.nip += 3;
+    showToast('📅 Daily challenge reward collected!');
+    renderDaily();
+    updateUI();
+}
+
+function claimWeekly() {
+    state.daily.weeklyClaimed = true;
+    state.yarn += 5;
+    state.gems += 100;
+    showToast('🏆 Weekly challenge reward collected!');
+    renderDaily();
+    updateUI();
+}
+
+function refreshMerchant() {
+    const now = Date.now();
+    if (now >= state.merchant.refreshAt) {
+        state.merchant.seed = Math.floor(Math.random() * 1e8);
+        state.merchant.refreshAt = now + 300000;
+        state.merchant.purchases = {};
+    }
+}
+
+function merchantItems() {
+    refreshMerchant();
+    const s = state.merchant.seed;
+    return [
+        { id: 'fish', name: 'Fresh Fish Crate', icon: '🐟', cost: 10000 + (s % 5000), pay: 'fish', reward: 'fish', amount: 25000 },
+        { id: 'gems', name: 'Gem Pouch', icon: '💎', cost: 30 + (s % 15), pay: 'gems', reward: 'gems', amount: 55 },
+        { id: 'nip', name: 'Imported Catnip', icon: '🌿', cost: 8 + (s % 5), pay: 'nip', reward: 'nip', amount: 16 },
+        { id: 'relic', name: 'Ancient Shard', icon: '🏺', cost: 25 + (s % 10), pay: 'gems', reward: 'relics', amount: 6 }
+    ];
+}
+
+function renderMerchant() {
+    const left = Math.max(0, state.merchant.refreshAt - Date.now());
+    document.getElementById('merchant-timer').innerText = `Refreshes in ${Math.ceil(left / 1000)}s`;
+
+    document.getElementById('merchant-container').innerHTML = merchantItems().map(x => `
+        <div class="big-card">
+            <div style="font-size:1.6rem; text-align:center;">${x.icon}</div>
+            <h3>${x.name}</h3>
+            <p>Stock: 1 Available</p>
+            <button class="btn btn-gold" ${state.merchant.purchases[x.id] ? 'disabled' : ''} onclick="buyMerchant('${x.id}')">
+                ${state.merchant.purchases[x.id] ? 'Sold Out' : `Buy (${formatCompact(x.cost)} ${x.pay === 'fish' ? '🐟' : x.pay === 'gems' ? '💎' : '🌿'})`}
+            </button>
+        </div>
+    `).join('');
+}
+
+function buyMerchant(id) {
+    const x = merchantItems().find(a => a.id === id);
+    if (!x || state.merchant.purchases[id]) return;
+
+    if (state[x.pay] >= x.cost) {
+        state[x.pay] -= x.cost;
+        state[x.reward] += x.amount;
+        state.merchant.purchases[id] = true;
+        showToast(`🏪 Purchased ${x.name}!`);
+        renderMerchant();
+        updateUI();
+    } else {
+        showToast('Not enough resources!');
+    }
+}
+
+function renderLab() {
+    const owned = CAT_DB.filter(c => state.cats[c.id]?.count > 0);
+    const awakened = owned.filter(c => state.cats[c.id].awakened).length;
+    document.getElementById('awakened-count').innerText = awakened;
+    document.getElementById('lab-level').innerText = state.lab.level;
+
+    document.getElementById('lab-container').innerHTML = owned.map(c => {
+        const d = state.cats[c.id];
+        const m = state.mastery[c.id] || {};
+        const canAwaken = d.stars >= 5 && d.count >= 15 && !d.awakened;
+
+        return `
+            <div class="big-card">
+                <h3>${c.icon} ${c.name}</h3>
+                <p>${d.awakened ? `🌟 Awakened Lv.${d.awakenLevel}/20` : `${'★'.repeat(d.stars)} • ${d.count} copies`}</p>
+                <div class="statline"><span>Trait</span><b>${m.trait || 'None'}</b></div>
+                <div class="choice-row">
+                    <button class="btn" onclick="rerollTrait(${c.id})">🎲 Trait (25 💎)</button>
+                    ${canAwaken ? `<button class="btn btn-divine" onclick="awakenCat(${c.id})">🌟 Awaken</button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('') || '<div class="big-card">Unlock cats to access the Lab.</div>';
+}
+
+function rerollTrait(id) {
+    if (state.gems < 25) { showToast('Need 25 💎 to reroll trait!'); return; }
+    state.gems -= 25;
+    const m = state.mastery[id];
+    m.trait = TRAITS[Math.floor(Math.random() * TRAITS.length)];
+    showToast(`🧬 New Trait: ${m.trait}!`);
+    renderLab();
+    renderMastery();
+    updateUI();
+}
+
+function awakenCat(id) {
+    const d = state.cats[id];
+    if (d.stars >= 5 && d.count >= 15 && !d.awakened) {
+        d.count -= 15;
+        d.awakened = true;
+        d.awakenLevel = 1;
+        state.lab.level++;
+        showToast('🌟 CAT AWAKENED! +30% Base Output & Combat Power!');
+        playAudio('jackpot');
+        renderLab();
+        renderSanctuary();
+        updateUI();
+    }
+}
+
+function trialData() {
+    const f = state.trials.floor;
+    const m = TRIAL_MODS[state.trials.modifier] || TRIAL_MODS[0];
+    const hp = Math.floor(1200 * Math.pow(1.22, f - 1) * m.hp);
+    return { hp, mod: m, reward: Math.floor((15 + f * 3) * m.reward) };
+}
+
+function renderTrials() {
+    const d = trialData();
+    document.getElementById('trial-floor').innerText = state.trials.floor;
+    document.getElementById('trial-best').innerText = state.trials.best;
+    document.getElementById('trial-tickets').innerText = state.trials.tickets;
+    document.getElementById('trial-modifier').innerText = `${d.mod.name} — ${d.mod.desc}`;
+    document.getElementById('trial-desc').innerText = `Enemy HP: ${formatCompact(d.hp)} | Reward: +${d.reward} 💎`;
+    document.getElementById('trial-progress').style.width = `${Math.min(100, (getTeamAttackPower() / d.hp) * 100)}%`;
+}
+
+function runTrial() {
+    if (state.trials.tickets <= 0) { showToast('No Trial tickets left today!'); return; }
+    state.trials.tickets--;
+    const d = trialData();
+    const myAtk = getTeamAttackPower() * (0.9 + Math.random() * 0.3);
+
+    if (myAtk >= d.hp) {
+        state.gems += d.reward;
+        state.trials.floor++;
+        state.trials.best = Math.max(state.trials.best, state.trials.floor);
+        addSeasonXP(100);
+        showToast(`🎲 Trial Victory! Earned +${d.reward} 💎!`);
+        playAudio('jackpot');
+    } else {
+        showToast('Trial defeated. Increase team power and try again!');
+    }
+    renderTrials();
+    updateUI();
+}
+
+function rerollTrialModifier() {
+    if (state.gems < 1) { showToast('Need 1 💎 to reroll modifier!'); return; }
+    state.gems -= 1;
+    state.trials.modifier = (state.trials.modifier + 1) % TRIAL_MODS.length;
+    renderTrials();
+    updateUI();
+}
+
+function addSeasonXP(amt) {
+    state.season.xp = Math.min(15000, (state.season.xp || 0) + amt);
+}
+
+function renderSeason() {
+    const xp = state.season.xp || 0;
+    const tier = Math.floor(xp / 500);
+    const within = xp % 500;
+
+    document.getElementById('season-xp').innerText = xp;
+    document.getElementById('season-tier').innerText = `${Math.min(30, tier + 1)} / 30`;
+    document.getElementById('season-progress').style.width = `${tier >= 30 ? 100 : (within / 500) * 100}%`;
+
+    document.getElementById('season-container').innerHTML = SEASON_REWARDS.map((r, i) => {
+        const t = i + 1;
+        const ready = t <= tier;
+        const claimed = state.season.claimed.includes(t);
+        return `
+            <div class="season-tier ${claimed ? 'claimed' : ''} ${ready && !claimed ? 'ready' : ''}">
+                <div style="font-size:1.2rem;">${r[0]}</div>
+                <b>Tier ${t}</b>
+                <div class="subtle">${r[1]}</div>
+                <button class="btn ${ready && !claimed ? 'btn-gold' : ''}" style="margin-top:4px; justify-content:center;" ${ready && !claimed ? '' : 'disabled'} onclick="claimSeason(${t})">
+                    ${claimed ? 'Claimed' : (ready ? 'Claim' : 'Locked')}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function claimSeason(t) {
+    const tier = Math.floor((state.season.xp || 0) / 500);
+    if (t > tier || state.season.claimed.includes(t)) return;
+
+    const r = SEASON_REWARDS[t - 1];
+    state.season.claimed.push(t);
+
+    if (r[0] === '💎') state.gems += r[2];
+    else if (r[0] === '🐟') state.fish += r[2];
+    else if (r[0] === '🌿') state.nip += r[2];
+    else if (r[0] === '🧶') state.yarn += r[2];
+    else if (r[0] === '🏺') state.relics += r[2];
+    else if (r[0] === '🌟') state.prestige.cores += r[2];
+
+    showToast(`🏆 Season Tier ${t} Reward Claimed!`);
+    playAudio('jackpot');
+    renderSeason();
+    updateUI();
+}
+
+function renderWardrobe() {
+    document.getElementById('wardrobe-container').innerHTML = WARDROBE_DB.map(w => {
+        const isEquipped = state.wardrobe.equipped === w.id;
+        return `
+            <div class="big-card">
+                <div class="wardrobe-swatch" style="background:${w.id==='classic'?'linear-gradient(90deg,#201438,#08070d)':w.id==='neon'?'linear-gradient(90deg,#00d2d3,#ff3bd4)':w.id==='forest'?'linear-gradient(90deg,#102e1c,#badc58)':w.id==='sunset'?'linear-gradient(90deg,#ff7675,#fdcb6e)':'linear-gradient(90deg,#200636,#70a1ff)'}"></div>
+                <h3>${w.icon} ${w.name}</h3>
+                <p>${w.desc}</p>
+                <button class="btn ${isEquipped ? 'btn-nip' : 'btn-gold'}" style="margin-top:4px; justify-content:center;" onclick="equipWardrobe('${w.id}')">
+                    ${isEquipped ? 'Equipped' : 'Equip Theme'}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function equipWardrobe(id) {
+    state.wardrobe.equipped = id;
+    document.body.className = '';
+    if (id !== 'classic') document.body.classList.add(`theme-${id}`);
+    showToast('🎨 Theme equipped!');
+    renderWardrobe();
+}
+
+function performAscension() {
+    if (state.yarn < 5 || state.totalFishEarned < 25000000) {
+        showToast('Need 5 🧶 Yarn and 25M Lifetime Fish!');
+        return;
+    }
+
+    if (confirm('Ascend to the Stars? Resets current fish, standard upgrades and Golden Yarn. Cats, mastery, research and artifacts remain!')) {
+        state.prestige.ascension++;
+        state.prestige.cores += Math.max(1, Math.floor(Math.sqrt(state.prestige.ascension)));
+        state.fish = 0;
+        state.yarn = 0;
+        UPGRADES_DB.forEach(u => state.upgrades[u.id] = 0);
+        showToast('🌟 Cosmic Ascension Complete! Permanent Power Gained!');
+        playAudio('jackpot');
+        renderAscension();
+        updateUI();
+    }
+}
+
+function renderAscension() {
+    document.getElementById('ascension-count').innerText = state.prestige.ascension;
+    document.getElementById('core-count').innerText = state.prestige.cores;
+
+    const costs = [2, 4, 7, 10];
+    const names = ['Core Resonance (+4% Production)', 'Star Engine (+6% Production)', 'Infinite Loom (+8% Production)', 'Transcendent Claws (+10% Battle ATK)'];
+
+    document.getElementById('ascension-container').innerHTML = names.map((n, i) => {
+        const lv = state.prestige['a' + i] || 0;
+        const cost = costs[i] + lv * 2;
+        return `
+            <div class="big-card">
+                <h3>🌟 ${n}</h3>
+                <div class="statline"><span>Level</span><b>${lv}/10</b></div>
+                <button class="btn btn-divine" style="margin-top:4px; justify-content:center;" ${state.prestige.cores >= cost && lv < 10 ? '' : 'disabled'} onclick="buyAscensionUpgrade(${i}, ${cost})">
+                    ${lv >= 10 ? 'MAX' : `Upgrade (${cost} Cores)`}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function buyAscensionUpgrade(idx, cost) {
+    const lv = state.prestige['a' + idx] || 0;
+    if (lv < 10 && state.prestige.cores >= cost) {
+        state.prestige.cores -= cost;
+        state.prestige['a' + idx] = lv + 1;
+        playAudio('jackpot');
+        renderAscension();
+        updateUI();
+    }
+}
+
+/* =========================================================================
+   12. RANDOM EVENTS (GOLDEN MOUSE)
+   ========================================================================= */
+function spawnGoldenMouse() {
+    const mouse = document.createElement('div');
+    mouse.className = 'golden-mouse';
+    mouse.innerText = '🐭✨';
+    mouse.style.left = `${Math.random() * (window.innerWidth - 80) + 30}px`;
+    mouse.style.top = `${Math.random() * (window.innerHeight - 80) + 30}px`;
+
+    mouse.onclick = () => {
+        playAudio('jackpot');
+        const lootGems = Math.floor(Math.random() * 6) + 3;
+        state.gems += lootGems;
+        state.nip += 1;
+        spawnBubble(parseFloat(mouse.style.left), parseFloat(mouse.style.top), `+${lootGems} 💎 & +1 🌿!`, 'var(--accent)');
+        mouse.remove();
+    };
+
+    document.body.appendChild(mouse);
+    setTimeout(() => { if (mouse.parentElement) mouse.remove(); }, 6000);
+}
+setInterval(() => { if (Math.random() < 0.4) spawnGoldenMouse(); }, 25000);
+
+/* =========================================================================
+   13. GAME TICKER ENGINE
+   ========================================================================= */
+let lastTick = performance.now();
+let lastTapCounter = 0;
+
+setInterval(() => {
+    const now = performance.now();
+    const delta = (now - lastTick) / 1000;
+    lastTick = now;
+
+    const fps = getTotalFPS();
+    const gain = fps * delta;
+    state.fish += gain;
+    state.totalFishEarned += gain;
+
+    const autoClicks = state.upgrades['auto_scratcher'] || 0;
+    if (autoClicks > 0) {
+        state.fish += autoClicks * getClickPower() * delta * 0.5;
+    }
+
+    damageBoss(getTeamAttackPower() * delta);
+
+    const hydroLvl = state.upgrades['nip_harvester'] || 0;
+    if (hydroLvl > 0 && Math.random() < (0.03 * hydroLvl * delta)) {
+        state.nip += 1;
+        showToast("🌿 Catnip harvested from hydroponics!");
+    }
+
+    if (feastBuffDuration > 0) feastBuffDuration -= delta;
+
+    if (isFever) {
+        feverDuration -= delta;
+        if (feverDuration <= 0) {
+            isFever = false;
+            state.feverGauge = 0;
+            document.body.classList.remove('fever-active');
+        }
+    } else if (state.feverGauge > 0) {
+        state.feverGauge = Math.max(0, state.feverGauge - (delta * 2));
+    }
+
+    // Expeditions progress
+    EXPEDITIONS_DB.forEach(exp => {
+        const expState = state.expeditions[exp.id];
+        if (expState && expState.active) {
+            expState.remaining -= delta;
+            if (expState.remaining <= 0) {
+                expState.active = false;
+                state.fish += exp.reward.fish;
+                state.gems += exp.reward.gems;
+                state.nip += exp.reward.nip || 0;
+                if (exp.reward.relics) state.relics += exp.reward.relics;
+                if (exp.reward.yarn) state.yarn += exp.reward.yarn;
+                state.stats.expeditions = (state.stats.expeditions || 0) + 1;
+
+                showToast(`🧭 Expedition "${exp.name}" Completed!`);
+                playAudio('jackpot');
+                if (currentTab === 'expeditions') renderExpeditions();
+            }
+        }
+    });
+
+    // Tap tracking for daily/weekly challenges
+    if (state.taps > lastTapCounter) {
+        const diff = state.taps - lastTapCounter;
+        state.daily.progress = Math.min(20, (state.daily.progress || 0) + diff);
+        state.daily.weekly = Math.min(100, (state.daily.weekly || 0) + diff);
+        lastTapCounter = state.taps;
+    }
+
+    updateUI();
+}, 100);
+
+/* =========================================================================
+   14. UI SYNC & TAB NAVIGATION
+   ========================================================================= */
+function switchTab(tabId) {
+    currentTab = tabId;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+    const target = document.getElementById(`tab-${tabId}`);
+    if (target) target.classList.add('active');
+
+    const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+    if (activeBtn) activeBtn.classList.add('active');
+
+    if (tabId === 'sanctuary') { syncPhysicalCats(); renderSanctuary(); }
+    else if (tabId === 'dungeon') { updateDungeonUI(); renderRelicUpgrades(); }
+    else if (tabId === 'bakery') renderBakery();
+    else if (tabId === 'upgrades') renderUpgrades();
+    else if (tabId === 'quests') renderQuests();
+    else if (tabId === 'expeditions') renderExpeditions();
+    else if (tabId === 'astral') renderAstralTree();
+    else if (tabId === 'regions') renderRegions();
+    else if (tabId === 'mastery') renderMastery();
+    else if (tabId === 'research') renderResearch();
+    else if (tabId === 'collection') renderCollection();
+    else if (tabId === 'daily') renderDaily();
+    else if (tabId === 'merchant') renderMerchant();
+    else if (tabId === 'lab') renderLab();
+    else if (tabId === 'trials') renderTrials();
+    else if (tabId === 'season') renderSeason();
+    else if (tabId === 'wardrobe') renderWardrobe();
+    else if (tabId === 'ascension') renderAscension();
+}
+
+function updateUI() {
+    document.getElementById('cur-slot-label').innerText = activeSlotId;
+    document.getElementById('fish-val').innerText = formatCompact(Math.floor(state.fish));
+    document.getElementById('gems-val').innerText = formatCompact(state.gems);
+    document.getElementById('nip-val').innerText = formatCompact(state.nip);
+    document.getElementById('yarn-val').innerText = formatCompact(state.yarn);
+    document.getElementById('relics-val').innerText = formatCompact(state.relics);
+    document.getElementById('fps-val').innerText = `${formatCompact(getTotalFPS())} /s`;
+    document.getElementById('click-val').innerText = `${formatCompact(getClickPower())} /tap`;
+
+    document.getElementById('pity-standard').innerText = state.pity.standard;
+    document.getElementById('pity-jewel').innerText = state.pity.jewel;
+    document.getElementById('pity-nip').innerText = state.pity.nip;
+    document.getElementById('pending-yarn').innerText = `Pending Yarn: +${getRebirthYarnReward()} 🧶`;
+
+    const cost1 = getStandardPullCost(1);
+    const cost10 = getStandardPullCost(10);
+    document.getElementById('cost-std-1').innerText = formatCompact(cost1);
+    document.getElementById('cost-std-10').innerText = formatCompact(cost10);
+
+    document.getElementById('btn-pull-std-1').disabled = state.fish < cost1;
+    document.getElementById('btn-pull-std-10').disabled = state.fish < cost10;
+    document.getElementById('btn-pull-gem-1').disabled = state.gems < 20;
+    document.getElementById('btn-pull-gem-10').disabled = state.gems < 180;
+    document.getElementById('btn-pull-nip-1').disabled = state.nip < 4;
+    document.getElementById('btn-pull-nip-5').disabled = state.nip < 18;
+    document.getElementById('btn-pull-yarn-1').disabled = state.yarn < 2;
+
+    const bar = document.getElementById('fever-bar');
+    const txt = document.getElementById('fever-status');
+    if (isFever) {
+        bar.style.width = `${(feverDuration / 10) * 100}%`;
+        txt.innerText = `🔥 MEOW FRENZY! ${feverDuration.toFixed(1)}s (2.5X BOOST!) 🔥`;
+    } else {
+        bar.style.width = `${state.feverGauge}%`;
+        txt.innerText = state.feverGauge >= 100 ? 'READY TO BURST!' : 'Tap cat to trigger MEOW FRENZY!';
+    }
+}
+
+function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2600);
+}
+
+function openModal(id) {
+    if (id === 'slots-modal') renderSlotsUI();
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function formatCompact(num) {
+    if (!Number.isFinite(num) || isNaN(num)) return "0";
+    if (num >= 1e12) return (num / 1e12).toFixed(2) + "T";
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + "k";
+    return Math.floor(num).toLocaleString();
+}
+
+/* =========================================================================
+   15. MULTI-SLOT SAVE & RESET ENGINE
+   ========================================================================= */
+const SAVE_PREFIX = 'neko_gacha_v6_slot_';
+
+function getSlotData(slotId) {
+    try {
+        const raw = localStorage.getItem(SAVE_PREFIX + slotId);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+        return null;
+    }
+}
+
+function saveGame(manual = false) {
+    const payload = {
+        slotId: activeSlotId,
+        state: state,
+        time: Date.now(),
+        meta: {
+            fish: state.fish,
+            discovered: Object.values(state.cats).filter(c => c.count > 0).length,
+            ascensions: state.prestige.ascension || 0
+        }
+    };
+    localStorage.setItem(SAVE_PREFIX + activeSlotId, JSON.stringify(payload));
+    localStorage.setItem('neko_gacha_last_slot', activeSlotId);
+    if (manual) showToast(`💾 Saved to Slot ${activeSlotId}!`);
+}
+
+function loadSlot(slotId) {
+    const data = getSlotData(slotId);
+    activeSlotId = slotId;
+    localStorage.setItem('neko_gacha_last_slot', slotId);
+
+    if (data && data.state) {
+        state = Object.assign(getFreshState(), data.state);
+        initDefaults();
+
+        // Offline progress calculation
+        const diffSec = Math.min(43200, (Date.now() - (data.time || Date.now())) / 1000);
+        if (diffSec > 30) {
+            const earned = Math.floor(getTotalFPS() * diffSec * 0.4);
+            state.fish += earned;
+            state.totalFishEarned += earned;
+            
+            setTimeout(() => {
+                document.getElementById('offline-time').innerText = `${Math.floor(diffSec / 60)}m ${Math.floor(diffSec % 60)}s`;
+                document.getElementById('offline-fish').innerText = `+${formatCompact(earned)} 🐟`;
+                openModal('offline-modal');
+            }, 500);
+        }
+    } else {
+        state = getFreshState();
+        initDefaults();
+    }
+
+    if (state.wardrobe?.equipped) {
+        equipWardrobe(state.wardrobe.equipped);
+    }
+
+    renderSanctuary();
+    renderTeamBar();
+    updateUI();
+    showToast(`Loaded Slot ${slotId}`);
+}
+
+function renderSlotsUI() {
+    const container = document.getElementById('slots-list-container');
+    container.innerHTML = '';
+
+    for (let i = 1; i <= 3; i++) {
+        const slotData = getSlotData(i);
+        const isActive = activeSlotId === i;
+        const div = document.createElement('div');
+        div.className = `slot-card ${isActive ? 'active-slot' : ''}`;
+
+        if (slotData) {
+            const dateStr = new Date(slotData.time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+            div.innerHTML = `
+                <div class="slot-title">
+                    <span>Slot ${i} ${isActive ? '<b style="color:var(--nip-color); font-size:0.75rem;">[ACTIVE]</b>' : ''}</span>
+                    <span class="badge-mini" style="background:#2d2642;">Saved: ${dateStr}</span>
+                </div>
+                <div class="slot-meta">
+                    🐟 Fish: <b>${formatCompact(slotData.state.fish || 0)}</b> | 🐾 Cats: <b>${slotData.meta?.discovered || 0}/100</b> | 🌟 Ascensions: <b>${slotData.meta?.ascensions || 0}</b>
+                </div>
+                <div class="choice-row">
+                    ${!isActive ? `<button class="btn btn-gold" onclick="switchSlot(${i})">Switch To Slot</button>` : `<button class="btn btn-nip" disabled>Currently Playing</button>`}
+                    <button class="btn" onclick="overwriteSlot(${i})">Save Here</button>
+                    <button class="btn btn-danger" style="flex:0.4;" onclick="deleteSlot(${i})">🗑️</button>
+                </div>
+            `;
+        } else {
+            div.innerHTML = `
+                <div class="slot-title">
+                    <span>Slot ${i} ${isActive ? '<b style="color:var(--nip-color); font-size:0.75rem;">[ACTIVE]</b>' : ''}</span>
+                    <span class="badge-mini" style="background:#333;">Empty Slot</span>
+                </div>
+                <div class="slot-meta">No save file data recorded.</div>
+                <div class="choice-row">
+                    ${!isActive ? `<button class="btn btn-gold" onclick="switchSlot(${i})">Create New Game</button>` : `<button class="btn btn-nip" disabled>Active Fresh Slot</button>`}
+                    <button class="btn" onclick="overwriteSlot(${i})">Save Here</button>
+                </div>
+            `;
+        }
+        container.appendChild(div);
+    }
+}
+
+function switchSlot(slotId) {
+    saveGame(false);
+    loadSlot(slotId);
+    renderSlotsUI();
+    closeModal('slots-modal');
+}
+
+function overwriteSlot(slotId) {
+    activeSlotId = slotId;
+    saveGame(true);
+    renderSlotsUI();
+}
+
+function deleteSlot(slotId) {
+    if (confirm(`Delete all data from Slot ${slotId}? This action cannot be undone.`)) {
+        localStorage.removeItem(SAVE_PREFIX + slotId);
+        if (activeSlotId === slotId) {
+            state = getFreshState();
+            initDefaults();
+            renderSanctuary();
+            renderTeamBar();
+            updateUI();
+        }
+        renderSlotsUI();
+        showToast(`Slot ${slotId} cleared.`);
+    }
+}
+
+function confirmHardReset() {
+    const input = prompt(`DANGER: Are you sure you want to permanently erase Slot ${activeSlotId}?\n\nType "RESET" to confirm:`);
+    if (input === 'RESET') {
+        localStorage.removeItem(SAVE_PREFIX + activeSlotId);
+        state = getFreshState();
+        initDefaults();
+        renderSanctuary();
+        renderTeamBar();
+        updateUI();
+        closeModal('slots-modal');
+        showToast("🧹 Slot completely wiped and reset!");
+    } else if (input !== null) {
+        showToast("Reset aborted: Confirmation keyword mismatch.");
+    }
+}
+
+function exportSave() {
+    const payload = { slotId: activeSlotId, state: state, time: Date.now() };
+    const str = btoa(JSON.stringify(payload));
+    navigator.clipboard.writeText(str).then(() => {
+        showToast("📤 Save code copied to clipboard!");
+    }).catch(() => {
+        prompt("Copy your save string manually:", str);
+    });
+}
+
+function importSave() {
+    const str = prompt("Paste your exported save code string:");
+    if (str) {
+        try {
+            const data = JSON.parse(atob(str));
+            if (data && data.state) {
+                state = Object.assign(getFreshState(), data.state);
+                initDefaults();
+                renderSanctuary();
+                renderTeamBar();
+                updateUI();
+                saveGame(true);
+                showToast("📥 Save code imported and restored successfully!");
+            }
+        } catch (e) {
+            alert("Invalid save string format!");
+        }
+    }
+}
+
+setInterval(() => saveGame(false), 20000);
+
+/* =========================================================================
+   16. INITIAL STARTUP
+   ========================================================================= */
+const lastSlot = parseInt(localStorage.getItem('neko_gacha_last_slot')) || 1;
+loadSlot(lastSlot);
+syncPhysicalCats();
+renderSanctuary();
+renderTeamBar();
+updateUI();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,3177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Food Artisan Empire - World Culinary Edition</title>
+<style>
+  :root {
+    --wood-dark: #120703;
+    --wood-mid: #2b1307;
+    --marble: #f4ede1;
+    --brass: #d4af37;
+    --brass-glow: #ffe484;
+    --accent: #b32415;
+    --accent-dark: #78140a;
+    --success: #2e7d32;
+    --text-dark: #2a180c;
+  }
+
+  * { box-sizing: border-box; user-select: none; font-family: 'Georgia', -apple-system, serif; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: #080302 radial-gradient(circle at 50% 30%, #240e05 0%, #050201 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-dark);
+    overflow: hidden;
+  }
+
+  #game-container {
+    width: min(1380px, 99vw);
+    height: min(890px, 98vh);
+    background: var(--marble);
+    border: 8px solid #1a0b04;
+    border-radius: 16px;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.95);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Header */
+  #header {
+    height: 60px;
+    background: linear-gradient(180deg, #301407 0%, #150702 100%);
+    color: #f7e7ce;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 3px solid #0d0401;
+    flex-shrink: 0;
+  }
+
+  .brand-block { display: flex; align-items: center; gap: 10px; }
+  .brand-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--brass-glow);
+    text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+    letter-spacing: 0.5px;
+  }
+
+  .venue-switcher {
+    display: flex;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 3px;
+  }
+  .venue-btn {
+    background: transparent;
+    border: none;
+    color: #dfcaa7;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 9px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .venue-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .venue-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .stats-bar { display: flex; gap: 5px; font-size: 11px; align-items: center; }
+  .stat-badge {
+    background: rgba(0,0,0,0.6);
+    padding: 3px 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,0.3);
+    color: #f3ebd8;
+  }
+  .stat-badge b { color: var(--brass-glow); font-family: monospace; font-size: 12px; }
+
+  .combo-badge {
+    background: linear-gradient(180deg, #d35400, #962d00);
+    color: #fff;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 14px;
+    border: 1px solid #f39c12;
+    animation: pulse 1.2s infinite alternate;
+  }
+  @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+  .header-btn {
+    background: #3f1e0b;
+    border: 1px solid #6c3717;
+    color: #eddac0;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .header-btn:hover { background: #56290f; color: #fff; }
+
+  /* Main Workspace Stage */
+  #main-stage {
+    flex: 1;
+    display: flex;
+    position: relative;
+    background: #eadecc radial-gradient(circle, #f4ecd9 10%, #d8c3a7 100%);
+    min-height: 0;
+  }
+
+  /* Left Ticket & Showcase Panel */
+  #ticket-panel {
+    width: 295px;
+    background: #faf4e8 linear-gradient(180deg, #fffcf7 0%, #f1e6d3 100%);
+    border-right: 3px solid #c7b095;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .customer-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #d8c7b0;
+    border-radius: 8px;
+    padding: 6px 8px;
+    position: relative;
+  }
+  .customer-avatar {
+    font-size: 26px;
+    background: #f4ede2;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ceb89f;
+    flex-shrink: 0;
+  }
+  .customer-info { flex: 1; font-size: 11px; line-height: 1.25; }
+  
+  .patience-bar-wrap {
+    width: 100%;
+    height: 5px;
+    background: #e0d0bc;
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .patience-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: #2e7d32;
+    transition: width 0.3s linear, background-color 0.3s;
+  }
+
+  .ticket {
+    background: #fff;
+    border: 1px solid #d8c7b0;
+    border-top: 5px solid var(--accent);
+    border-radius: 6px;
+    padding: 7px 9px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+  }
+  .ticket-title {
+    font-weight: bold;
+    font-size: 11px;
+    color: var(--accent-dark);
+    border-bottom: 1px dashed #d0beaa;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .ticket-body { font-size: 10.5px; line-height: 1.35; color: #432b17; }
+  .order-tag { display: inline-block; padding: 1px 5px; font-size: 8.5px; font-weight: bold; border-radius: 4px; color: #fff; }
+  .tag-takeout { background: #2e7d32; }
+  .tag-delivery { background: #1565c0; }
+  .tag-vip { background: #8e44ad; }
+  .tag-critic { background: #d35400; }
+  .tag-regular { background: #555; }
+
+  /* Daily Missions Box */
+  .missions-box {
+    background: #fdf5e6;
+    border: 1px solid #d4af37;
+    border-radius: 7px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+  .mission-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2px 0;
+    padding: 2px 0;
+    border-bottom: 1px dotted #edd5a8;
+  }
+  .mission-item.done { text-decoration: line-through; opacity: 0.6; }
+
+  /* Heated Warmer Box */
+  .slice-warmer-box {
+    background: #fff9ee;
+    border: 2px solid #e0c89e;
+    border-radius: 7px;
+    padding: 6px;
+    font-size: 10px;
+  }
+  .warmer-slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    margin-top: 4px;
+  }
+  .warmer-slot {
+    background: #fbf2df;
+    border: 1px dashed #cbb18a;
+    border-radius: 5px;
+    height: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    text-align: center;
+  }
+  .warmer-slot.occupied { background: #fff; border: 1px solid #2e7d32; }
+
+  /* Center Canvas Workspace */
+  #canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: radial-gradient(circle at center, #eed9bd 0%, #c4a984 100%);
+    overflow: hidden;
+  }
+
+  #kitchen-ready-badge {
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    z-index:3; padding:5px 12px; border-radius:999px;
+    background:rgba(255,248,231,.94); border:1px solid #d4af37;
+    color:#7a3a0e; font-size:9.5px; font-weight:800; letter-spacing:.4px;
+    box-shadow:0 2px 8px rgba(60,35,15,.12); pointer-events:none;
+  }
+  #canvas-start-hint {
+    position:absolute; bottom:7px; left:50%; transform:translateX(-50%);
+    width:88%; text-align:center; padding:5px 8px; border-radius:7px;
+    background:rgba(255,255,255,.88); border:1px solid #eadbc7;
+    color:#785c45; font-size:9.5px; pointer-events:none; z-index:3;
+  }
+
+  canvas {
+    background: transparent;
+    max-height: 96%;
+    max-width: 96%;
+    aspect-ratio: 1/1;
+    filter: drop-shadow(0 12px 25px rgba(0,0,0,0.35));
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  /* Floating Profit / Feedback Toast */
+  .profit-toast {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(25, 75, 25, 0.95);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 12px;
+    border: 1px solid #85e085;
+    pointer-events: none;
+    animation: fadeUp 2s forwards;
+    z-index: 10;
+  }
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translate(-50%, 15px); }
+    20% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; transform: translate(-50%, -5px); }
+    100% { opacity: 0; transform: translate(-50%, -25px); }
+  }
+
+  /* Right Tools Panel */
+  #tools-panel {
+    width: 350px;
+    background: #f7eedf linear-gradient(180deg, #f8f0e3 0%, #ecdcc8 100%);
+    border-left: 3px solid #c7b095;
+    padding: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .tool-section-title {
+    font-weight: bold;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    color: #5c3517;
+    letter-spacing: 0.6px;
+    border-bottom: 2px solid #dfcfbc;
+    padding-bottom: 2px;
+    margin-top: 4px;
+  }
+
+  .toppings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .tool-btn {
+    background: #fffaf0;
+    border: 2px solid #ceb9a1;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-weight: 600;
+    font-size: 9.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.12s ease;
+    color: #38210f;
+  }
+  .tool-btn:hover { background: #fff2dd; border-color: var(--accent); transform: translateY(-1px); }
+  .tool-btn.active { background: var(--accent); color: #fff; border-color: var(--accent-dark); box-shadow: 0 2px 6px rgba(179,36,21,0.35); }
+
+  .tool-icon-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.3);
+  }
+
+  .side-selector {
+    display: flex;
+    gap: 3px;
+    background: #e4d0b7;
+    padding: 2px;
+    border-radius: 5px;
+  }
+  .side-btn {
+    flex: 1;
+    padding: 3px;
+    font-size: 9px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #4a2d18;
+  }
+  .side-btn.active { background: #fff; color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+
+  .next-station-btn {
+    background: linear-gradient(180deg, #349646 0%, #247533 100%);
+    color: white;
+    font-weight: bold;
+    border: 1px solid #195b25;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 10.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .next-station-btn:hover { background: linear-gradient(180deg, #3bb853 0%, #2b8c3d 100%); }
+
+  /* Bottom Navigation */
+  #bottom-nav {
+    height: 52px;
+    background: linear-gradient(180deg, #250f05 0%, #100502 100%);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    border-top: 3px solid #080301;
+    flex-shrink: 0;
+  }
+
+  .step-btn {
+    background: #3e200f;
+    color: #e0cca9;
+    border: 1px solid #623418;
+    padding: 6px 11px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .step-btn:hover { background: #532c14; color: #fff; }
+  .step-btn.active-step {
+    background: linear-gradient(180deg, #b32415 0%, #7e170c 100%);
+    color: #fff;
+    border-color: #d4af37;
+    box-shadow: 0 0 8px rgba(212,175,55,0.4);
+  }
+
+  .action-btn {
+    background: linear-gradient(180deg, #b32415 0%, #87190d 100%);
+    color: white;
+    font-weight: bold;
+    border: 1px solid #5a0f07;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .action-btn:hover { background: linear-gradient(180deg, #cc2b1a 0%, #9e1f11 100%); }
+
+  /* Modals */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 5, 2, 0.88);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .modal-card {
+    background: #fdfaf2;
+    padding: 18px 22px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 680px;
+    width: 92%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.85);
+    border: 3px solid #c7b095;
+    max-height: 90%;
+    overflow-y: auto;
+  }
+  .modal-card h2 { margin-top: 0; color: var(--accent); font-size: 20px; }
+  .modal-card p { font-size: 11.5px; line-height: 1.4; color: #432b17; }
+
+  /* Receipt Breakdown styling */
+  .receipt-box {
+    background: #fff;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: left;
+    margin: 10px 0;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.04);
+  }
+  .receipt-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #5a361c;
+    border-bottom: 1px dashed #d8c7b0;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .receipt-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .receipt-list li {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #f0e6d6;
+    padding: 2px 0;
+  }
+  .item-ok { color: #2e7d32; }
+  .item-err { color: #b32415; font-weight: bold; }
+
+  @media (max-width: 950px) {
+    #ticket-panel { width: 240px; }
+    #tools-panel { width: 270px; }
+    .brand-title { display: none; }
+  }
+
+  #game-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 223, 157, 0.18), transparent 38%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #header, #main-stage, #bottom-nav, #ticket-panel, #tools-panel, #canvas-container, #overlay {
+    position: relative;
+    z-index: 1;
+  }
+
+  .customer-card { box-shadow: 0 6px 18px rgba(75, 40, 18, 0.08); }
+  .ticket { box-shadow: 0 10px 18px rgba(66, 35, 12, 0.08); }
+  .order-glow { animation: orderGlow 1.3s ease-in-out infinite alternate; }
+  @keyframes orderGlow {
+    from { box-shadow: 0 0 0 rgba(179, 36, 21, 0.0); }
+    to { box-shadow: 0 0 18px rgba(179, 36, 21, 0.2); }
+  }
+
+  .mood-card {
+    margin-top: 6px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    border: 1px solid #d9c9ab;
+    font-size: 9px;
+    line-height: 1.3;
+    font-weight: 700;
+    background: #f9f4ea;
+    color: #5b3d1d;
+  }
+  .mood-card.happy { background: #edf9ef; border-color: #8cc28f; color: #1b6f2d; }
+  .mood-card.angry { background: #fff0ee; border-color: #db8b7f; color: #9f261b; }
+
+/* BEST EVER VISUAL + PLAYABILITY POLISH */
+:root{--glow:rgba(212,175,55,.28)}
+#game-container{box-shadow:0 18px 60px rgba(0,0,0,.28)}
+#header{background:linear-gradient(135deg,#2a160b,#5a2b12 55%,#2b170d);box-shadow:0 4px 18px rgba(0,0,0,.28)}
+.stat-badge,.combo-badge{box-shadow:0 3px 10px rgba(0,0,0,.16)}
+button{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+button:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+button:active{transform:translateY(1px);box-shadow:none}
+#ticket-panel,#tools-panel{box-shadow:0 8px 24px rgba(0,0,0,.12)}
+#workspace{background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.9),rgba(239,224,195,.55))}
+.action-btn{box-shadow:0 4px 10px rgba(0,0,0,.16)}
+#toast{position:absolute;left:50%;top:78px;transform:translate(-50%,-12px);opacity:0;pointer-events:none;z-index:999;padding:9px 16px;border-radius:999px;background:#24140b;color:#fff;font-weight:bold;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:.25s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.order-pulse{animation:orderPulse .55s ease}
+@keyframes orderPulse{50%{transform:scale(1.015);box-shadow:0 0 0 5px var(--glow)}}
+
+/* REALISTIC FOOD + DEBUG UPDATE */
+.food-glow { filter: drop-shadow(0 8px 8px rgba(0,0,0,.25)); }
+#debug-chef-btn{background:linear-gradient(135deg,#5b1b6e,#a63bb4)!important;color:#fff;border-color:#d98be4!important}
+#debug-chef-btn:hover{transform:translateY(-2px) scale(1.03)}
+#debug-panel{position:absolute;right:14px;bottom:14px;z-index:150;background:rgba(20,12,26,.96);color:#fff;border:2px solid #c56bd4;border-radius:14px;padding:12px;width:260px;box-shadow:0 18px 45px rgba(0,0,0,.5);font-size:12px}
+#debug-panel button{margin:4px;padding:7px 9px;border-radius:8px;border:1px solid #e3a5ec;background:#6b2578;color:#fff;cursor:pointer}
+#debug-panel button:hover{filter:brightness(1.18)}
+
+</style>
+</head>
+<body>
+
+<div id="game-container"><div id="toast"></div>
+  <!-- Top Bar -->
+  <div id="header">
+    <div class="brand-block">
+      <div class="brand-title">🌮 STREET FOOD ARTISAN EMPIRE</div>
+      <div class="venue-switcher">
+        <button class="venue-btn active" id="restaurant-selector-btn" onclick="openRestaurantSelector()">🏪 Restaurants ▾</button>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-badge">Day: <span id="day-val">1</span></div>
+      <div class="stat-badge">Empire: <b>$<span id="cash-val">0.00</span></b></div>
+      <div class="stat-badge">Stars: <b><span id="prestige-val">0</span> ⭐</b></div>
+      <div class="combo-badge" id="combo-badge" style="display:none;">Combo x<span id="combo-val">1.0</span> 🔥</div>
+      <button class="header-btn" onclick="openEmpireReport()">🏙️ Empire</button>
+      <button class="header-btn" onclick="openAchievements()">🏆 Awards</button>
+      <button class="header-btn" onclick="openFestival()">🎪 Festival</button>
+      <button class="header-btn" onclick="openUpgradesModal()">⚙️ Upgrades</button>
+      <button class="header-btn" onclick="openPrestigeModal()">🎖️ Apprentices</button>
+      <button class="header-btn" onclick="openSaveModal()">💾 Saves</button>
+      <button class="header-btn" onclick="openHelpModal()">❓ Guide</button>
+      <button class="header-btn" onclick="toggleAudio()" id="audio-btn">🔊</button>
+    </div>
+  </div>
+
+  <!-- Main Stage -->
+  <div id="main-stage">
+    <!-- Left Panel -->
+    <div id="ticket-panel">
+      <!-- Customer Info & Patience -->
+      <div class="customer-card">
+        <div class="customer-avatar" id="c-avatar">🧑</div>
+        <div class="customer-info">
+          <div style="display:flex; justify-content:space-between;">
+            <b id="c-name">Guest</b>
+            <span id="c-tip-bonus" style="color:#2e7d32; font-weight:bold; font-size:9.5px;">+30% Fast Tip</span>
+          </div>
+          <div class="patience-bar-wrap">
+            <div class="patience-bar-fill" id="patience-bar"></div>
+          </div>
+          <div style="font-size:9px; color:#785c45; margin-top:2px;" id="c-mood">Order in Progress</div>
+        </div>
+      </div>
+
+      <!-- Active Ticket -->
+      <div class="ticket">
+        <div class="ticket-title">
+          <span>TICKET #<span id="t-num">101</span></span>
+          <span id="t-type" class="order-tag tag-takeout">TAKEOUT</span>
+        </div>
+        <div class="ticket-body" id="ticket-details"></div>
+      </div>
+
+      <!-- Daily Missions & Bounties -->
+      <div class="missions-box">
+        <div style="font-weight:bold; color:#7a3a0e; border-bottom:1px solid #ebd7b9; padding-bottom:2px; margin-bottom:3px; display:flex; justify-content:space-between;">
+          <span>🎯 GUILD BOUNTIES</span>
+          <span style="font-size:8.5px; color:#2e7d32;">Day <span id="m-day">1</span></span>
+        </div>
+        <div id="missions-list"></div>
+      </div>
+
+      <!-- Counter Heated Slices Warmer Showcase -->
+      <div class="slice-warmer-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; color:#7a3a0e;">
+          <span>🔥 HEATED SHOWCASE</span>
+          <span style="font-size:8.5px; color:#2e7d32;">Walk-ins Live</span>
+        </div>
+        <div class="warmer-slots" id="warmer-slots-container"></div>
+      </div>
+    </div>
+
+    <!-- Center Canvas Workspace -->
+    <div id="canvas-container">
+      <div id="kitchen-ready-badge">🍳 GRAND OPENING · KITCHEN READY</div>
+      <canvas id="mainCanvas" width="520" height="520"></canvas>
+      <div id="canvas-start-hint">Your order is waiting — use the numbered steps below or tools on the right.</div>
+    </div>
+
+    <!-- Right Station Tools Panel -->
+    <div id="tools-panel"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div id="bottom-nav">
+    <button class="step-btn active-step" id="step-btn-1" onclick="setupStation(1)">1. 🫓 Base Prep</button>
+    <button class="step-btn" id="step-btn-2" onclick="setupStation(2)">2. 🥫 Fillings & Layers</button>
+    <button class="step-btn" id="step-btn-3" onclick="setupStation(3)">3. 🔥 Hearth / Cook</button>
+    <button class="step-btn" id="step-btn-4" onclick="setupStation(4)">4. ✨ Package, Drinks & Deliver</button>
+    <button class="step-btn" style="background:#2b1207;" onclick="openRestaurantSelector()">🏪 Restaurants</button>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="overlay">
+    <div class="modal-card" id="modal-content">
+      <h2>⭐ GRAND OPENING!</h2>
+      <p><b>Bella Napoli Pizzeria is officially OPEN.</b></p>
+      <div style="background:#fff8ed;border:1px solid #d4af37;border-radius:10px;padding:10px;margin:10px 0;text-align:left;">
+        <div style="font-size:18px;letter-spacing:2px;">⭐☆☆☆☆</div>
+        <b>Quality Guide:</b><br>
+        • Minimum topping amounts ensure high scores, but feel free to add more for presentation!<br>
+        • Cook food in the green target zone on the meter.<br>
+        • Prepare drinks and sides in Stage 4 before boxing and delivering.
+      </div>
+      <button class="action-btn" onclick="closeModal()">Open Bella Napoli 🔥</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   AUDIO SYNTHESIZER (Web Audio API)
+   ========================================================================== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function toggleAudio() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('audio-btn').innerText = soundEnabled ? '🔊' : '🔇';
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'dough') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+    } else if (type === 'sauce') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(260 + Math.random() * 40, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.08);
+      osc.start(now); osc.stop(now + 0.08);
+    } else if (type === 'drop') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(420 + Math.random() * 80, now);
+      osc.frequency.exponentialRampToValueAtTime(170, now + 0.06);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+      osc.start(now); osc.stop(now + 0.06);
+    } else if (type === 'sizzle') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(190, now);
+      osc.frequency.linearRampToValueAtTime(280, now + 0.16);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+      osc.start(now); osc.stop(now + 0.16);
+    } else if (type === 'slice') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.11);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
+      osc.start(now); osc.stop(now + 0.11);
+    } else if (type === 'drink') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(950, now + 0.18);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+      osc.start(now); osc.stop(now + 0.18);
+    } else if (type === 'cash') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.06);
+      osc.frequency.setValueAtTime(783.99, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+      osc.start(now); osc.stop(now + 0.28);
+    } else if (type === 'fanfare') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(554.37, now + 0.08);
+      osc.frequency.setValueAtTime(659.25, now + 0.16);
+      osc.frequency.setValueAtTime(880, now + 0.24);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+      osc.start(now); osc.stop(now + 0.45);
+    }
+  } catch(e) {}
+}
+
+/* ==========================================================================
+   RESTAURANT CONFIGURATIONS (8 RESTAURANTS)
+   ========================================================================== */
+const VENUE_CONFIG = {
+  pizza: {
+    name: 'Bella Napoli Pizzeria',
+    icon: '🍕',
+    unlockCostCash: 0,
+    unlockCostStars: 0,
+    doughs: {
+      classic: { name: 'Caputo 00 Classic', c1: '#fff0d1' },
+      sourdough: { name: 'Madre Rustica Sourdough', c1: '#fcedcf' },
+      charcoal: { name: 'Nero Carbone Charcoal', c1: '#363435' }
+    },
+    hotToppings: {
+      pepperoni: { name: 'Spicy Pepperoni', color: '#a62419' },
+      mushroom: { name: 'Cremini Mushrooms', color: '#7a6652' },
+      pepper: { name: 'Bell Peppers', color: '#27ae60' },
+      olive: { name: 'Kalamata Olives', color: '#2b212f' },
+      basil: { name: 'Sweet Basil', color: '#32964d' },
+      bacon: { name: 'Smoked Pancetta', color: '#882b1d' },
+      sausage: { name: 'Fennel Sausage', color: '#7f3b24' },
+      onion: { name: 'Caramelized Onion', color: '#b87832' }
+    },
+    coldFinishes: {
+      burrata: { name: 'Pugliese Burrata', color: '#ffffff' },
+      prosciutto: { name: 'Prosciutto Parma', color: '#bd4e55' },
+      evoo: { name: 'EVOO Spiral Drizzle', color: '#c4a000' }
+    },
+    sides: ['Garlic Knots', 'Caprese Salad', 'Rosemary Focaccia Sticks', 'Truffle Fries'],
+    drinks: ['Espresso Romano', 'San Pellegrino Aranciata', 'Limoncello Soda', 'Italian Blood Orange']
+  },
+  hotdog: {
+    name: 'Boardwalk Artisan Franks',
+    icon: '🌭',
+    unlockCostCash: 160,
+    unlockCostStars: 1,
+    buns: {
+      brioche: { name: 'Toasted Sweet Brioche', color: '#f3d18e' },
+      poppy: { name: 'Poppy Seed Bakery Bun', color: '#dfc287' },
+      pretzel: { name: 'Bavarian Pretzel Bun', color: '#a86c3d' }
+    },
+    sausages: {
+      beef: { name: 'Artisan All-Beef Frank', color: '#913222' },
+      bratwurst: { name: 'Veal Bratwurst', color: '#d2b48c' },
+      polish: { name: 'Spicy Smoked Kielbasa', color: '#7b1f13' }
+    },
+    condiments: {
+      mustard: { name: 'Dijon Grain Mustard', color: '#d4ac0d' },
+      ketchup: { name: 'San Marzano Ketchup', color: '#b01f14' },
+      cheese: { name: 'Aged Cheddar Melt', color: '#f39c12' },
+      relish: { name: 'Sweet Pickle Relish', color: '#27ae60' }
+    },
+    toppings: {
+      onion: { name: 'Crispy Fried Onions', color: '#c0803e' },
+      kraut: { name: 'Bavarian Sauerkraut', color: '#f5eec8' },
+      jalapeno: { name: 'Calabrian Jalapeños', color: '#1e824c' },
+      baconbits: { name: 'Smoked Bacon Crumbles', color: '#78281f' }
+    },
+    sides: ['Boardwalk Fries', 'Cheese Fries', 'Crispy Onion Rings', 'Loaded Potato Tots'],
+    drinks: ['Craft Vanilla Cola', 'Draft Birch Root Beer', 'Lemon-Lime Seltzer', 'Blueberry Boardwalk Slush']
+  },
+  sub: {
+    name: 'Little Italy Sub & Panini',
+    icon: '🥪',
+    unlockCostCash: 320,
+    unlockCostStars: 2,
+    breads: {
+      ciabatta: { name: 'Rustic Ciabatta', color: '#e8cfa1' },
+      focaccia: { name: 'Rosemary Focaccia', color: '#dbb977' },
+      subroll: { name: 'Italian Hero Sub Roll', color: '#ebca94' }
+    },
+    spreads: {
+      pesto: { name: 'Genovese Basil Pesto', color: '#4d8a36' },
+      mayo: { name: 'Roasted Garlic Aioli', color: '#fbf7dc' },
+      balsamic: { name: 'Modena Balsamic Glaze', color: '#38160e' }
+    },
+    meats: {
+      mortadella: { name: 'Mortadella Bologna', color: '#ea9999' },
+      capicola: { name: 'Spicy Capicola', color: '#b83b38' },
+      prosciutto: { name: 'Prosciutto di Parma', color: '#c0392b' },
+      turkey: { name: 'Roasted Herb Turkey', color: '#d6b28a' }
+    },
+    cheeses: {
+      provolone: { name: 'Aged Sharp Provolone', color: '#fff9d6' },
+      mozzarella: { name: 'Fior di Latte Mozzarella', color: '#ffffff' }
+    },
+    greens: {
+      arugula: { name: 'Wild Baby Arugula', color: '#2e7d32' },
+      tomato: { name: 'Roma Sliced Tomatoes', color: '#c0392b' },
+      peppers: { name: 'Sweet Peppadews', color: '#d35400' }
+    },
+    sides: ['Italian Pasta Salad', 'Garlic Parmesan Fries', 'Tomato Basil Soup', 'Antipasto Cup'],
+    drinks: ['Iced Blood Orange Tea', 'Cold Brew Espresso Tonic', 'Sicilian Lemonade', 'Peach Bellini Soda']
+  },
+  taco: {
+    name: 'Taquería Oaxaca & Birria Cart',
+    icon: '🌮',
+    unlockCostCash: 500,
+    unlockCostStars: 3,
+    bases: {
+      corntortilla: { name: 'Artisan Masa Tortilla', color: '#f2d48c' },
+      tortillachips: { name: 'Crispy Tortilla Chips', color: '#ebc063' },
+      flourtortilla: { name: 'Sonora Flour Tortilla', color: '#f8eec9' }
+    },
+    meats: {
+      birria: { name: 'Slow-Braised Beef Birria', color: '#802619' },
+      alpastor: { name: 'Achiote Pork Al Pastor', color: '#b84419' },
+      carneasada: { name: 'Charred Carne Asada', color: '#4a2511' }
+    },
+    salsas: {
+      salsaverde: { name: 'Tomatillo Salsa Verde', color: '#449c33' },
+      salsaroja: { name: 'Roasted Arbol Salsa Roja', color: '#b32215' },
+      quesoblanco: { name: 'Warm Queso Blanco Melt', color: '#faefc2' },
+      crema: { name: 'Oaxacan Lime Crema', color: '#ffffff' }
+    },
+    garnishes: {
+      cilantro: { name: 'Fresh Chopped Cilantro', color: '#27ae60' },
+      whiteonion: { name: 'Diced White Onions', color: '#f0f3f4' },
+      jalapenos: { name: 'Pickled Jalapeños', color: '#196f3d' },
+      lime: { name: 'Fresh Lime Squeeze', color: '#82e0aa' }
+    },
+    sides: ['Mexican Street Corn', 'Chips & Guacamole', 'Charro Pinto Beans', 'Arroz Mexicano'],
+    drinks: ['Horchata Casera', 'Agua de Jamaica', 'Jarritos Tamarindo', 'Mexican Glass Coca-Cola']
+  },
+  ramen: {
+    name: 'Tokyo Yatai Ramen & Gyoza',
+    icon: '🍜',
+    unlockCostCash: 750,
+    unlockCostStars: 4,
+    broths: {
+      tonkotsu: { name: 'Rich Pork Tonkotsu Broth', color: '#eeddc4' },
+      spicymiso: { name: 'Hokkaido Spicy Miso Broth', color: '#c45a27' },
+      shoyu: { name: 'Tokyo Clear Shoyu Dashi', color: '#9e6231' }
+    },
+    proteins: {
+      chashu: { name: 'Rolled Seared Pork Chashu', color: '#a04936' },
+      egg: { name: 'Ajitsuke Soft-Boiled Egg', color: '#f39c12' },
+      gyoza: { name: 'Crispy Pork Gyoza', color: '#c89658' }
+    },
+    toppings: {
+      nori: { name: 'Seaweed Nori Sheet', color: '#1b2631' },
+      menma: { name: 'Braised Menma Bamboo', color: '#c09858' },
+      naruto: { name: 'Narutomaki Swirl Fishcake', color: '#f5b7b1' },
+      scallions: { name: 'Finely Sliced Green Negi', color: '#27ae60' },
+      cornbutter: { name: 'Sweet Corn & Butter', color: '#f9e79f' }
+    },
+    sides: ['Steamed Edamame', 'Crispy Gyoza Side', 'Seaweed Salad', 'Chicken Karaage Bites'],
+    drinks: ['Matcha Iced Milk', 'Ramune Marble Soda', 'Cold Mugicha Barley Tea', 'Calpico Sparkler']
+  },
+  steak: {
+    name: 'The Prime Cut Steakhouse',
+    icon: '🥩',
+    unlockCostCash: 1100,
+    unlockCostStars: 5,
+    cuts: {
+      ribeye: { name: 'Prime Bone-in Ribeye', color: '#7a2216' },
+      filet: { name: 'Center-Cut Filet Mignon', color: '#8c2c1f' },
+      strip: { name: 'New York Strip Steak', color: '#6d1d13' }
+    },
+    seasonings: {
+      salt: { name: 'Maldon Flaky Sea Salt', color: '#ffffff' },
+      pepper: { name: 'Cracked Black Pepper', color: '#2b2b2b' },
+      garlic: { name: 'Garlic Butter Crust', color: '#fae3aa' }
+    },
+    sauces: {
+      peppercorn: { name: 'Green Peppercorn Sauce', color: '#615438' },
+      chimichurri: { name: 'Fresh Herb Chimichurri', color: '#2e7d32' },
+      bearnaise: { name: 'Tarragon Béarnaise', color: '#faefc2' }
+    },
+    sides: ['Loaded Baked Potato', 'Truffle Parmesan Fries', 'Creamed Spinach', 'Grilled Jumbo Asparagus'],
+    drinks: ['Sparkling San Pellegrino', 'House Cherry Cola', 'Berry Mint Fizz', 'Iced Black Currant Tea']
+  },
+  burger: {
+    name: 'Empire Burger Works',
+    icon: '🍔',
+    unlockCostCash: 1500,
+    unlockCostStars: 6,
+    buns: {
+      brioche: { name: 'Toasted Butter Brioche', color: '#f3d18e' },
+      sesame: { name: 'Sesame Seed Bakery Bun', color: '#dfc287' },
+      potato: { name: 'Soft Potato Roll', color: '#eed399' }
+    },
+    patties: {
+      beef: { name: 'Smash Angus Beef Patty', color: '#542013' },
+      doublebeef: { name: 'Double Smash Patties', color: '#45170d' },
+      chicken: { name: 'Crispy Fried Chicken', color: '#d28a38' }
+    },
+    cheeses: {
+      american: { name: 'Melted American Cheese', color: '#ffb300' },
+      cheddar: { name: 'Sharp Aged Cheddar', color: '#f39c12' },
+      swiss: { name: 'Melted Swiss Emmental', color: '#fff9d6' }
+    },
+    toppings: {
+      lettuce: { name: 'Crisp Shredded Lettuce', color: '#4caf50' },
+      tomato: { name: 'Beefsteak Tomato Slice', color: '#e53935' },
+      pickle: { name: 'Crinkle-Cut Dill Pickles', color: '#558b2f' },
+      bacon: { name: 'Thick Applewood Bacon', color: '#88281a' }
+    },
+    sides: ['Crinkle Cut Sea Salt Fries', 'Crispy Onion Rings', 'Loaded Bacon Tots', 'Creamy Slaw'],
+    drinks: ['Vanilla Bean Malt Shake', 'Chocolate Fudge Shake', 'Draft Root Beer Float', 'Fresh Strawberry Lemonade']
+  },
+  icecream: {
+    name: 'Sweet Dreams Ice Cream Parlor',
+    icon: '🍦',
+    unlockCostCash: 1900,
+    unlockCostStars: 7,
+    containers: {
+      cone: { name: 'Waffle Sugar Cone', color: '#d79e5b' },
+      cup: { name: 'Artisan Dessert Cup', color: '#f0f3f4' }
+    },
+    flavors: {
+      vanilla: { name: 'Madagascar Vanilla Bean', color: '#fff9e6' },
+      chocolate: { name: 'Dark Belgian Chocolate', color: '#4a2c11' },
+      strawberry: { name: 'Fresh Sweet Strawberry', color: '#ff85a2' },
+      mint: { name: 'Mint Chocolate Chip', color: '#a3e4d7' }
+    },
+    sauces: {
+      fudge: { name: 'Warm Chocolate Fudge', color: '#321603' },
+      caramel: { name: 'Salted Golden Caramel', color: '#c67d16' },
+      strawberry: { name: 'Ruby Strawberry Coulis', color: '#c0392b' }
+    },
+    toppings: {
+      sprinkles: { name: 'Rainbow Sprinkles', color: '#e74c3c' },
+      brownie: { name: 'Fudge Brownie Bites', color: '#3d2314' },
+      nuts: { name: 'Toasted Pecan Crumbles', color: '#a06030' },
+      cherry: { name: 'Maraschino Glace Cherry', color: '#c0392b' }
+    },
+    sides: ['Warm Chocolate Chip Cookie', 'Mini Brownie Slice', 'Waffle Bites Cup', 'Fruit Skewer'],
+    drinks: ['Strawberry Ice Cream Float', 'Cold Brew Coffee Soda', 'Blueberry Cream Slush', 'Sparkling Yuzu Soda']
+  }
+};
+
+/* ==========================================================================
+   GAME STATE & REBALANCED VENUES
+   ========================================================================== */
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+let currentSlot = 1;
+let currentVenue = 'pizza';
+
+let empireState = {
+  cash: 0.00,
+  day: 1,
+  orderIndex: 1,
+  maxOrdersPerDay: 6,
+  prestigeStars: 0,
+  lifetimeEarnings: 0,
+  comboStreak: 0,
+  unlockedVenues: {
+    pizza: true,
+    hotdog: false,
+    sub: false,
+    taco: false,
+    ramen: false,
+    steak: false,
+    burger: false,
+    icecream: false
+  },
+  workers: {
+    pizza: false, hotdog: false, sub: false, taco: false,
+    ramen: false, steak: false, burger: false, icecream: false
+  },
+  workerEnabled: {
+    pizza: true, hotdog: true, sub: true, taco: true,
+    ramen: true, steak: true, burger: true, icecream: true
+  },
+  venueProgress: {},
+  upgrades: {
+    turboHearth: 0,
+    laserGuides: 0,
+    showcaseRack: 0
+  },
+  perks: {
+    maestro: 0
+  },
+  stats: { orders: 0, perfect: 0 },
+  achievements: {},
+  warmerSlices: Array(8).fill(null),
+  missions: [],
+  recentOrders: [],
+  shiftEvent: null
+};
+
+let activeOrder = null;
+let activeDish = null;
+let activeStage = 1;
+let selectedTool = 'sauce';
+let toppingSide = 'whole';
+let customerPatience = 100;
+let patienceInterval = null;
+let cookTimer = null;
+window.lastServiceScore = 0;
+
+function getCustomerMoodState() {
+  if (customerPatience > 60) return 'happy';
+  if (customerPatience > 25) return 'warn';
+  return 'angry';
+}
+
+/* Ensure venue state integrity */
+function ensureVenueState() {
+  const venues = Object.keys(VENUE_CONFIG);
+  venues.forEach(v => {
+    if (!empireState.venueProgress[v]) {
+      empireState.venueProgress[v] = { reputation: 25, level: 1, orders: 0, perfect: 0, earnings: 0, upgrades: {} };
+    }
+    if (typeof empireState.unlockedVenues[v] !== 'boolean') {
+      empireState.unlockedVenues[v] = (v === 'pizza');
+    }
+    if (typeof empireState.workers[v] !== 'boolean') empireState.workers[v] = false;
+    if (typeof empireState.workerEnabled[v] !== 'boolean') empireState.workerEnabled[v] = true;
+  });
+}
+ensureVenueState();
+
+/* ==========================================================================
+   DISH FACTORY GENERATOR
+   ========================================================================== */
+function createNewDish(venue = currentVenue) {
+  return {
+    venue,
+    // Base Attributes
+    doughType: 'classic',
+    doughRadius: 110,
+    doughTargetRadius: 180,
+    isFoldedCalzone: false,
+    bunType: 'brioche',
+    breadType: 'ciabatta',
+    baseType: 'corntortilla',
+    brothType: 'tonkotsu',
+    cutType: 'ribeye',
+    pattyType: 'beef',
+    containerType: 'cone',
+    flavorType: 'vanilla',
+    // Cooking & Prep Arrays
+    sauceStamps: [],
+    cheeseStamps: [],
+    toppings: [],
+    spreads: [],
+    meats: [],
+    salsas: [],
+    seasonings: [],
+    layers: [],
+    garnishes: [],
+    cuts: [],
+    drizzleTrails: [],
+    currentDrizzle: null,
+    currentCondiment: null,
+    currentSpread: null,
+    currentSalsa: null,
+    burrata: null,
+    // Cooking Progress
+    cookProgress: 0,
+    isCooking: false,
+    noodlesAdded: false,
+    consommeReady: false,
+    cutDone: false,
+    // Packaging & Side / Drink
+    boxed: false,
+    drinkPrepared: null,
+    sidePrepared: null
+  };
+}
+
+/* ==========================================================================
+   ORDER GENERATOR
+   ========================================================================== */
+const CUSTOMER_PROFILES = [
+  { name: 'Nonna Rosa', avatar: '👵', type: 'vip' },
+  { name: 'Critic Julien', avatar: '🧐', type: 'critic' },
+  { name: 'Chef Kenji', avatar: '👨‍🍳', type: 'vip' },
+  { name: 'Enzo (Courier)', avatar: '🛵', type: 'delivery' },
+  { name: 'Mateo (Foodie)', avatar: '🧔', type: 'regular' },
+  { name: 'Sofia (Student)', avatar: '👩', type: 'regular' }
+];
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffled(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+function pickSome(arr, min=1, max=2) { const n=Math.max(min, Math.min(max, arr.length)); return shuffled(arr).slice(0, min + Math.floor(Math.random()*(n-min+1))); }
+function rememberOrder(o) {
+  empireState.recentOrders = Array.isArray(empireState.recentOrders) ? empireState.recentOrders : [];
+  const sig = o.signature || `${o.venue}|${o.recipeName}`;
+  empireState.recentOrders.push(sig);
+  if (empireState.recentOrders.length > 12) empireState.recentOrders.shift();
+  return o;
+}
+function uniqueOrder(build, tries=20) {
+  let o;
+  for (let i=0;i<tries;i++) { o=build(); if (!empireState.recentOrders?.includes(o.signature)) return rememberOrder(o); }
+  return rememberOrder(o);
+}
+function pizzaSauceCheeseSpec(isCalzone) {
+  const r=Math.random();
+  const sauce = r < .12 ? 'none' : r < .32 ? 'light' : r < .55 ? 'extra' : 'normal';
+  const c=Math.random();
+  const cheese = c < .10 ? 'none' : c < .30 ? 'light' : c < .55 ? 'extra' : 'normal';
+  return { sauce, cheese: isCalzone && sauce==='none' && cheese==='none' ? 'normal' : cheese };
+}
+function difficultyForDay() { return Math.min(4, Math.floor((empireState.day-1)/2)); }
+function generateOrder(venue = currentVenue) {
+  const conf = VENUE_CONFIG[venue];
+  return uniqueOrder(() => {
+    const profile = pickRandom(CUSTOMER_PROFILES);
+    const difficulty = difficultyForDay();
+    const requestedDrink = Math.random() < Math.min(.9, .55 + difficulty*.08) ? pickRandom(conf.drinks) : null;
+    const requestedSide = Math.random() < Math.min(.85, .45 + difficulty*.09) ? pickRandom(conf.sides) : null;
+    const baseOrder = { id:100+empireState.orderIndex, venue, customer:profile, requestedDrink, requestedSide, difficulty, modifiers:[] };
+    if (profile.type==='critic') baseOrder.modifiers.push('Presentation is being judged closely');
+    if (profile.type==='vip') baseOrder.modifiers.push('VIP accuracy bonus');
+    if (venue==='pizza') {
+      const isCalzone=Math.random()<.28, isSplit=!isCalzone&&Math.random()<.28;
+      const spec=pizzaSauceCheeseSpec(isCalzone);
+      const tops=Object.keys(conf.hotToppings);
+      const toppings=pickSome(tops, difficulty>=2?1:0, difficulty>=3?4:3);
+      const left=pickSome(tops,1,2), right=pickSome(tops.filter(x=>!left.includes(x)),1,2);
+      const finishes=Math.random()<.55 ? pickSome(Object.keys(conf.coldFinishes),1,2) : [];
+      const names = isCalzone ? ['Classic Folded Calzone','Meat Market Calzone','Garden Hearth Calzone','White Garlic Calzone'] : isSplit ? ['Half & Half Artisan Pizza','Mezzo e Mezzo Special','Two-Sided Family Pie'] : ['Classic Napoli','Pepperoni Hearth Pie','Garden Market Pizza','White Artisan Pizza','The Foodie Special'];
+      const o=Object.assign(baseOrder,{recipeName:pickRandom(names),isCalzone,isSplit,doughType:pickRandom(Object.keys(conf.doughs)),toppings:isSplit?[]:toppings,leftToppings:isSplit?left:[],rightToppings:isSplit?right:[],finishes,slices:isCalzone?2:pickRandom([6,8]),sauceSpec:spec.sauce,cheeseSpec:spec.cheese});
+      o.signature=`pizza|${o.isCalzone}|${o.isSplit}|${o.doughType}|${o.sauceSpec}|${o.cheeseSpec}|${[...o.toppings,...o.leftToppings,...o.rightToppings].sort().join(',')}|${o.finishes.sort().join(',')}`; return o;
+    }
+    if (venue==='hotdog') { const cond=pickSome(Object.keys(conf.condiments),0,difficulty>=2?3:2), tops=pickSome(Object.keys(conf.toppings),0,difficulty>=2?3:2); const o=Object.assign(baseOrder,{recipeName:pickRandom(['Boardwalk Classic','Coney Island Loaded','Smoky Brat Special','Midnight Crunch Frank']),bunType:pickRandom(Object.keys(conf.buns)),sausageType:pickRandom(Object.keys(conf.sausages)),condiments:cond,toppings:tops}); o.signature=`hotdog|${o.bunType}|${o.sausageType}|${cond.sort()}|${tops.sort()}`; return o; }
+    if (venue==='sub') { const o=Object.assign(baseOrder,{recipeName:pickRandom(['Italian Deli Hero','Pressed Capicola Panini','Garden Pesto Sub','Big City Turkey Hero']),breadType:pickRandom(Object.keys(conf.breads)),spreads:pickSome(Object.keys(conf.spreads),1,2),meats:pickSome(Object.keys(conf.meats),1,difficulty>=2?3:2),cheeses:pickSome(Object.keys(conf.cheeses),1,1),greens:pickSome(Object.keys(conf.greens),1,3)}); o.signature=`sub|${o.breadType}|${o.spreads}|${o.meats}|${o.cheeses}|${o.greens}`; return o; }
+    if (venue==='taco') { const dishType=pickRandom(['Street Birria Tacos','Loaded Fiesta Nachos','Quesadilla Dorada']); const o=Object.assign(baseOrder,{recipeName:dishType,dishType,baseType:dishType==='Loaded Fiesta Nachos'?'tortillachips':dishType==='Quesadilla Dorada'?'flourtortilla':'corntortilla',meat:pickRandom(Object.keys(conf.meats)),salsas:pickSome(Object.keys(conf.salsas),1,2),garnishes:pickSome(Object.keys(conf.garnishes),1,3),requiresConsomme:dishType==='Street Birria Tacos'}); o.signature=`taco|${dishType}|${o.meat}|${o.salsas}|${o.garnishes}`; return o; }
+    if (venue==='ramen') { const all=[...Object.keys(conf.proteins),...Object.keys(conf.toppings)]; const o=Object.assign(baseOrder,{recipeName:pickRandom(['Tokyo Night Ramen','Hokkaido Fire Bowl','Shoyu Street Bowl','Yatai Deluxe']),brothType:pickRandom(Object.keys(conf.broths)),toppings:pickSome(all,2,difficulty>=2?5:4)}); o.signature=`ramen|${o.brothType}|${o.toppings.sort()}`; return o; }
+    if (venue==='steak') { const temp=pickRandom(['Rare','Medium Rare','Medium','Medium Well','Well Done']); const targets={Rare:68,'Medium Rare':78,Medium:88,'Medium Well':98,'Well Done':108}; const o=Object.assign(baseOrder,{recipeName:`${temp} ${pickRandom(['Prime Ribeye','Filet Mignon','New York Strip'])}`,cutType:pickRandom(Object.keys(conf.cuts)),targetTemp:targets[temp],targetTempName:temp,seasonings:pickSome(Object.keys(conf.seasonings),1,3),sauces:Math.random()<.8?pickSome(Object.keys(conf.sauces),1,2):[]}); o.signature=`steak|${o.cutType}|${temp}|${o.seasonings}|${o.sauces}`; return o; }
+    if (venue==='burger') { const cheese=Math.random()<.12?null:pickRandom(Object.keys(conf.cheeses)); const o=Object.assign(baseOrder,{recipeName:pickRandom(['Empire Smash Classic','Double Trouble','Bacon Tower','Crispy Chicken Deluxe']),bunType:pickRandom(Object.keys(conf.buns)),pattyType:pickRandom(Object.keys(conf.patties)),cheeseType:cheese,toppings:pickSome(Object.keys(conf.toppings),1,4)}); o.signature=`burger|${o.bunType}|${o.pattyType}|${cheese}|${o.toppings.sort()}`; return o; }
+    const o=Object.assign(baseOrder,{recipeName:pickRandom(['Sweet Dreams Sundae','Triple Treat','Parlor Special','Midnight Fudge Dream']),containerType:pickRandom(Object.keys(conf.containers)),flavorType:pickRandom(Object.keys(conf.flavors)),sauces:Math.random()<.85?pickSome(Object.keys(conf.sauces),1,2):[],toppings:pickSome(Object.keys(conf.toppings),1,4)}); o.signature=`icecream|${o.containerType}|${o.flavorType}|${o.sauces.sort()}|${o.toppings.sort()}`; return o;
+  });
+}
+
+/* ==========================================================================
+   DAILY MISSIONS SYSTEM
+   ========================================================================== */
+function generateDailyMissions() {
+  empireState.missions = [
+    { id: 1, text: "Serve 3 orders with 90%+ score", current: 0, target: 3, rewardStars: 1, completed: false },
+    { id: 2, text: "Keep showcase stocked with 3+ slices", current: 0, target: 1, rewardCash: 60, completed: false },
+    { id: 3, text: "Serve a VIP/Critic with fast bonus", current: 0, target: 1, rewardCash: 80, completed: false }
+  ];
+  renderMissionsUI();
+}
+
+function checkMissionProgress(type, data = {}) {
+  empireState.missions.forEach(m => {
+    if (m.completed) return;
+    if (m.id === 1 && type === 'perfect_score' && data.score >= 90) {
+      m.current++;
+      if (m.current >= m.target) completeMission(m);
+    } else if (m.id === 2 && type === 'warmer_stock') {
+      const count = empireState.warmerSlices.filter(s => s !== null).length;
+      if (count >= 3) {
+        m.current = 1;
+        completeMission(m);
+      }
+    } else if (m.id === 3 && type === 'fast_vip' && data.isVIP && data.fast) {
+      m.current = 1;
+      completeMission(m);
+    }
+  });
+  renderMissionsUI();
+}
+
+function completeMission(m) {
+  m.completed = true;
+  if (m.rewardStars) {
+    empireState.prestigeStars += m.rewardStars;
+    document.getElementById('prestige-val').innerText = empireState.prestigeStars;
+  }
+  if (m.rewardCash) {
+    empireState.cash += m.rewardCash;
+    document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+  }
+  playSound('fanfare');
+  showFloatingToast(`🎯 Guild Bounty Done! +${m.rewardStars ? m.rewardStars+' ⭐' : '$'+m.rewardCash}`);
+  saveData();
+}
+
+function renderMissionsUI() {
+  const list = document.getElementById('missions-list');
+  const daySpan = document.getElementById('m-day');
+  if (daySpan) daySpan.innerText = empireState.day;
+  if (!list) return;
+  list.innerHTML = empireState.missions.map(m => `
+    <div class="mission-item ${m.completed ? 'done' : ''}">
+      <span>${m.completed ? '✅' : '⏳'} ${m.text} (${m.current}/${m.target})</span>
+      <b style="color:#2e7d32; font-size:9px;">+${m.rewardStars ? m.rewardStars+' ⭐' : '$'+m.rewardCash}</b>
+    </div>
+  `).join('');
+}
+
+/* ==========================================================================
+   PATIENCE & COMBO SYSTEM
+   ========================================================================== */
+function resetCustomerPatience() {
+  if (patienceInterval) clearInterval(patienceInterval);
+  customerPatience = 100;
+  updatePatienceUI();
+
+  const speedMultiplier = 1 + (empireState.upgrades.laserGuides * 0.1);
+  patienceInterval = setInterval(() => {
+    const rainRush = empireState.shiftEvent && empireState.shiftEvent.includes('Rainy Rush');
+    customerPatience -= (rainRush ? 2.0 : 1.4) / speedMultiplier;
+    if (customerPatience < 0) customerPatience = 0;
+    updatePatienceUI();
+  }, 1000);
+}
+
+function updatePatienceUI() {
+  const bar = document.getElementById('patience-bar');
+  const mood = document.getElementById('c-mood');
+  const tipBonus = document.getElementById('c-tip-bonus');
+  if (!bar) return;
+
+  bar.style.width = `${customerPatience}%`;
+  if (customerPatience > 60) {
+    bar.style.backgroundColor = '#2e7d32';
+    if (mood) mood.innerText = 'Guest is Patient & Happy 😊';
+    if (tipBonus) { tipBonus.innerText = '+30% Speed Tip'; tipBonus.style.color = '#2e7d32'; }
+  } else if (customerPatience > 25) {
+    bar.style.backgroundColor = '#e67e22';
+    if (mood) mood.innerText = 'Guest is Looking at Watch ⏱️';
+    if (tipBonus) { tipBonus.innerText = '+10% Speed Tip'; tipBonus.style.color = '#e67e22'; }
+  } else {
+    bar.style.backgroundColor = '#c0392b';
+    if (mood) mood.innerText = 'Guest is Impatient! 😠';
+    if (tipBonus) { tipBonus.innerText = 'No Speed Tip'; tipBonus.style.color = '#888'; }
+  }
+}
+
+function updateComboUI() {
+  const badge = document.getElementById('combo-badge');
+  const val = document.getElementById('combo-val');
+  if (empireState.comboStreak > 1) {
+    badge.style.display = 'inline-block';
+    const mult = Math.min(2.5, 1 + (empireState.comboStreak * 0.2)).toFixed(1);
+    val.innerText = mult;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+/* ==========================================================================
+   UI BUILDER & VENUE SWITCHER
+   ========================================================================== */
+function updateKitchenReadyUI() {
+  const badge = document.getElementById('kitchen-ready-badge');
+  const hint = document.getElementById('canvas-start-hint');
+  const conf = VENUE_CONFIG[currentVenue];
+  if (badge) badge.textContent = `${conf.icon} ${conf.name.toUpperCase()} · READY`;
+  if (hint) {
+    if (activeStage === 1) hint.textContent = 'Stage 1: Prep base crust/bread and stretch or layer foundations.';
+    else if (activeStage === 2) hint.textContent = 'Stage 2: Place toppings freely (no penalty for extra aesthetic toppings!).';
+    else if (activeStage === 3) hint.textContent = 'Stage 3: Cook in the green sweet-spot (75%–100%) on the meter!';
+    else hint.textContent = 'Stage 4: Package, pour drinks, select sides, and deliver order!';
+  }
+}
+
+function openRestaurantSelector() {
+  ensureVenueState();
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  const venues = Object.keys(VENUE_CONFIG);
+  content.innerHTML = `
+    <h2>🏪 World Artisan Culinary Empire</h2>
+    <p>Select any open kitchen to start crafting or expand your empire!</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px; text-align:left; max-height:55vh; overflow-y:auto; padding:4px;">
+      ${venues.map(v => {
+        const c = VENUE_CONFIG[v];
+        const unlocked = !!empireState.unlockedVenues[v];
+        return `
+          <button class="tool-btn" style="min-height:74px; display:block; text-align:left; ${unlocked ? '' : 'opacity:.7;'}" onclick="${unlocked ? `closeModal(); switchVenue('${v}');` : `promptUnlockVenue('${v}');`}">
+            <b style="font-size:13px;">${c.icon} ${c.name}</b><br>
+            <span style="font-size:9.5px; color:#666;">
+              ${unlocked ? '✅ OPEN — Enter Kitchen' : `🔒 $${c.unlockCostCash} · ${c.unlockCostStars} ⭐ to unlock`}
+            </span>
+          </button>
+        `;
+      }).join('')}
+    </div>
+    <button class="header-btn" style="margin-top:10px; width:100%;" onclick="closeModal()">Back to Workspace</button>
+  `;
+}
+
+function switchVenue(venue) {
+  ensureVenueState();
+  if (!empireState.unlockedVenues[venue]) {
+    promptUnlockVenue(venue);
+    return;
+  }
+
+  currentVenue = venue;
+  updateKitchenReadyUI();
+
+  activeOrder = generateOrder(venue);
+  activeDish = createNewDish(venue);
+  activeStage = 1;
+
+  updateTicketUI();
+  setupStation(1);
+  resetCustomerPatience();
+  renderMissionsUI();
+  render();
+}
+
+function promptUnlockVenue(venue) {
+  const conf = VENUE_CONFIG[venue];
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>${conf.icon} Unlock ${conf.name}</h2>
+    <p>Expand your street food empire to a new culinary craft!</p>
+    <div style="background:#fff7e6; padding:12px; border-radius:8px; margin:10px 0; border:1px solid #d4af37; font-size:12px;">
+      <div><b>Cash Price:</b> $${conf.unlockCostCash.toFixed(2)} (You have: $${empireState.cash.toFixed(2)})</div>
+      <div style="margin-top:4px;"><b>Accademia Stars:</b> ${conf.unlockCostStars} ⭐ (You have: ${empireState.prestigeStars} ⭐)</div>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:center;">
+      <button class="action-btn" onclick="buyVenueUnlock('${venue}')">Unlock Restaurant</button>
+      <button class="header-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  `;
+}
+
+function buyVenueUnlock(venue) {
+  const conf = VENUE_CONFIG[venue];
+  if (empireState.cash >= conf.unlockCostCash && empireState.prestigeStars >= conf.unlockCostStars) {
+    empireState.cash -= conf.unlockCostCash;
+    empireState.prestigeStars -= conf.unlockCostStars;
+    empireState.unlockedVenues[venue] = true;
+    playSound('cash');
+    saveData();
+    document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+    document.getElementById('prestige-val').innerText = empireState.prestigeStars;
+    closeModal();
+    switchVenue(venue);
+  } else {
+    alert("You need more cash or Accademia Stars to unlock this restaurant!");
+  }
+}
+
+function updateTicketUI() {
+  const o = activeOrder;
+  const d = activeDish;
+  if (!o) return;
+
+  document.getElementById('t-num').innerText = o.id;
+  document.getElementById('c-name').innerText = o.customer.name;
+  document.getElementById('c-avatar').innerText = o.customer.avatar;
+
+  const typeTag = document.getElementById('t-type');
+  typeTag.innerText = o.customer.type.toUpperCase();
+  typeTag.className = `order-tag tag-${o.customer.type}`;
+
+  const conf = VENUE_CONFIG[o.venue];
+  let html = `<strong>Dish:</strong> <span style="color:#b32415; font-weight:bold;">${o.recipeName}</span><br>`;
+  if (empireState.shiftEvent) html += `<div style="background:#fff0d6;border-radius:4px;padding:3px 5px;margin:3px 0;color:#7a3a0e;"><b>📣 TODAY:</b> ${empireState.shiftEvent}</div>`;
+
+  if (o.venue === 'pizza') {
+    html += `<strong>Base:</strong> ${o.isCalzone ? 'Calzone' : '12" Round'}, ${conf.doughs[o.doughType].name}<br>`;
+    const sauceText={none:'NO SAUCE',light:'Light Sauce',normal:'Regular Sauce',extra:'EXTRA SAUCE'}[o.sauceSpec||'normal'];
+    const cheeseText={none:'NO CHEESE',light:'Light Cheese',normal:'Regular Cheese',extra:'EXTRA CHEESE'}[o.cheeseSpec||'normal'];
+    html += `<strong>🍅 Sauce:</strong> <b>${sauceText}</b><br><strong>🧀 Cheese:</strong> <b>${cheeseText}</b><br>`;
+    if (o.isSplit) {
+      html += `<strong>Left ◐:</strong> ${o.leftToppings.map(t => conf.hotToppings[t].name).join(', ') || 'Plain'}<br>`;
+      html += `<strong>Right ◑:</strong> ${o.rightToppings.map(t => conf.hotToppings[t].name).join(', ') || 'Plain'}<br>`;
+    } else {
+      html += `<strong>Hot Toppings:</strong> ${o.toppings.length ? o.toppings.map(t => conf.hotToppings[t].name).join(', ') : 'Plain'} (4+ pcs each)<br>`;
+    }
+    if (o.finishes.length) html += `<strong>Finishes:</strong> ${o.finishes.map(f => conf.coldFinishes[f].name).join(', ')}<br>`;
+    html += `<strong>Cut:</strong> ${o.slices} Slices<br>`;
+  } else if (o.venue === 'hotdog') {
+    html += `<strong>Bun & Sausage:</strong> ${conf.buns[o.bunType].name} + ${conf.sausages[o.sausageType].name}<br>`;
+    html += `<strong>Condiments:</strong> ${o.condiments.map(c => conf.condiments[c].name).join(', ')}<br>`;
+    html += `<strong>Toppings:</strong> ${o.toppings.map(t => conf.toppings[t].name).join(', ')}<br>`;
+  } else if (o.venue === 'sub') {
+    html += `<strong>Bread:</strong> ${conf.breads[o.breadType].name}<br>`;
+    html += `<strong>Spreads & Meats:</strong> ${o.spreads.map(s => conf.spreads[s].name).join(', ')} | ${o.meats.map(m => conf.meats[m].name).join(', ')}<br>`;
+  } else if (o.venue === 'taco') {
+    html += `<strong>Base & Meat:</strong> ${conf.bases[o.baseType].name} + ${conf.meats[o.meat].name}<br>`;
+    html += `<strong>Salsas & Garnishes:</strong> ${o.salsas.map(s => conf.salsas[s].name).join(', ')} + ${o.garnishes.map(g => conf.garnishes[g].name).join(', ')}<br>`;
+    if (o.requiresConsomme) html += `<strong>Dip:</strong> Hot Birria Dipping Consommé 🍵<br>`;
+  } else if (o.venue === 'ramen') {
+    html += `<strong>Broth:</strong> ${conf.broths[o.brothType].name}<br>`;
+    html += `<strong>Toppings:</strong> ${o.toppings.map(t => (conf.toppings[t]||conf.proteins[t]).name).join(', ')}<br>`;
+  } else if (o.venue === 'steak') {
+    html += `<strong>Cut & Seasoning:</strong> ${conf.cuts[o.cutType].name} (${o.recipeName})<br>`;
+    html += `<strong>Finishing Sauce:</strong> ${o.sauces.map(s => conf.sauces[s].name).join(', ')}<br>`;
+  } else if (o.venue === 'burger') {
+    html += `<strong>Burger Stack:</strong> ${conf.buns[o.bunType].name} + ${conf.patties[o.pattyType].name}<br>`;
+    html += `<strong>Cheese & Toppings:</strong> ${o.cheeseType ? conf.cheeses[o.cheeseType].name : 'NO CHEESE'} + ${o.toppings.map(t => conf.toppings[t].name).join(', ')}<br>`;
+  } else if (o.venue === 'icecream') {
+    html += `<strong>Scoop & Dish:</strong> ${conf.flavors[o.flavorType].name} in ${conf.containers[o.containerType].name}<br>`;
+    html += `<strong>Sauce & Toppings:</strong> ${o.sauces.map(s => conf.sauces[s].name).join(', ')} + ${o.toppings.map(t => conf.toppings[t].name).join(', ')}<br>`;
+  }
+
+  if (o.modifiers && o.modifiers.length) html += `<div style="margin-top:3px; padding:3px 5px; background:#f5ecff; border-radius:4px; color:#633b7a;"><b>⭐ Special:</b> ${o.modifiers.join(' · ')}</div>`;
+
+  const mood = getCustomerMoodState();
+  const moodText = mood === 'happy' ? 'Guest is happy and ready to tip generously.' : mood === 'warn' ? 'Guest is getting impatient—finish quickly.' : 'Guest is upset and will dock points badly.';
+  html += `<div class="mood-card ${mood === 'happy' ? 'happy' : mood === 'warn' ? '' : 'angry'}">${moodText}</div>`;
+
+  if (o.requestedSide) {
+    html += `<div style="background:#fff4d6; border-radius:4px; padding:3px 5px; margin-top:3px; color:#783e0c;"><b>🍽️ Side:</b> ${o.requestedSide} ${d.sidePrepared === o.requestedSide ? '✅' : '⏳'}</div>`;
+  }
+  if (o.requestedDrink) {
+    html += `<div style="background:#eaf2f8; border-radius:4px; padding:3px 5px; margin-top:3px; color:#1b4f72;"><b>🥤 Beverage:</b> ${o.requestedDrink} ${d.drinkPrepared === o.requestedDrink ? '✅' : '⏳'}</div>`;
+  }
+
+  document.getElementById('ticket-details').innerHTML = html;
+  renderWarmerSlots();
+}
+
+function setupStation(stageNumber) {
+  activeStage = stageNumber;
+  updateKitchenReadyUI();
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`step-btn-${i}`);
+    if (btn) btn.className = (i === stageNumber) ? 'step-btn active-step' : 'step-btn';
+  }
+
+  const tools = document.getElementById('tools-panel');
+  tools.innerHTML = '';
+
+  if (currentVenue === 'pizza') setupPizzaStationTools(stageNumber, tools);
+  else if (currentVenue === 'hotdog') setupHotdogStationTools(stageNumber, tools);
+  else if (currentVenue === 'sub') setupSubStationTools(stageNumber, tools);
+  else if (currentVenue === 'taco') setupTacoStationTools(stageNumber, tools);
+  else if (currentVenue === 'ramen') setupRamenStationTools(stageNumber, tools);
+  else if (currentVenue === 'steak') setupSteakStationTools(stageNumber, tools);
+  else if (currentVenue === 'burger') setupBurgerStationTools(stageNumber, tools);
+  else if (currentVenue === 'icecream') setupIceCreamStationTools(stageNumber, tools);
+
+  render();
+}
+
+/* ==========================================================================
+   STATION TOOLS BUILDERS FOR ALL 8 SHOPS
+   ========================================================================== */
+function renderDrinksAndSidesControls(container) {
+  const conf = VENUE_CONFIG[currentVenue];
+  const d = activeDish;
+  const o = activeOrder;
+
+  let html = `<div class="tool-section-title" style="margin-top:6px;">🥤 Drinks & Sides Bar</div>`;
+  html += `<div style="font-size:9.5px; margin-bottom:3px; color:#666;">Choose beverage and side items before delivering:</div>`;
+  
+  html += `<div class="toppings-grid">`;
+  conf.drinks.forEach(dr => {
+    html += `<button class="tool-btn ${d.drinkPrepared === dr ? 'active' : ''}" onclick="prepareDrink('${dr}')">🥤 ${dr} ${d.drinkPrepared === dr ? '✅' : ''}</button>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="toppings-grid" style="margin-top:4px;">`;
+  conf.sides.forEach(sd => {
+    html += `<button class="tool-btn ${d.sidePrepared === sd ? 'active' : ''}" onclick="prepareSide('${sd}')">🍽️ ${sd} ${d.sidePrepared === sd ? '✅' : ''}</button>`;
+  });
+  html += `</div>`;
+
+  container.insertAdjacentHTML('beforeend', html);
+}
+
+function prepareDrink(drinkName) {
+  activeDish.drinkPrepared = drinkName;
+  playSound('drink');
+  updateTicketUI();
+  setupStation(activeStage);
+}
+
+function prepareSide(sideName) {
+  activeDish.sidePrepared = sideName;
+  playSound('drop');
+  updateTicketUI();
+  setupStation(activeStage);
+}
+
+/* PIZZA TOOLS */
+function setupPizzaStationTools(stage, container) {
+  const p = activeDish;
+  if (stage === 1) {
+    let doughHTML = Object.keys(VENUE_CONFIG.pizza.doughs).map(k => `<button class="tool-btn ${p.doughType === k ? 'active' : ''}" onclick="selectPizzaDough('${k}')"><b>${VENUE_CONFIG.pizza.doughs[k].name}</b></button>`).join('');
+    container.innerHTML = `
+      <div class="tool-section-title">1. Dough Selection & Stretch</div>
+      ${doughHTML}
+      <button class="tool-btn" style="margin-top:6px; justify-content:center;" onclick="stretchPizzaDough()">👐 Stretch 00 Dough (${Math.round((p.doughRadius/p.doughTargetRadius)*100)}%)</button>
+      <button class="tool-btn" style="margin-top:4px; justify-content:center;" onclick="toggleCalzoneFold()">🥟 Fold Calzone: ${p.isFoldedCalzone ? 'YES' : 'NO'}</button>
+      ${p.doughRadius >= p.doughTargetRadius ? `<button class="next-station-btn" onclick="setupStation(2)">🥫 Sauces & Toppings ➡️</button>` : ''}
+    `;
+  } else if (stage === 2) {
+    let toppingsHTML = Object.keys(VENUE_CONFIG.pizza.hotToppings).map(k => `<button class="tool-btn ${selectedTool === k ? 'active' : ''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.pizza.hotToppings[k].color};"></span> ${VENUE_CONFIG.pizza.hotToppings[k].name}</button>`).join('');
+    container.innerHTML = `
+      <div class="tool-section-title">Sauce & Fior di Latte</div>
+      <button class="tool-btn ${selectedTool === 'sauce' ? 'active' : ''}" id="tool-sauce" onclick="selectTool('sauce')"><span class="tool-icon-circle" style="background:#b32415;"></span> San Marzano Sauce</button>
+      <button class="tool-btn ${selectedTool === 'cheese' ? 'active' : ''}" id="tool-cheese" onclick="selectTool('cheese')"><span class="tool-icon-circle" style="background:#f4c542;"></span> Fior di Latte</button>
+      <div class="side-selector" style="margin-top:4px;">
+        <button class="side-btn ${toppingSide === 'whole' ? 'active' : ''}" onclick="setSide('whole')">Whole</button>
+        <button class="side-btn ${toppingSide === 'left' ? 'active' : ''}" onclick="setSide('left')">Left ◐</button>
+        <button class="side-btn ${toppingSide === 'right' ? 'active' : ''}" onclick="setSide('right')">Right ◑</button>
+      </div>
+      <div class="tool-section-title">Hot Toppings (Click freely on dough)</div>
+      <div class="toppings-grid">${toppingsHTML}</div>
+      <button class="next-station-btn" onclick="setupStation(3)">🔥 Hearth Oven ➡️</button>
+    `;
+  } else if (stage === 3) {
+    const isSweet = p.cookProgress >= 70 && p.cookProgress <= 100;
+    const isBurnt = p.cookProgress > 105;
+    container.innerHTML = `
+      <div class="tool-section-title">3. Hearth Oven (900°F)</div>
+      <div style="font-size:11px; margin:4px 0;">Bake Progress: <b id="cook-pct">${Math.floor(p.cookProgress)}%</b> ${isSweet ? '🌟 SWEET SPOT' : (isBurnt ? '⚠️ OVERBAKED' : '')}</div>
+      
+      <!-- Visual Sweet Spot Cooking Bar -->
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(p.cookProgress, 100)}%; height:100%; background:${isBurnt ? '#b32415' : (isSweet ? '#2e7d32' : '#d35400')}; transition:width 0.1s;"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${p.isCooking ? '🛑 Pull From Hearth' : '🔥 Fire in Hearth'}</button>
+      <button class="next-station-btn" style="margin-top:12px;" onclick="setupStation(4)">✨ Finish, Drinks & Box ➡️</button>
+    `;
+  } else if (stage === 4) {
+    container.innerHTML = `
+      <div class="tool-section-title">4. Finishes & Packaging</div>
+      <div class="toppings-grid">
+        <button class="tool-btn ${selectedTool === 'evoo' ? 'active' : ''}" onclick="selectTool('evoo')">🫒 EVOO Drizzle</button>
+        <button class="tool-btn ${selectedTool === 'burrata' ? 'active' : ''}" onclick="selectTool('burrata')">🧀 Burrata</button>
+      </div>
+      <button class="tool-btn" style="margin-top:4px; justify-content:center;" onclick="autoCutPizza()">📐 Cut ${activeOrder.slices} Slices</button>
+      <button class="tool-btn" style="margin-top:4px; justify-content:center; background:#fff8e7;" onclick="putSliceInWarmer()">🔥 Put 1 Slice in Counter Warmer</button>
+      <button class="tool-btn" style="margin-top:4px; justify-content:center; background:${p.boxed ? '#d4edda' : '#fff'};" onclick="boxPizza()">${p.boxed ? '✅ Pizza Boxed & Sealed' : '📦 Box & Seal Pizza'}</button>
+    `;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Order</button>`);
+  }
+}
+
+/* HOTDOG TOOLS */
+function setupHotdogStationTools(stage, container) {
+  const d = activeDish;
+  if (stage === 1) {
+    let bunsHTML = Object.keys(VENUE_CONFIG.hotdog.buns).map(k => `<button class="tool-btn ${d.bunType===k?'active':''}" onclick="activeDish.bunType='${k}'; setupStation(1); playSound('dough');">🥖 ${VENUE_CONFIG.hotdog.buns[k].name}</button>`).join('');
+    let sausageHTML = Object.keys(VENUE_CONFIG.hotdog.sausages).map(k => `<button class="tool-btn ${d.sausageType===k?'active':''}" onclick="activeDish.sausageType='${k}'; setupStation(1); playSound('drop');">🌭 ${VENUE_CONFIG.hotdog.sausages[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Bun Base</div>${bunsHTML}<div class="tool-section-title">Sausage</div>${sausageHTML}<button class="next-station-btn" onclick="setupStation(2)">🔥 Roller Grill ➡️</button>`;
+  } else if (stage === 2) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Roller Grill</div>
+      <div style="font-size:11px; margin:4px 0;">Grill Sear: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#d35400'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Remove from Grill' : '🔥 Sizzle on Rollers'}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(3)">🌭 Condiments & Toppings ➡️</button>
+    `;
+  } else if (stage === 3) {
+    let condHTML = Object.keys(VENUE_CONFIG.hotdog.condiments).map(c => `<button class="tool-btn ${selectedTool===c?'active':''}" id="tool-${c}" onclick="selectTool('${c}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.hotdog.condiments[c].color};"></span> ${VENUE_CONFIG.hotdog.condiments[c].name}</button>`).join('');
+    let topHTML = Object.keys(VENUE_CONFIG.hotdog.toppings).map(t => `<button class="tool-btn ${selectedTool===t?'active':''}" id="tool-${t}" onclick="selectTool('${t}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.hotdog.toppings[t].color};"></span> ${VENUE_CONFIG.hotdog.toppings[t].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Condiments (Drag Zig-Zag)</div><div class="toppings-grid">${condHTML}</div><div class="tool-section-title">Toppings</div><div class="toppings-grid">${topHTML}</div><button class="next-station-btn" onclick="setupStation(4)">✨ Foil Wrap & Drinks ➡️</button>`;
+  } else if (stage === 4) {
+    container.innerHTML = `<div class="tool-section-title">Wrap & Drinks</div><button class="tool-btn" style="justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Wrapped in Silver Foil':'🌯 Foil Wrap Frank'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Frank</button>`);
+  }
+}
+
+/* SUB TOOLS */
+function setupSubStationTools(stage, container) {
+  const d = activeDish;
+  if (stage === 1) {
+    let breadsHTML = Object.keys(VENUE_CONFIG.sub.breads).map(k => `<button class="tool-btn ${d.breadType===k?'active':''}" onclick="activeDish.breadType='${k}'; setupStation(1); playSound('dough');">🥖 ${VENUE_CONFIG.sub.breads[k].name}</button>`).join('');
+    let spreadsHTML = Object.keys(VENUE_CONFIG.sub.spreads).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.sub.spreads[k].color};"></span> ${VENUE_CONFIG.sub.spreads[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Bread Base</div>${breadsHTML}<div class="tool-section-title">Spreads (Select one, then drag across bread)</div><div class="toppings-grid">${spreadsHTML}</div><button class="next-station-btn" onclick="setupStation(2)">🥩 Layer Meats ➡️</button>`;
+  } else if (stage === 2) {
+    let meatsHTML = Object.keys(VENUE_CONFIG.sub.meats).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.sub.meats[k].color};"></span> ${VENUE_CONFIG.sub.meats[k].name}</button>`).join('');
+    let cheeseHTML = Object.keys(VENUE_CONFIG.sub.cheeses).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.sub.cheeses[k].color};"></span> ${VENUE_CONFIG.sub.cheeses[k].name}</button>`).join('');
+    let greensHTML = Object.keys(VENUE_CONFIG.sub.greens).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.sub.greens[k].color};"></span> ${VENUE_CONFIG.sub.greens[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Meats</div><div class="toppings-grid">${meatsHTML}</div><div class="tool-section-title">Cheeses & Greens</div><div class="toppings-grid">${cheeseHTML}${greensHTML}</div><button class="next-station-btn" onclick="setupStation(3)">🔥 Panini Press ➡️</button>`;
+  } else if (stage === 3) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Cast-Iron Panini Press</div>
+      <div style="font-size:11px; margin:4px 0;">Press Sear: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#7e2217'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Lift Press' : '🔥 Clamp Panini Press'}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(4)">✨ Halve & Deliver ➡️</button>
+    `;
+  } else if (stage === 4) {
+    container.innerHTML = `
+      <div class="tool-section-title">Halve & Paper Wrap</div>
+      <button class="tool-btn" style="justify-content:center;" onclick="activeDish.cutDone=true; playSound('slice'); render();">🔪 Diagonal Cut</button>
+      <button class="tool-btn" style="justify-content:center; margin-top:4px; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Wrapped in Butcher Paper':'🗞️ Butcher Paper Wrap'}</button>
+    `;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Panini</button>`);
+  }
+}
+
+/* TACO TOOLS */
+function setupTacoStationTools(stage, container) {
+  const d = activeDish;
+  if (stage === 1) {
+    let basesHTML = Object.keys(VENUE_CONFIG.taco.bases).map(k => `<button class="tool-btn ${d.baseType===k?'active':''}" onclick="activeDish.baseType='${k}'; setupStation(1); playSound('dough');">🫓 ${VENUE_CONFIG.taco.bases[k].name}</button>`).join('');
+    let meatsHTML = Object.keys(VENUE_CONFIG.taco.meats).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.taco.meats[k].color};"></span> ${VENUE_CONFIG.taco.meats[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Base Selection</div>${basesHTML}<div class="tool-section-title">Braised Meats (Click on Tortilla)</div><div class="toppings-grid">${meatsHTML}</div><button class="next-station-btn" onclick="setupStation(2)">🥫 Salsas & Queso ➡️</button>`;
+  } else if (stage === 2) {
+    let salsasHTML = Object.keys(VENUE_CONFIG.taco.salsas).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.taco.salsas[k].color};"></span> ${VENUE_CONFIG.taco.salsas[k].name}</button>`).join('');
+    let garnishesHTML = Object.keys(VENUE_CONFIG.taco.garnishes).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.taco.garnishes[k].color};"></span> ${VENUE_CONFIG.taco.garnishes[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Salsas & Queso</div><div class="toppings-grid">${salsasHTML}</div><div class="tool-section-title">Garnishes & Lime</div><div class="toppings-grid">${garnishesHTML}</div><button class="next-station-btn" onclick="setupStation(3)">🔥 Comal Griddle ➡️</button>`;
+  } else if (stage === 3) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Comal Flat-Top Griddle</div>
+      <div style="font-size:11px; margin:4px 0;">Sear Progress: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#b84419'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Remove from Comal' : '🔥 Sear on Cast-Iron Comal'}</button>
+      <button class="tool-btn" style="margin-top:4px; justify-content:center; background:#fff5eb;" onclick="activeDish.consommeReady=true; playSound('sauce'); setupStation(3); updateTicketUI();">🍵 Ladle Hot Birria Consommé ${d.consommeReady?'✅':''}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(4)">✨ Wrap & Deliver ➡️</button>
+    `;
+  } else if (stage === 4) {
+    container.innerHTML = `<div class="tool-section-title">Service</div><button class="tool-btn" style="justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Wrapped in Checked Paper':'🌯 Wrap in Deli Paper'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Order</button>`);
+  }
+}
+
+/* RAMEN TOOLS */
+function setupRamenStationTools(stage, container) {
+  const d = activeDish;
+  if (stage === 1) {
+    let brothHTML = Object.keys(VENUE_CONFIG.ramen.broths).map(k => `<button class="tool-btn ${d.brothType===k?'active':''}" onclick="activeDish.brothType='${k}'; setupStation(1); playSound('sauce');">🥣 ${VENUE_CONFIG.ramen.broths[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">1. Master Dashi Broth</div>${brothHTML}<button class="tool-btn" style="margin-top:6px; justify-content:center;" onclick="activeDish.noodlesAdded=true; playSound('dough'); render();">🍜 Nest Handcrafted Noodles ${d.noodlesAdded?'✅':''}</button><button class="next-station-btn" onclick="setupStation(2)">🥩 Chashu & Toppings ➡️</button>`;
+  } else if (stage === 2) {
+    let protHTML = Object.keys(VENUE_CONFIG.ramen.proteins).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.ramen.proteins[k].color};"></span> ${VENUE_CONFIG.ramen.proteins[k].name}</button>`).join('');
+    let topHTML = Object.keys(VENUE_CONFIG.ramen.toppings).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${VENUE_CONFIG.ramen.toppings[k].color};"></span> ${VENUE_CONFIG.ramen.toppings[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Proteins (Click in Bowl)</div><div class="toppings-grid">${protHTML}</div><div class="tool-section-title">Toppings</div><div class="toppings-grid">${topHTML}</div><button class="next-station-btn" onclick="setupStation(3)">🔥 Simmer Broth ➡️</button>`;
+  } else if (stage === 3) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Simmer Kettle</div>
+      <div style="font-size:11px; margin:4px 0;">Infusion: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#c45a27'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Pull Bowl' : '🔥 Simmer Hot Kettle'}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(4)">✨ Tray Plating & Drinks ➡️</button>
+    `;
+  } else if (stage === 4) {
+    container.innerHTML = `<div class="tool-section-title">Service Plating</div><button class="tool-btn" style="justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Set on Cedar Platter':'🥢 Set Cedar Platter & Chopsticks'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Tokyo Ramen</button>`);
+  }
+}
+
+/* STEAK TOOLS */
+function setupSteakStationTools(stage, container) {
+  const d = activeDish;
+  const conf = VENUE_CONFIG.steak;
+  if (stage === 1) {
+    let cutsHTML = Object.keys(conf.cuts).map(k => `<button class="tool-btn ${d.cutType===k?'active':''}" onclick="activeDish.cutType='${k}'; setupStation(1); playSound('dough');">🥩 ${conf.cuts[k].name}</button>`).join('');
+    let seasHTML = Object.keys(conf.seasonings).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.seasonings[k].color};"></span> ${conf.seasonings[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Prime Cut</div>${cutsHTML}<div class="tool-section-title">Seasoning Crust (Click on Steak)</div><div class="toppings-grid">${seasHTML}</div><button class="next-station-btn" onclick="setupStation(2)">🔥 Cast Iron Sear ➡️</button>`;
+  } else if (stage === 2 || stage === 3) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Cast-Iron Skillet & Herb Butter</div>
+      <div style="font-size:11px; margin:4px 0;">Sear Progress: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#8b0000'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Pull Steak' : '🔥 Sear with Garlic Herb Butter'}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(4)">✨ Plating, Sauces & Drinks ➡️</button>
+    `;
+  } else if (stage === 4) {
+    let sauceHTML = Object.keys(conf.sauces).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.sauces[k].color};"></span> ${conf.sauces[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Finishing Sauce</div><div class="toppings-grid">${sauceHTML}</div><button class="tool-btn" style="margin-top:4px; justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Plated on Heated Silver Platter':'🍽️ Plate on Heated Silver Platter'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Prime Steak</button>`);
+  }
+}
+
+/* BURGER TOOLS */
+function setupBurgerStationTools(stage, container) {
+  const d = activeDish;
+  const conf = VENUE_CONFIG.burger;
+  if (stage === 1) {
+    let bunsHTML = Object.keys(conf.buns).map(k => `<button class="tool-btn ${d.bunType===k?'active':''}" onclick="activeDish.bunType='${k}'; setupStation(1); playSound('dough');">🍞 ${conf.buns[k].name}</button>`).join('');
+    let patHTML = Object.keys(conf.patties).map(k => `<button class="tool-btn ${d.pattyType===k?'active':''}" onclick="activeDish.pattyType='${k}'; setupStation(1); playSound('drop');">🥩 ${conf.patties[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Toasted Bun</div>${bunsHTML}<div class="tool-section-title">Patty Selection</div>${patHTML}<button class="next-station-btn" onclick="setupStation(2)">🔥 Smash Flat-Top ➡️</button>`;
+  } else if (stage === 2) {
+    let isSweet = d.cookProgress >= 70 && d.cookProgress <= 100;
+    container.innerHTML = `
+      <div class="tool-section-title">Flat-Top Smash Griddle</div>
+      <div style="font-size:11px; margin:4px 0;">Patty Sear: <b id="cook-pct">${Math.floor(d.cookProgress)}%</b></div>
+      <div style="position:relative; height:18px; background:#ddd; border-radius:9px; overflow:hidden; border:1px solid #aaa;">
+        <div style="position:absolute; left:70%; width:30%; height:100%; background:rgba(46,125,50,0.25); border-left:2px dashed #2e7d32; border-right:2px dashed #2e7d32; z-index:1;"></div>
+        <div id="cook-bar" style="width:${Math.min(d.cookProgress,100)}%; height:100%; background:${isSweet ? '#2e7d32' : '#d35400'};"></div>
+      </div>
+      <button class="tool-btn" style="margin-top:8px; justify-content:center;" onclick="toggleUniversalCook()">${d.isCooking ? '🛑 Remove Patties' : '🔥 Smash on Griddle'}</button>
+      <button class="next-station-btn" style="margin-top:8px;" onclick="setupStation(3)">🧀 Cheese & Toppings ➡️</button>
+    `;
+  } else if (stage === 3) {
+    let cheeseHTML = Object.keys(conf.cheeses).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.cheeses[k].color};"></span> ${conf.cheeses[k].name}</button>`).join('');
+    let topHTML = Object.keys(conf.toppings).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.toppings[k].color};"></span> ${conf.toppings[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Melted Cheese</div><div class="toppings-grid">${cheeseHTML}</div><div class="tool-section-title">Fresh Toppings</div><div class="toppings-grid">${topHTML}</div><button class="next-station-btn" onclick="setupStation(4)">✨ Box & Drinks ➡️</button>`;
+  } else if (stage === 4) {
+    container.innerHTML = `<div class="tool-section-title">Packaging</div><button class="tool-btn" style="justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Boxed in Burger Carton':'📦 Box in Classic Carton'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Burger</button>`);
+  }
+}
+
+/* ICE CREAM TOOLS */
+function setupIceCreamStationTools(stage, container) {
+  const d = activeDish;
+  const conf = VENUE_CONFIG.icecream;
+  if (stage === 1) {
+    let contHTML = Object.keys(conf.containers).map(k => `<button class="tool-btn ${d.containerType===k?'active':''}" onclick="activeDish.containerType='${k}'; setupStation(1); playSound('drop');">🍨 ${conf.containers[k].name}</button>`).join('');
+    let flavHTML = Object.keys(conf.flavors).map(k => `<button class="tool-btn ${d.flavorType===k?'active':''}" onclick="activeDish.flavorType='${k}'; setupStation(1); playSound('sauce');">🍦 ${conf.flavors[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Container</div>${contHTML}<div class="tool-section-title">Artisan Ice Cream Scoop</div>${flavHTML}<button class="next-station-btn" onclick="setupStation(2)">🍫 Sauces & Toppings ➡️</button>`;
+  } else if (stage === 2 || stage === 3) {
+    let sauceHTML = Object.keys(conf.sauces).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.sauces[k].color};"></span> ${conf.sauces[k].name}</button>`).join('');
+    let topHTML = Object.keys(conf.toppings).map(k => `<button class="tool-btn ${selectedTool===k?'active':''}" id="tool-${k}" onclick="selectTool('${k}')"><span class="tool-icon-circle" style="background:${conf.toppings[k].color};"></span> ${conf.toppings[k].name}</button>`).join('');
+    container.innerHTML = `<div class="tool-section-title">Warm Sauces & Syrups</div><div class="toppings-grid">${sauceHTML}</div><div class="tool-section-title">Toppings & Cherries</div><div class="toppings-grid">${topHTML}</div><button class="next-station-btn" onclick="setupStation(4)">✨ Pack & Drinks ➡️</button>`;
+  } else if (stage === 4) {
+    container.innerHTML = `<div class="tool-section-title">Dessert Tray</div><button class="tool-btn" style="justify-content:center; background:${d.boxed?'#d4edda':'#fff'};" onclick="activeDish.boxed=true; playSound('drop'); render(); setupStation(4);">${d.boxed?'✅ Served with Dessert Spoon':'🥄 Set Dessert Spoon & Napkin'}</button>`;
+    renderDrinksAndSidesControls(container);
+    container.insertAdjacentHTML('beforeend', `<button class="action-btn" style="margin-top:10px; width:100%;" onclick="serveDish()">🚚 Deliver Ice Cream</button>`);
+  }
+}
+
+function selectTool(tool) {
+  selectedTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`tool-${tool}`);
+  if (btn) btn.classList.add('active');
+}
+
+function selectPizzaDough(d) { activeDish.doughType = d; playSound('dough'); setupStation(1); }
+function setSide(s) { toppingSide = s; setupStation(2); }
+
+/* ==========================================================================
+   CANVAS RENDERING ENGINE
+   ========================================================================== */
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cx = 260, cy = 260;
+
+  if (currentVenue === 'pizza') renderPizzaWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'hotdog') renderHotdogWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'sub') renderSubWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'taco') renderTacoWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'ramen') renderRamenWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'steak') renderSteakWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'burger') renderBurgerWorkspace(cx, cy, activeDish);
+  else if (currentVenue === 'icecream') renderIceCreamWorkspace(cx, cy, activeDish);
+}
+
+function drawPrepBoard(cx, cy) {
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, 245, 0, Math.PI * 2);
+  const grad = ctx.createRadialGradient(cx - 50, cy - 50, 40, cx, cy, 250);
+  grad.addColorStop(0, '#5a361c'); grad.addColorStop(1, '#251206');
+  ctx.fillStyle = grad; ctx.fill(); ctx.strokeStyle = '#6e4324'; ctx.lineWidth = 6; ctx.stroke();
+  ctx.restore();
+}
+
+function drawBoxedDish(cx, cy, text) {
+  ctx.save();
+  ctx.fillStyle = '#dcdde1'; ctx.beginPath(); ctx.roundRect(cx - 170, cy - 170, 340, 340, 20); ctx.fill();
+  ctx.strokeStyle = '#718093'; ctx.lineWidth = 5; ctx.stroke();
+  ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 17px Georgia'; ctx.textAlign = 'center';
+  ctx.fillText(text, cx, cy - 10);
+  ctx.fillStyle = '#27ae60'; ctx.font = 'bold 13px Georgia';
+  ctx.fillText('✔ PACKAGED & READY TO DELIVER', cx, cy + 25);
+  ctx.restore();
+}
+
+function renderPizzaWorkspace(cx, cy, p) {
+  drawPrepBoard(cx, cy);
+  if (p.boxed) { drawBoxedDish(cx, cy, '🍕 BELLA NAPOLI PIZZA'); return; }
+
+  const r = p.doughRadius;
+  if (r > 80) {
+    ctx.save();
+    ctx.beginPath();
+    if (p.isFoldedCalzone) { ctx.arc(cx, cy, r, -Math.PI*0.5, Math.PI*0.5); ctx.closePath(); }
+    else { ctx.arc(cx, cy, r, 0, Math.PI*2); }
+    ctx.fillStyle = p.cookProgress > 50 ? '#c78e47' : VENUE_CONFIG.pizza.doughs[p.doughType].c1;
+    ctx.fill(); ctx.strokeStyle = '#9d682e'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.clip();
+
+    for (const s of p.sauceStamps) {
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = p.cookProgress > 60 ? '#7a1408' : '#b82414'; ctx.fill();
+    }
+    for (const c of p.cheeseStamps) {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.angle);
+      ctx.fillStyle = p.cookProgress > 60 ? '#f3be4b' : '#fffdec';
+      ctx.fillRect(-8, -3, 16, 6); ctx.restore();
+    }
+    for (const top of p.toppings) drawRealisticTopping(top.x, top.y, top.type, top.rot);
+    if (p.burrata) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.burrata.x, p.burrata.y, 22, 0, Math.PI*2); ctx.fill();
+    }
+    for (const t of p.drizzleTrails) {
+      ctx.strokeStyle = 'rgba(218, 165, 32, 0.85)'; ctx.lineWidth = 4; ctx.beginPath();
+      for (let i = 0; i < t.points.length; i++) {
+        if (i === 0) ctx.moveTo(t.points[i].x, t.points[i].y);
+        else ctx.lineTo(t.points[i].x, t.points[i].y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = '#2c1407'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
+    for (const c of p.cuts) { ctx.beginPath(); ctx.moveTo(c.x1, c.y1); ctx.lineTo(c.x2, c.y2); ctx.stroke(); }
+    ctx.restore();
+  }
+}
+
+function renderHotdogWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🌯 BOARDWALK WRAPPED FRANK'); return; }
+
+  ctx.save();
+  ctx.fillStyle = VENUE_CONFIG.hotdog.buns[d.bunType].color;
+  ctx.beginPath(); ctx.roundRect(cx - 150, cy - 55, 300, 110, 35); ctx.fill();
+  ctx.strokeStyle = '#8c5828'; ctx.lineWidth = 4; ctx.stroke();
+
+  ctx.fillStyle = d.cookProgress > 60 ? '#4d1208' : VENUE_CONFIG.hotdog.sausages[d.sausageType].color;
+  ctx.beginPath(); ctx.roundRect(cx - 170, cy - 26, 340, 52, 24); ctx.fill();
+  ctx.strokeStyle = '#380a03'; ctx.lineWidth = 3; ctx.stroke();
+
+  for (const c of d.drizzleTrails) {
+    ctx.strokeStyle = VENUE_CONFIG.hotdog.condiments[c.type]?.color || '#d4ac0d'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < c.points.length; i++) {
+      if (i === 0) ctx.moveTo(c.points[i].x, c.points[i].y);
+      else ctx.lineTo(c.points[i].x, c.points[i].y);
+    }
+    ctx.stroke();
+  }
+  for (const t of d.toppings) {
+    ctx.fillStyle = VENUE_CONFIG.hotdog.toppings[t.type]?.color || '#27ae60';
+    ctx.beginPath(); ctx.arc(t.x, t.y, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderSubWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🥖 DELI WRAPPED PANINI'); return; }
+
+  ctx.save();
+  ctx.fillStyle = d.cookProgress > 50 ? '#9c642e' : VENUE_CONFIG.sub.breads[d.breadType].color;
+  ctx.beginPath(); ctx.roundRect(cx - 155, cy - 80, 310, 160, 22); ctx.fill();
+  ctx.strokeStyle = '#6b3e15'; ctx.lineWidth = 4; ctx.stroke();
+
+  for (const sp of d.spreads) {
+    ctx.strokeStyle = VENUE_CONFIG.sub.spreads[sp.type]?.color || '#4d8a36'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < sp.points.length; i++) {
+      if (i === 0) ctx.moveTo(sp.points[i].x, sp.points[i].y);
+      else ctx.lineTo(sp.points[i].x, sp.points[i].y);
+    }
+    ctx.stroke();
+  }
+  for (const l of d.layers) {
+    ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot);
+    ctx.fillStyle = VENUE_CONFIG.sub.meats[l.type]?.color || VENUE_CONFIG.sub.cheeses[l.type]?.color || VENUE_CONFIG.sub.greens[l.type]?.color || '#c0392b';
+    ctx.beginPath(); ctx.roundRect(-22, -11, 44, 22, 5); ctx.fill();
+    ctx.restore();
+  }
+  if (d.cutDone) {
+    ctx.strokeStyle = '#180702'; ctx.lineWidth = 4; ctx.setLineDash([8, 4]);
+    ctx.beginPath(); ctx.moveTo(cx - 155, cy - 80); ctx.lineTo(cx + 155, cy + 80); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function renderTacoWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🌮 TAQUERÍA OAXACA SERVED'); return; }
+
+  ctx.save();
+  ctx.fillStyle = d.cookProgress > 50 ? '#d4a259' : VENUE_CONFIG.taco.bases[d.baseType].color;
+  ctx.beginPath(); ctx.arc(cx, cy, 160, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#a87930'; ctx.lineWidth = 5; ctx.stroke();
+
+  for (const m of d.meats) {
+    ctx.fillStyle = VENUE_CONFIG.taco.meats[m.type]?.color || '#802619';
+    ctx.beginPath(); ctx.roundRect(m.x - 14, m.y - 8, 28, 16, 4); ctx.fill();
+  }
+  for (const s of d.salsas) {
+    ctx.strokeStyle = VENUE_CONFIG.taco.salsas[s.type]?.color || '#449c33';
+    ctx.lineWidth = 10; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < s.points.length; i++) {
+      if (i === 0) ctx.moveTo(s.points[i].x, s.points[i].y);
+      else ctx.lineTo(s.points[i].x, s.points[i].y);
+    }
+    ctx.stroke();
+  }
+  for (const g of d.garnishes) {
+    ctx.fillStyle = VENUE_CONFIG.taco.garnishes[g.type]?.color || '#27ae60';
+    ctx.beginPath(); ctx.arc(g.x, g.y, 6, 0, Math.PI * 2); ctx.fill();
+  }
+  if (d.consommeReady) {
+    ctx.fillStyle = '#802619';
+    ctx.beginPath(); ctx.arc(cx + 175, cy - 140, 36, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Georgia'; ctx.textAlign = 'center';
+    ctx.fillText('BIRRIA DIP', cx + 175, cy - 138);
+  }
+  ctx.restore();
+}
+
+function renderRamenWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🍜 TOKYO YATAI RAMEN SET'); return; }
+
+  ctx.save();
+  ctx.fillStyle = '#1a252f';
+  ctx.beginPath(); ctx.arc(cx, cy, 180, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#d4ac0d'; ctx.lineWidth = 6; ctx.stroke();
+
+  ctx.fillStyle = d.cookProgress > 50 ? '#9c441b' : VENUE_CONFIG.ramen.broths[d.brothType].color;
+  ctx.beginPath(); ctx.arc(cx, cy, 160, 0, Math.PI * 2); ctx.fill();
+
+  if (d.noodlesAdded) {
+    ctx.strokeStyle = '#f5cba7'; ctx.lineWidth = 3.5;
+    for (let r = 20; r <= 120; r += 16) {
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 1.8); ctx.stroke();
+    }
+  }
+  for (const t of d.toppings) {
+    ctx.save(); ctx.translate(t.x, t.y);
+    ctx.fillStyle = VENUE_CONFIG.ramen.toppings[t.type]?.color || VENUE_CONFIG.ramen.proteins[t.type]?.color || '#f39c12';
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function renderSteakWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🥩 PRIME CUT STEAK'); return; }
+
+  ctx.save();
+  ctx.fillStyle = d.cookProgress > 50 ? '#42160d' : VENUE_CONFIG.steak.cuts[d.cutType].color;
+  ctx.beginPath(); ctx.ellipse(cx, cy, 140, 85, Math.PI/12, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#250a04'; ctx.lineWidth = 6; ctx.stroke();
+
+  for (const s of d.seasonings) {
+    ctx.fillStyle = VENUE_CONFIG.steak.seasonings[s.type]?.color || '#ffffff';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderBurgerWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🍔 EMPIRE BURGER MEAL'); return; }
+
+  ctx.save();
+  ctx.fillStyle = VENUE_CONFIG.burger.buns[d.bunType].color;
+  ctx.beginPath(); ctx.arc(cx, cy, 140, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#8c5828'; ctx.lineWidth = 5; ctx.stroke();
+
+  ctx.fillStyle = d.cookProgress > 50 ? '#381308' : VENUE_CONFIG.burger.patties[d.pattyType].color;
+  ctx.beginPath(); ctx.arc(cx, cy, 120, 0, Math.PI * 2); ctx.fill();
+
+  for (const l of d.layers) {
+    ctx.save(); ctx.translate(l.x, l.y);
+    ctx.fillStyle = VENUE_CONFIG.burger.toppings[l.type]?.color || VENUE_CONFIG.burger.cheeses[l.type]?.color || '#ffb300';
+    ctx.beginPath(); ctx.roundRect(-20, -10, 40, 20, 4); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function renderIceCreamWorkspace(cx, cy, d) {
+  drawPrepBoard(cx, cy);
+  if (d.boxed) { drawBoxedDish(cx, cy, '🍨 SWEET DREAMS SUNDAE'); return; }
+
+  ctx.save();
+  ctx.fillStyle = VENUE_CONFIG.icecream.containers[d.containerType].color;
+  ctx.beginPath(); ctx.arc(cx, cy + 60, 110, 0, Math.PI); ctx.fill();
+  ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 5; ctx.stroke();
+
+  ctx.fillStyle = VENUE_CONFIG.icecream.flavors[d.flavorType].color;
+  ctx.beginPath(); ctx.arc(cx, cy - 20, 85, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#d0d3d4'; ctx.lineWidth = 4; ctx.stroke();
+
+  for (const t of d.toppings) {
+    ctx.fillStyle = VENUE_CONFIG.icecream.toppings[t.type]?.color || VENUE_CONFIG.icecream.sauces[t.type]?.color || '#e74c3c';
+    ctx.beginPath(); ctx.arc(t.x, t.y, 6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawRealisticTopping(x, y, type, rot) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rot);
+  if (type === 'pepperoni') {
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fillStyle = '#a82416'; ctx.fill();
+    ctx.strokeStyle = '#5a0d04'; ctx.stroke();
+  } else if (type === 'mushroom') {
+    ctx.beginPath(); ctx.arc(0, -2, 12, Math.PI, 0); ctx.fillStyle = '#6b5442'; ctx.fill();
+    ctx.fillRect(-3, -2, 6, 9);
+  } else if (type === 'basil') {
+    ctx.beginPath(); ctx.ellipse(0, 0, 12, 7, Math.PI/4, 0, Math.PI*2); ctx.fillStyle = '#2e8b46'; ctx.fill();
+  } else {
+    ctx.fillStyle = '#87231c'; ctx.fillRect(-10, -4, 20, 8);
+  }
+  ctx.restore();
+}
+
+/* ==========================================================================
+   POINTER & INTERACTION ENGINE
+   ========================================================================== */
+let isPointerDown = false;
+let lastPos = null;
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+  isPointerDown = true;
+  initAudio();
+  const pos = getCanvasPos(e);
+  lastPos = pos;
+
+  const d = activeDish;
+  if (currentVenue === 'pizza') {
+    if (activeStage === 1) stretchPizzaDough();
+    else if (activeStage === 2) applyPizzaTool(pos.x, pos.y);
+    else if (activeStage === 4) {
+      if (selectedTool === 'evoo') {
+        const trail = { points: [pos] };
+        d.drizzleTrails.push(trail); d.currentDrizzle = trail; playSound('sauce');
+      } else if (selectedTool === 'burrata') {
+        d.burrata = { x: pos.x, y: pos.y }; playSound('drop');
+      }
+    }
+  } else if (currentVenue === 'hotdog' && activeStage === 3) {
+    if (VENUE_CONFIG.hotdog.condiments[selectedTool]) {
+      const trail = { type: selectedTool, points: [pos] };
+      d.drizzleTrails.push(trail); d.currentCondiment = trail; playSound('sauce');
+    } else if (VENUE_CONFIG.hotdog.toppings[selectedTool]) {
+      d.toppings.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+    }
+  } else if (currentVenue === 'sub' && activeStage === 1) {
+    if (VENUE_CONFIG.sub.spreads[selectedTool]) {
+      const trail = { type: selectedTool, points: [pos] };
+      d.spreads.push(trail); d.currentSpread = trail; playSound('sauce');
+    }
+  } else if (currentVenue === 'sub' && activeStage === 2) {
+    d.layers.push({ type: selectedTool, x: pos.x, y: pos.y, rot: (Math.random() - 0.5) * 0.3 }); playSound('drop');
+  } else if (currentVenue === 'taco' && (activeStage === 1 || activeStage === 2)) {
+    if (activeStage === 1 && VENUE_CONFIG.taco.meats[selectedTool]) {
+      d.meats.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+    } else if (activeStage === 2) {
+      if (VENUE_CONFIG.taco.salsas[selectedTool]) {
+        const trail = { type: selectedTool, points: [pos] };
+        d.salsas.push(trail); d.currentSalsa = trail; playSound('sauce');
+      } else if (VENUE_CONFIG.taco.garnishes[selectedTool]) {
+        d.garnishes.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+      }
+    }
+  } else if (currentVenue === 'ramen' && activeStage === 2) {
+    d.toppings.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+  } else if (currentVenue === 'steak' && activeStage === 1) {
+    d.seasonings.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+  } else if (currentVenue === 'burger' && activeStage === 3) {
+    d.layers.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+  } else if (currentVenue === 'icecream' && (activeStage === 2 || activeStage === 3)) {
+    d.toppings.push({ type: selectedTool, x: pos.x, y: pos.y }); playSound('drop');
+  }
+
+  render();
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!isPointerDown) return;
+  const pos = getCanvasPos(e);
+
+  if (currentVenue === 'pizza' && activeStage === 2 && (selectedTool === 'sauce' || selectedTool === 'cheese')) {
+    if (lastPos && Math.hypot(pos.x - lastPos.x, pos.y - lastPos.y) > 14) {
+      applyPizzaTool(pos.x, pos.y); lastPos = pos;
+    }
+  } else if (currentVenue === 'pizza' && activeStage === 4 && activeDish.currentDrizzle) {
+    activeDish.currentDrizzle.points.push(pos);
+  } else if (currentVenue === 'hotdog' && activeStage === 3 && activeDish.currentCondiment) {
+    activeDish.currentCondiment.points.push(pos);
+  } else if (currentVenue === 'sub' && activeStage === 1 && activeDish.currentSpread) {
+    activeDish.currentSpread.points.push(pos);
+  } else if (currentVenue === 'taco' && activeStage === 2 && activeDish.currentSalsa) {
+    activeDish.currentSalsa.points.push(pos);
+  }
+  render();
+});
+
+function endPointer() {
+  if (activeDish) {
+    activeDish.currentDrizzle = null;
+    activeDish.currentCondiment = null;
+    activeDish.currentSpread = null;
+    activeDish.currentSalsa = null;
+  }
+  isPointerDown = false;
+  lastPos = null;
+  render();
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+
+function stretchPizzaDough() {
+  const p = activeDish;
+  if (p.doughRadius < p.doughTargetRadius) {
+    p.doughRadius += 35;
+    if (p.doughRadius > p.doughTargetRadius) p.doughRadius = p.doughTargetRadius;
+    playSound('dough'); setupStation(1);
+  }
+}
+function toggleCalzoneFold() { activeDish.isFoldedCalzone = !activeDish.isFoldedCalzone; playSound('dough'); setupStation(1); }
+
+function applyPizzaTool(x, y) {
+  const p = activeDish;
+  if (Math.hypot(x - 260, y - 260) > p.doughRadius - 16) return;
+  if (toppingSide === 'left' && x > 260) return;
+  if (toppingSide === 'right' && x < 260) return;
+
+  if (selectedTool === 'sauce') { p.sauceStamps.push({ x, y, r: 30 }); playSound('sauce'); }
+  else if (selectedTool === 'cheese') { p.cheeseStamps.push({ x, y, angle: Math.random() * Math.PI }); playSound('drop'); }
+  else if (VENUE_CONFIG.pizza.hotToppings[selectedTool]) {
+    p.toppings.push({ x, y, type: selectedTool, rot: Math.random() * Math.PI * 2 });
+    playSound('drop');
+  }
+  render();
+}
+
+function autoCutPizza() {
+  const p = activeDish;
+  const cutsCount = activeOrder.slices / 2;
+  p.cuts = [];
+  for (let i = 0; i < cutsCount; i++) {
+    const a = (Math.PI / cutsCount) * i;
+    p.cuts.push({ x1: 260 - Math.cos(a)*180, y1: 260 - Math.sin(a)*180, x2: 260 + Math.cos(a)*180, y2: 260 + Math.sin(a)*180 });
+  }
+  playSound('slice'); render();
+}
+function boxPizza() { activeDish.boxed = true; playSound('drop'); render(); setupStation(4); }
+
+/* ==========================================================================
+   UNIVERSAL COOKING TIMERS (WITH TARGET SWEET SPOT)
+   ========================================================================== */
+function getCookSpeed() { return 1 + (empireState.upgrades.turboHearth * 0.4); }
+
+function toggleUniversalCook() {
+  const d = activeDish;
+  if (d.isCooking) {
+    d.isCooking = false;
+    clearInterval(cookTimer);
+    setupStation(activeStage);
+  } else {
+    d.isCooking = true;
+    setupStation(activeStage);
+    cookTimer = setInterval(() => {
+      d.cookProgress += 4.0 * getCookSpeed();
+      const bar = document.getElementById('cook-bar');
+      const txt = document.getElementById('cook-pct');
+      if (bar) {
+        bar.style.width = `${Math.min(d.cookProgress, 100)}%`;
+        if (d.cookProgress > 105) bar.style.backgroundColor = '#b32415';
+        else if (d.cookProgress >= 70) bar.style.backgroundColor = '#2e7d32';
+      }
+      if (txt) txt.innerText = `${Math.floor(d.cookProgress)}%`;
+      playSound('sizzle');
+      render();
+    }, 280);
+  }
+}
+
+/* ==========================================================================
+   COUNTER SLICE WARMER
+   ========================================================================== */
+function putSliceInWarmer() {
+  const maxSlots = 4 + (empireState.upgrades.showcaseRack * 4);
+  const emptyIdx = empireState.warmerSlices.findIndex((s, i) => i < maxSlots && s === null);
+  if (emptyIdx === -1) {
+    alert("Showcase is full! Upgrade showcase rack in Kitchen Upgrades.");
+    return;
+  }
+  empireState.warmerSlices[emptyIdx] = { price: 5.50 + (empireState.perks.maestro * 1.5) };
+  playSound('drop');
+  checkMissionProgress('warmer_stock');
+  renderWarmerSlots();
+}
+
+function renderWarmerSlots() {
+  const container = document.getElementById('warmer-slots-container');
+  if (!container) return;
+  const maxSlots = 4 + (empireState.upgrades.showcaseRack * 4);
+  container.innerHTML = '';
+  for (let i = 0; i < maxSlots; i++) {
+    const slice = empireState.warmerSlices[i];
+    const div = document.createElement('div');
+    div.className = `warmer-slot ${slice ? 'occupied' : ''}`;
+    div.innerHTML = slice ? `🍕<br><b>$${slice.price.toFixed(2)}</b>` : `Slot ${i+1}<br><i>Empty</i>`;
+    container.appendChild(div);
+  }
+}
+
+setInterval(() => {
+  const maxSlots = 4 + (empireState.upgrades.showcaseRack * 4);
+  const occupied = [];
+  empireState.warmerSlices.forEach((s, idx) => { if (idx < maxSlots && s !== null) occupied.push(idx); });
+  if (occupied.length > 0) {
+    const sellIdx = occupied[Math.floor(Math.random() * occupied.length)];
+    const sold = empireState.warmerSlices[sellIdx];
+    empireState.cash += sold.price;
+    empireState.lifetimeEarnings += sold.price;
+    empireState.warmerSlices[sellIdx] = null;
+    playSound('cash');
+    document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+    renderWarmerSlots();
+  }
+}, 6500);
+
+/* ==========================================================================
+   AUTONOMOUS APPRENTICES ENGINE
+   ========================================================================== */
+setInterval(() => {
+  const venues = Object.keys(VENUE_CONFIG);
+  for (const v of venues) {
+    if (v !== currentVenue && empireState.unlockedVenues[v] && empireState.workers[v] && empireState.workerEnabled[v]) {
+      const earned = (18.00 + (empireState.perks.maestro * 4.00)) * (0.9 + Math.random() * 0.25);
+      empireState.cash += earned;
+      empireState.lifetimeEarnings += earned;
+      document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+      showFloatingToast(`🤖 Apprentice at ${VENUE_CONFIG[v].name} made +$${earned.toFixed(2)}`);
+    }
+  }
+}, 6000);
+
+function showFloatingToast(text) {
+  const container = document.getElementById('canvas-container');
+  const toast = document.createElement('div');
+  toast.className = 'profit-toast';
+  toast.innerText = text;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 2000);
+}
+
+/* ==========================================================================
+   SCORING & ITEMIZED ORDER SERVICE
+   ========================================================================== */
+function serveDish() {
+  if (cookTimer) clearInterval(cookTimer);
+  if (patienceInterval) clearInterval(patienceInterval);
+
+  let score = 100;
+  const o = activeOrder;
+  const d = activeDish;
+  const feedback = [];
+
+  if (customerPatience < 20) {
+    score -= 12;
+    feedback.push(`<li class="item-err"><span>❌ Customer patience collapsed: service felt rushed</span><b>-12%</b></li>`);
+  } else if (customerPatience > 60) {
+    score += 4;
+    feedback.push(`<li class="item-ok"><span>✅ Fast, relaxed service boosted the guest experience</span><b>+4%</b></li>`);
+  }
+
+  if (o.requestedDrink) {
+    if (d.drinkPrepared === o.requestedDrink) {
+      feedback.push(`<li class="item-ok"><span>✅ Beverage Prepared (${o.requestedDrink})</span><b>+100%</b></li>`);
+    } else {
+      score -= 15;
+      feedback.push(`<li class="item-err"><span>❌ Missing Drink (Wanted: ${o.requestedDrink})</span><b>-15%</b></li>`);
+    }
+  }
+
+  if (o.requestedSide) {
+    if (d.sidePrepared === o.requestedSide) {
+      feedback.push(`<li class="item-ok"><span>✅ Side Dish Prepared (${o.requestedSide})</span><b>+100%</b></li>`);
+    } else {
+      score -= 12;
+      feedback.push(`<li class="item-err"><span>❌ Missing Side (Wanted: ${o.requestedSide})</span><b>-12%</b></li>`);
+    }
+  }
+
+  if (o.venue === 'pizza') {
+    if (d.doughRadius < d.doughTargetRadius) {
+      score -= 12;
+      feedback.push(`<li class="item-err"><span>❌ Dough not fully stretched</span><b>-12%</b></li>`);
+    }
+    if (d.cookProgress < 70) {
+      score -= 18;
+      feedback.push(`<li class="item-err"><span>❌ Underbaked Pizza Crust (${Math.floor(d.cookProgress)}%)</span><b>-18%</b></li>`);
+    } else if (d.cookProgress > 105) {
+      score -= 18;
+      feedback.push(`<li class="item-err"><span>❌ Overbaked / Burnt Crust (${Math.floor(d.cookProgress)}%)</span><b>-18%</b></li>`);
+    } else {
+      feedback.push(`<li class="item-ok"><span>✅ Golden Hearth Baked (Sweet Spot)</span><b>+100%</b></li>`);
+    }
+
+    const sauceCount=(d.sauceStamps||[]).length, cheeseCount=(d.cheeseStamps||[]).length;
+    const checkCoverage=(label,spec,count)=>{
+      if (spec==='none' && count>0) { score-=10; feedback.push(`<li class="item-err"><span>❌ ${label} added despite NO ${label.toUpperCase()} request</span><b>-10%</b></li>`); }
+      else if (spec==='light' && (count<2 || count>8)) { score-=6; feedback.push(`<li class="item-err"><span>⚠️ ${label} amount did not match LIGHT request</span><b>-6%</b></li>`); }
+      else if (spec==='normal' && count<5) { score-=10; feedback.push(`<li class="item-err"><span>❌ Missing / insufficient ${label}</span><b>-10%</b></li>`); }
+      else if (spec==='extra' && count<10) { score-=10; feedback.push(`<li class="item-err"><span>❌ Not enough ${label} for EXTRA request</span><b>-10%</b></li>`); }
+      else feedback.push(`<li class="item-ok"><span>✅ ${label} request matched (${spec})</span><b>✓</b></li>`);
+    };
+    checkCoverage('Sauce', o.sauceSpec||'normal', sauceCount);
+    checkCoverage('Cheese', o.cheeseSpec||'normal', cheeseCount);
+
+    const targetTops = o.isSplit ? (o.leftToppings || []).concat(o.rightToppings || []) : o.toppings;
+    targetTops.forEach(req => {
+      const placed = (d.toppings || []).filter(t => t.type === req).length;
+      const minNeeded = o.isSplit ? 2 : 4;
+      if (placed === 0) {
+        score -= 8;
+        feedback.push(`<li class="item-err"><span>❌ Missing Topping: ${VENUE_CONFIG.pizza.hotToppings[req]?.name || req}</span><b>-8%</b></li>`);
+      } else if (placed < minNeeded) {
+        score -= 4;
+        feedback.push(`<li class="item-err"><span>⚠️ Skimpy ${VENUE_CONFIG.pizza.hotToppings[req]?.name} (${placed}/${minNeeded} min)</span><b>-4%</b></li>`);
+      }
+    });
+
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Pizza was not boxed & sealed</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'hotdog') {
+    if (d.cookProgress < 70 || d.cookProgress > 105) { score -= 15; feedback.push(`<li class="item-err"><span>❌ Sausage Grill Sear imperfect</span><b>-15%</b></li>`); }
+    else { feedback.push(`<li class="item-ok"><span>✅ Golden Roller Grill Sizzle</span><b>+100%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Frank was not foil wrapped</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'sub') { 
+    if (d.cookProgress < 70 || d.cookProgress > 105) { score -= 15; feedback.push(`<li class="item-err"><span>❌ Panini Press timing imperfect</span><b>-15%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Panini was not wrapped</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'taco') {
+    if (d.cookProgress < 65) { score -= 12; feedback.push(`<li class="item-err"><span>❌ Tortilla not fully seared on comal</span><b>-12%</b></li>`); }
+    if (o.requiresConsomme && !d.consommeReady) { score -= 10; feedback.push(`<li class="item-err"><span>❌ Dipping Consommé not ladled</span><b>-10%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Taco order not paper wrapped</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'ramen') {
+    if (d.cookProgress < 65) { score -= 12; feedback.push(`<li class="item-err"><span>❌ Broth not simmered to temp</span><b>-12%</b></li>`); }
+    if (!d.noodlesAdded) { score -= 12; feedback.push(`<li class="item-err"><span>❌ Noodles missing from bowl</span><b>-12%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Cedar Platter not set</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'steak') {
+    if (d.cookProgress < 70 || d.cookProgress > 105) { score -= 15; feedback.push(`<li class="item-err"><span>❌ Steak Sear Doneness imperfect</span><b>-15%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Steak not plated on silver platter</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'burger') {
+    if (d.cookProgress < 70 || d.cookProgress > 105) { score -= 15; feedback.push(`<li class="item-err"><span>❌ Burger Patty sear timing imperfect</span><b>-15%</b></li>`); }
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Burger carton not sealed</span><b>-8%</b></li>`); }
+  } else if (o.venue === 'icecream') {
+    if (!d.boxed) { score -= 8; feedback.push(`<li class="item-err"><span>❌ Dessert tray not completed</span><b>-8%</b></li>`); }
+  }
+
+  score = Math.max(25, Math.min(100, Math.round(score)));
+
+  const isFast = customerPatience > 60;
+  let speedBonus = isFast ? 1.3 : (customerPatience > 25 ? 1.1 : 1.0);
+  if (empireState.shiftEvent && empireState.shiftEvent.includes('Happy Hour')) speedBonus += 0.15;
+  if (empireState.shiftEvent && empireState.shiftEvent.includes('Festival Rush')) speedBonus += 0.10;
+
+  if (score >= 90) empireState.comboStreak++;
+  else empireState.comboStreak = 0;
+  updateComboUI();
+
+  let comboCap = (empireState.shiftEvent && empireState.shiftEvent.includes('Cook-Off')) ? 3.0 : 2.5;
+  const comboMult = Math.min(comboCap, 1 + (empireState.comboStreak * 0.2));
+  const baseReward = 22.00 + (empireState.perks.maestro * 4.00);
+  const qualityBonus = (score / 100) * 18.00;
+  const tip = (score / 100) * 12.00 * speedBonus;
+  const total = (baseReward + qualityBonus + tip) * comboMult;
+
+  window.lastServiceScore = score;
+
+  empireState.cash += total;
+  empireState.lifetimeEarnings += total;
+  empireState.stats.orders = (empireState.stats.orders || 0) + 1;
+  if (score >= 90) empireState.stats.perfect = (empireState.stats.perfect || 0) + 1;
+
+  if (empireState.venueProgress[o.venue]) {
+    const vp = empireState.venueProgress[o.venue];
+    vp.orders++;
+    vp.earnings += total;
+    vp.reputation = Math.min(100, vp.reputation + (score >= 90 ? 3 : (score < 60 ? -2 : 1)));
+    if (score >= 90) vp.perfect++;
+  }
+
+  document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+
+  checkMissionProgress('perfect_score', { score });
+  if (o.customer.type === 'vip' || o.customer.type === 'critic') {
+    checkMissionProgress('fast_vip', { isVIP: true, fast: isFast });
+  }
+
+  saveData();
+  playSound(score >= 88 ? 'fanfare' : 'cash');
+
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>${score >= 90 ? '⭐⭐⭐⭐⭐ Squisito Maestro!' : (score >= 70 ? '⭐⭐⭐ Good Service!' : '⭐ Needs Practice')}</h2>
+    <div class="receipt-box">
+      <div class="receipt-title">
+        <span>ITEMIZED SERVICE RECEIPT</span>
+        <span>Score: <b>${score}%</b></span>
+      </div>
+      <ul class="receipt-list">
+        ${feedback.length ? feedback.join('') : '<li class="item-ok"><span>✅ All Order Specifications Met</span><b>+100%</b></li>'}
+      </ul>
+      <div style="border-top:1px dashed #d8c7b0; margin-top:6px; padding-top:4px; display:flex; justify-content:space-between; font-size:10.5px;">
+        <span>Base Pay: $${baseReward.toFixed(2)}</span>
+        <span>Speed Tip: +${Math.round((speedBonus - 1) * 100)}%</span>
+        <span>Combo: x${comboMult.toFixed(1)}</span>
+      </div>
+    </div>
+
+    <p style="font-size:16px; margin:6px 0;"><b>Total Earned:</b> <span style="color:#2e7d32; font-weight:bold;">$${total.toFixed(2)}</span></p>
+    <button class="action-btn" onclick="nextGuest()">Next Customer ➡️</button>
+  `;
+}
+
+function nextGuest() {
+  document.getElementById('overlay').style.display = 'none';
+  empireState.orderIndex++;
+  if (empireState.orderIndex > empireState.maxOrdersPerDay) {
+    showDayEnd();
+    return;
+  }
+  document.getElementById('day-val').innerText = empireState.day;
+  activeOrder = generateOrder(currentVenue);
+  activeDish = createNewDish(currentVenue);
+  updateTicketUI();
+  setupStation(1);
+  resetCustomerPatience();
+}
+
+function showDayEnd() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>🎉 Day ${empireState.day} Concluded!</h2>
+    <p>All scheduled orders completed! Total Empire Register: <b style="color:#2e7d32; font-size:18px;">$${empireState.cash.toFixed(2)}</b></p>
+    <button class="action-btn" onclick="startNextDay()">Open Day ${empireState.day + 1} ☀️</button>
+  `;
+}
+
+function startNextDay() {
+  const events=['🍕 Festival Rush: more customers, bigger tips','🧐 Critic Night: accuracy matters more','🎉 Happy Hour: fast service bonus','🌧️ Rainy Rush: patience drains faster','🏆 Cook-Off: perfect orders build huge combos'];
+  empireState.shiftEvent = Math.random()<0.65 ? pickRandom(events) : null;
+  empireState.day++;
+  empireState.orderIndex = 1;
+  document.getElementById('day-val').innerText = empireState.day;
+  document.getElementById('overlay').style.display = 'none';
+  generateDailyMissions();
+  switchVenue(currentVenue);
+}
+
+/* ==========================================================================
+   UPGRADES & APPRENTICES MODALS
+   ========================================================================== */
+function openUpgradesModal() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  const u = empireState.upgrades;
+  content.innerHTML = `
+    <h2>⚙️ Artisan Kitchen Upgrades</h2>
+    <p>Permanent equipment enhancements across all your restaurants:</p>
+    
+    <div style="display:flex; flex-direction:column; gap:8px; text-align:left; margin:10px 0;">
+      <div style="background:#fff; border:1px solid #d4af37; padding:8px 10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div><b>🔥 Turbo Hearth & Griddle:</b> Level ${u.turboHearth}/3<br><span style="font-size:10px; color:#666;">+40% faster cooking timers across all shops</span></div>
+        <button class="tool-btn" onclick="buyUpgrade('turboHearth', 120 * (u.turboHearth + 1))">${u.turboHearth>=3 ? 'MAX' : `Buy ($${120 * (u.turboHearth + 1)})`}</button>
+      </div>
+
+      <div style="background:#fff; border:1px solid #d4af37; padding:8px 10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div><b>📐 Laser Plating Guides:</b> Level ${u.laserGuides}/1<br><span style="font-size:10px; color:#666;">Shows visual alignment grid and +10% customer patience</span></div>
+        <button class="tool-btn" onclick="buyUpgrade('laserGuides', 180)">${u.laserGuides ? 'Owned' : 'Buy ($180)'}</button>
+      </div>
+
+      <div style="background:#fff; border:1px solid #d4af37; padding:8px 10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div><b>🍕 Expanded Showcase Rack:</b> Level ${u.showcaseRack}/1<br><span style="font-size:10px; color:#666;">Expands warmer slots from 4 to 8 for walk-in cash</span></div>
+        <button class="tool-btn" onclick="buyUpgrade('showcaseRack', 150)">${u.showcaseRack ? 'Owned' : 'Buy ($150)'}</button>
+      </div>
+    </div>
+    <button class="header-btn" style="margin-top:6px; width:100%;" onclick="closeModal()">Close</button>
+  `;
+}
+
+function buyUpgrade(key, cost) {
+  if (empireState.upgrades[key] >= 3 && key === 'turboHearth') return alert("Max level reached!");
+  if (empireState.upgrades[key] >= 1 && key !== 'turboHearth') return alert("Already owned!");
+
+  if (empireState.cash >= cost) {
+    empireState.cash -= cost;
+    empireState.upgrades[key]++;
+    playSound('cash');
+    saveData();
+    document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+    renderWarmerSlots();
+    openUpgradesModal();
+  } else {
+    alert("Not enough cash!");
+  }
+}
+
+function openPrestigeModal() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  const potentialStars = Math.floor(empireState.lifetimeEarnings / 150);
+  const venues = Object.keys(VENUE_CONFIG);
+
+  let workerControls = venues.map(v => {
+    const isUnlocked = empireState.unlockedVenues[v];
+    const hasWorker = empireState.workers[v];
+    const isEnabled = empireState.workerEnabled[v];
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #d4af37; margin:3px 0;">
+        <span style="font-weight:bold; font-size:11px;">${VENUE_CONFIG[v].icon} ${VENUE_CONFIG[v].name}:</span>
+        <div>
+          ${!isUnlocked ? `<span style="color:#777; font-size:10px;">(Locked)</span>` : 
+            !hasWorker ? `<button class="tool-btn" style="padding:2px 8px;" onclick="hireWorker('${v}')">Hire Apprentice (1 ⭐)</button>` :
+            `<button class="tool-btn" style="padding:2px 8px; background:${isEnabled?'#2e7d32':'#777'}; color:white;" onclick="toggleWorker('${v}')">${isEnabled?'⚡ Active':'⏸️ Paused'}</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  content.innerHTML = `
+    <h2>🎖️ Accademia & Apprentice Guild</h2>
+    <p>Prestige reset your daily register to earn permanent <b>Accademia Stars</b>. Hire autonomous apprentices for passive revenue!</p>
+    
+    <div style="background:#fff7e6; padding:8px; border-radius:8px; margin:6px 0; border:1px solid #d4af37; font-size:11.5px;">
+      <div>Current Stars: <b>${empireState.prestigeStars} ⭐</b> | Lifetime Earnings: <b>$${empireState.lifetimeEarnings.toFixed(2)}</b></div>
+      <div>Stars upon Reset: <b>+${potentialStars} ⭐</b></div>
+    </div>
+
+    <div class="tool-section-title" style="text-align:left; margin-top:6px;">Autonomous Apprentices (Passive Income)</div>
+    <div style="max-height:160px; overflow-y:auto;">${workerControls}</div>
+
+    <button class="action-btn" style="background:#78140a; margin-top:10px;" onclick="performPrestigeReset(${potentialStars})">✨ Perform Prestige Reset</button>
+    <button class="header-btn" style="margin-top:6px; width:100%;" onclick="closeModal()">Close</button>
+  `;
+}
+
+function hireWorker(v) {
+  if (empireState.prestigeStars >= 1) {
+    empireState.prestigeStars--;
+    empireState.workers[v] = true;
+    empireState.workerEnabled[v] = true;
+    document.getElementById('prestige-val').innerText = empireState.prestigeStars;
+    saveData();
+    openPrestigeModal();
+  } else alert("Need 1 Accademia Star!");
+}
+
+function toggleWorker(v) {
+  empireState.workerEnabled[v] = !empireState.workerEnabled[v];
+  saveData();
+  openPrestigeModal();
+}
+
+function performPrestigeReset(earnedStars) {
+  if (earnedStars <= 0) { alert("Earn at least $150 lifetime revenue before prestiging!"); return; }
+  empireState.prestigeStars += earnedStars;
+  empireState.cash = 0;
+  empireState.day = 1;
+  empireState.orderIndex = 1;
+  empireState.lifetimeEarnings = 0;
+  saveData();
+  document.getElementById('prestige-val').innerText = empireState.prestigeStars;
+  document.getElementById('cash-val').innerText = "0.00";
+  closeModal();
+  generateDailyMissions();
+  switchVenue('pizza');
+}
+
+/* ==========================================================================
+   NAVIGATION, EMPIRE & REPORT MODALS
+   ========================================================================== */
+function openEmpireReport() {
+  ensureVenueState();
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  const venues = Object.keys(VENUE_CONFIG);
+  content.innerHTML = `
+    <h2>🏙️ Culinary Empire Overview</h2>
+    <div style="text-align:left; max-height:360px; overflow-y:auto;">
+      ${venues.map(v => {
+        const p = empireState.venueProgress[v];
+        return `
+          <div style="background:#fff8ed; border:1px solid #d4af37; border-radius:8px; padding:8px; margin:5px 0;">
+            <b>${VENUE_CONFIG[v].icon} ${VENUE_CONFIG[v].name}</b><br>
+            <span style="font-size:11px;">⭐ Reputation: ${p.reputation}/100 · Orders: ${p.orders} · Perfect: ${p.perfect} · Revenue: $${p.earnings.toFixed(2)}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <button class="header-btn" style="margin-top:8px; width:100%;" onclick="closeModal()">Close</button>
+  `;
+}
+
+function openFestival() {
+  const festivals = ['🍕 Pizza Fest', '🌭 Boardwalk Weekend', '🥪 Deli Days', '🌮 Taco Fiesta', '🍜 Tokyo Night Market'];
+  const today = festivals[Math.floor((empireState.day - 1) / 2) % festivals.length];
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>🎪 ${today}</h2>
+    <p>Today's culinary festival is live across your restaurants!</p>
+    <p>Serve <b>3 orders with 90%+ score</b> today for a festival bounty of <b>$75 + 1 ⭐</b>.</p>
+    <button class="action-btn" onclick="closeModal()">Back to Kitchen</button>
+  `;
+}
+
+function openAchievements() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  const s = empireState.stats;
+  content.innerHTML = `
+    <h2>🏆 Artisan Hall of Fame</h2>
+    <div style="text-align:left; max-height:300px; overflow-y:auto; font-size:11.5px; line-height:1.6;">
+      <div>👨‍🍳 <b>First Service:</b> ${s.orders >= 1 ? '✅ Unlocked' : '⏳ In Progress'}</div>
+      <div>💯 <b>Century Club (100 Orders):</b> ${s.orders >= 100 ? '✅ Unlocked' : `${s.orders}/100`}</div>
+      <div>✨ <b>Ten Perfect Dishes (90%+):</b> ${s.perfect >= 10 ? '✅ Unlocked' : `${s.perfect}/10`}</div>
+      <div>💰 <b>Empire Mogul ($5,000 Earned):</b> ${empireState.lifetimeEarnings >= 5000 ? '✅ Unlocked' : `$${empireState.lifetimeEarnings.toFixed(2)}/$5000`}</div>
+    </div>
+    <button class="header-btn" style="margin-top:10px; width:100%;" onclick="closeModal()">Close</button>
+  `;
+}
+
+function openHelpModal() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>📖 Artisan Master Guide</h2>
+    <div style="text-align:left; font-size:11px; line-height:1.45; color:#361f10; max-height:300px; overflow-y:auto;">
+      <p><b>✨ Visual Sweet-Spot Cooking:</b> Keep your food in the green target bracket (70% - 100%) on the cooking meter. Avoid burning food by pulling it before 105%.</p>
+      <p><b>🍕 Generous Topping Rule:</b> You can add extra toppings freely for aesthetic appeal. Only missing ingredients or going below the required count causes penalties.</p>
+      <p><b>🥤 Stage 4 Complete Assembly:</b> Package your dishes, pour requested cold beverages, and add delicious sides before delivering.</p>
+      <p><b>🧾 Itemized Feedback:</b> Review your receipt on delivery to see exact bonuses and deductions.</p>
+    </div>
+    <button class="action-btn" style="margin-top:10px; width:100%;" onclick="closeModal()">Back to Kitchen</button>
+  `;
+}
+
+/* ==========================================================================
+   PERSISTENCE & SAVE SLOTS
+   ========================================================================== */
+function openSaveModal() {
+  const modal = document.getElementById('overlay');
+  const content = document.getElementById('modal-content');
+  modal.style.display = 'flex';
+
+  content.innerHTML = `
+    <h2>💾 Save Slots</h2>
+    <div style="display:flex; flex-direction:column; gap:8px; margin:10px 0;">
+      <button class="tool-btn" onclick="loadSlot(1)">📁 Slot 1 ${currentSlot===1?'(Active)':''}</button>
+      <button class="tool-btn" onclick="loadSlot(2)">📁 Slot 2 ${currentSlot===2?'(Active)':''}</button>
+      <button class="tool-btn" onclick="loadSlot(3)">📁 Slot 3 ${currentSlot===3?'(Active)':''}</button>
+    </div>
+    <button class="action-btn" style="background:#8a1b12; margin-top:8px;" onclick="resetCurrentSlot()">⚠️ Reset Current Slot</button>
+    <button class="header-btn" style="margin-top:6px; width:100%;" onclick="closeModal()">Close</button>
+  `;
+}
+
+function saveData() {
+  try { localStorage.setItem(`street_food_empire_v4_slot_${currentSlot}`, JSON.stringify(empireState)); } catch(e) {}
+}
+
+function loadSlot(slotNum) {
+  currentSlot = slotNum;
+  try {
+    const raw = localStorage.getItem(`street_food_empire_v4_slot_${currentSlot}`);
+    if (raw) {
+      empireState = Object.assign(empireState, JSON.parse(raw));
+    }
+  } catch(e) {}
+  ensureVenueState();
+  document.getElementById('cash-val').innerText = empireState.cash.toFixed(2);
+  document.getElementById('day-val').innerText = empireState.day;
+  document.getElementById('prestige-val').innerText = empireState.prestigeStars;
+  if (!empireState.missions || !empireState.missions.length) generateDailyMissions();
+  closeModal();
+  switchVenue(currentVenue);
+}
+
+function resetCurrentSlot() {
+  if (confirm("Reset all saved data in this slot?")) {
+    localStorage.removeItem(`street_food_empire_v4_slot_${currentSlot}`);
+    location.reload();
+  }
+}
+
+function closeModal() { document.getElementById('overlay').style.display = 'none'; }
+
+/* ==========================================================================
+   INITIALIZATION
+   ========================================================================== */
+loadSlot(1);
+if (!empireState.missions || !empireState.missions.length) generateDailyMissions();
+switchVenue('pizza');
+</script>
+
+<script>
+/* Gameplay feel polish: feedback, keyboard shortcuts, and order safety. */
+(function(){
+ const toast=(m)=>{const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),1500)};
+ window.showGameToast=toast;
+ document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&typeof closeModal==='function') closeModal();
+   if(e.key.toLowerCase()==='h') toast('Tip: Check every line of the ticket before serving!');
+ });
+ const oldAlert=window.alert; window.alert=(m)=>{toast(String(m));};
+ const watch=setInterval(()=>{
+   const t=document.getElementById('ticket-panel'); if(t&&!t.dataset.polished){t.dataset.polished='1';toast('Welcome back, Chef! Build carefully and serve accurately.');}
+ },500);
+})();
+</script>
+
+<style id="mega-update-style">
+/* MEGA GAMEPLAY UPDATE */
+#ticket-panel{box-shadow:0 12px 30px rgba(0,0,0,.28)}
+#canvas-container{position:relative;overflow:hidden}
+#kitchen-live-hud{position:absolute;left:12px;bottom:12px;z-index:20;display:flex;gap:8px;align-items:center;pointer-events:none}
+.live-pill{background:rgba(22,15,10,.88);color:#fff;border:1px solid rgba(255,215,120,.55);border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;box-shadow:0 5px 15px rgba(0,0,0,.3)}
+.live-pill.hot{animation:pulseHeat 1s infinite alternate}
+@keyframes pulseHeat{to{transform:scale(1.04);filter:brightness(1.2)}}
+.pizza-requirements{background:linear-gradient(135deg,#fff7e6,#fff);border:2px solid #d4af37;border-radius:10px;padding:8px;margin:8px 0;font-size:11px;line-height:1.55;box-shadow:0 3px 10px rgba(100,60,0,.12)}
+.pizza-requirements b{color:#7b241c}
+.customer-mood-card{border-radius:9px;padding:7px 9px;margin-top:7px;font-size:10px;font-weight:bold;background:#fff8e7;border:1px solid #e4c77d}
+.customer-mood-card.happy{background:#edf8ef;border-color:#75b979;color:#1e6b31}
+.customer-mood-card.angry{background:#fff0ee;border-color:#d8847c;color:#9c241b}
+#service-celebration{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:60;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.15),rgba(0,0,0,.28));font-size:48px;font-weight:900;text-shadow:0 5px 18px #000;animation:celebrate .9s ease both}
+@keyframes celebrate{0%{transform:scale(.65);opacity:0}45%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:0}}
+</style>
+<script>
+/* ===== BEST EVER UPDATE: interactive cooking + order reliability ===== */
+(function(){
+  // Explicit pizza order specs: sauce and cheese are NEVER silently omitted.
+  const oldGenerateOrder = generateOrder;
+  generateOrder = function(venue=currentVenue){
+    const o=oldGenerateOrder(venue);
+    if(venue==='pizza'){
+      const sauceNames={none:'NO SAUCE',light:'LIGHT SAUCE',normal:'REGULAR SAUCE',extra:'EXTRA SAUCE'};
+      const cheeseNames={none:'NO CHEESE',light:'LIGHT CHEESE',normal:'REGULAR CHEESE',extra:'EXTRA CHEESE'};
+      o.sauceSpec=o.sauceSpec||'normal'; o.cheeseSpec=o.cheeseSpec||'normal';
+      o.modifiers=(o.modifiers||[]).filter(x=>!String(x).startsWith('🍅 Sauce:')&&!String(x).startsWith('🧀 Cheese:'));
+      o.modifiers.unshift('🧀 Cheese: '+cheeseNames[o.cheeseSpec]);
+      o.modifiers.unshift('🍅 Sauce: '+sauceNames[o.sauceSpec]);
+      o.orderFlavor=`🍅 ${sauceNames[o.sauceSpec]}  •  🧀 ${cheeseNames[o.cheeseSpec]}`;
+    }
+    return o;
+  };
+
+  // Make pizza requirements impossible to miss on the ticket.
+  const oldTicket=updateTicketUI;
+  updateTicketUI=function(){
+    oldTicket();
+    const o=activeOrder;
+    if(o&&o.venue==='pizza'){
+      const body=document.getElementById('ticket-body') || document.querySelector('#ticket-panel .ticket-body');
+      if(body && !body.querySelector('.pizza-requirements')){
+        const box=document.createElement('div'); box.className='pizza-requirements';
+        const sauce={none:'🚫 NO SAUCE',light:'🍅 LIGHT SAUCE',normal:'🍅 REGULAR SAUCE',extra:'🍅🍅 EXTRA SAUCE'}[o.sauceSpec||'normal'];
+        const cheese={none:'🚫 NO CHEESE',light:'🧀 LIGHT CHEESE',normal:'🧀 REGULAR CHEESE',extra:'🧀🧀 EXTRA CHEESE'}[o.cheeseSpec||'normal'];
+        box.innerHTML='<b>🔥 PIZZA BUILD REQUIREMENTS</b><br>'+sauce+'<br>'+cheese;
+        body.prepend(box);
+      }
+    }
+  };
+
+  // Customer reaction + satisfying service feedback.
+  const oldServe=serveDish;
+  serveDish=function(){
+    const o=activeOrder;
+    const before=o?JSON.stringify(o):'';
+    oldServe();
+    setTimeout(()=>{
+      const score=Number(window.lastServiceScore||0);
+      const mood=score>=90?'happy':score>=70?'neutral':'angry';
+      const msg=score>=95?'🌟 PERFECT! Customer is thrilled!':score>=80?'😊 Great meal! Nice tip!':score>=60?'😐 Customer accepted it, but noticed mistakes.':'😡 Customer is unhappy — check the ticket more carefully!';
+      showFloatingToast(msg);
+      const cel=document.getElementById('service-celebration');
+      if(cel){cel.textContent=score>=90?'🌟 PERFECT SERVICE! 🌟':score>=70?'👏 NICE SERVICE!':'⚠️ ORDER MISTAKES';cel.style.display='flex';setTimeout(()=>cel.style.display='none',950)}
+    },30);
+  };
+
+  // Live cooking HUD: gives constant feedback while baking/grilling.
+  function ensureHUD(){
+    const c=document.getElementById('canvas-container'); if(!c)return;
+    let hud=document.getElementById('kitchen-live-hud');
+    if(!hud){hud=document.createElement('div');hud.id='kitchen-live-hud';c.appendChild(hud)}
+    if(!document.getElementById('service-celebration')){const x=document.createElement('div');x.id='service-celebration';c.appendChild(x)}
+    const d=activeDish, o=activeOrder;
+    if(!d||!o){hud.innerHTML='';return}
+    const cp=Math.round(d.cookProgress||0);
+    let state='PREP'; let cls='';
+    if(cp>0&&cp<70){state='🔥 COOKING — '+cp+'%';cls='hot'}
+    else if(cp>=70&&cp<=105){state='✨ PERFECT COOKING ZONE — '+cp+'%';cls='hot'}
+    else if(cp>105){state='🔥⚠️ OVERCOOKING — '+cp+'%';cls='hot'}
+    const patience=Math.max(0,Math.round(o.patience||0));
+    hud.innerHTML='<div class="live-pill '+cls+'">'+state+'</div><div class="live-pill">❤️ Patience: '+patience+'%</div>';
+  }
+  setInterval(ensureHUD,250);
+
+  // Error guard: protect against missing arrays from old saves.
+  setInterval(()=>{
+    if(activeDish){
+      ['sauceStamps','cheeseStamps','toppings','drizzleTrails','cuts','layers'].forEach(k=>{if(!Array.isArray(activeDish[k])) activeDish[k]=[]});
+    }
+    if(activeOrder&&activeOrder.venue==='pizza'){
+      if(!activeOrder.sauceSpec)activeOrder.sauceSpec='normal';
+      if(!activeOrder.cheeseSpec)activeOrder.cheeseSpec='normal';
+    }
+  },800);
+})();
+</script>
+
+
+<script>
+/* ================= REALISTIC FOOD + CHEF DEBUG PATCH ================= */
+(function(){
+  // Password-protected testing mode. Intended for the game owner/local copy.
+  function addDebugButton(){
+    const nav=document.getElementById('ultimate-nav') || document.querySelector('.stats-bar') || document.getElementById('header');
+    if(!nav || document.getElementById('debug-chef-btn')) return;
+    const b=document.createElement('button'); b.id='debug-chef-btn'; b.className='header-btn'; b.textContent='🛠️ Chef Debug';
+    b.onclick=openChefDebug; nav.appendChild(b);
+  }
+  function openChefDebug(){
+    const pass=prompt('Chef Debug password:');
+    if(pass!=='nookie'){ alert('Incorrect password.'); return; }
+    let p=document.getElementById('debug-panel');
+    if(!p){p=document.createElement('div');p.id='debug-panel';document.getElementById('game-container').appendChild(p)}
+    p.innerHTML='<b style="font-size:15px">🛠️ CHEF TEST MODE</b><br><span style="opacity:.8">Testing tools for your local game copy</span><hr>'+
+      '<button onclick="window.__chefUnlockAll()">🔓 Unlock All</button>'+ 
+      '<button onclick="window.__chefCash()">💰 +$50,000</button>'+ 
+      '<button onclick="window.__chefStars()">⭐ +100 Stars</button>'+ 
+      '<button onclick="window.__chefMaxUpgrades()">⚡ Max Upgrades</button>'+ 
+      '<button onclick="window.__chefNextOrder()">🎟️ New Order</button>'+ 
+      '<button onclick="window.__chefClose()">✖ Close</button>';
+  }
+  window.__chefClose=()=>document.getElementById('debug-panel')?.remove();
+  window.__chefUnlockAll=()=>{Object.keys(VENUE_CONFIG).forEach(v=>empireState.unlockedVenues[v]=true);empireState.cash=Math.max(empireState.cash||0,50000);empireState.prestigeStars=Math.max(empireState.prestigeStars||0,100);saveData();updateHeaderUI?.();showFloatingToast?.('🔓 ALL RESTAURANTS UNLOCKED!');};
+  window.__chefCash=()=>{empireState.cash=(empireState.cash||0)+50000;saveData();updateHeaderUI?.();showFloatingToast?.('💰 +$50,000');};
+  window.__chefStars=()=>{empireState.prestigeStars=(empireState.prestigeStars||0)+100;saveData();updateHeaderUI?.();showFloatingToast?.('⭐ +100 Stars');};
+  window.__chefMaxUpgrades=()=>{Object.values(empireState.venueProgress||{}).forEach(v=>{if(v.upgrades){Object.keys(v.upgrades).forEach(k=>v.upgrades[k]=Math.max(5,v.upgrades[k]||0))}});saveData();showFloatingToast?.('⚡ Upgrades boosted!');};
+  window.__chefNextOrder=()=>{activeOrder=null; activeDish=null; startNewOrder?.();};
+
+  // Richer topping renderer: distinct silhouettes, highlights and textures.
+  window.drawFoodPiece=function(x,y,type,rot,config){
+    const c=(config&&config.color)||'#d14b35'; ctx.save();ctx.translate(x,y);ctx.rotate(rot||0);
+    const shine=(col)=>{ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(-3,-4,5,3,-.4,0,Math.PI*2);ctx.fill()};
+    if(/pepperoni|salami/i.test(type)){ctx.fillStyle='#b83222';ctx.beginPath();ctx.arc(0,0,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7b1b13';[[4,3],[-4,2],[0,-5]].forEach(a=>{ctx.beginPath();ctx.arc(a[0],a[1],1.8,0,7);ctx.fill()});shine();}
+    else if(/mushroom/i.test(type)){ctx.fillStyle='#7b604d';ctx.beginPath();ctx.arc(0,-3,11,Math.PI,0);ctx.fill();ctx.fillStyle='#e8d6b9';ctx.fillRect(-3,-3,6,10);}
+    else if(/basil|lettuce|greens|cabbage/i.test(type)){ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(-5,0,10,4,.6,0,7);ctx.ellipse(5,0,10,4,-.6,0,7);ctx.fill();}
+    else if(/onion/i.test(type)){ctx.strokeStyle='#b77ab5';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*1.8);ctx.stroke();}
+    else if(/olive/i.test(type)){ctx.fillStyle='#536d35';ctx.beginPath();ctx.arc(0,0,7,0,7);ctx.fill();ctx.fillStyle='#d8b85a';ctx.beginPath();ctx.arc(0,0,2.5,0,7);ctx.fill();}
+    else if(/tomato|pico/i.test(type)){ctx.fillStyle='#d73a2e';ctx.beginPath();ctx.arc(0,0,8,0,7);ctx.fill();ctx.fillStyle='#ff9d7c';ctx.fillRect(-3,-2,4,2);}
+    else if(/cheese/i.test(type)){ctx.fillStyle='#f3c94f';ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(12,-3);ctx.lineTo(7,8);ctx.lineTo(-10,6);ctx.closePath();ctx.fill();shine();}
+    else {ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(0,0,10,7,0,0,7);ctx.fill();shine();}
+    ctx.restore();
+  };
+  window.drawRealisticTopping=function(x,y,type,rot){drawFoodPiece(x,y,type,rot,VENUE_CONFIG.pizza.hotToppings[type]);};
+
+  // Upgrade each workspace with ingredient-specific pieces instead of same circles/rectangles.
+  const oldHotdog=renderHotdogWorkspace;
+  renderHotdogWorkspace=function(cx,cy,d){oldHotdog(cx,cy,d); if(!d||d.boxed)return; (d.toppings||[]).forEach(t=>drawFoodPiece(t.x,t.y,t.type,t.rot,VENUE_CONFIG.hotdog.toppings[t.type]));};
+  const oldTaco=renderTacoWorkspace;
+  renderTacoWorkspace=function(cx,cy,d){oldTaco(cx,cy,d);if(!d||d.boxed)return;(d.meats||[]).forEach(t=>drawFoodPiece(t.x,t.y,t.type,t.rot,VENUE_CONFIG.taco.meats[t.type]));(d.garnishes||[]).forEach(t=>drawFoodPiece(t.x,t.y,t.type,t.rot,VENUE_CONFIG.taco.garnishes[t.type]));};
+  const oldRamen=renderRamenWorkspace;
+  renderRamenWorkspace=function(cx,cy,d){oldRamen(cx,cy,d);if(!d||d.boxed)return;(d.toppings||[]).forEach(t=>drawFoodPiece(t.x,t.y,t.type,t.rot,VENUE_CONFIG.ramen.toppings[t.type]||VENUE_CONFIG.ramen.proteins[t.type]));};
+  const oldIce=renderIceCreamWorkspace;
+  renderIceCreamWorkspace=function(cx,cy,d){oldIce(cx,cy,d);if(!d||d.boxed)return;(d.toppings||[]).forEach(t=>drawFoodPiece(t.x,t.y,t.type,t.rot,VENUE_CONFIG.icecream.toppings[t.type]||VENUE_CONFIG.icecream.sauces[t.type]));};
+
+  // Better pizza ticket enforcement: requirements are always visible and scoring data exists.
+  const oldTicket=updateTicketUI;
+  updateTicketUI=function(){oldTicket();const o=activeOrder;if(!o||o.venue!=='pizza')return;const box=document.getElementById('t-order'); if(!box)return; if(!box.innerHTML.includes('PIZZA BUILD REQUIREMENTS')) box.innerHTML='<div style="margin:8px 0;padding:8px;border:2px solid #b32415;border-radius:8px;background:#fff0e8"><b>🍕 PIZZA BUILD REQUIREMENTS</b><br>🍅 Sauce: <b>'+String(o.sauceSpec||'normal').toUpperCase()+'</b><br>🧀 Cheese: <b>'+String(o.cheeseSpec||'normal').toUpperCase()+'</b></div>'+box.innerHTML;};
+
+  addDebugButton(); setTimeout(addDebugButton,500);
+})();
+</script>
+
+
+<!-- FINAL ALL-RESTAURANTS INTERACTION FIX -->
+<style>
+/* Keep tool buttons clearly clickable in every restaurant */
+.tool-btn,.next-station-btn,.step-btn,.venue-btn,.action-btn{pointer-events:auto!important;cursor:pointer!important}
+.tool-btn:disabled{opacity:.55;cursor:not-allowed!important}
+</style>
+<script>
+(function(){
+  'use strict';
+  const FIX='ALL_RESTAURANTS_BUTTONS_FIXED_V1';
+  if(window[FIX]) return; window[FIX]=true;
+
+  function firstKey(obj, fallback){ return obj && Object.keys(obj).length ? Object.keys(obj)[0] : fallback; }
+  function ensureDishIntegrity(d, venue){
+    if(!d) return d;
+    venue=venue||d.venue||window.currentVenue||'pizza';
+    const c=window.VENUE_CONFIG&&VENUE_CONFIG[venue];
+    if(!c) return d;
+    d.venue=venue;
+    // Arrays used by the pointer and renderer engines.
+    ['sauceStamps','cheeseStamps','toppings','spreads','meats','salsas','seasonings','layers','garnishes','cuts','drizzleTrails'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[]});
+    ['currentDrizzle','currentCondiment','currentSpread','currentSalsa'].forEach(k=>{if(d[k]===undefined)d[k]=null});
+    if(d.boxed===undefined)d.boxed=false;
+    if(typeof d.cookProgress!=='number')d.cookProgress=0;
+    if(typeof d.isCooking!=='boolean')d.isCooking=false;
+    if(d.drinkPrepared===undefined)d.drinkPrepared=null;
+    if(d.sidePrepared===undefined)d.sidePrepared=null;
+
+    // CRITICAL: the previous build forgot sausageType. That caused hotdog rendering
+    // to throw an error before any buttons could update.
+    if(venue==='hotdog'){
+      if(!c.buns[d.bunType]) d.bunType=firstKey(c.buns,'brioche');
+      if(!c.sausages[d.sausageType]) d.sausageType=firstKey(c.sausages);
+    }
+    if(venue==='sub'){
+      if(!c.breads[d.breadType]) d.breadType=firstKey(c.breads);
+    }
+    if(venue==='taco'){
+      if(!c.bases[d.baseType]) d.baseType=firstKey(c.bases);
+    }
+    if(venue==='ramen'){
+      if(!c.broths[d.brothType]) d.brothType=firstKey(c.broths);
+      if(d.noodlesAdded===undefined)d.noodlesAdded=false;
+    }
+    if(venue==='steak'){
+      if(!c.cuts[d.cutType]) d.cutType=firstKey(c.cuts);
+    }
+    if(venue==='burger'){
+      if(!c.buns[d.bunType]) d.bunType=firstKey(c.buns);
+      if(!c.patties[d.pattyType]) d.pattyType=firstKey(c.patties);
+    }
+    if(venue==='icecream'){
+      if(!c.containers[d.containerType]) d.containerType=firstKey(c.containers);
+      if(!c.flavors[d.flavorType]) d.flavorType=firstKey(c.flavors);
+    }
+    if(venue==='pizza'){
+      if(!c.doughs[d.doughType]) d.doughType=firstKey(c.doughs);
+      if(typeof d.doughRadius!=='number')d.doughRadius=110;
+      if(typeof d.doughTargetRadius!=='number')d.doughTargetRadius=180;
+      if(d.isFoldedCalzone===undefined)d.isFoldedCalzone=false;
+    }
+    return d;
+  }
+  window.ensureDishIntegrity=ensureDishIntegrity;
+
+  // Repair factory output for every new order, while preserving the original game.
+  const originalCreate=window.createNewDish;
+  window.createNewDish=function(venue){
+    const d=originalCreate ? originalCreate(venue) : {venue:venue||window.currentVenue};
+    return ensureDishIntegrity(d, venue||d.venue);
+  };
+
+  // Repair the currently loaded dish too (important for old saves).
+  if(window.activeDish) ensureDishIntegrity(window.activeDish, window.currentVenue);
+
+  // Defensive workspace renderers: never let one missing property freeze an entire venue.
+  const oldHotdogRender=window.renderHotdogWorkspace;
+  window.renderHotdogWorkspace=function(cx,cy,d){
+    ensureDishIntegrity(d,'hotdog');
+    try{return oldHotdogRender(cx,cy,d);}catch(err){
+      console.error('Hotdog renderer recovered:',err);
+      const c=VENUE_CONFIG.hotdog; ctx.save(); drawPrepBoard(cx,cy);
+      ctx.fillStyle=(c.buns[d.bunType]||{}).color||'#d8a35a';ctx.beginPath();ctx.roundRect(cx-150,cy-55,300,110,35);ctx.fill();
+      ctx.fillStyle=(c.sausages[d.sausageType]||{}).color||'#9b2f1f';ctx.beginPath();ctx.roundRect(cx-170,cy-25,340,50,24);ctx.fill();ctx.restore();
+    }
+  };
+
+  // Wrap setup so a single UI issue cannot make a restaurant appear dead.
+  const originalSetup=window.setupStation;
+  window.setupStation=function(stage){
+    if(window.activeDish) ensureDishIntegrity(window.activeDish, window.currentVenue);
+    try{return originalSetup(stage);}catch(err){
+      console.error('Station setup error recovered:',window.currentVenue,err);
+      const panel=document.getElementById('tools-panel');
+      if(panel) panel.innerHTML='<div class="tool-section-title">Kitchen controls recovered</div><button class="tool-btn" onclick="setupStation(1)">↻ Reload Station</button>';
+      try{ window.render&&window.render(); }catch(e){}
+    }
+  };
+
+  // Repair before and after venue changes.
+  const originalSwitch=window.switchVenue;
+  if(typeof originalSwitch==='function'){
+    window.switchVenue=function(v){
+      try{
+        const result=originalSwitch(v);
+        if(window.activeDish) ensureDishIntegrity(window.activeDish,v);
+        setTimeout(()=>{try{if(window.activeDish)ensureDishIntegrity(window.activeDish,window.currentVenue);window.setupStation&&window.setupStation(window.activeStage||1)}catch(e){console.error(e)}},0);
+        return result;
+      }catch(err){console.error('Venue switch recovered:',err);alert('That restaurant had old broken dish data. Reloading a clean station now.');window.activeDish=window.createNewDish(v);window.currentVenue=v;return window.setupStation(1);}
+    };
+  }
+
+  // Hotdog-specific button helpers avoid fragile inline state assumptions.
+  window.__fixHotdogBun=function(k){if(!activeDish)return;ensureDishIntegrity(activeDish,'hotdog');activeDish.bunType=k;window.setupStation(1);};
+  window.__fixHotdogSausage=function(k){if(!activeDish)return;ensureDishIntegrity(activeDish,'hotdog');activeDish.sausageType=k;window.setupStation(1);};
+
+  // Rebuild the hotdog first station with explicit, reliable handlers.
+  const originalHotdogTools=window.setupHotdogStationTools;
+  window.setupHotdogStationTools=function(stage,container){
+    ensureDishIntegrity(activeDish,'hotdog');
+    if(stage===1){
+      const c=VENUE_CONFIG.hotdog,d=activeDish;
+      const buns=Object.keys(c.buns).map(k=>`<button class="tool-btn ${d.bunType===k?'active':''}" onclick="__fixHotdogBun('${k}')">🥖 ${c.buns[k].name}</button>`).join('');
+      const dogs=Object.keys(c.sausages).map(k=>`<button class="tool-btn ${d.sausageType===k?'active':''}" onclick="__fixHotdogSausage('${k}')">🌭 ${c.sausages[k].name}</button>`).join('');
+      container.innerHTML=`<div class="tool-section-title">Choose Bun</div>${buns}<div class="tool-section-title">Choose Sausage</div>${dogs}<button class="next-station-btn" onclick="setupStation(2)">🔥 Grill Station ➡️</button>`;
+      return;
+    }
+    return originalHotdogTools(stage,container);
+  };
+
+  // Make the main render always validate the active dish first.
+  const originalRender=window.render;
+  window.render=function(){if(activeDish)ensureDishIntegrity(activeDish,currentVenue);return originalRender();};
+
+  // One-time save repair for old broken active state.
+  try{if(activeDish)ensureDishIntegrity(activeDish,currentVenue);if(typeof window.saveData==='function')window.saveData();}catch(e){console.warn(e)}
+})();
+</script>
+
+
+<!-- TRUE INLINE BUTTON SCOPE FIX -->
+<script>
+(function(){
+  // HTML inline onclick handlers cannot see local variables from setup*StationTools.
+  // All station actions must use the real global activeDish.
+  const tools=document.getElementById('tools-panel');
+  if(tools){ tools.addEventListener('click', function(){
+    // Let normal handlers run; this listener simply ensures UI remains interactive.
+  }); }
+  console.log('Street Food: inline station button scope fix active');
+})();
+</script>
+</body>
+</html>

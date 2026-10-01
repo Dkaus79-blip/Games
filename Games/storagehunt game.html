@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage & Estate Tycoon: Ultimate Underground Edition</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --panel-bg: #181818;
+            --accent-color: #f39c12;
+            --accent-hover: #e67e22;
+            --text-color: #e0e0e0;
+            --text-muted: #999999;
+            --border-color: #2a2a2a;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --legendary-color: #9b59b6;
+            --heat-color: #e67e22;
+            --weather-color: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 980px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 4px;
+        }
+
+        header h2 { margin: 0; font-size: 1.1rem; color: var(--accent-color); }
+        .stats span {
+            margin-left: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .money { color: var(--success-color); }
+        .heat { color: var(--danger-color); }
+        .info-bar { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 4px; padding: 0 4px; color: var(--text-muted); font-style: italic;}
+        .day-event { color: var(--accent-color); }
+        .weather-banner { color: var(--weather-color); }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 4px;
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .panel.active { display: flex; }
+
+        h3 { margin: 0 0 4px 0; color: var(--accent-color); font-size: 1.05rem; }
+        p { margin: 3px 0 8px 0; font-size: 0.82rem; color: var(--text-muted); }
+
+        button {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin: 2px;
+        }
+
+        button:hover { background-color: var(--accent-hover); }
+        button:disabled { background-color: #444; color: #777; cursor: not-allowed; }
+
+        .tier-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .tier-card {
+            background: #222222;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tier-card.vip { border: 2px solid var(--legendary-color); background: #221728; }
+        .tier-card.golden { border: 2px solid var(--accent-color); background: #2b2211; }
+        .tier-card h4 { margin: 0 0 2px 0; color: var(--accent-color); font-size: 0.9rem; }
+        .tier-card.vip h4 { color: var(--legendary-color); }
+        .tier-card.golden h4 { color: #f1c40f; }
+        .tier-card p { margin: 2px 0; font-size: 0.75rem; }
+
+        .log-box {
+            background: #111;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            height: 110px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            flex-grow: 1;
+        }
+
+        .item-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 6px;
+            padding-right: 4px;
+        }
+
+        .item-card {
+            background: #222222;
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-card.legendary { border: 2px solid var(--legendary-color); background: #221728; }
+        .item-card.fake { border: 2px solid var(--danger-color); background: #2a1515; }
+        .item-card.real-verified { border: 2px solid var(--success-color); background: #152a1a; }
+
+        .item-name { font-weight: bold; color: var(--accent-color); font-size: 0.82rem; }
+        .legendary .item-name { color: var(--legendary-color); }
+        .fake .item-name { color: var(--danger-color); }
+        .real-verified .item-name { color: var(--success-color); }
+        .item-value { font-size: 0.72rem; color: var(--text-muted); }
+
+        .bid-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .system-controls {
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 6px;
+            margin-top: auto;
+        }
+
+        .flashlight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .flash-box {
+            background: #111;
+            border: 2px dashed #444;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #555;
+            transition: 0.2s;
+        }
+        .flash-box.scouted {
+            border: 2px solid var(--accent-color);
+            color: var(--text-color);
+            background: #222;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Stats -->
+    <header>
+        <h2>Global Storage Tycoon (<span id="stat-country-label" style="color:var(--accent-color);">United States</span>)</h2>
+        <div class="stats">
+            Cash: <span id="stat-cash" class="money">$1,500</span> | 
+            Loan: <span id="stat-loan" style="color:var(--danger-color);">$0</span> |
+            Flashlights: <span id="stat-flashlights" style="color:var(--accent-color);">5</span> |
+            Museum/Store: <span id="stat-income" class="money">+$0/day</span> | 
+            Heat: <span id="stat-heat" class="heat">0%</span> | 
+            Day: <span id="stat-day">1</span> |
+            Rank: <span id="stat-rank" style="color:var(--legendary-color);">1</span>
+        </div>
+    </header>
+
+    <div class="info-bar">
+        <span id="day-event-banner" class="day-event">City Event: Normal Business Day</span>
+        <span id="weather-banner" class="weather-banner">Weather: Clear Skies</span>
+    </div>
+
+    <!-- HUB PANEL -->
+    <div id="panel-hub" class="panel active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <h3 style="margin:0;">Choose Your Bidding Arena</h3>
+            <button onclick="openTravel()" style="background-color: #3498db; color: #fff; padding: 4px 10px;">🌍 Travel Agency</button>
+        </div>
+        <p>Select a location in <span id="current-region-name">United States</span>, manage your storefront, buy gear, or sabotage rivals.</p>
+        
+        <div class="tier-grid" id="arena-grid"></div>
+
+        <div style="text-align: center; margin-bottom: 4px;">
+            <button onclick="openInventory()" style="background-color: #3498db; color: #fff;">Inventory (<span id="inv-count">0</span>)</button>
+            <button onclick="openStorefront()" style="background-color: #27ae60; color: #fff;">Pawn Storefront</button>
+            <button onclick="openBlackMarket()" style="background-color: var(--danger-color); color: #fff;">Black Market</button>
+            <button onclick="openMuseum()" style="background-color: var(--legendary-color); color: #fff;">Museum</button>
+            <button onclick="openSabotage()" style="background-color: #c0392b; color: #fff;">Rival Sabotage</button>
+            <button onclick="openQuests()" style="background-color: var(--accent-color); color: #000;">Regional Bounties</button>
+            <button onclick="openUpgrades()" style="background-color: #2980b9; color: #fff;">Facility & Staff</button>
+            <button onclick="openLoans()" style="background-color: #e74c3c; color: #fff;">Loan Shark</button>
+            <button onclick="openPerks()" style="background-color: #8e44ad; color: #fff;">Skill Tree</button>
+            <button onclick="openPrestige()" style="background-color: var(--legendary-color); color: #fff;">Prestige</button>
+            <button onclick="openAchievements()" style="background-color: #e67e22; color: #000;">Trophies</button>
+        </div>
+
+        <div class="system-controls">
+            <button onclick="saveGame()" style="background-color: #2ecc71; color: #000; font-size: 0.7rem;">Save Game</button>
+            <button onclick="loadGame()" style="background-color: #3498db; color: #fff; font-size: 0.7rem;">Load Game</button>
+            <button onclick="resetGame()" style="background-color: var(--danger-color); color: #fff; font-size: 0.7rem;">Reset Save</button>
+        </div>
+    </div>
+
+    <!-- TRAVEL AGENCY PANEL -->
+    <div id="panel-travel" class="panel">
+        <h3>Global Travel Agency</h3>
+        <p>Fly your storage empire to international ports. Higher Prestige ranks unlock exotic high-risk countries!</p>
+        <div class="tier-grid" id="travel-destinations-grid"></div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- FLASHLIGHT INSPECTION MINI-GAME PANEL -->
+    <div id="panel-inspection" class="panel">
+        <h3>Flashlight Unit Inspection</h3>
+        <p>Flashlights available: <span id="sweeps-left" style="font-weight:bold; color:var(--accent-color);">5</span>. Click boxes to reveal hidden highlights or spot clues! Each sweep consumes 1 Flashlight.</p>
+        
+        <div class="flashlight-grid" id="flashlight-grid"></div>
+
+        <div style="text-align: center; margin-top: auto;">
+            <button onclick="proceedToAuction()" style="background-color: var(--success-color); color: #fff;">Proceed to Live Bidding</button>
+        </div>
+    </div>
+
+    <!-- AUCTION PANEL -->
+    <div id="panel-auction" class="panel">
+        <h3 id="auction-title">Live Auction</h3>
+        <p id="auction-clue" style="font-style: italic; color: var(--accent-color);"></p>
+        
+        <div class="log-box" id="auction-log"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <p style="margin: 0 0 2px 0; font-size: 0.85rem;">Current Bid: <span id="current-bid" style="font-weight: bold; font-size: 1.05rem;">$0</span></p>
+                <p style="margin: 0; font-size: 0.85rem;">Leader: <span id="bid-leader">None</span></p>
+            </div>
+            <div class="bid-controls" id="bid-buttons-container">
+                <button class="bid-btn" onclick="playerBid(10)">+$10</button>
+                <button class="bid-btn" onclick="playerBid(25)">+$25</button>
+                <button class="bid-btn" onclick="playerBid(50)">+$50</button>
+                <button class="bid-btn" onclick="playerBid(100)">+$100</button>
+                <button onclick="bluffRivals()" style="background-color: var(--legendary-color); color: #fff;">Bluff ($50)</button>
+                <button onclick="passAuction()" style="background-color: var(--danger-color); color: #fff; margin-left: 3px;">Walk Away</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVEAL PANEL -->
+    <div id="panel-reveal" class="panel">
+        <h3>The Door Opens! Haul Unlocked</h3>
+        <p>Inspect what you found.</p>
+        <div class="item-list" id="reveal-items"></div>
+        <div style="text-align: center;">
+            <button onclick="finishAuctionDay()" style="background-color: var(--success-color); color: #fff;">Claim Haul & Continue</button>
+        </div>
+    </div>
+
+    <!-- INVENTORY PANEL -->
+    <div id="panel-inventory" class="panel">
+        <h3>Inventory & Management</h3>
+        <p>Inspect suspicious items, restore collectibles, or ship items to your retail storefront.</p>
+        <div class="item-list" id="inventory-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- STOREFRONT PANEL -->
+    <div id="panel-storefront" class="panel">
+        <h3>Pawn Shop Display Racks</h3>
+        <p>Put items on display here. Customers walk in daily, browsing your display racks and paying a 25% markup over estimated value!</p>
+        <div class="tier-grid" style="margin-bottom: 8px;">
+            <div class="tier-card">
+                <h4>Display Rack Slots</h4>
+                <p>Capacity: <span id="store-count">0</span> / <span id="store-max">3</span></p>
+                <button onclick="upgradeStorefront()" style="background-color: #27ae60; color:#fff;">Expand Racks ($2,500)</button>
+            </div>
+            <div class="tier-card">
+                <h4>Storefront Status</h4>
+                <p>Daily Foot Traffic: Active</p>
+                <p>Markup Bonus: +25% Profit</p>
+            </div>
+        </div>
+        <div class="item-list" id="storefront-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- BLACK MARKET PANEL -->
+    <div id="panel-blackmarket" class="panel">
+        <h3>Underground Counterfeit Exchange</h3>
+        <p>Offload your confirmed fakes here for big cash. Careful—each sale increases your Heat!</p>
+        <div class="item-list" id="blackmarket-items"></div>
+        <div style="text-align: center;">
+            <button onclick="bribePolice()" style="background-color: #3498db; color: #fff;">Bribe Police ($300 to clear Heat)</button>
+            <button onclick="returnToHub()">Back to Hub</button>
+        </div>
+    </div>
+
+    <!-- MUSEUM PANEL -->
+    <div id="panel-museum" class="panel">
+        <h3>Museum Showroom</h3>
+        <p>Display rare artifacts here to generate daily passive tourism income.</p>
+        <div class="item-list" id="museum-items"></div>
+        <div style="text-align: center;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- RIVAL SABOTAGE PANEL -->
+    <div id="panel-sabotage" class="panel">
+        <h3>Rival Sabotage & Security HQ</h3>
+        <p>Prank rival AI bidders to lower their bidding power, or install security upgrades to safeguard your museum from random burglaries.</p>
+        <div class="tier-grid">
+            <div class="tier-card">
+                <h4>Anonymous Tip-Off</h4>
+                <p>Calls local health inspector on Greedy Greg. Lowers his bid aggression for 3 days.</p>
+                <p>Cost: $500</p>
+                <button onclick="sabotageRival('greg')">Sabotage Greg</button>
+            </div>
+            <div class="tier-card">
+                <h4>Sugar in the Tank</h4>
+                <p>Sabotages Crazy Carl's transport van. Slows him down at future auctions.</p>
+                <p>Cost: $750</p>
+                <button onclick="sabotageRival('carl')">Sabotage Carl</button>
+            </div>
+            <div class="tier-card" style="grid-column: span 2;">
+                <h4>Museum Laser Security Grid</h4>
+                <p>Protects your museum from random burglaries and night-time heists.</p>
+                <p>Status: <span id="status-security">Not Installed</span></p>
+                <button onclick="buySecurity()" style="background-color: var(--success-color); color:#fff;">Install Security ($4,000)</button>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- QUESTS PANEL -->
+    <div id="panel-quests" class="panel">
+        <h3 id="regional-bounty-title">Regional Contracts</h3>
+        <p>Contracts specific to your current territory. They refresh automatically when completed!</p>
+        <div class="item-list" id="quests-list" style="display: flex; flex-direction: column; max-height: 220px;"></div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- UPGRADES & STAFF PANEL -->
+    <div id="panel-upgrades" class="panel">
+        <h3>Facility & Autonomous Staff</h3>
+        <p>Hire autonomous staff, buy supply gear like flashlights, and expand your warehouse.</p>
+        <div class="tier-grid">
+            <div class="tier-card">
+                <div>
+                    <h4>Warehouse Expansion</h4>
+                    <p>Increases max storage capacity.</p>
+                    <p>Level: <span id="upgrade-storage-lvl">1</span> (Max: <span id="max-storage-cap">25</span>)</p>
+                </div>
+                <div><button onclick="buyUpgrade('storage')" id="btn-up-storage">Upgrade ($1,000)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Flashlight Resupply Pack</h4>
+                    <p>Restock 5 inspection flashlights for scanning units.</p>
+                    <p>Cost: $100</p>
+                </div>
+                <div><button onclick="buyFlashlights()" style="background-color: var(--accent-color); color:#000;">Buy Pack ($100)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Auto-Bidding Manager</h4>
+                    <p>Wins cheap units & gains experience over time.</p>
+                    <p>Lvl: <span id="staff-autobidder-lvl">0</span> | Status: <span id="status-autobidder">Inactive</span></p>
+                </div>
+                <div><button onclick="upgradeStaff('autobidder')" id="btn-up-autobidder">Hire/Train ($5,000)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Inventory Sorter Bot</h4>
+                    <p>Appraises items & finds hidden gems automatically.</p>
+                    <p>Lvl: <span id="staff-sorter-lvl">0</span> | Status: <span id="status-sorter">Inactive</span></p>
+                </div>
+                <div><button onclick="upgradeStaff('sorter')" id="btn-up-sorter">Hire/Train ($7,500)</button></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- LOAN SHARK PANEL -->
+    <div id="panel-loans" class="panel">
+        <h3>Vinnie's Cash Advance (Loan Shark)</h3>
+        <p>Need quick cash? Borrow money here. Warning: 10% daily compound interest accumulates every day with a safety cap!</p>
+        <div style="text-align: center; padding: 15px;">
+            <h4>Current Loan Balance: <span id="loan-balance-display" style="color:var(--danger-color);">$0</span></h4>
+            <div style="margin: 10px 0;">
+                <button onclick="takeLoan(5000)" style="background-color: var(--danger-color); color:#fff;">Borrow $5,000</button>
+                <button onclick="takeLoan(15000)" style="background-color: var(--danger-color); color:#fff;">Borrow $15,000</button>
+            </div>
+            <div style="margin: 10px 0;">
+                <button onclick="repayLoan(5000)" style="background-color: var(--success-color); color:#fff;">Repay $5,000</button>
+                <button onclick="repayLoan(100000)" style="background-color: var(--success-color); color:#fff;">Repay All</button>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- SKILL TREE PANEL -->
+    <div id="panel-perks" class="panel">
+        <h3>Tycoon Skill Tree & Research</h3>
+        <p>Spend Prestige Points earned from presticing to unlock multi-level passive perks.</p>
+        <div style="text-align: center; margin-bottom: 8px;">
+            <h4>Available Prestige Points: <span id="skill-points-display" style="color:var(--legendary-color);">0</span></h4>
+        </div>
+        <div class="tier-grid">
+            <div class="tier-card">
+                <div>
+                    <h4>Eagle Eye Flashlight</h4>
+                    <p>Chance to save flashlight battery on use + reveals item names/tiers.</p>
+                    <p>Level: <span id="perk-eagle-lvl">0</span> / 3</p>
+                </div>
+                <div><button onclick="buyPerk('eagle')" id="btn-perk-eagle">Upgrade (1 Pt)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Silver Tongue</h4>
+                    <p>Reduces rival AI bidding aggressiveness.</p>
+                    <p>Level: <span id="perk-tongue-lvl">0</span> / 3</p>
+                </div>
+                <div><button onclick="buyPerk('tongue')" id="btn-perk-tongue">Upgrade (1 Pt)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Master Appraiser</h4>
+                    <p>Lowers item appraisal costs.</p>
+                    <p>Level: <span id="perk-appraise-lvl">0</span> / 3</p>
+                </div>
+                <div><button onclick="buyPerk('appraise')" id="btn-perk-appraise">Upgrade (1 Pt)</button></div>
+            </div>
+            <div class="tier-card">
+                <div>
+                    <h4>Underground Grease</h4>
+                    <p>Reduces Black Market police heat gain.</p>
+                    <p>Level: <span id="perk-heat-lvl">0</span> / 3</p>
+                </div>
+                <div><button onclick="buyPerk('heat')" id="btn-perk-heat">Upgrade (1 Pt)</button></div>
+            </div>
+            <div class="tier-card" style="grid-column: span 2;">
+                <div>
+                    <h4>Museum Curator's Touch</h4>
+                    <p>Boosts daily museum passive earnings multiplier.</p>
+                    <p>Level: <span id="perk-museum-lvl">0</span> / 3</p>
+                </div>
+                <div><button onclick="buyPerk('museum')" id="btn-perk-museum">Upgrade (2 Pts)</button></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- PRESTIGE PANEL -->
+    <div id="panel-prestige" class="panel">
+        <h3>Tycoon Prestige Rank</h3>
+        <p>Reset your cash and inventory once you hit target requirements to rank up! Grants multipliers, Prestige Skill Points, and unlocks Global Travel.</p>
+        <div style="text-align: center; padding: 15px;">
+            <h4>Current Prestige Rank: <span id="prestige-rank-display" style="color:var(--legendary-color);">1</span></h4>
+            <p>Active Multiplier Bonus: <span id="prestige-mult-display">1.0x</span></p>
+            <button onclick="doPrestige()" id="prestige-btn" style="background-color: var(--legendary-color); color: #fff; padding: 8px 16px; font-size: 0.9rem;">Perform Prestige ($100k Cash Required)</button>
+        </div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+
+    <!-- ACHIEVEMENTS PANEL -->
+    <div id="panel-achievements" class="panel">
+        <h3>Trophy & Achievement Room</h3>
+        <p>Track your lifetime storage empire milestones.</p>
+        <div class="item-list" id="achievements-list" style="display: flex; flex-direction: column; max-height: 220px;"></div>
+        <div style="text-align: center; margin-top: auto;"><button onclick="returnToHub()">Back to Hub</button></div>
+    </div>
+</div>
+
+<script>
+    let cash = 1500;
+    let day = 1;
+    let heat = 0;
+    let loan = 0;
+    let flashlights = 5;
+    let prestigeLevel = 1;
+    let skillPoints = 0;
+    let inventory = [];
+    let museum = [];
+    let storefront = [];
+    let storefrontMax = 3;
+    let currentEvent = "Normal Business Day";
+    let eventMultiplier = 1.0;
+    let currentWeather = "Clear Skies";
+    let weatherMultiplier = 1.0;
+    let auctionEnded = false;
+    let vipUnlocked = false;
+    let goldenHourActive = false;
+    let currentRegionId = 'us';
+    let securityInstalled = false;
+    let rivalSabotageTimers = { greg: 0, carl: 0 };
+
+    let countriesData = {
+        us: {
+            name: "United States",
+            minPrestige: 1,
+            desc: "Standard domestic storage auctions. Low risk, steady profit.",
+            arenas: [
+                { id: 1, name: "Local Pawn Lockers", desc: "Small units. Electronics & vintage collectibles.", entry: 150 },
+                { id: 2, name: "Industrial Containers", desc: "Medium risk. Machinery & bulk goods.", entry: 800 },
+                { id: 3, name: "Mansion Estates", desc: "High risk. Fine art & rare antiques.", entry: 3500 },
+                { id: 4, name: "⭐ VIP Underground Vault", desc: "Weekly invite. Guaranteed Legendaries.", entry: 25000, isVip: true }
+            ],
+            bounties: [
+                { id: 1, title: "Pawnshop Liquidation", desc: "Sell any US item worth $400+", targetVal: 400, progress: 0, reward: 1000, completed: false, type: 'sellVal' },
+                { id: 2, title: "Domestic Hustle", desc: "Fence 2 items on the US black market.", targetCount: 2, progress: 0, reward: 2000, completed: false, type: 'fence' },
+                { id: 3, title: "Estate Curator", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 3000, completed: false, type: 'museum' }
+            ]
+        },
+        japan: {
+            name: "Japan (Tokyo Cyber Docks)",
+            minPrestige: 2,
+            desc: "Tech-heavy shipping containers & anime collectibles. High tech payout variance.",
+            arenas: [
+                { id: 1, name: "Akihabara Retro Lockers", desc: "Vintage consoles and rare collectibles.", entry: 500 },
+                { id: 2, name: "Neo-Tokyo Tech Containers", desc: "Advanced robotics and electronics.", entry: 2000 },
+                { id: 3, name: "Yakuza Secret Vaults", desc: "High-stakes smuggled luxury gear.", entry: 10000 }
+            ],
+            bounties: [
+                { id: 1, title: "Akihabara Relic Hunt", desc: "Sell any Japanese tech/anime item worth $800+", targetVal: 800, progress: 0, reward: 2500, completed: false, type: 'sellVal' },
+                { id: 2, title: "Cyber Smuggler", desc: "Fence 2 items in Tokyo's underground.", targetCount: 2, progress: 0, reward: 4000, completed: false, type: 'fence' },
+                { id: 3, title: "Shrine Artifact Display", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 5000, completed: false, type: 'museum' }
+            ]
+        },
+        uk: {
+            name: "United Kingdom (London Docks)",
+            minPrestige: 3,
+            desc: "Royal antiquities, aristocratic estates, and high-security vaults.",
+            arenas: [
+                { id: 1, name: "Victorian Estate Lockers", desc: "Old books and antique silverware.", entry: 1200 },
+                { id: 2, name: "Kensington Vaults", desc: "Fine art and designer apparel.", entry: 5000 },
+                { id: 3, name: "Crown Estate Depository", desc: "Priceless monarch artifacts.", entry: 22000 }
+            ],
+            bounties: [
+                { id: 1, title: "Aristocratic Appraisal", desc: "Sell any British antique worth $1,500+", targetVal: 1500, progress: 0, reward: 5000, completed: false, type: 'sellVal' },
+                { id: 2, title: "London Black Market Ring", desc: "Fence 2 items on the UK underground market.", targetCount: 2, progress: 0, reward: 8000, completed: false, type: 'fence' },
+                { id: 3, title: "Monarch Showroom", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 10000, completed: false, type: 'museum' }
+            ]
+        },
+        dubai: {
+            name: "Dubai (Middle East Port)",
+            minPrestige: 4,
+            desc: "Ultra-luxury hypercar parts, gold bullion crates, and billionaire abandoned units.",
+            arenas: [
+                { id: 1, name: "Marina Storage Pods", desc: "Luxury resort overstock items.", entry: 3000 },
+                { id: 2, name: "Sheikh's Private Hangars", desc: "Exotic supercar parts and watches.", entry: 15000 },
+                { id: 3, name: "Royal Desert Palace Vault", desc: "Legendary royal treasures.", entry: 60000 }
+            ],
+            bounties: [
+                { id: 1, title: "Billionaire Overstock", desc: "Sell any luxury Dubai item worth $5,000+", targetVal: 5000, progress: 0, reward: 15000, completed: false, type: 'sellVal' },
+                { id: 2, title: "Desert Syndicate Deal", desc: "Fence 2 items on the Dubai underground network.", targetCount: 2, progress: 0, reward: 20000, completed: false, type: 'fence' },
+                { id: 3, title: "Emirate Royal Gallery", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 25000, completed: false, type: 'museum' }
+            ]
+        },
+        berlin: {
+            name: "Neo-Berlin (Underground Cyber Labs)",
+            minPrestige: 5,
+            desc: "Neon-drenched industrial lockups, hacker hardware, and secret underground tech labs.",
+            arenas: [
+                { id: 1, name: "Techno Club Vaults", desc: "High-end audio gear and underground art.", entry: 5000 },
+                { id: 2, name: "Cyberpunk Server Hubs", desc: "Advanced neural links and data drives.", entry: 25000 },
+                { id: 3, name: "Kanzler Private Depository", desc: "Classified political archives and tech.", entry: 90000 }
+            ],
+            bounties: [
+                { id: 1, title: "Underground Hack", desc: "Sell any Berlin cyber tech item worth $8,000+", targetVal: 8000, progress: 0, reward: 30000, completed: false, type: 'sellVal' },
+                { id: 2, title: "Cyber Syndicate", desc: "Fence 2 items on the Berlin black market.", targetCount: 2, progress: 0, reward: 40000, completed: false, type: 'fence' },
+                { id: 3, title: "Cyber Museum", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 50000, completed: false, type: 'museum' }
+            ]
+        },
+        caribbean: {
+            name: "Tortuga (Pirate Smuggler Coves)",
+            minPrestige: 6,
+            desc: "Sunken treasure chests, pirate gold, and contraband cargo containers.",
+            arenas: [
+                { id: 1, name: "Smuggler Shack Lockers", desc: "Contraband rum and salvaged ship gear.", entry: 8000 },
+                { id: 2, name: "Captain's Hidden Vault", desc: "Spanish silver and navigation tools.", entry: 40000 },
+                { id: 3, name: "Legendary Pirate Cove Depository", desc: "Priceless pirate gold hordes.", entry: 150000 }
+            ],
+            bounties: [
+                { id: 1, title: "Buried Treasure", desc: "Sell any pirate treasure worth $15,000+", targetVal: 15000, progress: 0, reward: 60000, completed: false, type: 'sellVal' },
+                { id: 2, title: "Blackbeard's Ring", desc: "Fence 2 items on the Tortuga underground market.", targetCount: 2, progress: 0, reward: 80000, completed: false, type: 'fence' },
+                { id: 3, title: "Captain's Gallery", desc: "Display 2 items in your Museum.", targetCount: 2, progress: 0, reward: 100000, completed: false, type: 'museum' }
+            ]
+        }
+    };
+
+    let perks = { eagle: 0, tongue: 0, appraise: 0, heat: 0, museum: 0 };
+    let statsTracker = { lockersWon: 0, fakesFenced: 0, legendariesFound: 0, totalEarned: 0 };
+    let upgrades = { storageLevel: 1, hasAppraiser: false };
+    let staff = { autobidder: { level: 0 }, sorter: { level: 0 } };
+
+    let achievementsData = [
+        { id: 'lockers', title: 'Storage Baron', desc: 'Win 10 total storage lockers', target: 10, unlocked: false },
+        { id: 'fakes', title: 'Shady Operative', desc: 'Fence 5 fakes on the Black Market', target: 5, unlocked: false },
+        { id: 'legendary', title: 'Museum Master', desc: 'Discover 3 Legendary items', target: 3, unlocked: false }
+    ];
+
+    let currentInspection = { region: 'us', tier: 1, items: [] };
+    let currentAuction = { tier: 1, startingPrice: 150, currentBid: 150, leader: "None", clue: "", items: [] };
+
+    const rivals = [
+        { name: "Greedy Greg", quote: "No way you're getting this cheap, rookie!" },
+        { name: "Crazy Carl", quote: "I smell gold in the walls! HAHA!" },
+        { name: "The Snob", quote: "Absolute garbage unit... but I'll take it off your hands." }
+    ];
+
+    const events = [
+        { name: "Normal Business Day", mult: 1.0, desc: "Standard auction traffic across the city." },
+        { name: "Storage Wars TV Crew in Town!", mult: 1.8, desc: "Prices are hyped up, but rare item values are through the roof!" },
+        { name: "Economic Slowdown", mult: 0.8, desc: "Fewer bidders out today. Bargain prices on entry bids!" },
+        { name: "Syndicate Turf War", mult: 1.3, desc: "Underground bosses are bidding aggressively today!" },
+        { name: "Holiday Tourist Rush", mult: 1.4, desc: "Tourists are in town, boosting item resale values by 20%!" }
+    ];
+
+    const weatherConditions = [
+        { name: "Clear Skies", mult: 1.0, desc: "Normal auction attendance." },
+        { name: "Heavy Rainstorm", mult: 0.85, desc: "Fewer bidders show up, entry bids discounted by 15%!" },
+        { name: "Blistering Heatwave", mult: 1.1, desc: "Tensions flare up; rivals bid a bit more aggressively." }
+    ];
+
+    function speakAI(msg) {
+        let banner = document.getElementById('day-event-banner');
+        if (banner) {
+            banner.innerHTML = `<span style="color:var(--accent-color);">🤖 AI:</span> ${msg}`;
+            setTimeout(() => {
+                updateStats();
+            }, 6000);
+        }
+    }
+
+    const itemPools = {
+        us: {
+            1: [
+                { name: "Box of Vintage Comic Books", val: 200, canFix: false, isLegendary: false },
+                { name: "Dusty Acoustic Guitar", val: 300, canFix: true, fixedVal: 700, isLegendary: false },
+                { name: "Mint 1st Ed. Trading Card Pack", val: 5500, canFix: false, isLegendary: true },
+                { name: "Suspicious Designer Handbag", val: 1200, canFix: false, isFake: true, fakeVal: 40 },
+                { name: "Box of Retro Video Games", val: 450, canFix: false, isLegendary: false }
+            ],
+            2: [
+                { name: "Crated Industrial Generator", val: 1500, canFix: true, fixedVal: 3200, isLegendary: false },
+                { name: "Smuggled Sport ATV", val: 12000, canFix: false, isLegendary: true },
+                { name: "Pallet of Overstock Sneakers", val: 900, canFix: false, isLegendary: false },
+                { name: "Fake Gold Bullion Bar", val: 8000, canFix: false, isFake: true, fakeVal: 100 }
+            ],
+            3: [
+                { name: "19th Century Oil Painting", val: 5000, canFix: true, fixedVal: 11000, isLegendary: false },
+                { name: "Billionaire's Crypto Hard Wallet", val: 35000, canFix: false, isLegendary: true },
+                { name: "Cursed Medieval Suit of Armor", val: 18000, canFix: false, isLegendary: true },
+                { name: "Counterfeit Antique Pocket Watch", val: 6000, canFix: false, isFake: true, fakeVal: 50 }
+            ],
+            4: [
+                { name: "Lost Imperial Faberge Egg", val: 75000, canFix: false, isLegendary: true },
+                { name: "Solid Gold Smuggled Vault Crate", val: 50000, canFix: false, isLegendary: true },
+                { name: "Top-Secret Military Prototype Drone", val: 95000, canFix: false, isLegendary: true }
+            ]
+        },
+        japan: {
+            1: [
+                { name: "Vintage Anime Cel Collection", val: 600, canFix: false, isLegendary: false },
+                { name: "Custom Arcade PCB Board", val: 900, canFix: true, fixedVal: 2100, isLegendary: false },
+                { name: "Rare Prototype Game Boy", val: 7500, canFix: false, isLegendary: true },
+                { name: "Knockoff Anime Figurine Box", val: 900, canFix: false, isFake: true, fakeVal: 35 }
+            ],
+            2: [
+                { name: "Robotics Research Prototype", val: 4000, canFix: true, fixedVal: 9500, isLegendary: false },
+                { name: "Smuggled Samurai Katana Set", val: 18000, canFix: false, isLegendary: true },
+                { name: "Counterfeit Neo-Tokyo Cyber Deck", val: 11000, canFix: false, isFake: true, fakeVal: 90 }
+            ],
+            3: [
+                { name: "Ancient Emperor Jade Dragon", val: 45000, canFix: false, isLegendary: true },
+                { name: "Next-Gen AI Quantum Core", val: 60000, canFix: false, isLegendary: true }
+            ]
+        },
+        uk: {
+            1: [
+                { name: "Victorian Sterling Silver Tea Set", val: 1500, canFix: false, isLegendary: false },
+                { name: "First Edition Shakespeare Folio", val: 12000, canFix: false, isLegendary: true },
+                { name: "Fake Antique Brass Compass", val: 800, canFix: false, isFake: true, fakeVal: 30 }
+            ],
+            2: [
+                { name: "Royal Carriage Clock", val: 8000, canFix: true, fixedVal: 18000, isLegendary: false },
+                { name: "Stolen British Museum Artifact", val: 30000, canFix: false, isLegendary: true }
+            ],
+            3: [
+                { name: "Crown Jewel Replica Diamond Tiara", val: 85000, canFix: false, isLegendary: true }
+            ]
+        },
+        dubai: {
+            1: [
+                { name: "Solid Gold Shisha Pipe", val: 4000, canFix: false, isLegendary: false },
+                { name: "Designer Diamond Watch", val: 18000, canFix: false, isLegendary: true },
+                { name: "Counterfeit Designer Gold Watch", val: 12000, canFix: false, isFake: true, fakeVal: 120 }
+            ],
+            2: [
+                { name: "Hypercar V12 Engine Block", val: 35000, canFix: true, fixedVal: 80000, isLegendary: false },
+                { name: "Private Jet Navigation HUD", val: 45000, canFix: false, isLegendary: true }
+            ],
+            3: [
+                { name: "Billionaire's Gold-Plated Falconry Hood", val: 120000, canFix: false, isLegendary: true }
+            ]
+        },
+        berlin: {
+            1: [
+                { name: "Vintage Synth Module", val: 6000, canFix: true, fixedVal: 14000, isLegendary: false },
+                { name: "Hacker Neural Deck", val: 22000, canFix: false, isLegendary: true },
+                { name: "Knockoff Cybernetic Eye", val: 4000, canFix: false, isFake: true, fakeVal: 150 }
+            ],
+            2: [
+                { name: "Quantum Mainframe Rack", val: 55000, canFix: false, isLegendary: true },
+                { name: "Classified Stasi Audio Archive", val: 30000, canFix: false, isLegendary: false }
+            ],
+            3: [
+                { name: "Prototype AI Governing Core", val: 140000, canFix: false, isLegendary: true }
+            ]
+        },
+        caribbean: {
+            1: [
+                { name: "Crate of Contraband Rum", val: 10000, canFix: false, isLegendary: false },
+                { name: "17th Century Gold Doubloons", val: 35000, canFix: false, isLegendary: true },
+                { name: "Fake Pirate Map on Faux Parchment", val: 5000, canFix: false, isFake: true, fakeVal: 200 }
+            ],
+            2: [
+                { name: "Sunken Galleon Brass Navigational Astrolabe", val: 65000, canFix: true, fixedVal: 150000, isLegendary: true },
+                { name: "Smuggled Pearl Necklace", val: 45000, canFix: false, isLegendary: false }
+            ],
+            3: [
+                { name: "Lost Crown of Tortuga", val: 200000, canFix: false, isLegendary: true }
+            ]
+        }
+    };
+
+    const clues = {
+        us: ["Smells like old paper and dust.", "Heavy scent of steel and fuel.", "Clean unit. Covered furniture.", "Sub-level vault smells of ozone."],
+        japan: ["Scent of cherry blossom and electronics.", "Neon hum and metallic crates.", "Ancient temple wood and silk."],
+        uk: ["Musty tweed and old library books.", "Polished mahogany and velvet covers.", "Royal seal stamped crates."],
+        dubai: ["Smells of expensive oud and desert sand.", "High-octane fuel and polished chrome.", "Pure gold leaf reflection under lights."],
+        berlin: ["Ozone, heavy bass thumps, and chilled server racks.", "Smells of circuit solder and copper wiring.", "Secure classified steel lockers."],
+        caribbean: ["Salty ocean air and aged oak barrels.", "Wet sand and glimmering gold reflections.", "Heavy iron-bound chests."]
+    };
+
+    function getPrestigeMultiplier() {
+        return 1 + ((prestigeLevel - 1) * 0.15) + (perks.museum * 0.10);
+    }
+
+    function getPrestigeCost() {
+        let costs = [0, 100000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 15000000];
+        return costs[prestigeLevel] || (prestigeLevel * 2000000);
+    }
+
+    function getMaxStorage() {
+        return 15 + (upgrades.storageLevel * 10);
+    }
+
+    function updateStats() {
+        let mult = getPrestigeMultiplier();
+        let multiplierBonus = currentEvent.includes("Tourist") ? 1.2 : 1.0;
+        let dailyMuseumIncome = Math.floor(museum.reduce((sum, item) => sum + Math.floor(item.val * 0.1 * multiplierBonus), 0) * mult);
+        let dailyStoreIncome = Math.floor(storefront.reduce((sum, item) => sum + Math.floor(item.val * 0.25), 0));
+        let totalDailyIncome = dailyMuseumIncome + dailyStoreIncome;
+        
+        document.getElementById('stat-cash').innerText = `$${cash.toLocaleString()}`;
+        document.getElementById('stat-loan').innerText = `$${loan.toLocaleString()}`;
+        document.getElementById('stat-flashlights').innerText = flashlights;
+        document.getElementById('stat-income').innerText = `+$${totalDailyIncome}/day`;
+        document.getElementById('stat-heat').innerText = `${heat}%`;
+        document.getElementById('stat-day').innerText = day;
+        document.getElementById('stat-rank').innerText = prestigeLevel;
+        document.getElementById('stat-country-label').innerText = countriesData[currentRegionId].name;
+        document.getElementById('current-region-name').innerText = countriesData[currentRegionId].name;
+        document.getElementById('day-event-banner').innerText = `City Event: ${currentEvent}`;
+        document.getElementById('weather-banner').innerText = `Weather: ${currentWeather}`;
+        document.getElementById('inv-count').innerText = `${inventory.length}/${getMaxStorage()}`;
+
+        document.getElementById('prestige-rank-display').innerText = prestigeLevel;
+        document.getElementById('prestige-mult-display').innerText = `${mult.toFixed(2)}x`;
+        document.getElementById('skill-points-display').innerText = skillPoints;
+        document.getElementById('loan-balance-display').innerText = `$${loan.toLocaleString()}`;
+
+        document.getElementById('store-count').innerText = storefront.length;
+        document.getElementById('store-max').innerText = storefrontMax;
+
+        document.getElementById('staff-autobidder-lvl').innerText = staff.autobidder.level;
+        document.getElementById('status-autobidder').innerText = staff.autobidder.level > 0 ? `Lvl ${staff.autobidder.level} Active` : "Inactive";
+        document.getElementById('staff-sorter-lvl').innerText = staff.sorter.level;
+        document.getElementById('status-sorter').innerText = staff.sorter.level > 0 ? `Lvl ${staff.sorter.level} Active` : "Inactive";
+        document.getElementById('status-security').innerText = securityInstalled ? "Active 🛡️" : "Not Installed";
+
+        let cost = getPrestigeCost();
+        document.getElementById('prestige-btn').innerText = `Perform Prestige ($${cost.toLocaleString()} Cash Required)`;
+
+        renderArenas();
+        checkAchievements();
+    }
+
+    function renderArenas() {
+        let grid = document.getElementById('arena-grid');
+        grid.innerHTML = '';
+        let region = countriesData[currentRegionId];
+
+        region.arenas.forEach(arena => {
+            let isVipCard = arena.isVip;
+            let vipLocked = isVipCard && (day % 7 !== 0);
+            let isGolden = goldenHourActive && !isVipCard;
+            let btnText = isVipCard ? (vipLocked ? `Available Day ${Math.ceil(day / 7) * 7}` : "Enter VIP Vault") : (isGolden ? "⭐ Enter Golden Locker" : "Scout & Bid");
+            let entryCost = Math.floor(arena.entry * eventMultiplier * weatherMultiplier);
+
+            let card = document.createElement('div');
+            card.className = isVipCard ? 'tier-card vip' : (isGolden ? 'tier-card golden' : 'tier-card');
+            card.innerHTML = `
+                <div>
+                    <h4>${arena.name} ${isGolden ? ' [GOLDEN HOUR]' : ''}</h4>
+                    <p>${arena.desc}</p>
+                </div>
+                <div>
+                    <p><strong>Entry: ~$${entryCost.toLocaleString()}</strong></p>
+                    <button onclick="startInspection(${arena.id})" ${vipLocked ? 'disabled' : ''} style="${isVipCard ? 'background-color: var(--legendary-color); color: #fff;' : (isGolden ? 'background-color: #f1c40f; color: #000;' : '')}">${btnText}</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function switchPanel(panelId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(panelId).classList.add('active');
+    }
+
+    function openTravel() {
+        let grid = document.getElementById('travel-destinations-grid');
+        grid.innerHTML = '';
+
+        Object.keys(countriesData).forEach(key => {
+            let country = countriesData[key];
+            let unlocked = prestigeLevel >= country.minPrestige;
+            let card = document.createElement('div');
+            card.className = 'tier-card';
+            card.style.opacity = unlocked ? "1" : "0.6";
+
+            card.innerHTML = `
+                <div>
+                    <h4>${country.name}</h4>
+                    <p>${country.desc}</p>
+                    <p><strong>Required Prestige: Rank ${country.minPrestige}</strong></p>
+                </div>
+                <div>
+                    <button onclick="travelTo('${key}')" ${!unlocked ? 'disabled' : ''} style="${currentRegionId === key ? 'background-color: var(--success-color); color:#fff;' : ''}">
+                        ${currentRegionId === key ? 'Current Location' : (unlocked ? 'Travel Here' : 'Locked')}
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        switchPanel('panel-travel');
+    }
+
+    function travelTo(regionKey) {
+        currentRegionId = regionKey;
+        alert(`Successfully traveled to ${countriesData[regionKey].name}!`);
+        speakAI(`Landed safely in ${countriesData[regionKey].name}. Let's hunt down some treasure!`);
+        updateStats();
+        switchPanel('panel-hub');
+    }
+
+    function buyFlashlights() {
+        let cost = 100;
+        if (cash < cost) {
+            alert("Not enough cash to buy flashlights!");
+            return;
+        }
+        cash -= cost;
+        flashlights += 5;
+        updateStats();
+        alert("Purchased 5 inspection flashlights!");
+    }
+
+    function startInspection(tier) {
+        if (flashlights <= 0) {
+            alert("You are out of flashlights! Buy more in the Facility & Staff panel before inspecting lockers.");
+            return;
+        }
+        if (inventory.length >= getMaxStorage()) {
+            alert("Your storage inventory is full! Sell or store items before bidding.");
+            return;
+        }
+
+        let regionObj = countriesData[currentRegionId];
+        let arena = regionObj.arenas.find(a => a.id === tier);
+        let baseCost = Math.floor(arena.entry * eventMultiplier * weatherMultiplier);
+
+        if (cash < baseCost) {
+            alert("Not enough cash for the entry bid!");
+            return;
+        }
+
+        currentInspection.region = currentRegionId;
+        currentInspection.tier = tier;
+        currentInspection.items = [];
+
+        let pool = itemPools[currentRegionId]?.[tier] || itemPools.us[1];
+        let count = tier === 1 ? 3 : tier === 2 ? 4 : 3;
+
+        for (let i = 0; i < count; i++) {
+            let template = pool[Math.floor(Math.random() * pool.length)];
+            let isLeg = (arena.isVip || goldenHourActive) ? true : (template.isLegendary || false);
+            if (isLeg) statsTracker.legendariesFound++;
+
+            let item = {
+                name: template.name,
+                val: Math.floor(template.val * (currentEvent.includes("TV Crew") ? 1.5 : 1.0) * (goldenHourActive ? 2.0 : 1.0)),
+                canFix: template.canFix || false,
+                fixedVal: template.fixedVal ? Math.floor(template.fixedVal * 1.5) : 0,
+                isFixed: false,
+                isLegendary: isLeg,
+                isFake: template.isFake || false,
+                fakeVal: template.fakeVal || 25,
+                appraised: (arena.isVip || goldenHourActive) ? true : false,
+                isRealVerified: (arena.isVip || goldenHourActive) ? true : false
+            };
+            currentInspection.items.push(item);
+        }
+
+        let gridContainer = document.getElementById('flashlight-grid');
+        gridContainer.innerHTML = '';
+        currentInspection.items.forEach((item, idx) => {
+            let box = document.createElement('div');
+            box.className = 'flash-box';
+            box.id = `flash-box-${idx}`;
+            box.innerText = `Crate #${idx + 1}\n[Click to Sweep]`;
+            box.onclick = () => revealFlashlightBox(idx);
+            gridContainer.appendChild(box);
+        });
+
+        document.getElementById('sweeps-left').innerText = flashlights;
+        switchPanel('panel-inspection');
+    }
+
+    function revealFlashlightBox(idx) {
+        let box = document.getElementById(`flash-box-${idx}`);
+        if (box.classList.contains('scouted')) return;
+
+        if (flashlights <= 0) {
+            alert("You are out of flashlights!");
+            return;
+        }
+
+        let saveChance = perks.eagle * 0.15;
+        if (Math.random() > saveChance) {
+            flashlights--;
+        } else {
+            alert("Eagle Eye Perk saved your flashlight battery!");
+        }
+
+        box.classList.add('scouted');
+        document.getElementById('sweeps-left').innerText = flashlights;
+
+        let item = currentInspection.items[idx];
+        let desc = perks.eagle >= 1 ? `${item.name} (~$${item.val})` : (item.isLegendary ? "✨ Glowing / Rare Object" : item.isFake ? "⚠️ Looks Suspicious / Flimsy" : "📦 Standard Utility Item");
+        box.innerText = desc;
+    }
+
+    function proceedToAuction() {
+        let regionObj = countriesData[currentInspection.region];
+        let arena = regionObj.arenas.find(a => a.id === currentInspection.tier);
+        let baseCost = Math.floor(arena.entry * eventMultiplier * weatherMultiplier);
+
+        auctionEnded = false;
+        currentAuction.tier = currentInspection.tier;
+        currentAuction.startingPrice = baseCost;
+        currentAuction.currentBid = baseCost;
+        currentAuction.leader = "You";
+        currentAuction.items = currentInspection.items;
+        currentAuction.clue = clues[currentInspection.region]?.[currentInspection.tier - 1] || clues.us[0];
+
+        document.getElementById('auction-title').innerText = `${regionObj.name} - ${arena.name} Auction`;
+        document.getElementById('auction-clue').innerText = `Inspection Clue: "${currentAuction.clue}"`;
+        document.getElementById('current-bid').innerText = `$${currentAuction.currentBid}`;
+        document.getElementById('bid-leader').innerText = currentAuction.leader;
+        
+        let log = document.getElementById('auction-log');
+        log.innerHTML = `<div>Auction opened at $${baseCost}. International bidders are sizing you up...</div>`;
+
+        switchPanel('panel-auction');
+    }
+
+    function playerBid(amount) {
+        if (auctionEnded) return;
+        let nextBid = currentAuction.currentBid + amount;
+        if (nextBid > cash) {
+            alert("You don't have enough cash to place that bid!");
+            return;
+        }
+
+        currentAuction.currentBid = nextBid;
+        currentAuction.leader = "You";
+        document.getElementById('current-bid').innerText = `$${currentAuction.currentBid}`;
+        document.getElementById('bid-leader').innerText = currentAuction.leader;
+
+        let log = document.getElementById('auction-log');
+        log.innerHTML += `<div>You raised by $${amount} to $${currentAuction.currentBid}.</div>`;
+        log.scrollTop = log.scrollHeight;
+
+        setBidButtonsEnabled(false);
+        setTimeout(aiTurn, 1000);
+    }
+
+    function bluffRivals() {
+        if (auctionEnded) return;
+        if (cash < 50) { alert("Not enough cash!"); return; }
+        cash -= 50;
+        let log = document.getElementById('auction-log');
+        log.innerHTML += `<div>You aggressively bluff! Rivals hesitate...</div>`;
+        log.scrollTop = log.scrollHeight;
+        updateStats();
+        setTimeout(aiTurn, 1000);
+    }
+
+    function setBidButtonsEnabled(isEnabled) {
+        let buttons = document.querySelectorAll('.bid-btn');
+        buttons.forEach(btn => btn.disabled = !isEnabled);
+    }
+
+    function aiTurn() {
+        if (auctionEnded) return;
+        let maxWillingness = currentAuction.items.reduce((sum, item) => sum + (item.isFake ? item.fakeVal : item.val), 0) * 0.9;
+        let activeRival = rivals[Math.floor(Math.random() * rivals.length)];
+        
+        let rivalBuff = 1.0;
+        if (activeRival.name.includes("Greg") && rivalSabotageTimers.greg > 0) rivalBuff = 0.5;
+        if (activeRival.name.includes("Carl") && rivalSabotageTimers.carl > 0) rivalBuff = 0.5;
+
+        let aiChance = Math.max(0.05, (0.25 - (perks.tongue * 0.08)) * rivalBuff);
+
+        if (currentAuction.currentBid < maxWillingness && Math.random() > aiChance) {
+            let raise = Math.floor(Math.random() * 3) * 50 + 50;
+            currentAuction.currentBid += raise;
+            currentAuction.leader = activeRival.name;
+            
+            document.getElementById('current-bid').innerText = `$${currentAuction.currentBid}`;
+            document.getElementById('bid-leader').innerText = currentAuction.leader;
+
+            let log = document.getElementById('auction-log');
+            log.innerHTML += `<div><strong>${activeRival.name}</strong> counters to $${currentAuction.currentBid}!</div>`;
+            log.scrollTop = log.scrollHeight;
+            setBidButtonsEnabled(true);
+        } else {
+            auctionEnded = true;
+            let log = document.getElementById('auction-log');
+            log.innerHTML += `<div>Rivals back out! SOLD to you for $${currentAuction.currentBid}!</div>`;
+            log.scrollTop = log.scrollHeight;
+            setBidButtonsEnabled(true);
+            setTimeout(winAuction, 1800);
+        }
+    }
+
+    function passAuction() {
+        auctionEnded = true;
+        alert("You walked away from the auction.");
+        switchPanel('panel-hub');
+    }
+
+    function winAuction() {
+        cash -= currentAuction.currentBid;
+        statsTracker.lockersWon++;
+        updateStats();
+
+        let revealContainer = document.getElementById('reveal-items');
+        revealContainer.innerHTML = '';
+
+        currentAuction.items.forEach(item => {
+            inventory.push(item);
+            let div = document.createElement('div');
+            div.className = item.isLegendary ? 'item-card legendary' : item.isFake ? 'item-card fake' : 'item-card';
+            let tag = item.isLegendary ? ' ⭐ LEGENDARY!' : item.isFake ? ' ⚠️ SUSPICIOUS' : '';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${item.name}${tag}</div>
+                    <div class="item-value">Est. Value: $${item.val.toLocaleString()}</div>
+                </div>
+            `;
+            revealContainer.appendChild(div);
+        });
+
+        currentAuction.items = [];
+        switchPanel('panel-reveal');
+    }
+
+    function finishAuctionDay() {
+        advanceTime();
+        switchPanel('panel-hub');
+    }
+
+    function advanceTime() {
+        day++;
+        let mult = getPrestigeMultiplier();
+        let multiplierBonus = currentEvent.includes("Tourist") ? 1.2 : 1.0;
+        let passiveIncome = Math.floor(museum.reduce((sum, item) => sum + Math.floor(item.val * 0.1 * multiplierBonus), 0) * mult);
+        let storeIncome = Math.floor(storefront.reduce((sum, item) => sum + Math.floor(item.val * 0.25), 0));
+        cash += (passiveIncome + storeIncome);
+
+        if (loan > 0) {
+            let interest = Math.floor(loan * 0.10);
+            loan += interest;
+            let maxCap = 250000;
+            if (loan > maxCap) loan = maxCap;
+        }
+
+        if (staff.autobidder.level > 0 && inventory.length < getMaxStorage()) {
+            staff.autobidder.level++;
+            let cheapItem = { name: "Manager's Pawn Find", val: 300 * staff.autobidder.level, canFix: false, isLegendary: false, appraised: true, isRealVerified: true };
+            inventory.push(cheapItem);
+        }
+
+        if (staff.sorter.level > 0 && inventory.length > 0) {
+            staff.sorter.level++;
+            let unappraised = inventory.find(i => !i.appraised);
+            if (unappraised) {
+                unappraised.appraised = true;
+                unappraised.isRealVerified = true;
+            }
+        }
+
+        if (rivalSabotageTimers.greg > 0) rivalSabotageTimers.greg--;
+        if (rivalSabotageTimers.carl > 0) rivalSabotageTimers.carl--;
+
+        if (museum.length > 0 && !securityInstalled && Math.random() < 0.08) {
+            let stolenItem = museum.pop();
+            alert(`🚨 BURGLARY! Thieves broke into your unsecure museum and stole "${stolenItem.name}"! Install a security grid to prevent this.`);
+        }
+
+        if (heat >= 70 && Math.random() < (heat / 100)) {
+            let fine = Math.floor(cash * 0.3);
+            cash -= fine;
+            heat = 0;
+            alert(`🚨 POLICE RAID! Law enforcement seized $${fine.toLocaleString()} in fines! Heat reset to 0%.`);
+        } else if (heat > 0) {
+            heat = Math.max(0, heat - 10);
+        }
+
+        let randomEvent = events[Math.floor(Math.random() * events.length)];
+        currentEvent = randomEvent.name;
+        eventMultiplier = randomEvent.mult;
+
+        let randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+        currentWeather = randomWeather.name;
+        weatherMultiplier = randomWeather.mult;
+
+        goldenHourActive = (Math.random() < 0.15);
+        if (goldenHourActive) {
+            speakAI("Golden Hour is active today! Special high-value lockers are available!");
+        } else {
+            speakAI("Markets are active and running smoothly.");
+        }
+
+        updateStats();
+    }
+
+    function returnToHub() { switchPanel('panel-hub'); }
+
+    function openInventory() {
+        let container = document.getElementById('inventory-items');
+        container.innerHTML = '';
+
+        if (inventory.length === 0) {
+            container.innerHTML = '<p>Your inventory is empty. Win some units first!</p>';
+        } else {
+            inventory.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = item.isLegendary ? 'item-card legendary' : item.isRealVerified ? 'item-card real-verified' : (item.isFake && item.appraised ? 'item-card fake' : 'item-card');
+
+                let effectiveVal = item.isRealVerified ? item.val : (item.isFixed ? item.fixedVal : (item.isFake && item.appraised ? item.fakeVal : item.val));
+                let actionBtn = "";
+
+                if (item.isFake && !item.appraised) {
+                    let discount = 1.0 - (perks.appraise * 0.2) - (upgrades.hasAppraiser ? 0.5 : 0);
+                    let cost = Math.max(10, Math.floor(item.val * 0.05 * Math.max(0.1, discount)));
+                    actionBtn += `<button onclick="appraiseItem(${index})" style="padding: 3px 6px; font-size: 0.7rem;">Inspect ($${cost})</button> `;
+                }
+
+                actionBtn += `<button onclick="sellItem(${index})" style="background-color: var(--success-color); padding: 3px 6px; font-size: 0.7rem;">Sell ($${effectiveVal.toLocaleString()})</button>`;
+                actionBtn += ` <button onclick="sendToStorefront(${index})" style="background-color: #27ae60; color:#fff; padding: 3px 6px; font-size: 0.7rem;">Storefront</button>`;
+                if (item.canFix && !item.isFixed) actionBtn += ` <button onclick="fixItem(${index})" style="padding: 3px 6px; font-size: 0.7rem;">Restore</button>`;
+                if (item.isLegendary || item.isRealVerified) actionBtn += ` <button onclick="sendToMuseum(${index})" style="background-color: var(--legendary-color); color:#fff; padding: 3px 6px; font-size: 0.7rem;">Museum</button>`;
+
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name} ${item.isFixed ? '(Restored)' : ''}</div>
+                        <div class="item-value">Value: $${effectiveVal.toLocaleString()}</div>
+                    </div>
+                    <div>${actionBtn}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        switchPanel('panel-inventory');
+    }
+
+    function openStorefront() {
+        let container = document.getElementById('storefront-items');
+        container.innerHTML = storefront.length === 0 ? '<p>No items currently on display in your pawn shop storefront.</p>' : '';
+        storefront.forEach((item, index) => {
+            let div = document.createElement('div');
+            let displayVal = Math.floor(item.val * 1.25);
+            div.className = 'item-card real-verified';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-value">Retail Price (+25%): $${displayVal.toLocaleString()}</div>
+                </div>
+                <div><button onclick="removeFromStorefront(${index})" style="background-color: var(--danger-color); color:#fff; padding: 3px 6px;">Recall</button></div>
+            `;
+            container.appendChild(div);
+        });
+        switchPanel('panel-storefront');
+    }
+
+    function sendToStorefront(index) {
+        if (storefront.length >= storefrontMax) {
+            alert("Storefront racks are full! Expand your racks first.");
+            return;
+        }
+        let item = inventory.splice(index, 1)[0];
+        storefront.push(item);
+        updateStats();
+        openInventory();
+    }
+
+    function removeFromStorefront(index) {
+        if (inventory.length >= getMaxStorage()) {
+            alert("Inventory is full!");
+            return;
+        }
+        let item = storefront.splice(index, 1)[0];
+        inventory.push(item);
+        updateStats();
+        openStorefront();
+    }
+
+    function upgradeStorefront() {
+        let cost = 2500;
+        if (cash < cost) { alert("Not enough cash!"); return; }
+        cash -= cost;
+        storefrontMax += 3;
+        updateStats();
+        openStorefront();
+    }
+
+    function openBlackMarket() {
+        let container = document.getElementById('blackmarket-items');
+        container.innerHTML = '';
+
+        inventory.forEach((item, index) => {
+            if (item.isFake && item.appraised) {
+                let div = document.createElement('div');
+                div.className = 'item-card fake';
+                let payout = Math.floor(item.val * 0.45);
+                div.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-value">Payout: $${payout.toLocaleString()}</div>
+                    </div>
+                    <div><button onclick="sellBlackMarket(${index})" style="background-color: var(--danger-color); color: #fff; padding: 3px 6px; font-size: 0.7rem;">Fence It</button></div>
+                `;
+                container.appendChild(div);
+            }
+        });
+        if (container.innerHTML === '') container.innerHTML = '<p>No confirmed fake items available.</p>';
+        switchPanel('panel-blackmarket');
+    }
+
+    function sellBlackMarket(index) {
+        let item = inventory[index];
+        let payout = Math.floor(item.val * 0.45 * getPrestigeMultiplier());
+        cash += payout;
+
+        let heatGain = Math.max(5, 25 - (perks.heat * 6));
+        heat = Math.min(100, heat + heatGain);
+
+        statsTracker.fakesFenced++;
+        inventory.splice(index, 1);
+
+        let regionBounties = countriesData[currentRegionId].bounties;
+        regionBounties.forEach(q => {
+            if (q.type === 'fence' && !q.completed) {
+                q.progress++;
+                if (q.progress >= (q.targetCount || 1)) {
+                    q.completed = true;
+                    cash += q.reward;
+                    alert(`🎉 ${countriesData[currentRegionId].name} BOUNTY COMPLETED: "${q.title}"! Reward: $${q.reward.toLocaleString()}`);
+                }
+            }
+        });
+
+        updateStats();
+        openBlackMarket();
+    }
+
+    function bribePolice() {
+        if (cash < 300) { alert("Not enough cash!"); return; }
+        cash -= 300;
+        heat = 0;
+        updateStats();
+    }
+
+    function appraiseItem(index) {
+        let item = inventory[index];
+        let discount = 1.0 - (perks.appraise * 0.2) - (upgrades.hasAppraiser ? 0.5 : 0);
+        let cost = Math.max(10, Math.floor(item.val * 0.05 * Math.max(0.1, discount)));
+
+        if (cash < cost) { alert("Not enough cash!"); return; }
+        cash -= cost;
+        item.appraised = true;
+
+        if (Math.random() < (0.30 + (perks.appraise * 0.10))) {
+            item.isFake = false;
+            item.isRealVerified = true;
+            alert(`Expert authenticated "${item.name}" as 100% REAL!`);
+        } else {
+            alert(`"${item.name}" is a counterfeit fake.`);
+        }
+        updateStats();
+        openInventory();
+    }
+
+    function sellItem(index) {
+        let item = inventory[index];
+        let mult = getPrestigeMultiplier();
+        let price = item.isRealVerified ? item.val : (item.isFixed ? item.fixedVal : (item.isFake && item.appraised ? item.fakeVal : item.val));
+        let earned = Math.floor(price * (currentEvent.includes("Tourist") ? 1.2 : 1.0) * mult);
+        cash += earned;
+        statsTracker.totalEarned += earned;
+
+        let regionBounties = countriesData[currentRegionId].bounties;
+        regionBounties.forEach(q => {
+            if (q.type === 'sellVal' && !q.completed && earned >= q.targetVal) {
+                q.completed = true;
+                cash += q.reward;
+                alert(`🎉 ${countriesData[currentRegionId].name} BOUNTY COMPLETED: "${q.title}"! Reward: $${q.reward.toLocaleString()}`);
+            }
+        });
+
+        inventory.splice(index, 1);
+        updateStats();
+        openInventory();
+    }
+
+    function fixItem(index) {
+        let item = inventory[index];
+        let cost = Math.floor(item.val * 0.2);
+        if (cash < cost) { alert("Not enough cash!"); return; }
+        cash -= cost;
+        item.isFixed = true;
+        updateStats();
+        openInventory();
+    }
+
+    function sendToMuseum(index) {
+        let item = inventory[index];
+        museum.push(item);
+        inventory.splice(index, 1);
+
+        let regionBounties = countriesData[currentRegionId].bounties;
+        regionBounties.forEach(q => {
+            if (q.type === 'museum' && !q.completed) {
+                q.progress = museum.length;
+                if (q.progress >= (q.targetCount || 2)) {
+                    q.completed = true;
+                    cash += q.reward;
+                    alert(`🎉 ${countriesData[currentRegionId].name} BOUNTY COMPLETED: "${q.title}"! Reward: $${q.reward.toLocaleString()}`);
+                }
+            }
+        });
+
+        updateStats();
+        openInventory();
+    }
+
+    function sellMuseumItem(index) {
+        let item = museum[index];
+        cash += Math.floor(item.val * getPrestigeMultiplier());
+        museum.splice(index, 1);
+        updateStats();
+        openMuseum();
+    }
+
+    function openMuseum() {
+        let container = document.getElementById('museum-items');
+        container.innerHTML = museum.length === 0 ? '<p>Your museum is empty!</p>' : '';
+        museum.forEach((item, index) => {
+            let div = document.createElement('div');
+            div.className = 'item-card real-verified';
+            div.innerHTML = `<div class="item-info"><div class="item-name">${item.name}</div><div class="item-value">Value: $${item.val.toLocaleString()}</div></div><div><button onclick="sellMuseumItem(${index})" style="background-color: var(--danger-color); color: #fff; padding: 3px 6px;">Sell</button></div>`;
+            container.appendChild(div);
+        });
+        switchPanel('panel-museum');
+    }
+
+    function openSabotage() { switchPanel('panel-sabotage'); }
+
+    function sabotageRival(rivalKey) {
+        let cost = rivalKey === 'greg' ? 500 : 750;
+        if (cash < cost) { alert("Not enough cash!"); return; }
+        cash -= cost;
+        rivalSabotageTimers[rivalKey] = 3;
+        alert(`Successfully sabotaged ${rivalKey === 'greg' ? 'Greedy Greg' : 'Crazy Carl'}! Their bid aggressiveness is reduced for 3 days.`);
+        updateStats();
+    }
+
+    function buySecurity() {
+        if (securityInstalled) { alert("Security is already installed!"); return; }
+        let cost = 4000;
+        if (cash < cost) { alert("Not enough cash!"); return; }
+        cash -= cost;
+        securityInstalled = true;
+        alert("Laser security grid installed! Your museum is now fully protected against burglaries.");
+        updateStats();
+    }
+
+    function openQuests() {
+        document.getElementById('regional-bounty-title').innerText = `${countriesData[currentRegionId].name} - Regional Contracts`;
+        let container = document.getElementById('quests-list');
+        container.innerHTML = '';
+        
+        let regionBounties = countriesData[currentRegionId].bounties;
+        regionBounties.forEach((q, index) => {
+            let div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${q.title} ${q.completed ? '✅ (Ready to Refresh)' : ''}</div>
+                    <div class="item-value">${q.desc} | Reward: $${q.reward.toLocaleString()}</div>
+                </div>
+                <div><button onclick="refreshQuest(${index})" style="padding: 3px 6px;">Reset Bounty</button></div>
+            `;
+            container.appendChild(div);
+        });
+        switchPanel('panel-quests');
+    }
+
+    function refreshQuest(index) {
+        let regionBounties = countriesData[currentRegionId].bounties;
+        let q = regionBounties[index];
+        if (q.completed) {
+            q.completed = false;
+            q.progress = 0;
+            openQuests();
+        } else {
+            alert("Complete the bounty before resetting it!");
+        }
+    }
+
+    function openUpgrades() {
+        document.getElementById('upgrade-storage-lvl').innerText = upgrades.storageLevel;
+        document.getElementById('max-storage-cap').innerText = getMaxStorage();
+        switchPanel('panel-upgrades');
+    }
+
+    function buyUpgrade(type) {
+        if (type === 'storage') {
+            let cost = upgrades.storageLevel * 1000;
+            if (cash < cost) { alert("Not enough cash!"); return; }
+            cash -= cost;
+            upgrades.storageLevel++;
+        }
+        updateStats();
+        openUpgrades();
+    }
+
+    function upgradeStaff(staffKey) {
+        let cost = (staff[staffKey].level + 1) * 5000;
+        if (cash < cost) { alert(`Not enough cash! Need $${cost.toLocaleString()}`); return; }
+        cash -= cost;
+        staff[staffKey].level++;
+        updateStats();
+        openUpgrades();
+    }
+
+    function openLoans() { switchPanel('panel-loans'); }
+    function takeLoan(amount) {
+        loan += amount;
+        cash += amount;
+        updateStats();
+        alert(`Borrowed $${amount.toLocaleString()} from Vinnie. Remember the 10% daily compound interest!`);
+    }
+
+    function repayLoan(amount) {
+        let payAmount = Math.min(amount, loan, cash);
+        if (payAmount <= 0) { alert("No loan to pay or not enough cash!"); return; }
+        cash -= payAmount;
+        loan -= payAmount;
+        updateStats();
+        alert(`Repaid $${payAmount.toLocaleString()} to Vinnie.`);
+    }
+
+    function openPerks() {
+        document.getElementById('perk-eagle-lvl').innerText = perks.eagle;
+        document.getElementById('perk-tongue-lvl').innerText = perks.tongue;
+        document.getElementById('perk-appraise-lvl').innerText = perks.appraise;
+        document.getElementById('perk-heat-lvl').innerText = perks.heat;
+        document.getElementById('perk-museum-lvl').innerText = perks.museum;
+        switchPanel('panel-perks');
+    }
+
+    function buyPerk(type) {
+        let cost = (type === 'museum') ? 2 : 1;
+        if (skillPoints < cost) { alert("Not enough Prestige Points!"); return; }
+        if (perks[type] >= 3) { alert("This skill is already maxed out at Level 3!"); return; }
+
+        skillPoints -= cost;
+        perks[type]++;
+        updateStats();
+        openPerks();
+    }
+
+    function openPrestige() { switchPanel('panel-prestige'); }
+    function doPrestige() {
+        let cost = getPrestigeCost();
+        if (cash < cost) {
+            alert(`You need at least $${cost.toLocaleString()} cash to prestige!`);
+            return;
+        }
+        if (confirm(`Are you sure you want to prestige? Resets cash and inventory, but grants permanent multipliers, +2 Prestige Points, and unlocks Global Travel ranks!`)) {
+            prestigeLevel++;
+            skillPoints += 2;
+            cash = 1500;
+            loan = 0;
+            flashlights = 5;
+            inventory = [];
+            museum = [];
+            storefront = [];
+            currentRegionId = 'us';
+            updateStats();
+            switchPanel('panel-hub');
+        }
+    }
+
+    function openAchievements() {
+        let container = document.getElementById('achievements-list');
+        container.innerHTML = '';
+        achievementsData.forEach(ach => {
+            let div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `<div class="item-info"><div class="item-name">${ach.title} ${ach.unlocked ? '🏆 (Unlocked)' : '🔒'}</div><div class="item-value">${ach.desc}</div></div>`;
+            container.appendChild(div);
+        });
+        switchPanel('panel-achievements');
+    }
+
+    function checkAchievements() {
+        achievementsData.forEach(ach => {
+            if (!ach.unlocked) {
+                if (ach.id === 'lockers' && statsTracker.lockersWon >= ach.target) ach.unlocked = true;
+                if (ach.id === 'fakes' && statsTracker.fakesFenced >= ach.target) ach.unlocked = true;
+                if (ach.id === 'legendary' && statsTracker.legendariesFound >= ach.target) ach.unlocked = true;
+            }
+        });
+    }
+
+    function saveGame() {
+        let saveData = { cash, day, heat, loan, flashlights, prestigeLevel, skillPoints, inventory, museum, storefront, storefrontMax, upgrades, staff, perks, countriesData, statsTracker, achievementsData, currentRegionId, securityInstalled };
+        localStorage.setItem('storageTycoonUltimateSave', JSON.stringify(saveData));
+        alert("Game saved successfully!");
+    }
+
+    function loadGame() {
+        let savedData = localStorage.getItem('storageTycoonUltimateSave');
+        if (!savedData) { alert("No save file found!"); return; }
+        let data = JSON.parse(savedData);
+        cash = data.cash;
+        day = data.day;
+        heat = data.heat || 0;
+        loan = data.loan || 0;
+        flashlights = data.flashlights !== undefined ? data.flashlights : 5;
+        prestigeLevel = data.prestigeLevel || 1;
+        skillPoints = data.skillPoints || 0;
+        inventory = data.inventory;
+        museum = data.museum;
+        storefront = data.storefront || [];
+        storefrontMax = data.storefrontMax || 3;
+        upgrades = data.upgrades || upgrades;
+        staff = data.staff || staff;
+        perks = data.perks || perks;
+        if (data.countriesData) countriesData = data.countriesData;
+        statsTracker = data.statsTracker || statsTracker;
+        if (data.achievementsData) achievementsData = data.achievementsData;
+        currentRegionId = data.currentRegionId || 'us';
+        securityInstalled = data.securityInstalled || false;
+
+        updateStats();
+        switchPanel('panel-hub');
+        alert("Game loaded successfully!");
+    }
+
+    function resetGame() {
+        if (confirm("Reset save data?")) {
+            localStorage.removeItem('storageTycoonUltimateSave');
+            cash = 1500; day = 1; heat = 0; loan = 0; flashlights = 5; prestigeLevel = 1; skillPoints = 0; inventory = []; museum = []; storefront = []; currentRegionId = 'us'; securityInstalled = false;
+            updateStats();
+            switchPanel('panel-hub');
+        }
+    }
+
+    updateStats();
+</script>
+
+</body>
+</html>

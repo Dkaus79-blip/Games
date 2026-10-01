@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gas Station Simulator: Franchise Empire Master</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: rgba(30, 41, 59, 0.88);
+      --panel-border: #334155;
+      --accent-green: #10b981;
+      --accent-cyan: #06b6d4;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --screen-bg: #022c22;
+      --screen-text: #34d399;
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+      margin: 0; padding: 8px;
+      background: radial-gradient(circle at top, #0284c7, #090d16 80%);
+      transition: background 2s ease;
+      color: var(--text-main);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh; overflow: hidden;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--panel-bg); border: 1px solid var(--panel-border);
+      padding: 4px 12px; border-radius: 8px; backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); flex-shrink: 0;
+    }
+
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand h1 {
+      margin: 0; font-size: 1.1rem;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+
+    .stats-container { display: flex; gap: 8px; }
+    .stat-card {
+      background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 6px;
+      border: 1px solid var(--panel-border); display: flex; flex-direction: column;
+      align-items: center; min-width: 65px;
+    }
+    .stat-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+    .stat-val { font-size: 0.9rem; font-weight: bold; }
+    .money-val { color: var(--accent-green); }
+    .rep-val { color: var(--accent-amber); }
+
+    .store-bar {
+      display: flex; gap: 6px; background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--panel-border); padding: 3px; border-radius: 8px; flex-shrink: 0;
+    }
+    .store-tab {
+      flex: 1; padding: 4px 6px; background: rgba(30, 41, 59, 0.5);
+      border: 1px solid transparent; border-radius: 6px; color: var(--text-muted);
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.72rem; font-weight: bold; transition: all 0.15s ease;
+    }
+    .store-tab:hover { background: rgba(51, 65, 85, 0.8); }
+    .store-tab.active {
+      background: var(--panel-bg); border-color: var(--accent-cyan); color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+    .store-tab.locked { opacity: 0.6; border-style: dashed; }
+
+    .top-banner {
+      background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; color: var(--accent-cyan);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+
+    #global-alerts-bar {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      backdrop-filter: blur(8px);
+    }
+
+    #alerts-area {
+      display: flex; gap: 6px; align-items: center;
+      overflow-x: auto; flex-grow: 1; min-height: 24px;
+    }
+
+    .alert-badge {
+      background: rgba(239, 68, 68, 0.25); border: 1px solid var(--accent-red); color: #fca5a5;
+      padding: 2px 8px; border-radius: 5px; font-size: 0.68rem; font-weight: bold;
+      cursor: pointer; display: flex; align-items: center; gap: 4px; animation: pulse 1s infinite; white-space: nowrap;
+    }
+    .alert-active {
+      background: rgba(239, 68, 68, 0.4) !important;
+      border-color: #ff2222 !important; color: #ffffff !important;
+    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    #game-grid {
+      display: grid; grid-template-columns: 290px 1fr 320px; gap: 6px;
+      flex-grow: 1; min-height: 0;
+    }
+
+    .panel {
+      background: var(--panel-bg); border: 1px solid var(--panel-border);
+      border-radius: 8px; padding: 8px; display: flex; flex-direction: column;
+      gap: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px);
+      min-height: 0; overflow: hidden;
+    }
+
+    .panel-title {
+      margin: 0; font-size: 0.85rem; display: flex; justify-content: space-between;
+      align-items: center; border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 3px; flex-shrink: 0;
+    }
+
+    .customer-area {
+      background: rgba(0, 0, 0, 0.3); border-radius: 6px; padding: 4px;
+      text-align: center; position: relative; flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .customer-avatar { font-size: 1.8rem; line-height: 1; margin-bottom: 1px; }
+    .thought-bubble {
+      position: absolute; top: 2px; right: 8px; background: #ffffff; color: #0f172a;
+      padding: 1px 5px; border-radius: 8px; font-size: 0.68rem; font-weight: bold;
+    }
+
+    .patience-bar-bg { width: 100%; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 3px; }
+    .patience-bar-fill { height: 100%; width: 0%; background: var(--accent-green); transition: width 0.2s linear; }
+
+    .pos-screen {
+      background: var(--screen-bg); color: var(--screen-text); font-family: monospace;
+      padding: 4px 8px; border-radius: 5px; border: 1px solid #047857; flex-shrink: 0;
+    }
+    .pos-line { display: flex; justify-content: space-between; margin-bottom: 1px; font-weight: bold; font-size: 0.72rem; }
+
+    .counter-items {
+      display: flex; gap: 4px; min-height: 32px; background: rgba(0, 0, 0, 0.2);
+      border-radius: 5px; padding: 3px; align-items: center; overflow-x: auto; flex-shrink: 0;
+    }
+    .scan-item {
+      background: #334155; padding: 2px 5px; border-radius: 4px; font-size: 0.68rem;
+      cursor: pointer; display: flex; align-items: center; gap: 3px; border: 1px solid #475569; white-space: nowrap;
+    }
+    .scan-item.scanned { border-color: var(--accent-green); background: #064e3b; opacity: 0.7; }
+
+    .money-section { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-height: 0; overflow-y: auto; }
+    .tray-box {
+      background: rgba(0, 0, 0, 0.4); border: 1px dashed #475569; border-radius: 5px;
+      min-height: 30px; max-height: 42px; padding: 3px; display: flex; flex-wrap: wrap; gap: 3px; align-items: center; overflow-y: auto;
+    }
+    .drawer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; flex-shrink: 0; }
+    .money-btn {
+      padding: 4px 2px; border-radius: 4px; font-weight: bold; font-size: 0.68rem; text-align: center;
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .money-btn:hover { filter: brightness(1.2); }
+    .money-btn:active { transform: scale(0.95); }
+    .bill { background: #065f46; color: #a7f3d0; }
+    .coin { background: #854d0e; color: #fef08a; }
+
+    .floor-container { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-height: 0; overflow-y: auto; }
+    .shelves-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; flex-shrink: 0; }
+    .shelf-card { background: rgba(0, 0, 0, 0.25); border: 1px solid var(--panel-border); border-radius: 5px; padding: 4px 6px; display: flex; flex-direction: column; gap: 2px; }
+    .shelf-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.72rem; }
+    .stock-indicator { height: 4px; background: #334155; border-radius: 2px; overflow: hidden; }
+    .stock-fill { height: 100%; background: var(--accent-cyan); transition: width 0.3s ease; }
+
+    .stations-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; flex-shrink: 0; }
+    .station-card { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--panel-border); border-radius: 5px; padding: 4px 5px; display: flex; flex-direction: column; gap: 2px; }
+
+    .laptop-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--panel-border); padding-bottom: 3px; flex-shrink: 0; overflow-x: auto; }
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 3px 5px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.65rem; white-space: nowrap; }
+    .tab-btn.active { background: #334155; color: var(--text-main); }
+    .tab-pane { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-height: 0; overflow-y: auto; }
+
+    .action-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--panel-border); border-radius: 5px; padding: 5px 6px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+
+    .btn { background: var(--accent-cyan); color: #0f172a; border: none; padding: 4px 7px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.68rem; }
+    .btn:hover { filter: brightness(1.1); }
+    .btn:active { transform: scale(0.98); }
+    .btn-green { background: var(--accent-green); color: #fff; }
+    .btn-amber { background: var(--accent-amber); color: #fff; }
+    .btn-red { background: var(--accent-red); color: #fff; }
+    .btn-purple { background: var(--accent-purple); color: #fff; }
+    .btn-disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+    #log { height: 50px; background: #060a12; border-radius: 5px; padding: 4px; font-size: 0.65rem; font-family: monospace; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05); }
+    .log-entry { color: var(--text-muted); }
+    .log-success { color: var(--accent-green); }
+    .log-error { color: var(--accent-red); }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 100; }
+    .modal { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 10px; padding: 16px; width: 420px; max-width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative; }
+    #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span style="font-size: 1.1rem;">⛽</span>
+      <h1>Franchise Master</h1>
+    </div>
+    <div class="stats-container">
+      <div class="stat-card"><span class="stat-label">Shift Day</span><span class="stat-val" id="ui-day">1</span></div>
+      <div class="stat-card"><span class="stat-label">Clock</span><span class="stat-val" id="ui-time">08:00 AM</span></div>
+      <div class="stat-card"><span class="stat-label">Franchise Cash</span><span class="stat-val money-val" id="ui-cash">$100.00</span></div>
+      <div class="stat-card"><span class="stat-label">Reputation</span><span class="stat-val rep-val" id="ui-rep">100⭐</span></div>
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <button class="btn" onclick="openHelpModal()">❓ Help & Keys</button>
+      <button class="btn btn-amber" onclick="toggleAudio()" id="audio-btn">🔊 Audio</button>
+    </div>
+  </header>
+
+  <div class="store-bar" id="store-bar"></div>
+
+  <div class="top-banner" id="top-banner">
+    <span id="weather-text">🌤️ Weather: Clear skies. Normal traffic.</span>
+    <span id="ad-campaign-text" style="font-weight:bold; color:var(--accent-purple);">📢 Campaign: None</span>
+    <span id="fuel-market-text" style="font-weight:bold;">⛽ Wholesale Gas: $3.10/gal</span>
+  </div>
+
+  <div id="global-alerts-bar">
+    <span style="font-size: 0.68rem; font-weight: bold; color: var(--accent-cyan); white-space: nowrap;">🚨 TOP ALERTS:</span>
+    <div id="alerts-area"><span style="color:var(--text-muted); font-size:0.68rem;">Floor clean & secure.</span></div>
+  </div>
+
+  <div id="game-grid">
+    <!-- LEFT PANEL: REGISTER & CHECKOUT -->
+    <div class="panel">
+      <h3 class="panel-title">Checkout Counter <span id="queue-count" style="font-size:0.68rem; color:var(--text-muted);">Queue: 0</span></h3>
+      <div class="customer-area" id="customer-box">
+        <div id="thought-bubble" class="thought-bubble" style="display:none;"></div>
+        <div class="customer-avatar" id="cust-avatar">🏬</div>
+        <div id="cust-name" style="font-size: 0.72rem; font-weight: bold;">Waiting for customer...</div>
+        <div class="patience-bar-bg"><div class="patience-bar-fill" id="cust-patience"></div></div>
+      </div>
+      <div>
+        <label style="font-size: 0.65rem; color: var(--text-muted);">Counter Items (Click to Scan)</label>
+        <div class="counter-items" id="counter-items"><span style="color:var(--text-muted); font-size:0.68rem;">Counter empty</span></div>
+      </div>
+      <div class="pos-screen" id="pos-screen">
+        <div class="pos-line"><span>TOTAL:</span><span id="pos-total">$0.00</span></div>
+        <div class="pos-line"><span>PAID:</span><span id="pos-paid">$0.00</span></div>
+        <div class="pos-line" style="border-top:1px dashed #047857; padding-top:1px; margin-top:1px;"><span>CHANGE DUE:</span><span id="pos-change" style="color:#fff;">$0.00</span></div>
+      </div>
+      <div class="money-section">
+        <div style="display:flex; justify-content: space-between; align-items:center;">
+          <label style="font-size: 0.65rem; color: var(--text-muted);">Change Tray (Keys 1-8)</label>
+          <button class="btn btn-red" style="padding: 1px 4px; font-size: 0.6rem;" onclick="clearTray()">Clear [C]</button>
+        </div>
+        <div class="tray-box" id="tray-box"></div>
+        <label style="font-size: 0.65rem; color: var(--text-muted);">Register Drawer</label>
+        <div class="drawer-grid" id="drawer-grid"></div>
+      </div>
+      <button class="btn btn-green" style="width:100%; padding:6px; font-size:0.75rem; flex-shrink:0;" onclick="submitChange()">GIVE CHANGE [Space]</button>
+    </div>
+
+    <!-- CENTER PANEL: STORE FLOOR & SERVICES -->
+    <div class="panel">
+      <h3 class="panel-title">Store Floor & Services</h3>
+      <div class="floor-container">
+        <div class="shelves-grid" id="shelves-grid"></div>
+        <div>
+          <label style="font-size: 0.65rem; color: var(--text-muted); display:block; margin-bottom:2px;">Services (Pumps, Car Wash, Coffee)</label>
+          <div class="stations-grid" id="stations-grid"></div>
+        </div>
+      </div>
+
+      <h3 class="panel-title" style="margin-top: 2px;">Store Log</h3>
+      <div id="log"></div>
+    </div>
+
+    <!-- RIGHT PANEL: MANAGEMENT TERMINAL -->
+    <div class="panel">
+      <h3 class="panel-title">Terminal Management</h3>
+      <div class="laptop-tabs">
+        <button class="tab-btn active" onclick="switchTab('supply')" id="tab-supply">Supply</button>
+        <button class="tab-btn" onclick="switchTab('pricing')" id="tab-pricing">Gas Price</button>
+        <button class="tab-btn" onclick="switchTab('upgrades')" id="tab-upgrades">Upgrades</button>
+        <button class="tab-btn" onclick="switchTab('staff')" id="tab-staff">Staff</button>
+        <button class="tab-btn" onclick="switchTab('finance')" id="tab-finance">Finance</button>
+        <button class="tab-btn" onclick="switchTab('empire')" id="tab-empire">Franchise</button>
+        <button class="tab-btn" onclick="switchTab('achieve')" id="tab-achieve">Trophies</button>
+        <button class="tab-btn" onclick="switchTab('settings')" id="tab-settings">System</button>
+      </div>
+
+      <div id="tab-content-supply" class="tab-pane">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Order wholesale crates to restock shelves.</p>
+        <div id="supply-list" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-pricing" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Set retail gas price for active station.</p>
+        <div class="action-card" style="flex-direction: column; gap: 4px; align-items: stretch;">
+          <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span>Retail Fuel Price:</span>
+            <span id="gas-price-label" style="color:var(--accent-green);">$3.50/gal</span>
+          </div>
+          <input type="range" id="gas-price-slider" min="2.50" max="5.50" step="0.10" value="3.50" oninput="updateGasPrice(this.value)">
+          <div style="font-size:0.6rem; color:var(--text-muted);">Wholesale Cost: <b id="gas-wholesale-label">$3.10</b> | Margin: <b id="gas-margin-label">+$0.40</b>/gal</div>
+        </div>
+      </div>
+
+      <div id="tab-content-upgrades" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Station improvements for active location.</p>
+        <div id="upgrades-list" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-staff" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Automate operations for active location.</p>
+        <div id="staff-list" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-finance" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Bank loans & marketing ad campaigns.</p>
+        <div id="finance-box" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-empire" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Purchase & expand your store empire.</p>
+        <div id="empire-list" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-achieve" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Milestones & rewards.</p>
+        <div id="achieve-list" style="display: flex; flex-direction: column; gap: 3px;"></div>
+      </div>
+
+      <div id="tab-content-settings" class="tab-pane" style="display: none;">
+        <p style="font-size:0.65rem; color:var(--text-muted); margin:0;">Save, load, or reset progress.</p>
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 3px;">
+          <button class="btn btn-green" onclick="saveGame()">💾 Save Game</button>
+          <button class="btn btn-amber" onclick="loadGame()">📂 Load Game</button>
+          <button class="btn btn-red" onclick="resetGamePrompt()">🗑️ Reset Progress</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="help-modal" style="display: none;">
+    <div class="modal" style="text-align: left; max-width: 420px;">
+      <h2 style="text-align: center; margin-top: 0; color: var(--accent-cyan); font-size: 1rem;">How to Play ⛽</h2>
+      <ul style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3; padding-left: 14px; margin-bottom: 10px;">
+        <li><b>Checkout Customers:</b> Click counter items to scan. Enter change into tray and hit <b>Spacebar</b> or <b>GIVE CHANGE</b>.</li>
+        <li><b>Keyboard Shortcuts:</b> Press <b>1–8</b> for quick cash, <b>C</b> to clear tray, <b>Spacebar</b> to finish transaction.</li>
+        <li><b>Multi-Store Empire:</b> Switch stores using the top bar. Staffed idle stores generate passive income!</li>
+        <li><b>Bank Loans & Marketing:</b> Borrow funds or run Marketing campaigns in the <b>Finance Tab</b>.</li>
+        <li><b>Emergencies:</b> Reset circuit breakers during Power Outages (⚡) & prepare for Health Inspector Visits (🩺) at 1:00 PM!</li>
+        <li><b>Victory Goal:</b> Own all 3 store locations, reach 100⭐ Rating, and earn <b>$5,000 Cash</b> to win!</li>
+      </ul>
+      <button class="btn" style="width: 100%; padding: 6px;" onclick="closeHelpModal()">GOT IT</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="end-day-modal" style="display: none;">
+    <div class="modal">
+      <h2 style="margin-top:0; font-size: 1.1rem;">Shift Completed! 🌙</h2>
+      <p style="color: var(--text-muted); font-size: 0.72rem; margin: 3px 0;">Franchise daily summary report:</p>
+      <div style="text-align: left; margin: 8px 0; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 5px;">
+        <div class="pos-line"><span>Total Customers Served:</span><span id="summary-served">0</span></div>
+        <div class="pos-line"><span>Franchise Revenue:</span><span id="summary-revenue" style="color:var(--accent-green);">$0.00</span></div>
+        <div class="pos-line"><span>Franchise Rent/Utilities:</span><span style="color:var(--accent-red);" id="summary-rent">-$30.00</span></div>
+        <div class="pos-line"><span>Loan Interest (5%):</span><span style="color:var(--accent-amber);" id="summary-interest">-$0.00</span></div>
+        <hr style="border-color: var(--panel-border); margin: 3px 0;">
+        <div class="pos-line" style="font-weight:bold;"><span>Net Shift Profit:</span><span id="summary-profit">$0.00</span></div>
+      </div>
+      <button class="btn btn-green" style="width: 100%; padding: 6px;" onclick="startNextDay()">START NEXT SHIFT</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="victory-modal" style="display: none;">
+    <div class="modal">
+      <canvas id="confetti-canvas"></canvas>
+      <h2 style="margin-top:0; font-size: 1.2rem; color: var(--accent-amber);">👑 FRANCHISE TYCOON VICTORY! 🏆</h2>
+      <p style="color: var(--text-muted); font-size: 0.75rem; margin: 4px 0;">Congratulations! You built the ultimate gas station empire!</p>
+      <div style="text-align: left; margin: 10px 0; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 5px;">
+        <div class="pos-line"><span>Total Empire Stores:</span><span style="color:var(--accent-cyan);">3 Locations</span></div>
+        <div class="pos-line"><span>Final Treasury Cash:</span><span style="color:var(--accent-green);" id="win-cash">$0.00</span></div>
+        <div class="pos-line"><span>Lifetime Revenue:</span><span style="color:var(--accent-purple);" id="win-revenue">$0.00</span></div>
+        <div class="pos-line"><span>Total Customers Served:</span><span style="color:var(--accent-amber);" id="win-served">0</span></div>
+      </div>
+      <button class="btn btn-green" style="width: 100%; padding: 8px; font-size:0.8rem;" onclick="closeVictoryModal()">KEEP PLAYING (SANDBOX MODE)</button>
+    </div>
+  </div>
+
+  <script>
+    let audioEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() { 
+      if (!audioCtx) audioCtx = new AudioContext(); 
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+
+      if (type === 'scan') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.exponentialRampToValueAtTime(1600, now + 0.08);
+        gain.gain.setValueAtTime(0.12, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now); osc.stop(now + 0.08);
+      } else if (type === 'coin') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(1800, now); osc.frequency.exponentialRampToValueAtTime(2200, now + 0.05);
+        gain.gain.setValueAtTime(0.18, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now); osc.stop(now + 0.05);
+      } else if (type === 'cash') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08); osc.frequency.setValueAtTime(783.99, now + 0.16);
+        gain.gain.setValueAtTime(0.18, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.28);
+        osc.start(now); osc.stop(now + 0.28);
+      } else if (type === 'error' || type === 'siren') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now); osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.25, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now); osc.stop(now + 0.25);
+      } else if (type === 'wash') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(400, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById('audio-btn').textContent = audioEnabled ? '🔊 Audio' : '🔇 Audio';
+    }
+
+    const ITEMS = {
+      soda: { id: 'soda', name: 'Soda Can', price: 2.50, cost: 1.20, icon: '🥤', boxSize: 10 },
+      chips: { id: 'chips', name: 'Potato Chips', price: 1.99, cost: 0.90, icon: '🥔', boxSize: 10 },
+      candy: { id: 'candy', name: 'Chocolate Bar', price: 1.25, cost: 0.50, icon: '🍫', boxSize: 12 },
+      coffee: { id: 'coffee', name: 'Hot Coffee', price: 3.50, cost: 1.00, icon: '☕', boxSize: 8 },
+      energy: { id: 'energy', name: 'Energy Drink', price: 4.50, cost: 2.00, icon: '⚡', boxSize: 8 },
+      oil: { id: 'oil', name: 'Motor Oil', price: 8.99, cost: 4.50, icon: '🛢️', boxSize: 6 }
+    };
+
+    const MONEY_PIECES = [
+      { label: '$20', val: 2000, type: 'bill', key: '1' },
+      { label: '$10', val: 1000, type: 'bill', key: '2' },
+      { label: '$5', val: 500, type: 'bill', key: '3' },
+      { label: '$1', val: 100, type: 'bill', key: '4' },
+      { label: '25¢', val: 25, type: 'coin', key: '5' },
+      { label: '10¢', val: 10, type: 'coin', key: '6' },
+      { label: '5¢', val: 5, type: 'coin', key: '7' },
+      { label: '1¢', val: 1, type: 'coin', key: '8' }
+    ];
+
+    const CUSTOMER_TYPES = [
+      { avatar: '👨', type: 'regular', name: 'Commuter' },
+      { avatar: '👩', type: 'regular', name: 'Local Resident' },
+      { avatar: '🧔', type: 'regular', name: 'Trucker' },
+      { avatar: '👵', type: 'regular', name: 'Senior Citizen' },
+      { avatar: '💼', type: 'vip', name: 'VIP Executive' },
+      { avatar: '👮', type: 'vip', name: 'Police Officer' },
+      { avatar: '🥷', type: 'thief', name: 'Suspicious Character' }
+    ];
+
+    const WEATHER_TYPES = [
+      { name: 'Clear skies', desc: 'Normal customer traffic.', effect: 'normal' },
+      { name: 'Heatwave', desc: 'Boosts drink & energy sales!', effect: 'heatwave' },
+      { name: 'Morning Rush Hour', desc: 'Faster customer queue spawns!', effect: 'rush' },
+      { name: 'Rainy Day', desc: 'Slower foot traffic.', effect: 'rain' }
+    ];
+
+    const STORE_DEFINITIONS = [
+      { id: 0, name: 'Highway Depot', icon: '📍', buyCost: 0, trafficMultiplier: 1.0, rent: 30 },
+      { id: 1, name: 'Downtown Metro', icon: '🏙️', buyCost: 500, trafficMultiplier: 1.5, rent: 60 },
+      { id: 2, name: 'Airport Plaza', icon: '✈️', buyCost: 1200, trafficMultiplier: 2.0, rent: 120 }
+    ];
+
+    const ACHIEVEMENTS = [
+      { id: 'first_shift', name: 'First Shift Complete', desc: 'Complete Shift 1.', reward: 50, unlocked: false },
+      { id: 'served_20', name: 'Speedy Cashier', desc: 'Serve 20 customers total.', reward: 100, unlocked: false },
+      { id: 'clean_freak', name: 'Clean Station', desc: 'Clean 5 spills/trash.', reward: 75, unlocked: false },
+      { id: 'catch_thief', name: 'Bounty Hunter', desc: 'Catch a shoplifter.', reward: 120, unlocked: false },
+      { id: 'multi_store', name: 'Empire Expansion', desc: 'Own 2 or more stores.', reward: 250, unlocked: false },
+      { id: 'big_earner', name: 'Station Mogul', desc: 'Earn $2,000 lifetime revenue.', reward: 300, unlocked: false }
+    ];
+
+    function createSingleStoreState(def) {
+      return {
+        id: def.id, name: def.name, icon: def.icon, buyCost: def.buyCost,
+        owned: def.buyCost === 0,
+        inventory: { soda: 8, chips: 8, candy: 10, coffee: 5, energy: 4, oil: 2 },
+        maxInventory: 15,
+        upgrades: { autoScanner: false, expandedShelves: false, autoCarWash: false, highFlowPumps: false, neonSign: false },
+        staff: { cashier: false, stocker: false, janitor: false, gasAttendant: false },
+        retailGas: 3.50, coffeeBeans: 10, powerOutage: false, truckDiscount: false,
+        pumps: [
+          { id: 1, status: 'idle', timeLeft: 10, car: null, timer: null },
+          { id: 2, status: 'idle', timeLeft: 10, car: null, timer: null }
+        ],
+        carWash: { status: 'idle', car: null, type: 'Basic', washTimeLeft: 5, price: 10, timer: null },
+        spills: [], thieves: [], queue: [], currentCustomer: null, scannedItems: [], trayCents: []
+      };
+    }
+
+    let globalState = {
+      day: 1, timeMinutes: 480, cash: 100.00, reputation: 100, wholesaleGas: 3.10,
+      weather: WEATHER_TYPES[0], activeStoreIndex: 0, loanPrincipal: 0, activeCampaign: null,
+      healthInspectorChecked: false, stores: STORE_DEFINITIONS.map(def => createSingleStoreState(def)),
+      dailyServedTotal: 0, dailyRevenueTotal: 0, totalServedLifetime: 0, totalRevenueLifetime: 0,
+      spillsCleanedCount: 0, thievesCaughtCount: 0, achievements: ACHIEVEMENTS, hasWon: false, shiftActive: true
+    };
+
+    function getActiveStore() { return globalState.stores[globalState.activeStoreIndex]; }
+
+    window.onload = () => {
+      selectDailyWeather(); renderStoreSwitcherBar(); renderDrawer(); renderShelves();
+      renderStations(); renderSupplyTab(); renderUpgradesTab(); renderStaffTab();
+      renderFinanceTab(); renderEmpireTab(); renderAchievementsTab(); updateStats(); gameLoop();
+
+      setInterval(spawnCustomerTick, 3200); setInterval(spawnPumpCarTick, 4000);
+      setInterval(spawnCarWashCarTick, 6000); setInterval(spawnSpillTick, 14000);
+      setInterval(spawnThiefTick, 18000); setInterval(spawnOutageTick, 25000);
+      setInterval(spawnDeliveryTruckTick, 22000); setInterval(staffAutomationTick, 2500);
+
+      window.addEventListener('keydown', handleKeyPress);
+    };
+
+    function handleKeyPress(e) {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      const piece = MONEY_PIECES.find(m => m.key === e.key);
+      if (piece) addCentsToTray(piece.val);
+      else if (e.key.toLowerCase() === 'c') clearTray();
+      else if (e.code === 'Space') { e.preventDefault(); submitChange(); }
+    }
+
+    function selectDailyWeather() {
+      globalState.weather = WEATHER_TYPES[Math.floor(Math.random() * WEATHER_TYPES.length)];
+      globalState.wholesaleGas = parseFloat((2.80 + Math.random() * 0.80).toFixed(2));
+      globalState.healthInspectorChecked = false;
+
+      document.getElementById('weather-text').textContent = `🌤️ Weather: ${globalState.weather.name} - ${globalState.weather.desc}`;
+      document.getElementById('fuel-market-text').textContent = `⛽ Wholesale Gas: $${globalState.wholesaleGas.toFixed(2)}/gal`;
+      document.getElementById('gas-wholesale-label').textContent = `$${globalState.wholesaleGas.toFixed(2)}`;
+      updateGasPrice(getActiveStore().retailGas);
+    }
+
+    function updateGasPrice(val) {
+      const store = getActiveStore();
+      store.retailGas = parseFloat(val);
+      
+      const slider = document.getElementById('gas-price-slider');
+      if (slider && slider.value !== val.toString()) slider.value = val;
+
+      const margin = (store.retailGas - globalState.wholesaleGas).toFixed(2);
+      document.getElementById('gas-price-label').textContent = `$${store.retailGas.toFixed(2)}/gal`;
+      document.getElementById('gas-margin-label').textContent = `${margin >= 0 ? '+' : ''}$${margin}`;
+      document.getElementById('gas-margin-label').style.color = margin >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+
+    function renderStoreSwitcherBar() {
+      const bar = document.getElementById('store-bar'); bar.innerHTML = '';
+      globalState.stores.forEach((store, idx) => {
+        const tab = document.createElement('div');
+        tab.className = `store-tab ${idx === globalState.activeStoreIndex ? 'active' : ''} ${!store.owned ? 'locked' : ''}`;
+        tab.innerHTML = `<span>${store.icon} ${store.name}</span><span style="font-size:0.65rem;">${store.owned ? 'OWNED' : `$${store.buyCost}`}</span>`;
+        tab.onclick = () => switchActiveStore(idx);
+        bar.appendChild(tab);
+      });
+    }
+
+    function switchActiveStore(idx) {
+      if (!globalState.stores[idx].owned) {
+        log(`Store #${idx + 1} locked! Purchase it in Franchise tab.`, 'error');
+        playSound('error'); return;
+      }
+      globalState.activeStoreIndex = idx;
+      renderStoreSwitcherBar(); renderShelves(); renderStations(); renderSupplyTab();
+      renderUpgradesTab(); renderStaffTab(); renderCustomerUI(); updateQueueUI();
+      renderAlerts(); renderDrawer(); updateGasPrice(getActiveStore().retailGas);
+      log(`Switched view to ${getActiveStore().name}.`, 'success');
+    }
+
+    const SAVE_KEY = 'gas_station_simulator_master_v1';
+
+    function saveGame() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(globalState));
+        log('Franchise empire state saved successfully!', 'success'); playSound('cash');
+      } catch (e) { log('Failed to save game.', 'error'); playSound('error'); }
+    }
+
+    function loadGame() {
+      try {
+        const savedData = localStorage.getItem(SAVE_KEY);
+        if (!savedData) { log('No saved data found.', 'error'); playSound('error'); return; }
+        const loaded = JSON.parse(savedData);
+        globalState = { ...globalState, ...loaded, shiftActive: true };
+        
+        globalState.stores.forEach(s => {
+          if (s.upgrades.expandedShelves) s.maxInventory = 30;
+          s.pumps.forEach(p => { p.timer = null; if (p.status === 'pumping') p.status = 'waiting'; });
+          s.carWash.timer = null; if (s.carWash.status === 'washing') s.carWash.status = 'waiting';
+        });
+
+        renderStoreSwitcherBar(); renderDrawer(); renderShelves(); renderStations();
+        renderSupplyTab(); renderUpgradesTab(); renderStaffTab(); renderFinanceTab();
+        renderEmpireTab(); renderAchievementsTab(); updateStats(); renderCustomerUI();
+        updateQueueUI(); renderAlerts(); updateGasPrice(getActiveStore().retailGas);
+        log('Franchise empire loaded successfully!', 'success'); playSound('cash');
+      } catch (e) { log('Failed to load saved game.', 'error'); playSound('error'); }
+    }
+
+    function resetGamePrompt() {
+      if (confirm('Are you sure you want to reset all game progress?')) {
+        localStorage.removeItem(SAVE_KEY); location.reload();
+      }
+    }
+
+    function openHelpModal() { document.getElementById('help-modal').style.display = 'flex'; }
+    function closeHelpModal() { document.getElementById('help-modal').style.display = 'none'; }
+
+    function gameLoop() {
+      setInterval(() => {
+        if (!globalState.shiftActive) return;
+        if (globalState.timeMinutes < 1320) {
+          globalState.timeMinutes += 1;
+          updateClockDisplay(); updateCustomerPatience(); updateLighting(); checkHealthInspector();
+        } else if (document.getElementById('end-day-modal').style.display !== 'flex') {
+          endShift();
+        }
+      }, 250);
+    }
+
+    function updateClockDisplay() {
+      const hrs = Math.floor(globalState.timeMinutes / 60);
+      const mins = globalState.timeMinutes % 60;
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      const formattedHrs = hrs % 12 === 0 ? 12 : hrs % 12;
+      const formattedMins = mins < 10 ? '0' + mins : mins;
+      document.getElementById('ui-time').textContent = `${formattedHrs}:${formattedMins} ${ampm}`;
+    }
+
+    function updateLighting() {
+      const m = globalState.timeMinutes; const body = document.body;
+      if (m >= 480 && m < 660) body.style.background = 'radial-gradient(circle at top, #38bdf8, #0f172a 80%)';
+      else if (m >= 660 && m < 1020) body.style.background = 'radial-gradient(circle at top, #0284c7, #090d16 80%)';
+      else if (m >= 1020 && m < 1200) body.style.background = 'radial-gradient(circle at top, #f97316, #1e1b4b 80%)';
+      else body.style.background = 'radial-gradient(circle at top, #312e81, #090d16 80%)';
+    }
+
+    function spawnCustomerTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      globalState.stores.forEach((store, sIdx) => {
+        if (!store.owned || store.queue.length >= 4) return;
+        if (globalState.weather.effect === 'rain' && Math.random() < 0.4) return;
+
+        let spawnChance = 0.4 * STORE_DEFINITIONS[sIdx].trafficMultiplier;
+        if (store.upgrades.neonSign) spawnChance *= 1.3;
+        if (globalState.activeCampaign) spawnChance *= globalState.activeCampaign.multiplier;
+
+        if (Math.random() < spawnChance) {
+          const availableKeys = Object.keys(store.inventory).filter(k => store.inventory[k] > 0);
+          if (availableKeys.length === 0) return;
+
+          let itemCount = Math.floor(Math.random() * 3) + 1;
+          const itemsToBuy = [];
+          for (let i = 0; i < itemCount; i++) {
+            const randKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+            if (store.inventory[randKey] > 0) {
+              itemsToBuy.push(randKey); store.inventory[randKey]--;
+            }
+          }
+
+          if (itemsToBuy.length === 0) return;
+          if (sIdx === globalState.activeStoreIndex) renderShelves();
+
+          const custDef = CUSTOMER_TYPES[Math.floor(Math.random() * (CUSTOMER_TYPES.length - 1))];
+          const newCust = {
+            id: Date.now() + Math.random(), avatar: custDef.avatar, type: custDef.type,
+            name: custDef.name, items: itemsToBuy, patience: 100
+          };
+
+          store.queue.push(newCust);
+          if (!store.currentCustomer) nextCustomerForStore(store);
+          else if (sIdx === globalState.activeStoreIndex) updateQueueUI();
+        }
+      });
+    }
+
+    function nextCustomerForStore(store) {
+      store.scannedItems = []; 
+      store.trayCents = [];
+      if (store.id === getActiveStore().id) renderTray();
+
+      if (store.queue.length > 0) {
+        store.currentCustomer = store.queue.shift();
+        let totalCents = 0;
+        store.currentCustomer.items.forEach(k => totalCents += Math.round(ITEMS[k].price * 100));
+        const totalDollars = totalCents / 100;
+        const paidOptions = [5, 10, 20, 50].filter(v => v >= totalDollars);
+        store.currentCustomer.paidCents = Math.round((paidOptions[Math.floor(Math.random() * paidOptions.length)] || totalDollars) * 100);
+
+        if (store.id === getActiveStore().id) { renderCustomerUI(); updateQueueUI(); }
+      } else {
+        store.currentCustomer = null;
+        if (store.id === getActiveStore().id) renderCustomerUI();
+      }
+    }
+
+    function updateCustomerPatience() {
+      const store = getActiveStore();
+      if (store.currentCustomer) {
+        store.currentCustomer.patience -= 0.4;
+        const fill = document.getElementById('cust-patience');
+        if (fill) {
+          fill.style.width = Math.max(0, store.currentCustomer.patience) + '%';
+          if (store.currentCustomer.patience < 30) fill.style.background = 'var(--accent-red)';
+          else if (store.currentCustomer.patience < 60) fill.style.background = 'var(--accent-amber)';
+          else fill.style.background = 'var(--accent-green)';
+        }
+
+        if (store.currentCustomer.patience <= 0) {
+          log(`${store.currentCustomer.name} left in frustration! (-5 Rating)`, 'error');
+          playSound('error');
+          globalState.reputation = Math.max(0, globalState.reputation - 5);
+          updateStats();
+          nextCustomerForStore(store);
+        }
+      }
+    }
+
+    function renderCustomerUI() {
+      const store = getActiveStore();
+      const counter = document.getElementById('counter-items');
+      const bubble = document.getElementById('thought-bubble');
+
+      if (!store.currentCustomer) {
+        document.getElementById('cust-avatar').textContent = '🏬';
+        document.getElementById('cust-name').textContent = 'Waiting for customer...';
+        document.getElementById('cust-patience').style.width = '0%';
+        bubble.style.display = 'none';
+        counter.innerHTML = '<span style="color:var(--text-muted); font-size:0.68rem;">Counter empty</span>';
+        updatePOSDisplay();
+        return;
+      }
+
+      if (store.upgrades.autoScanner || store.staff.cashier) {
+        store.currentCustomer.items.forEach((_, idx) => {
+          if (!store.scannedItems.includes(idx)) store.scannedItems.push(idx);
+        });
+      }
+
+      document.getElementById('cust-avatar').textContent = store.currentCustomer.avatar;
+      document.getElementById('cust-name').textContent = store.currentCustomer.name + (store.currentCustomer.type === 'vip' ? ' (VIP)' : '');
+
+      const icons = store.currentCustomer.items.map(k => ITEMS[k].icon).join('');
+      bubble.textContent = `💭 ${icons}`; bubble.style.display = 'block';
+
+      counter.innerHTML = '';
+      store.currentCustomer.items.forEach((itemKey, idx) => {
+        const item = ITEMS[itemKey];
+        const itemEl = document.createElement('div');
+        itemEl.className = 'scan-item' + (store.scannedItems.includes(idx) ? ' scanned' : '');
+        itemEl.innerHTML = `<span>${item.icon}</span> <span>$${item.price.toFixed(2)}</span>`;
+        itemEl.onclick = () => scanItem(idx);
+        counter.appendChild(itemEl);
+      });
+
+      updatePOSDisplay();
+    }
+
+    function updateQueueUI() {
+      const store = getActiveStore();
+      document.getElementById('queue-count').textContent = `Queue: ${store.queue.length}`;
+    }
+
+    function scanItem(idx, silent = false) {
+      const store = getActiveStore();
+      if (store.powerOutage) {
+        if (!silent) playSound('error');
+        log('POWER OUTAGE! Reset Circuit Breaker first!', 'error');
+        return;
+      }
+      if (!store.scannedItems.includes(idx)) {
+        store.scannedItems.push(idx);
+        if (!silent) {
+          playSound('scan');
+          renderCustomerUI();
+        }
+      }
+    }
+
+    function updatePOSDisplay() {
+      const store = getActiveStore();
+      if (store.powerOutage) {
+        document.getElementById('pos-total').textContent = '[NO POWER]';
+        document.getElementById('pos-paid').textContent = '[NO POWER]';
+        document.getElementById('pos-change').textContent = '[NO POWER]';
+        return;
+      }
+
+      let scannedCents = 0;
+      if (store.currentCustomer) {
+        store.scannedItems.forEach(idx => {
+          const key = store.currentCustomer.items[idx];
+          scannedCents += Math.round(ITEMS[key].price * 100);
+        });
+      }
+
+      const totalScannedAll = store.currentCustomer && (store.scannedItems.length === store.currentCustomer.items.length);
+      const paidCents = totalScannedAll ? store.currentCustomer.paidCents : 0;
+      const changeDueCents = Math.max(0, paidCents - scannedCents);
+
+      document.getElementById('pos-total').textContent = `$${(scannedCents / 100).toFixed(2)}`;
+      document.getElementById('pos-paid').textContent = `$${(paidCents / 100).toFixed(2)}`;
+      document.getElementById('pos-change').textContent = `$${(changeDueCents / 100).toFixed(2)}`;
+    }
+
+    function spawnPumpCarTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      globalState.stores.forEach(store => {
+        if (!store.owned || store.powerOutage) return;
+        const idlePump = store.pumps.find(p => p.status === 'idle');
+        if (idlePump && Math.random() < 0.5) {
+          idlePump.status = 'waiting'; idlePump.car = '🚗';
+          idlePump.timeLeft = store.upgrades.highFlowPumps ? 5 : 10;
+          if (store.id === getActiveStore().id) renderStations();
+        }
+      });
+    }
+
+    function spawnCarWashCarTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      globalState.stores.forEach(store => {
+        if (!store.owned || store.powerOutage) return;
+        if (store.carWash.status === 'idle' && Math.random() < 0.4) {
+          const types = [
+            { name: 'Basic Wash', price: 10 },
+            { name: 'Deluxe Wash', price: 20 },
+            { name: 'Ultimate Polish', price: 30 }
+          ];
+          const selected = types[Math.floor(Math.random() * types.length)];
+          store.carWash.status = 'waiting'; store.carWash.car = '🚘';
+          store.carWash.type = selected.name; store.carWash.price = selected.price;
+          store.carWash.washTimeLeft = 5;
+          if (store.id === getActiveStore().id) renderStations();
+        }
+      });
+    }
+
+    function renderStations() {
+      const store = getActiveStore();
+      const container = document.getElementById('stations-grid'); container.innerHTML = '';
+
+      store.pumps.forEach(pump => {
+        const card = document.createElement('div'); card.className = 'station-card';
+        let actionHTML = ''; let fillPct = 0; const maxTime = store.upgrades.highFlowPumps ? 5 : 10;
+
+        if (store.powerOutage) actionHTML = `<span style="font-size:0.62rem; color:var(--accent-red);">NO POWER</span>`;
+        else if (pump.status === 'idle') actionHTML = `<span style="font-size:0.65rem; color:var(--text-muted);">Idle</span>`;
+        else if (pump.status === 'waiting') actionHTML = `<button class="btn btn-amber" style="padding:2px 4px; font-size:0.62rem;" onclick="startPump(${pump.id})">🚗 PUMP</button>`;
+        else if (pump.status === 'pumping') {
+          actionHTML = `<button class="btn btn-red" style="padding:2px 4px; font-size:0.62rem;" onclick="stopPump(${pump.id})">🛑 STOP (${pump.timeLeft}s)</button>`;
+          fillPct = ((maxTime - pump.timeLeft) / maxTime) * 100;
+        } else if (pump.status === 'ready') {
+          const rev = (12 * store.retailGas).toFixed(2);
+          actionHTML = `<button class="btn btn-green" style="padding:2px 4px; font-size:0.62rem;" onclick="collectPump(${pump.id})">💵 $${rev}</button>`;
+          fillPct = 100;
+        }
+
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:bold;">
+            <span>Pump #${pump.id}</span><span>${pump.car || '⛽'}</span>
+          </div>
+          <div class="stock-indicator"><div class="stock-fill" style="width: ${fillPct}%;"></div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.62rem; color:var(--text-muted); text-transform:uppercase;">${pump.status}</span>
+            ${actionHTML}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      const washCard = document.createElement('div'); washCard.className = 'station-card';
+      let washActionHTML = '';
+      if (store.powerOutage) washActionHTML = `<span style="font-size:0.62rem; color:var(--accent-red);">NO POWER</span>`;
+      else if (store.carWash.status === 'idle') washActionHTML = `<span style="font-size:0.65rem; color:var(--text-muted);">Idle</span>`;
+      else if (store.carWash.status === 'waiting') washActionHTML = `<button class="btn btn-purple" style="padding:2px 4px; font-size:0.62rem;" onclick="startCarWash()">🧼 WASH ($${store.carWash.price})</button>`;
+      else if (store.carWash.status === 'washing') washActionHTML = `<span style="font-size:0.62rem; color:var(--accent-purple);">Washing (${store.carWash.washTimeLeft}s)</span>`;
+      else if (store.carWash.status === 'ready') washActionHTML = `<button class="btn btn-green" style="padding:2px 4px; font-size:0.62rem;" onclick="collectCarWash()">💵 COLLECT $${store.carWash.price}</button>`;
+
+      washCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:bold;">
+          <span>🚘 Car Wash</span><span>${store.carWash.car || '🧼'}</span>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-muted);">${store.carWash.type || 'Service'}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.62rem; color:var(--text-muted); text-transform:uppercase;">${store.carWash.status}</span>
+          ${washActionHTML}
+        </div>
+      `;
+      container.appendChild(washCard);
+
+      const coffeeCard = document.createElement('div'); coffeeCard.className = 'station-card';
+      coffeeCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:bold;">
+          <span>☕ Coffee Brewer</span><span>${store.coffeeBeans > 0 ? '🟢 Ready' : '🔴 Empty'}</span>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-muted);">Beans: <b>${store.coffeeBeans}/10</b></div>
+        <button class="btn btn-amber" style="padding:2px 4px; font-size:0.62rem; align-self:flex-end;" onclick="brewCoffee()">BREW ($5)</button>
+      `;
+      container.appendChild(coffeeCard);
+    }
+
+    function startPump(id) {
+      const store = getActiveStore(); if (store.powerOutage) return;
+      const pump = store.pumps.find(p => p.id === id);
+      if (pump && pump.status === 'waiting') {
+        pump.status = 'pumping'; pump.timeLeft = store.upgrades.highFlowPumps ? 5 : 10;
+        playSound('coin'); renderStations();
+        if (pump.timer) clearInterval(pump.timer);
+        pump.timer = setInterval(() => {
+          if (!globalState.shiftActive) { clearInterval(pump.timer); return; }
+          if (pump.status === 'pumping') {
+            pump.timeLeft--;
+            if (pump.timeLeft <= 0) { clearInterval(pump.timer); pump.status = 'ready'; playSound('cash'); }
+            if (store.id === getActiveStore().id) renderStations();
+          } else clearInterval(pump.timer);
+        }, 1000);
+      }
+    }
+
+    function stopPump(id) {
+      const store = getActiveStore(); const pump = store.pumps.find(p => p.id === id);
+      if (pump && pump.status === 'pumping') {
+        if (pump.timer) clearInterval(pump.timer);
+        if (pump.timeLeft <= 8 && pump.timeLeft >= 1) {
+          pump.status = 'ready'; playSound('cash'); log('Pump stopped cleanly!', 'success');
+        } else {
+          pump.status = 'idle'; pump.car = null; playSound('error'); log('Stopped too early! Tank underfilled.', 'error');
+        }
+        renderStations();
+      }
+    }
+
+    function collectPump(id) {
+      const store = getActiveStore(); const pump = store.pumps.find(p => p.id === id);
+      if (pump && pump.status === 'ready') {
+        const revenue = 12 * store.retailGas;
+        globalState.cash += revenue; globalState.dailyRevenueTotal += revenue; globalState.totalRevenueLifetime += revenue;
+        pump.status = 'idle'; pump.car = null; pump.timeLeft = 10; playSound('cash');
+        log(`Fuel sales collected! +$${revenue.toFixed(2)}`, 'success');
+        checkAchievements(); checkVictoryCondition(); updateStats(); renderStations();
+      }
+    }
+
+    function startCarWash() {
+      const store = getActiveStore(); if (store.powerOutage) return;
+      if (store.carWash.status === 'waiting') {
+        store.carWash.status = 'washing'; store.carWash.washTimeLeft = 5;
+        playSound('wash'); renderStations();
+        if (store.carWash.timer) clearInterval(store.carWash.timer);
+        store.carWash.timer = setInterval(() => {
+          if (!globalState.shiftActive) { clearInterval(store.carWash.timer); return; }
+          if (store.carWash.status === 'washing') {
+            store.carWash.washTimeLeft--;
+            if (store.carWash.washTimeLeft <= 0) { clearInterval(store.carWash.timer); store.carWash.status = 'ready'; playSound('cash'); }
+            if (store.id === getActiveStore().id) renderStations();
+          } else clearInterval(store.carWash.timer);
+        }, 1000);
+      }
+    }
+
+    function collectCarWash() {
+      const store = getActiveStore();
+      if (store.carWash.status === 'ready') {
+        const rev = store.carWash.price;
+        globalState.cash += rev; globalState.dailyRevenueTotal += rev; globalState.totalRevenueLifetime += rev;
+        store.carWash.status = 'idle'; store.carWash.car = null; playSound('cash');
+        log(`Car wash payment collected! +$${rev.toFixed(2)}`, 'success');
+        checkAchievements(); checkVictoryCondition(); updateStats(); renderStations();
+      }
+    }
+
+    function brewCoffee() {
+      const store = getActiveStore();
+      if (store.coffeeBeans >= 10) {
+        playSound('error'); log('Coffee brewer is already full!', 'error'); return;
+      }
+      if (globalState.cash >= 5.00) {
+        globalState.cash -= 5.00; store.coffeeBeans = 10; playSound('wash');
+        log('Fresh coffee brewed!', 'success'); updateStats(); renderStations();
+      } else { playSound('error'); log('Not enough cash to brew coffee!', 'error'); }
+    }
+
+    function spawnSpillTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      globalState.stores.forEach(store => {
+        if (!store.owned) return;
+        if (store.spills.length < 2 && Math.random() < 0.5) {
+          store.spills.push({ id: Date.now() + Math.random(), name: Math.random() > 0.5 ? '🛢️ Oil Spill' : '🗑️ Trash Mess' });
+          if (store.id === getActiveStore().id) renderAlerts();
+        }
+      });
+    }
+
+    function spawnThiefTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      globalState.stores.forEach(store => {
+        if (!store.owned) return;
+        if (store.thieves.length === 0 && Math.random() < 0.35) {
+          if (store.staff.janitor) return;
+          store.thieves.push({ id: Date.now() + Math.random(), name: '🥷 Shoplifter Alert!' });
+          if (store.id === getActiveStore().id) { playSound('siren'); renderAlerts(); log('SECURITY ALERT: Shoplifter in store!', 'error'); }
+        }
+      });
+    }
+
+    function spawnOutageTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      const store = getActiveStore();
+      if (!store.powerOutage && Math.random() < 0.25) {
+        store.powerOutage = true; playSound('siren');
+        renderAlerts(); renderStations(); updatePOSDisplay();
+        log('POWER OUTAGE! Blown fuse detected!', 'error');
+      }
+    }
+
+    function spawnDeliveryTruckTick() {
+      if (!globalState.shiftActive || globalState.timeMinutes >= 1300) return;
+      const store = getActiveStore();
+      if (!store.truckDiscount && Math.random() < 0.3) {
+        store.truckDiscount = true; renderAlerts();
+        log('TRUCK DELIVERY: Bulk 50% discount stock available!', 'success');
+      }
+    }
+
+    function checkHealthInspector() {
+      if (globalState.timeMinutes >= 780 && !globalState.healthInspectorChecked) {
+        globalState.healthInspectorChecked = true;
+        const store = getActiveStore();
+        if (store.spills.length === 0) {
+          globalState.cash += 150; globalState.reputation = Math.min(100, globalState.reputation + 5);
+          playSound('cash'); log('HEALTH INSPECTION PASSED! Clean store bonus +$150 +5⭐!', 'success');
+        } else {
+          globalState.cash = Math.max(0, globalState.cash - 100); globalState.reputation = Math.max(0, globalState.reputation - 10);
+          playSound('error'); log('HEALTH INSPECTION FAILED! Dirty spills fine -$100 -10⭐!', 'error');
+        }
+        updateStats();
+      }
+    }
+
+    function resetBreaker() {
+      const store = getActiveStore(); store.powerOutage = false; playSound('scan');
+      renderAlerts(); renderStations(); updatePOSDisplay();
+      log('Circuit breaker reset! Power restored.', 'success');
+    }
+
+    function claimTruckDiscount() {
+      const store = getActiveStore();
+      Object.keys(store.inventory).forEach(k => store.inventory[k] = store.maxInventory);
+      store.truckDiscount = false; playSound('cash'); renderShelves(); renderAlerts();
+      log('Claimed bulk truck inventory restock!', 'success');
+    }
+
+    function renderAlerts() {
+      const store = getActiveStore(); const area = document.getElementById('alerts-area');
+      if (store.spills.length === 0 && store.thieves.length === 0 && !store.powerOutage && !store.truckDiscount) {
+        area.innerHTML = '<span style="color:var(--text-muted); font-size:0.68rem;">Floor clean & secure.</span>'; return;
+      }
+      area.innerHTML = '';
+
+      if (store.powerOutage) {
+        const badge = document.createElement('div'); badge.className = 'alert-badge alert-active';
+        badge.innerHTML = `<span>⚡ Power Outage</span> <span style="font-size:0.6rem;">(RESET BREAKER)</span>`;
+        badge.onclick = () => resetBreaker(); area.appendChild(badge);
+      }
+
+      if (store.truckDiscount) {
+        const badge = document.createElement('div'); badge.className = 'alert-badge';
+        badge.style.borderColor = 'var(--accent-green)'; badge.style.color = '#a7f3d0';
+        badge.innerHTML = `<span>🚚 Discount Truck</span> <span style="font-size:0.6rem;">(CLAIM STOCK)</span>`;
+        badge.onclick = () => claimTruckDiscount(); area.appendChild(badge);
+      }
+
+      store.spills.forEach(spill => {
+        const badge = document.createElement('div'); badge.className = 'alert-badge';
+        badge.innerHTML = `<span>${spill.name}</span> <span style="font-size:0.6rem;">(Clean)</span>`;
+        badge.onclick = () => cleanSpill(spill.id); area.appendChild(badge);
+      });
+
+      store.thieves.forEach(thief => {
+        const badge = document.createElement('div'); badge.className = 'alert-badge alert-active';
+        badge.innerHTML = `<span>${thief.name}</span> <span style="font-size:0.6rem;">(SPOTLIGHT)</span>`;
+        badge.onclick = () => catchThief(thief.id); area.appendChild(badge);
+      });
+    }
+
+    function cleanSpill(id) {
+      const store = getActiveStore(); store.spills = store.spills.filter(s => s.id !== id);
+      globalState.spillsCleanedCount++; playSound('scan'); renderAlerts();
+      log('Cleaned floor spill.', 'success'); checkAchievements();
+    }
+
+    function catchThief(id) {
+      const store = getActiveStore(); store.thieves = store.thieves.filter(t => t.id !== id);
+      globalState.thievesCaughtCount++; globalState.cash += 25.00; playSound('cash');
+      renderAlerts(); log('CAUGHT SHOPLIFTER! Recovered items + $25 bounty!', 'success');
+      checkAchievements(); updateStats();
+    }
+
+    function renderDrawer() {
+      const drawer = document.getElementById('drawer-grid'); drawer.innerHTML = '';
+      MONEY_PIECES.forEach(m => {
+        const btn = document.createElement('div'); btn.className = `money-btn ${m.type}`;
+        btn.textContent = `${m.label}`; btn.title = `Key [${m.key}]`;
+        btn.onclick = () => addCentsToTray(m.val); drawer.appendChild(btn);
+      });
+    }
+
+    function addCentsToTray(cents) {
+      playSound('coin'); const store = getActiveStore();
+      store.trayCents.push(cents); renderTray();
+    }
+
+    function renderTray() {
+      const store = getActiveStore(); const box = document.getElementById('tray-box'); box.innerHTML = '';
+      store.trayCents.forEach((cents, idx) => {
+        const item = document.createElement('span');
+        item.style.cssText = 'background:#334155; padding:2px 5px; border-radius:4px; font-size:0.68rem; cursor:pointer; font-weight:bold;';
+        item.textContent = cents >= 100 ? `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}` : `${cents}¢`;
+        item.onclick = () => { store.trayCents.splice(idx, 1); playSound('coin'); renderTray(); };
+        box.appendChild(item);
+      });
+    }
+
+    function clearTray() {
+      const store = getActiveStore(); store.trayCents = []; renderTray();
+    }
+
+    function submitChange() {
+      const store = getActiveStore();
+      if (!store.currentCustomer) return;
+      if (store.powerOutage) { log('POWER OUTAGE! Reset Circuit Breaker first!', 'error'); playSound('error'); return; }
+      if (store.scannedItems.length < store.currentCustomer.items.length) { log('Error: Scan all items first!', 'error'); playSound('error'); return; }
+
+      let totalCents = 0;
+      store.currentCustomer.items.forEach(k => totalCents += Math.round(ITEMS[k].price * 100));
+
+      const requiredChangeCents = store.currentCustomer.paidCents - totalCents;
+      const givenChangeCents = store.trayCents.reduce((a, b) => a + b, 0);
+
+      if (requiredChangeCents === givenChangeCents) {
+        let tip = 0;
+        if (store.currentCustomer.type === 'vip') tip += 5.00;
+        if (store.coffeeBeans > 0 && Math.random() < 0.4) { tip += 2.00; store.coffeeBeans--; renderStations(); }
+
+        const totalEarned = (totalCents / 100) + tip;
+        playSound('cash');
+        log(`Served ${store.currentCustomer.name}! +$${totalEarned.toFixed(2)}${tip > 0 ? ` (Tip: $${tip.toFixed(2)})` : ''}`, 'success');
+
+        globalState.cash += totalEarned; globalState.dailyRevenueTotal += totalEarned; globalState.totalRevenueLifetime += totalEarned;
+        globalState.dailyServedTotal++; globalState.totalServedLifetime++;
+        globalState.reputation = Math.min(100, globalState.reputation + 1);
+
+        checkAchievements(); checkVictoryCondition(); updateStats(); nextCustomerForStore(store);
+      } else {
+        playSound('error');
+        log(`Wrong change! Needed $${(requiredChangeCents / 100).toFixed(2)}, gave $${(givenChangeCents / 100).toFixed(2)}`, 'error');
+        globalState.reputation = Math.max(0, globalState.reputation - 3); updateStats();
+      }
+    }
+
+    function renderShelves() {
+      const store = getActiveStore(); const grid = document.getElementById('shelves-grid'); grid.innerHTML = '';
+      Object.keys(ITEMS).forEach(key => {
+        const item = ITEMS[key]; const count = store.inventory[key]; const pct = (count / store.maxInventory) * 100;
+        const card = document.createElement('div'); card.className = 'shelf-card';
+        card.innerHTML = `
+          <div class="shelf-header"><span>${item.icon} ${item.name}</span><span style="color:var(--accent-green)">$${item.price.toFixed(2)}</span></div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">Stock: <b>${count}/${store.maxInventory}</b></div>
+          <div class="stock-indicator"><div class="stock-fill" style="width: ${pct}%; background:${pct < 25 ? 'var(--accent-red)' : 'var(--accent-cyan)'}"></div></div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function switchTab(tab) {
+      const tabs = ['supply', 'pricing', 'upgrades', 'staff', 'finance', 'empire', 'achieve', 'settings'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', tab === t);
+        document.getElementById(`tab-content-${t}`).style.display = tab === t ? 'flex' : 'none';
+      });
+    }
+
+    function renderSupplyTab() {
+      const list = document.getElementById('supply-list'); list.innerHTML = '';
+      Object.keys(ITEMS).forEach(key => {
+        const item = ITEMS[key]; const cost = item.cost * item.boxSize;
+        const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${item.icon} ${item.name} (+${item.boxSize})</div><div style="font-size:0.62rem; color:var(--text-muted);">Cost: $${cost.toFixed(2)}</div></div>
+          <button class="btn btn-amber ${globalState.cash < cost ? 'btn-disabled' : ''}" onclick="orderStock('${key}')">BUY</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function orderStock(key) {
+      const store = getActiveStore(); const item = ITEMS[key]; const cost = item.cost * item.boxSize;
+      if (globalState.cash >= cost) {
+        globalState.cash -= cost; store.inventory[key] = Math.min(store.maxInventory, store.inventory[key] + item.boxSize);
+        playSound('cash'); log(`Ordered ${item.name} crate`, 'success');
+        updateStats(); renderShelves(); renderSupplyTab();
+      } else { playSound('error'); log('Not enough cash!', 'error'); }
+    }
+
+    function renderUpgradesTab() {
+      const store = getActiveStore(); const list = document.getElementById('upgrades-list'); list.innerHTML = '';
+      const upgrades = [
+        { id: 'autoScanner', name: 'Auto-Scanner', cost: 150, desc: 'Instantly scans barcodes.' },
+        { id: 'expandedShelves', name: 'Expanded Shelves', cost: 200, desc: 'Shelf capacity to 30.' },
+        { id: 'autoCarWash', name: 'Automatic Car Wash', cost: 250, desc: 'Auto-washes cars & collects fee.' },
+        { id: 'highFlowPumps', name: 'High-Flow Pumps', cost: 175, desc: 'Cuts pumping time in half (5s).' },
+        { id: 'neonSign', name: 'Neon Ad Sign', cost: 300, desc: '+30% customer traffic.' }
+      ];
+
+      upgrades.forEach(u => {
+        const bought = store.upgrades[u.id]; const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${u.name}</div><div style="font-size:0.62rem; color:var(--text-muted);">${u.desc}</div><div style="font-size:0.62rem; color:var(--accent-amber);">$${u.cost}</div></div>
+          <button class="btn ${bought ? 'btn-disabled' : 'btn-green'}" onclick="buyUpgrade('${u.id}', ${u.cost})">${bought ? 'OWNED' : 'BUY'}</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function buyUpgrade(id, cost) {
+      const store = getActiveStore(); if (store.upgrades[id]) return;
+      if (globalState.cash >= cost) {
+        globalState.cash -= cost; store.upgrades[id] = true;
+        if (id === 'expandedShelves') { store.maxInventory = 30; renderShelves(); }
+        playSound('cash'); log('Upgrade purchased!', 'success'); updateStats(); renderUpgradesTab();
+      } else { playSound('error'); log('Not enough cash!', 'error'); }
+    }
+
+    function renderStaffTab() {
+      const store = getActiveStore(); const list = document.getElementById('staff-list'); list.innerHTML = '';
+      const staffMembers = [
+        { id: 'cashier', name: 'Automated Cashier', cost: 300, desc: 'Auto-completes checkouts.' },
+        { id: 'stocker', name: 'Automated Stocker', cost: 250, desc: 'Auto-buys wholesale stock.' },
+        { id: 'gasAttendant', name: 'Gas Attendant', cost: 350, desc: 'Auto-pumps gas & collects fee.' },
+        { id: 'janitor', name: 'Security & Janitor', cost: 200, desc: 'Cleans spills & stops thieves.' }
+      ];
+
+      staffMembers.forEach(s => {
+        const hired = store.staff[s.id]; const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${s.name}</div><div style="font-size:0.62rem; color:var(--text-muted);">${s.desc}</div><div style="font-size:0.62rem; color:var(--accent-amber);">$${s.cost}</div></div>
+          <button class="btn ${hired ? 'btn-disabled' : 'btn-green'}" onclick="hireStaff('${s.id}', ${s.cost})">${hired ? 'HIRED' : 'HIRE'}</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function hireStaff(id, cost) {
+      const store = getActiveStore(); if (store.staff[id]) return;
+      if (globalState.cash >= cost) {
+        globalState.cash -= cost; store.staff[id] = true; playSound('cash');
+        log('Staff member hired!', 'success'); updateStats(); renderStaffTab();
+      } else { playSound('error'); log('Not enough cash!', 'error'); }
+    }
+
+    function renderFinanceTab() {
+      const box = document.getElementById('finance-box'); box.innerHTML = '';
+
+      const loanCard = document.createElement('div'); loanCard.className = 'action-card';
+      loanCard.style.flexDirection = 'column'; loanCard.style.alignItems = 'stretch'; loanCard.style.gap = '6px';
+      loanCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.75rem;">
+          <span>Franchise Bank Loan</span><span>Principal: $${globalState.loanPrincipal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button class="btn btn-amber" style="flex:1;" onclick="takeLoan(500)">BORROW $500</button>
+          <button class="btn btn-amber" style="flex:1;" onclick="takeLoan(1500)">BORROW $1,500</button>
+          <button class="btn btn-green" style="flex:1;" onclick="repayLoan()">REPAY LOAN</button>
+        </div>
+      `;
+      box.appendChild(loanCard);
+
+      const campaigns = [
+        { name: 'Flyer Blast', cost: 50, multiplier: 1.3, label: 'Flyers ($50 / +30% Traffic)' },
+        { name: 'Radio Spot', cost: 120, multiplier: 1.6, label: 'Radio ($120 / +60% Traffic)' },
+        { name: 'Billboard Campaign', cost: 250, multiplier: 2.2, label: 'Billboard ($250 / +120% Traffic)' }
+      ];
+
+      campaigns.forEach(c => {
+        const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${c.name}</div><div style="font-size:0.62rem; color:var(--text-muted);">${c.label}</div></div>
+          <button class="btn btn-purple" onclick="launchCampaign('${c.name}', ${c.cost}, ${c.multiplier})">LAUNCH</button>
+        `;
+        box.appendChild(card);
+      });
+    }
+
+    function takeLoan(amt) {
+      if (globalState.loanPrincipal >= 3000) { log('Loan limit ($3,000) reached!', 'error'); playSound('error'); return; }
+      globalState.cash += amt; globalState.loanPrincipal += amt; playSound('cash');
+      log(`Bank loan approved! +$${amt} (5% daily interest)`, 'success'); updateStats(); renderFinanceTab();
+    }
+
+    function repayLoan() {
+      if (globalState.loanPrincipal === 0) {
+        log('No active loan to repay.', 'error'); playSound('error'); return;
+      }
+      const payAmount = Math.min(globalState.cash, globalState.loanPrincipal);
+      if (payAmount > 0) {
+        globalState.cash -= payAmount;
+        globalState.loanPrincipal -= payAmount;
+        playSound('cash');
+        log(`Repaid $${payAmount.toFixed(2)} towards bank loan. Remaining: $${globalState.loanPrincipal.toFixed(2)}`, 'success');
+        updateStats(); renderFinanceTab();
+      } else {
+        playSound('error'); log('Not enough cash to repay loan!', 'error');
+      }
+    }
+
+    function launchCampaign(name, cost, mult) {
+      if (globalState.cash >= cost) {
+        globalState.cash -= cost; globalState.activeCampaign = { name: name, multiplier: mult };
+        document.getElementById('ad-campaign-text').textContent = `📢 Campaign: ${name} (+${Math.round((mult-1)*100)}%)`;
+        playSound('cash'); log(`Launched ${name}! Traffic boosted!`, 'success'); updateStats();
+      } else { playSound('error'); log('Not enough cash for ad campaign!', 'error'); }
+    }
+
+    function renderEmpireTab() {
+      const list = document.getElementById('empire-list'); list.innerHTML = '';
+      globalState.stores.forEach((store, idx) => {
+        const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${store.icon} Store #${idx + 1}: ${store.name}</div><div style="font-size:0.62rem; color:var(--text-muted);">Traffic: x${STORE_DEFINITIONS[idx].trafficMultiplier} | Rent: $${STORE_DEFINITIONS[idx].rent}/day</div></div>
+          <button class="btn ${store.owned ? 'btn-disabled' : 'btn-purple'}" onclick="buyStoreLocation(${idx})">${store.owned ? 'OWNED' : `PURCHASE $${store.buyCost}`}</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function buyStoreLocation(idx) {
+      const store = globalState.stores[idx]; if (store.owned) return;
+      if (globalState.cash >= store.buyCost) {
+        globalState.cash -= store.buyCost; store.owned = true; playSound('cash');
+        log(`PURCHASED STORE LOCATION: ${store.name}!`, 'success');
+        checkAchievements(); checkVictoryCondition(); renderStoreSwitcherBar(); renderEmpireTab(); updateStats();
+      } else { playSound('error'); log('Not enough cash to buy location!', 'error'); }
+    }
+
+    function renderAchievementsTab() {
+      const list = document.getElementById('achieve-list'); list.innerHTML = '';
+      globalState.achievements.forEach(a => {
+        const card = document.createElement('div'); card.className = 'action-card';
+        card.innerHTML = `
+          <div><div style="font-weight:bold; font-size:0.72rem;">${a.unlocked ? '🏆' : '🔒'} ${a.name}</div><div style="font-size:0.62rem; color:var(--text-muted);">${a.desc}</div></div>
+          <span style="font-size:0.68rem; font-weight:bold; color:${a.unlocked ? 'var(--accent-green)' : 'var(--text-muted)'}">${a.unlocked ? 'CLAIMED' : `+$${a.reward}`}</span>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function checkAchievements() {
+      const ownedStoresCount = globalState.stores.filter(s => s.owned).length;
+      globalState.achievements.forEach(a => {
+        if (!a.unlocked) {
+          let pass = false;
+          if (a.id === 'first_shift' && globalState.day > 1) pass = true;
+          if (a.id === 'served_20' && globalState.totalServedLifetime >= 20) pass = true;
+          if (a.id === 'clean_freak' && globalState.spillsCleanedCount >= 5) pass = true;
+          if (a.id === 'catch_thief' && globalState.thievesCaughtCount >= 1) pass = true;
+          if (a.id === 'multi_store' && ownedStoresCount >= 2) pass = true;
+          if (a.id === 'big_earner' && globalState.totalRevenueLifetime >= 2000) pass = true;
+
+          if (pass) {
+            a.unlocked = true; globalState.cash += a.reward; playSound('cash');
+            log(`ACHIEVEMENT UNLOCKED: ${a.name} (+$${a.reward})`, 'success');
+            renderAchievementsTab(); updateStats();
+          }
+        }
+      });
+    }
+
+    function checkVictoryCondition() {
+      const allOwned = globalState.stores.every(s => s.owned);
+      if (allOwned && globalState.cash >= 5000 && globalState.reputation >= 100 && !globalState.hasWon) {
+        globalState.hasWon = true; triggerVictory();
+      }
+    }
+
+    function triggerVictory() {
+      document.getElementById('win-cash').textContent = `$${globalState.cash.toFixed(2)}`;
+      document.getElementById('win-revenue').textContent = `$${globalState.totalRevenueLifetime.toFixed(2)}`;
+      document.getElementById('win-served').textContent = globalState.totalServedLifetime;
+      document.getElementById('victory-modal').style.display = 'flex';
+      startConfetti();
+    }
+
+    function closeVictoryModal() {
+      document.getElementById('victory-modal').style.display = 'none';
+    }
+
+    function startConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+      const particles = Array.from({ length: 60 }, () => ({
+        x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
+        color: ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random() * 5)],
+        size: Math.random() * 6 + 4, speed: Math.random() * 3 + 2
+      }));
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.y += p.speed; if (p.y > canvas.height) p.y = -10;
+          ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        if (document.getElementById('victory-modal').style.display === 'flex') requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    function staffAutomationTick() {
+      if (!globalState.shiftActive) return;
+
+      globalState.stores.forEach(store => {
+        if (!store.owned) return;
+
+        if (store.staff.cashier && store.currentCustomer && !store.powerOutage) {
+          store.currentCustomer.items.forEach((_, idx) => { if (!store.scannedItems.includes(idx)) store.scannedItems.push(idx); });
+          let totalCents = 0; store.currentCustomer.items.forEach(k => totalCents += Math.round(ITEMS[k].price * 100));
+          const requiredChangeCents = store.currentCustomer.paidCents - totalCents;
+          store.trayCents = [requiredChangeCents];
+
+          if (store.id === getActiveStore().id) submitChange();
+          else {
+            const totalEarned = totalCents / 100;
+            globalState.cash += totalEarned; globalState.dailyRevenueTotal += totalEarned; globalState.totalRevenueLifetime += totalEarned;
+            globalState.dailyServedTotal++; globalState.totalServedLifetime++;
+            nextCustomerForStore(store);
+          }
+        }
+
+        if (store.staff.stocker) {
+          Object.keys(store.inventory).forEach(key => {
+            if (store.inventory[key] <= 3) {
+              const item = ITEMS[key]; const cost = item.cost * item.boxSize;
+              if (globalState.cash >= cost) {
+                globalState.cash -= cost; store.inventory[key] = Math.min(store.maxInventory, store.inventory[key] + item.boxSize);
+                if (store.id === getActiveStore().id) renderShelves();
+              }
+            }
+          });
+        }
+
+        if (store.staff.gasAttendant && !store.powerOutage) {
+          store.pumps.forEach(pump => {
+            if (pump.status === 'waiting') {
+              pump.status = 'pumping'; pump.timeLeft = store.upgrades.highFlowPumps ? 5 : 10;
+            } else if (pump.status === 'pumping' && pump.timeLeft <= 0) {
+              pump.status = 'ready';
+            } else if (pump.status === 'ready') {
+              const rev = 12 * store.retailGas;
+              globalState.cash += rev; globalState.dailyRevenueTotal += rev; globalState.totalRevenueLifetime += rev;
+              pump.status = 'idle'; pump.car = null;
+              if (store.id === getActiveStore().id) renderStations();
+            }
+          });
+        }
+
+        if (store.upgrades.autoCarWash && store.carWash.status === 'waiting' && !store.powerOutage) {
+          const rev = store.carWash.price;
+          globalState.cash += rev; globalState.dailyRevenueTotal += rev; globalState.totalRevenueLifetime += rev;
+          store.carWash.status = 'idle'; store.carWash.car = null;
+          if (store.id === getActiveStore().id) renderStations();
+        }
+
+        if (store.staff.janitor && store.spills.length > 0) {
+          store.spills.pop(); if (store.id === getActiveStore().id) renderAlerts();
+        }
+      });
+
+      updateStats(); checkVictoryCondition();
+    }
+
+    function updateStats() {
+      document.getElementById('ui-day').textContent = globalState.day;
+      document.getElementById('ui-cash').textContent = `$${globalState.cash.toFixed(2)}`;
+      document.getElementById('ui-rep').textContent = `${Math.round(globalState.reputation)}⭐`;
+      renderSupplyTab(); renderUpgradesTab(); renderStaffTab(); renderFinanceTab(); renderEmpireTab();
+    }
+
+    function log(msg, type = '') {
+      const logDiv = document.getElementById('log'); const entry = document.createElement('div');
+      entry.className = `log-entry ${type === 'success' ? 'log-success' : type === 'error' ? 'log-error' : ''}`;
+      entry.textContent = `[${document.getElementById('ui-time').textContent}] ${msg}`;
+      logDiv.appendChild(entry); logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function endShift() {
+      globalState.shiftActive = false;
+
+      let totalRent = 0;
+      globalState.stores.forEach(s => { if (s.owned) totalRent += STORE_DEFINITIONS[s.id].rent; });
+      const loanInterest = parseFloat((globalState.loanPrincipal * 0.05).toFixed(2));
+      const totalExpenses = totalRent + loanInterest;
+      const profit = globalState.dailyRevenueTotal - totalExpenses;
+
+      globalState.cash = Math.max(0, globalState.cash - totalExpenses);
+      globalState.activeCampaign = null;
+      document.getElementById('ad-campaign-text').textContent = '📢 Campaign: None';
+
+      document.getElementById('summary-served').textContent = globalState.dailyServedTotal;
+      document.getElementById('summary-revenue').textContent = `$${globalState.dailyRevenueTotal.toFixed(2)}`;
+      document.getElementById('summary-rent').textContent = `-$${totalRent.toFixed(2)}`;
+      document.getElementById('summary-interest').textContent = `-$${loanInterest.toFixed(2)}`;
+      document.getElementById('summary-profit').textContent = `$${profit.toFixed(2)}`;
+      document.getElementById('summary-profit').style.color = profit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+      document.getElementById('end-day-modal').style.display = 'flex';
+      checkAchievements(); checkVictoryCondition();
+    }
+
+    function startNextDay() {
+      globalState.day++; globalState.timeMinutes = 480; globalState.dailyServedTotal = 0;
+      globalState.dailyRevenueTotal = 0; globalState.shiftActive = true;
+      document.getElementById('end-day-modal').style.display = 'none';
+      selectDailyWeather(); updateStats(); log(`--- SHIFT ${globalState.day} STARTED ---`);
+    }
+  </script>
+</body>
+</html>

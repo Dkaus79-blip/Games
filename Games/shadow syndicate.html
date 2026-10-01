@@ -1,0 +1,2745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Syndicate: Ultimate Empire Edition v12.0 (Complete)</title>
+    <style>
+        :root {
+            --bg-color: #080b10;
+            --panel-bg: #0f141d;
+            --border-color: #1e2636;
+            --text-main: #d0d7de;
+            --text-muted: #8b949e;
+            --accent-green: #2ea043;
+            --accent-red: #da3633;
+            --accent-blue: #58a6ff;
+            --accent-yellow: #d29922;
+            --accent-purple: #bc8cff;
+            --tier-1: #3fb950;
+            --tier-2: #d29922;
+            --tier-3: #f85149;
+            --tier-4: #a371f7;
+            --tier-5: #ff0055;
+            --neon-glow: 0 0 10px rgba(88, 166, 255, 0.3);
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        textarea, input { user-select: text; }
+
+        body.manhunt-flash { animation: flashRed 0.6s infinite alternate; }
+        @keyframes flashRed {
+            0% { background-color: var(--bg-color); }
+            100% { background-color: #3d0303; }
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .title-group { display: flex; align-items: center; gap: 12px; }
+
+        .avatar-box {
+            font-size: 1.5rem;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .avatar-box:hover { background: rgba(255,255,255,0.1); }
+
+        .org-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed var(--accent-blue);
+            color: var(--accent-blue);
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: bold;
+            width: 190px;
+            padding-bottom: 2px;
+            outline: none;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-item span { color: var(--accent-green); font-weight: bold; }
+        .heat-tier-badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            color: #fff;
+            text-shadow: 0 0 3px #000;
+        }
+
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            animation: floatUp 1.2s ease-out forwards;
+            z-index: 9999;
+            text-shadow: 0 0 5px #000;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.1); }
+        }
+
+        .news-ticker {
+            background-color: #05070a;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--accent-yellow);
+            font-size: 0.75rem;
+            padding: 5px 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 230px 1fr 300px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar-left, .sidebar-right {
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-right { border-right: none; border-left: 1px solid var(--border-color); }
+
+        .section-title {
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(255,255,255,0.02);
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 7px 12px;
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-btn:hover {
+            background-color: rgba(255,255,255,0.04);
+            color: var(--accent-blue);
+            box-shadow: inset 3px 0 0 var(--accent-blue);
+        }
+
+        .nav-btn.active {
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .content-area {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-panel { display: none; flex-direction: column; gap: 16px; }
+        .tab-panel.active { display: flex; }
+
+        .card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .card:hover { border-color: rgba(88, 166, 255, 0.4); }
+
+        .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        button.action-btn {
+            background-color: #1c2128;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 10px;
+            font-family: var(--font-mono);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        button.action-btn:hover:not(:disabled) {
+            background-color: #2d333b;
+            border-color: var(--accent-blue);
+            color: #fff;
+            box-shadow: var(--neon-glow);
+        }
+
+        button.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        button.action-btn.primary {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #fff;
+        }
+
+        button.action-btn.primary:hover:not(:disabled) {
+            background-color: #3fb950;
+            box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
+        }
+
+        .multiplier-bar {
+            display: flex;
+            gap: 4px;
+            background: #05070a;
+            padding: 3px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .multiplier-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .multiplier-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .list-item {
+            background-color: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .list-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .list-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2px;
+            font-size: 0.75rem;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--border-color);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--accent-blue);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .log-container {
+            flex: 1;
+            background-color: #05070a;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 180px;
+        }
+
+        .log-entry {
+            border-left: 2px solid var(--border-color);
+            padding-left: 6px;
+            color: var(--text-muted);
+        }
+
+        .log-entry.success { border-left-color: var(--accent-green); color: var(--text-main); }
+        .log-entry.warning { border-left-color: var(--accent-yellow); color: var(--text-main); }
+        .log-entry.danger { border-left-color: var(--accent-red); color: #ffa198; }
+        .log-entry.event { border-left-color: var(--accent-purple); color: #d2a8ff; }
+
+        .badge {
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+
+        #city-map-canvas {
+            background-color: #05070a;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 100%;
+            height: 220px;
+            cursor: pointer;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .tech-card {
+            background-color: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); z-index:2000; justify-content:center; align-items:center;
+            backdrop-filter: blur(3px);
+        }
+
+        #autosave-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(46, 160, 67, 0.2);
+        }
+
+        .hotkey-tag {
+            font-size: 0.6rem;
+            background: rgba(255,255,255,0.08);
+            padding: 1px 4px;
+            border-radius: 2px;
+            color: var(--accent-yellow);
+            border: 1px solid rgba(210, 153, 34, 0.3);
+        }
+
+        @media (max-width: 1100px) {
+            main { grid-template-columns: 1fr; overflow-y: auto; }
+            body { overflow: auto; height: auto; }
+            .sidebar-left, .sidebar-right { max-height: 240px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="autosave-toast">Game Auto-Saved</div>
+
+    <header>
+        <div class="title-group">
+            <div class="avatar-box" id="player-avatar-btn" onclick="cycleAvatar()" title="Click to change Avatar">🕵️‍♂️</div>
+            <div>
+                <input type="text" class="org-input" id="org-name-input" value="Shadow Syndicate" onchange="updateOrgName(this.value)">
+                <div style="font-size:0.7rem; color:var(--accent-purple);" id="player-title-display">Rank: Boss (Lvl 1)</div>
+            </div>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-item">Level: <span id="stat-level" style="color:var(--accent-purple);">1</span> (<span id="stat-xp">0</span> XP)</div>
+            <div class="stat-item">Dirty: <span id="stat-dirty">$0</span></div>
+            <div class="stat-item">Clean: <span id="stat-clean">$1,000</span></div>
+            <div class="stat-item">
+                Heat: <span id="stat-heat" style="color:var(--accent-red);">0</span>% 
+                <span id="heat-tier-display" class="heat-tier-badge" style="background-color:var(--accent-green);">Tier 0: Clear</span>
+            </div>
+            <div class="stat-item">Loyalty: <span id="stat-loyalty" style="color:var(--accent-green);">100%</span></div>
+            <div class="stat-item">Inf: <span id="stat-influence">0</span></div>
+            <div class="stat-item" style="color:var(--accent-yellow);">Prestige: <span id="stat-prestige-tokens">0</span> 👑</div>
+        </div>
+    </header>
+
+    <div class="news-ticker">
+        <span id="news-ticker-text">[INTEL] Offline Progress, Bulk Multipliers, Tactical Combat, and Hotkeys active. Expansion v12.0 online.</span>
+        <span id="econ-indicator" style="color:var(--accent-blue);">Market: Normal (Inflation: 0%)</span>
+    </div>
+
+    <main>
+        <!-- Left Sidebar Navigation -->
+        <nav class="sidebar-left">
+            <div class="section-title">
+                Empire HQ
+                <div class="multiplier-bar">
+                    <button class="multiplier-btn active" id="mult-1" onclick="setBuyMultiplier(1)">1x</button>
+                    <button class="multiplier-btn" id="mult-10" onclick="setBuyMultiplier(10)">10x</button>
+                    <button class="multiplier-btn" id="mult-max" onclick="setBuyMultiplier('max')">MAX</button>
+                </div>
+            </div>
+            <button class="nav-btn active" onclick="switchTab('terminal')"><span>1. Crimes & Rackets</span> <span class="hotkey-tag">[1]</span></button>
+            <button class="nav-btn" onclick="switchTab('laundering')"><span>2. Front Businesses</span> <span class="hotkey-tag">[2]</span></button>
+            <button class="nav-btn" onclick="switchTab('smuggling')"><span>3. Smuggling Routes</span> <span class="hotkey-tag">[3]</span></button>
+            <button class="nav-btn" onclick="switchTab('operatives')"><span>4. Crew & Training</span> <span class="hotkey-tag">[4]</span></button>
+            <button class="nav-btn" onclick="switchTab('skills')"><span>5. Skill Tree & Rank</span> <span class="hotkey-tag">[5]</span></button>
+            <button class="nav-btn" onclick="switchTab('bosses')"><span>6. Bosses & War</span> <span class="hotkey-tag">[6]</span></button>
+            <button class="nav-btn" onclick="switchTab('diplomacy')"><span>7. Diplomacy & Treaties</span> <span class="hotkey-tag">[7]</span></button>
+            <button class="nav-btn" onclick="switchTab('shipping')"><span>8. Global Shipping</span> <span class="hotkey-tag">[8]</span></button>
+            <button class="nav-btn" onclick="switchTab('safehouse')"><span>9. HQ Safehouse</span> <span class="hotkey-tag">[9]</span></button>
+            <button class="nav-btn" onclick="switchTab('government')"><span>10. Judicial Corruption</span> <span class="hotkey-tag">[0]</span></button>
+            <button class="nav-btn" onclick="switchTab('territory')">Interactive Map & Turf</button>
+            <button class="nav-btn" onclick="switchTab('missions')">Encrypted Contracts</button>
+            <button class="nav-btn" onclick="switchTab('darkweb')">Research Tree</button>
+            <button class="nav-btn" onclick="switchTab('blackmarket')">Black Market & Tech</button>
+            <button class="nav-btn" onclick="switchTab('prestige')">👑 Prestige & Classes</button>
+            <button class="nav-btn" onclick="switchTab('achievements')">Milestones</button>
+
+            <div class="section-title">Documentation</div>
+            <button class="nav-btn" onclick="switchTab('howtoplay')">How to Play</button>
+            <button class="nav-btn" onclick="switchTab('story')">About & Story</button>
+
+            <div class="section-title" style="margin-top:auto;">System</div>
+            <button class="nav-btn" onclick="openSaveModal()" style="color: var(--accent-green);"><span>Save Slots</span> <span class="hotkey-tag">[S]</span></button>
+            <button class="nav-btn" onclick="resetGameSave()" style="color: var(--accent-red);">⚠️ Reset Game</button>
+            <button class="nav-btn" onclick="toggleAudio()" id="audio-toggle-btn" style="color: var(--accent-yellow);">Sound: OFF</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <section class="content-area">
+
+            <!-- TAB 1: CRIMES -->
+            <div id="tab-terminal" class="tab-panel active">
+                <!-- ACTIVE EVENT BANNER -->
+                <div id="active-event-card" class="card" style="display:none; border-color:var(--accent-purple); background:rgba(188, 140, 255, 0.05);">
+                    <div class="card-title" style="color:var(--accent-purple);" id="event-title">🚨 UNDERWORLD ENCOUNTER ACTIVE</div>
+                    <p class="list-item-desc" id="event-desc" style="margin-bottom:10px; font-size:0.85rem;"></p>
+                    <div class="flex-row" id="event-actions"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        Criminal Operations 
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">Press [Space] to quick-execute top operation</span>
+                    </div>
+                    <div class="grid-2" id="crime-list-container"></div>
+                </div>
+
+                <div class="card" style="flex:1; display:flex; flex-direction:column;">
+                    <div class="card-title">Terminal Activity Feed</div>
+                    <div class="log-container" id="terminal-log">
+                        <div class="log-entry">Terminal v12.0 Complete Online. Offline laundering, bulk multipliers, and sound synth initialized.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: LAUNDERING -->
+            <div id="tab-laundering" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-yellow); margin-bottom: 15px;">
+                    <div class="card-title" style="color: var(--accent-yellow);">Street Broker Exchange</div>
+                    <p class="list-item-desc" style="margin-bottom:10px;">Manually scrub dirty cash instantly at a 50% flat broker tax.</p>
+                    <div class="flex-row" style="justify-content: space-between;">
+                        <button class="action-btn primary" onclick="manualWash(100, event)">Wash $100</button>
+                        <button class="action-btn primary" onclick="manualWash(1000, event)">Wash $1,000</button>
+                        <button class="action-btn primary" onclick="manualWash('all', event)">Wash ALL Dirty</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Front Businesses & Corporate Laundries</div>
+                    <div id="fronts-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SMUGGLING NETWORKS -->
+            <div id="tab-smuggling" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">Underground Smuggling Routes</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Route contraband across secondary transit lines to passively generate unmonitored capital and reduce front heat pressure.</p>
+                    <div id="smuggling-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 4: OPERATIVES & TRAINING -->
+            <div id="tab-operatives" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-green); margin-bottom: 12px;">
+                    <div class="card-title" style="color: var(--accent-green);">Crew Loyalty & Morale System</div>
+                    <p class="list-item-desc" style="margin-bottom:10px;">
+                        Current Morale: <strong id="operatives-loyalty-text" style="color:var(--accent-green);">100%</strong><br>
+                        High Heat (>60%) decays loyalty. Below 30% Loyalty triggers betrayal events (cash theft & police leaks).
+                    </p>
+                    <button class="action-btn primary" onclick="boostLoyaltyWithBonus()">Distribute Bonus ($2,000 Clean -> +25% Loyalty)</button>
+                </div>
+                
+                <div id="jail-container"></div>
+
+                <div class="card">
+                    <div class="card-title">Syndicate Roster & Crew Leveling</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Level up agent divisions using clean capital to boost overall specialization power.</p>
+                    <div id="recruit-list-container" class="card-list"></div>
+                </div>
+            </div>
+
+            <!-- TAB 5: PLAYER SKILL TREE -->
+            <div id="tab-skills" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">Boss Skill Points & Mastery</div>
+                    <p class="list-item-desc">Available Skill Points: <strong id="skill-points-display" style="color:var(--accent-yellow); font-size:1rem;">0</strong> (Earned by leveling up!)</p>
+                </div>
+                <div class="card">
+                    <div class="card-title">Perk Tree</div>
+                    <div id="skills-list-container" class="tech-grid"></div>
+                </div>
+            </div>
+
+            <!-- TAB 6: RIVAL BOSSES & WAR -->
+            <div id="tab-bosses" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-red);">
+                    <div class="card-title" style="color: var(--accent-red);">Target Dossiers, War States & Hit List</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Declare War or maintain Peace with rival syndicates. Exploit tactical weaknesses to eliminate rival kingpins for persistent signature bonuses.</p>
+                    <div id="boss-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 7: DIPLOMACY -->
+            <div id="tab-diplomacy" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">Underworld Treaties & Pacts</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Spend Influence and clean capital to establish non-aggression and operational treaties with global syndicates.</p>
+                    <div id="diplomacy-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 8: GLOBAL SHIPPING -->
+            <div id="tab-shipping" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-blue);">
+                    <div class="card-title" style="color: var(--accent-blue);">Maritime Fleets & Aviation</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Purchase smuggling boats and cargo planes to generate passive clean capital and rare contraband imports.</p>
+                    <div id="shipping-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 9: SAFEHOUSE -->
+            <div id="tab-safehouse" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-green);">
+                    <div class="card-title" style="color: var(--accent-green);">Base Buildout & Fortifications</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Upgrade your underground headquarters to improve defense, reduce police raid impact, and unlock secret storage.</p>
+                    <div id="safehouse-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 10: JUDICIAL CORRUPTION -->
+            <div id="tab-government" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-yellow);">
+                    <div class="card-title" style="color: var(--accent-yellow);">Political Bribes & Ordinances</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Corrupt judges, police chiefs, and politicians to permanently alter city laws in your syndicate's favor.</p>
+                    <div id="government-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 11: INTERACTIVE MAP & TURF -->
+            <div id="tab-territory" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">City Map & Turf Control</div>
+                    <canvas id="city-map-canvas" width="600" height="220" onclick="handleMapClick(event)"></canvas>
+                    <div id="map-sector-inspect" style="margin-top: 10px; font-size: 0.85rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;">
+                        Select a territory node on the map above to inspect intelligence.
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Sector List & Enforcer Patrols</div>
+                    <div id="sectors-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 12: MISSIONS -->
+            <div id="tab-missions" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">Encrypted Contracts & Timed Operations</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Dispatch operatives on high-stakes black ops contracts for valuable payouts and XP.</p>
+                    <div id="missions-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 13: RESEARCH -->
+            <div id="tab-darkweb" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">Underworld Tech & Research Tree</div>
+                    <div class="tech-grid" id="upgrades-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 14: BLACK MARKET -->
+            <div id="tab-blackmarket" class="tab-panel">
+                <div class="card" style="margin-bottom:15px;">
+                    <div class="card-title">Black Market (Rotates Live)</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Acquire illegal armaments, forged documents, and restricted assets. Stock rotates periodically.</p>
+                    <div id="blackmarket-list-container"></div>
+                </div>
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">Advanced Syndicate Tech & Augmentations</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">High-tier specialized upgrades to streamline late-game empire automation.</p>
+                    <div class="tech-grid" id="advanced-tech-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 15: PRESTIGE & CRIMINAL CLASSES -->
+            <div id="tab-prestige" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-yellow); text-align: center; padding: 20px;">
+                    <div class="card-title" style="color: var(--accent-yellow); justify-content: center; font-size: 1.2rem;">👑 Underworld Rebirth (Prestige)</div>
+                    <p class="list-item-desc" style="margin: 10px 0; font-size:0.9rem;">
+                        Reset your current empire state in exchange for <strong>Infamy Tokens</strong>.<br>
+                        Spend Infamy Tokens below to unlock permanent Criminal Classes and Legacy Upgrades!
+                    </p>
+                    <div style="font-size: 1.1rem; margin-bottom: 10px;">
+                        Claimable Infamy Tokens Now: <strong id="prestige-claim-count" style="color:var(--accent-yellow);">0</strong>
+                    </div>
+                    <button class="action-btn primary" style="font-size: 0.9rem; padding: 8px 16px;" onclick="triggerPrestige()">Rebirth Empire & Claim Tokens</button>
+                </div>
+
+                <div class="card" style="border-color: var(--accent-purple);">
+                    <div class="card-title" style="color: var(--accent-purple);">Unlockable Criminal Classes & Legacy Perks</div>
+                    <div class="tech-grid" id="prestige-perks-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 16: ACHIEVEMENTS -->
+            <div id="tab-achievements" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">Milestones & Achievements</div>
+                    <p class="list-item-desc" style="margin-bottom:12px;">Complete empire milestones to unlock prestigious badges and bonuses.</p>
+                    <div id="achievements-list-container"></div>
+                </div>
+            </div>
+
+            <!-- TAB 17: HOW TO PLAY -->
+            <div id="tab-howtoplay" class="tab-panel">
+                <div class="card" style="border-color: var(--accent-blue);">
+                    <div class="card-title" style="color: var(--accent-blue);">How to Play & Hotkeys</div>
+                    <div class="list-item-desc" style="font-size: 0.9rem; margin-bottom: 10px;">
+                        <strong>Welcome to Shadow Syndicate v12.0!</strong>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-header" style="color: var(--accent-green);">1. Hotkeys Suite</div>
+                        <div class="list-item-desc">
+                            <strong>[1]-[0]</strong>: Switch Tabs | <strong>[Space]</strong>: Quick Execute Top Crime / Wash Cash | <strong>[B]</strong>: Instant Bribe Precinct | <strong>[S]</strong>: Save Slot Manager | <strong>[ESC]</strong>: Close Modals
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-header" style="color: var(--accent-yellow);">2. Bulk Purchase Multipliers</div>
+                        <div class="list-item-desc">Toggle between 1x, 10x, and MAX purchase amounts at the top left to rapidly scale up your front businesses and smuggling lines.</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-header" style="color: var(--accent-red);">3. Dynamic Tactical Combat</div>
+                        <div class="list-item-desc">Engage rival bosses in active war strikes. Upgrade division levels and recruit specialized counters (e.g. Drivers vs Skulls) to defeat kingpins.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 18: ABOUT & STORY -->
+            <div id="tab-story" class="tab-panel">
+                <div class="card" style="border-color: var(--text-main);">
+                    <div class="card-title">About & Story</div>
+                    <div class="list-item-desc" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+                        <p style="margin-bottom: 15px;">
+                            The neon rain never seems to wash the grime off these streets. It just pushes it into the gutters, where people like us learn to swim.
+                        </p>
+                        <p style="margin-bottom: 15px;">
+                            Now, with expanded smuggling networks, secured sector turfs, and tactical operative rosters, the corporate elites and Mayor are starting to feel the pressure.
+                        </p>
+                        <p style="color: var(--accent-purple); font-weight: bold;">
+                            It's time to take the city back. One click at a time.
+                        </p>
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                            Shadow Syndicate v12.0 - Ultimate Empire Edition.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar-right">
+            <div class="section-title">Empire Overview</div>
+            <div style="padding: 12px 15px; display: flex; flex-direction: column; gap: 12px; font-size: 0.8rem;">
+                <div>
+                    <div class="text-muted">Crew Roster & Loyalty</div>
+                    <div id="sidebar-crew-size" style="font-size: 1rem; font-weight: bold;">0 Agents</div>
+                </div>
+                <div>
+                    <div class="text-muted">Sectors Controlled</div>
+                    <div id="sidebar-sectors" style="font-size: 1rem; font-weight: bold; color: var(--accent-green);">0 / 3</div>
+                </div>
+                <div>
+                    <div class="text-muted">Law Enforcement Alert</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                        <div class="progress-bar-container" style="flex:1;">
+                            <div class="progress-bar-fill" id="sidebar-heat-fill" style="width: 0%; background-color: var(--accent-green);"></div>
+                        </div>
+                        <span id="sidebar-heat-text" style="font-size:0.75rem;">Secure</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                Bribe Precinct 
+                <span class="hotkey-tag">[B]</span>
+            </div>
+            <div style="padding: 12px 15px; display:flex; flex-direction:column; gap:8px;">
+                <button class="action-btn" id="bribe-btn-small" onclick="payBribe(15, 500, event)">Pay Precinct ($<span id="bribe-cost-1">500</span> / -15%)</button>
+                <button class="action-btn" id="bribe-btn-large" onclick="payBribe(40, 2500, event)">Federal Settlement ($<span id="bribe-cost-2">2500</span> / -40%)</button>
+                <div id="bribe-cd-text" style="font-size: 0.7rem; color: var(--accent-yellow); text-align: center;">Status: Ready</div>
+            </div>
+
+            <div class="section-title">Difficulty Mode</div>
+            <div style="padding: 12px 15px;">
+                <select id="difficulty-select" onchange="changeDifficulty(this.value)" style="width:100%; background:#05070a; color:var(--text-main); border:1px solid var(--border-color); padding:5px; font-family:var(--font-mono);">
+                    <option value="easy">Easy (Half Heat, 1.5x Yield)</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard (1.5x Heat, 0.75x Yield)</option>
+                    <option value="nightmare">Nightmare (2x Heat, High Raids)</option>
+                </select>
+            </div>
+        </aside>
+    </main>
+
+    <!-- SAVE SLOT MODAL -->
+    <div id="save-modal" class="modal">
+        <div class="card" style="width: 450px; border-color: var(--accent-green);">
+            <div class="card-title" style="color: var(--accent-green);">Multiple Save Slots</div>
+            <p class="list-item-desc" style="margin-bottom:15px;">Select a slot to save or load your empire state.</p>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+                <div class="flex-row" style="justify-content: space-between;">
+                    <span>Slot 1: <small id="slot-1-desc">Empty</small></span>
+                    <div>
+                        <button class="action-btn primary" onclick="saveToSlot(1)">Save</button>
+                        <button class="action-btn" onclick="loadFromSlot(1)">Load</button>
+                    </div>
+                </div>
+                <div class="flex-row" style="justify-content: space-between;">
+                    <span>Slot 2: <small id="slot-2-desc">Empty</small></span>
+                    <div>
+                        <button class="action-btn primary" onclick="saveToSlot(2)">Save</button>
+                        <button class="action-btn" onclick="loadFromSlot(2)">Load</button>
+                    </div>
+                </div>
+                <div class="flex-row" style="justify-content: space-between;">
+                    <span>Slot 3: <small id="slot-3-desc">Empty</small></span>
+                    <div>
+                        <button class="action-btn primary" onclick="saveToSlot(3)">Save</button>
+                        <button class="action-btn" onclick="loadFromSlot(3)">Load</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-row" style="justify-content: space-between;">
+                <button class="action-btn" onclick="openExportImportModal()">Export/Import String</button>
+                <button class="action-btn" onclick="closeSaveModal()">Close Window</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT / IMPORT MODAL -->
+    <div id="export-modal" class="modal">
+        <div class="card" style="width: 500px; border-color: var(--accent-blue);">
+            <div class="card-title" style="color: var(--accent-blue);">Save State Transfer String</div>
+            <textarea id="save-string-box" style="width:100%; height:120px; background:#05070a; color:var(--text-main); border:1px solid var(--border-color); font-family:var(--font-mono); font-size:0.75rem; padding:8px; margin-bottom:10px; resize:none;"></textarea>
+            <div class="flex-row" style="justify-content: space-between;">
+                <button class="action-btn primary" onclick="importSaveString()">Import</button>
+                <button class="action-btn" onclick="document.getElementById('export-modal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OFFLINE EARNINGS MODAL -->
+    <div id="offline-modal" class="modal">
+        <div class="card" style="width: 480px; border-color: var(--accent-yellow); text-align: center; padding: 20px;">
+            <div class="card-title" style="color: var(--accent-yellow); justify-content: center; font-size: 1.2rem;">🌆 OVERNIGHT EMPIRE EXECUTIVE BRIEFING</div>
+            <p class="list-item-desc" style="margin: 12px 0; font-size: 0.85rem;" id="offline-report-text">
+                While you were away, your syndicate kept operations running silently in the shadows.
+            </p>
+            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 4px; text-align: left; font-size: 0.8rem; margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px;">
+                <div>Time Away: <strong id="offline-time-text" style="color: var(--accent-blue);">0s</strong></div>
+                <div>Dirty Cash Washed: <strong id="offline-washed-text" style="color: var(--accent-green);">$0</strong></div>
+                <div>Smuggling Contraband Earned: <strong id="offline-smuggled-text" style="color: var(--accent-purple);">$0</strong></div>
+                <div>Shipping Revenue Generated: <strong id="offline-shipping-text" style="color: var(--accent-yellow);">$0</strong></div>
+            </div>
+            <button class="action-btn primary" style="width: 100%; padding: 8px;" onclick="closeOfflineModal()">Resume Operations</button>
+        </div>
+    </div>
+
+    <!-- COMBAT ANIMATION MODAL -->
+    <div id="combat-modal" class="modal">
+        <div class="card" style="width: 450px; border-color: var(--accent-red); text-align: center; padding: 20px;">
+            <div class="card-title" style="color: var(--accent-red); justify-content: center;" id="combat-title">⚔️ SYNDICATE WAR OPERATION</div>
+            <div style="margin: 15px 0;">
+                <div id="combat-status-text" style="font-size: 0.9rem; margin-bottom: 10px; color: var(--accent-yellow);">Deploying Strike Force...</div>
+                <div class="progress-bar-container"><div class="progress-bar-fill" id="combat-progress-bar"></div></div>
+            </div>
+            <div id="combat-log" style="font-size: 0.75rem; color: var(--text-muted); height: 80px; overflow-y: auto; text-align: left; background: #05070a; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);"></div>
+        </div>
+    </div>
+
+    <!-- VICTORY MODAL -->
+    <div id="victory-modal" class="modal">
+        <div class="card" style="width: 500px; border-color: var(--accent-yellow); text-align: center; padding: 25px;">
+            <div class="card-title" style="color: var(--accent-yellow); justify-content: center; font-size: 1.3rem;">👑 CONQUEST COMPLETE: KING OF THE CITY</div>
+            <p class="list-item-desc" style="margin: 15px 0; font-size: 0.95rem; line-height: 1.5;">
+                Director Sterling has fallen. The police force is bought, the corporate board has surrendered, and the streets belong entirely to the <strong>Shadow Syndicate</strong>. You have achieved supreme dominance over the city!
+            </p>
+            <div style="color: var(--accent-purple); font-weight: bold; margin-bottom: 20px; font-size: 0.9rem;">
+                Global Expansion Unlocked! You can continue building your empire or prestige for permanent Infamy Tokens.
+            </div>
+            <button class="action-btn primary" style="font-size: 1rem; padding: 10px 20px;" onclick="document.getElementById('victory-modal').style.display='none'">Continue Reign</button>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let soundEnabled = false;
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            let btn = document.getElementById('audio-toggle-btn');
+            if (soundEnabled) {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                btn.innerText = "Sound: ON";
+                btn.style.color = "var(--accent-green)";
+                playTone(440, 0.1);
+            } else {
+                btn.innerText = "Sound: OFF";
+                btn.style.color = "var(--accent-yellow)";
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', gainVal = 0.08) {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playCashSfx() {
+            if (!soundEnabled) return;
+            playTone(800, 0.08, 'triangle');
+            setTimeout(() => playTone(1200, 0.12, 'triangle'), 60);
+        }
+
+        function playBuySfx() {
+            if (!soundEnabled) return;
+            playTone(520, 0.05, 'square');
+            setTimeout(() => playTone(650, 0.08, 'sine'), 50);
+        }
+
+        function playRaidAlarm() {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(300, audioCtx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        function spawnFloatingText(x, y, text, color = '#2ea043') {
+            let el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = text;
+            el.style.color = color;
+            el.style.left = (x || window.innerWidth / 2) + 'px';
+            el.style.top = (y || window.innerHeight / 2) + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1200);
+        }
+
+        const avatars = ['🕵️‍♂️', '🦹‍♂️', '🎩', '💼', '🕶️', '👑'];
+
+        let game = {
+            lastSaveTime: Date.now(),
+            orgName: "Shadow Syndicate",
+            avatarIdx: 0,
+            difficulty: "normal",
+            buyAmount: 1,
+            dirtyCash: 0,
+            cleanCapital: 1000,
+            heat: 0,
+            heatTier: 0,
+            crewLoyalty: 100,
+            arrestedAgents: [],
+            influence: 0,
+            bribeCooldown: 0,
+            
+            player: {
+                level: 1,
+                xp: 0,
+                xpReq: 100,
+                skillPoints: 0,
+                skills: { hustler: 0, cleaner: 0, stealth: 0, commander: 0 }
+            },
+
+            prestigeTokens: 0,
+            prestigeUpgrades: { golden_connections: false, shadow_skin: false, master_mind: false, corrupt_empire: false, class_godfather: false },
+            economy: { inflation: 1.0, event: "Normal Markets" },
+
+            stats: {
+                totalCrimes: 0, totalDirty: 0, totalClean: 1000,
+                missionsCompleted: 0, bossesDefeated: 0, turfRepelled: 0, eventsSurvived: 0
+            },
+            fronts: { 
+                bar: { owned: 0 }, diner: { owned: 0 }, laundromat: { owned: 0 }, pawnshop: { owned: 0 }, 
+                nightclub: { owned: 0 }, restaurant: { owned: 0 }, hotel: { owned: 0 }, 
+                construction: { owned: 0 }, crypto_exchange: { owned: 0 }, casino: { owned: 0 },
+                oil: { owned: 0 }, airline: { owned: 0 }
+            },
+            smuggling: {
+                contraband_route: { owned: 0 }, firearm_pipeline: { owned: 0 }, tech_smuggle: { owned: 0 }
+            },
+            agents: { 
+                thug: { owned: 0, level: 1 }, enforcer: { owned: 0, level: 1 }, accountant: { owned: 0, level: 1 }, 
+                hacker: { owned: 0, level: 1 }, driver: { owned: 0, level: 1 }, fixer: { owned: 0, level: 1 }
+            },
+            bosses: { 
+                local_gang: { defeated: false, state: 'Peace' }, mafia_family: { defeated: false, state: 'Peace' }, cartel: { defeated: false, state: 'Peace' }, 
+                syndicate: { defeated: false, state: 'Peace' }, final_boss: { defeated: false, state: 'Peace' } 
+            },
+            sectors: { 
+                downtown: { controlled: false, enforcersAssigned: 0, x: 150, y: 110 }, 
+                industrial: { controlled: false, enforcersAssigned: 0, x: 280, y: 70 }, 
+                docks: { controlled: false, enforcersAssigned: 0, x: 420, y: 60 }
+            },
+            missions: { 
+                smuggling_run: { active: false, progress: 0 }, 
+                data_extraction: { active: false, progress: 0 }, 
+                heist_prep: { active: false, progress: 0 } 
+            },
+            upgrades: { shell_corp: false, crime_speed_1: false, ai_ops: false, ghost_protocol: false },
+            advancedTech: { neural_net: false, quantum_vault: false, shadow_grid: false },
+            blackmarket: { weapons: { owned: 0 }, forged_docs: { owned: 0 }, encrypted_radio: { owned: 0 } },
+            diplomacy: { bratva: false, yakuza: false, cartel_pact: false },
+            shipping: { fast_boat: { owned: 0 }, cargo_ship: { owned: 0 }, private_jet: { owned: 0 } },
+            safehouse: { armory: { owned: 0 }, surveillance: { owned: 0 }, bunker: { owned: 0 } },
+            government: { ordinance_heat: false, judge_pardon: false, senate_seat: false },
+            achievements: { first_crime: false, first_million: false, crime_lord: false, territory_master: false },
+            activeEvent: null
+        };
+
+        const crimeData = {
+            pickpocket: { name: "Street Pickpocketing", desc: "Quick cash off pedestrians.", cash: 40, heat: 0.4, time: 400, xp: 10 },
+            shoplifting: { name: "Retail Shoplifting", desc: "Lifting electronics and goods.", cash: 150, heat: 1.5, time: 2000, xp: 25 },
+            mugging: { name: "Dark Alley Mugging", desc: "Extracting valuables under threat.", cash: 400, heat: 4.0, time: 6000, xp: 60 },
+            burglary: { name: "Residential Burglary", desc: "Breaking into houses for high-value gear.", cash: 750, heat: 7.0, time: 10000, xp: 120 },
+            car_theft: { name: "Vehicle Hotwiring", desc: "Stealing luxury cars for chop shops.", cash: 1800, heat: 12.0, time: 18000, xp: 250 },
+            extortion: { name: "Protection Extortion", desc: "Collecting forced security fees.", cash: 4200, heat: 18.0, time: 30000, xp: 500 },
+            cyber_crime: { name: "Corporate Cyber Heist", desc: "Drain offshore accounts and blackmail execs.", cash: 12000, heat: 45.0, time: 75000, xp: 1200 },
+            bank_heist: { name: "Federal Reserve Vault Heist", desc: "The ultimate syndicate score.", cash: 50000, heat: 85.0, time: 150000, xp: 3000 }
+        };
+
+        const frontData = {
+            bar: { name: "Local Dive Bar", desc: "A cozy watering hole for initial cash cleanups.", cost: 600, rate: 4, heatRate: 0.08 },
+            diner: { name: "All-Night Diner", desc: "Cleans small retail cash flows.", cost: 1500, rate: 12, heatRate: 0.2 },
+            laundromat: { name: "Scrub-A-Dub Laundromat", desc: "Standard commercial sanitization.", cost: 10000, rate: 85, heatRate: 0.9 },
+            pawnshop: { name: "Shadow Pawn Shop", desc: "Turns stolen goods into clean funds.", cost: 45000, rate: 380, heatRate: 3.2 },
+            nightclub: { name: "Neon Viper Nightclub", desc: "High-volume VIP cash laundering.", cost: 180000, rate: 1600, heatRate: 12.0 },
+            restaurant: { name: "Gourmet Restaurant Front", desc: "Upscale dining enterprise.", cost: 550000, rate: 5200, heatRate: 32.0 },
+            hotel: { name: "Grand Plaza Hotel", desc: "Hospitality enterprise washing heavy capital.", cost: 2200000, rate: 21000, heatRate: 120.0 },
+            construction: { name: "Apex Construction Co.", desc: "Heavy infrastructure asset cleansing.", cost: 9500000, rate: 92000, heatRate: 480.0 },
+            crypto_exchange: { name: "Darknet Crypto Exchange", desc: "Digital token mixing and high-speed routing.", cost: 40000000, rate: 410000, heatRate: 2100.0 },
+            casino: { name: "Underground Casino", desc: "Massive corporate-tier throughput.", cost: 180000000, rate: 1850000, heatRate: 9500.0 },
+            oil: { name: "BlackGold Petroleum", desc: "Heavy industry cash sink.", cost: 1000000000, rate: 8500000, heatRate: 20000.0 },
+            airline: { name: "Skyline Private Air", desc: "High altitude executive transit network.", cost: 5000000000, rate: 45000000, heatRate: 80000.0 }
+        };
+
+        const smugglingData = {
+            contraband_route: { name: "Contraband Courier Route", desc: "Passively transports black market goods ($35/s, -2% Heat).", cost: 5000, rate: 35, heatSuppress: 0.02 },
+            firearm_pipeline: { name: "Armament Transit Pipeline", desc: "Moves restricted weapons safely ($420/s, -8% Heat).", cost: 75000, rate: 420, heatSuppress: 0.08 },
+            tech_smuggle: { name: "Silicon Black-Channel", desc: "High-yield tech smuggling ring ($3,200/s, -25% Heat).", cost: 600000, rate: 3200, heatSuppress: 0.25 }
+        };
+
+        const agentData = {
+            thug: { name: "Street Thug", trait: "Street Brawler", weakness: "Impulsive", desc: "+$10 flat bonus to all crime payouts.", cost: 500 },
+            enforcer: { name: "Syndicate Enforcer", trait: "Iron Shield", weakness: "High Maintenance", desc: "Increases combat power & counters cartel forces.", cost: 2000 },
+            accountant: { name: "Dirty Accountant", trait: "Creative Ledger", weakness: "Paper Trail", desc: "Suppresses market inflation impact on front costs by 5%/ea.", cost: 6000 },
+            hacker: { name: "Cyber Operative", trait: "Ghost Operator", weakness: "Paranoid", desc: "Automates darknet connections & counters Mafia Family.", cost: 20000 },
+            driver: { name: "Getaway Driver", trait: "Evasion Expert", weakness: "Reckless", desc: "Reduces heat accrual and counters Southside Skulls.", cost: 50000 },
+            fixer: { name: "Corrupt Fixer", trait: "Political Ties", weakness: "Expensive", desc: "Passively cools off heat and counters Apex Council.", cost: 150000 }
+        };
+
+        const bossData = {
+            local_gang: { name: "Southside Skulls", power: 5, rewardClean: 5000, rewardInf: 15, temperament: "Aggressive", weakness: "Getaway Drivers", signatureBonus: "+10% Street Crime Payouts", desc: "A chaotic local street gang shaking down downtown merchants." },
+            mafia_family: { name: "The Moretti Family", power: 25, rewardClean: 50000, rewardInf: 40, temperament: "Calculated", weakness: "Cyber Operatives (Hackers)", signatureBonus: "-15% Front Business Purchase Costs", desc: "Traditional mobsters controlling industrial protection rackets." },
+            cartel: { name: "Sinaloa Remnants", power: 80, rewardClean: 300000, rewardInf: 100, temperament: "Ruthless", weakness: "Syndicate Enforcers", signatureBonus: "+25% Smuggling Route Income", desc: "International drug syndicate managing dock import pipelines." },
+            syndicate: { name: "The Apex Council", power: 250, rewardClean: 2000000, rewardInf: 300, temperament: "Elitist", weakness: "Corrupt Fixers", signatureBonus: "+50% Global Money Laundering Speed", desc: "Corrupt elite shadow board running the city's political machine." },
+            final_boss: { name: "Director Sterling", power: 600, rewardClean: 15000000, rewardInf: 1000, temperament: "Tyrannical", weakness: "Full Network Mastery", signatureBonus: "Supreme Underworld Dominance", desc: "Head of the Clean City Initiative. Defeat him to rule supreme." }
+        };
+
+        const prestigePerksData = {
+            golden_connections: { name: "Golden Rolodex", cost: 1, desc: "Start New Game+ with +$10,000 Clean Capital and 5 Influence." },
+            shadow_skin: { name: "Neon Noir HQ", cost: 2, desc: "Permanent visual cosmetic glow & unlocks Overlord avatar." },
+            master_mind: { name: "Mastermind Network", cost: 3, desc: "+20% crime execution speed permanently across all playthroughs." },
+            corrupt_empire: { name: "Immunity Accord", cost: 5, desc: "Baseline police Heat decay rate doubled permanently." },
+            class_godfather: { name: "Criminal Class: Shadow Godfather", cost: 8, desc: "Unlock Shadow Godfather starting class (+50% Global Revenue, -30% Heat accrual)." }
+        };
+
+        const upgradeData = {
+            shell_corp: { name: "Offshore Shell Corporations", desc: "Permanently reduces heat generated by 20%.", cost: 15000 },
+            crime_speed_1: { name: "Overclocked Logistics", desc: "+35% crime execution speed across all rackets.", cost: 8000 },
+            ai_ops: { name: "AI Algorithmic Mixing", desc: "+25% global money laundering throughput.", cost: 50000 },
+            ghost_protocol: { name: "Ghost Protocol", desc: "Cuts police raid cash penalty from 50% down to 25%.", cost: 120000 }
+        };
+
+        const advancedTechData = {
+            neural_net: { name: "Syndicate Neural Net", desc: "Doubles passive smuggling efficiency across all routes.", cost: 2500000 },
+            quantum_vault: { name: "Quantum Encryption Vault", desc: "Shields 100% of dirty cash during police raids.", cost: 15000000 },
+            shadow_grid: { name: "Shadow Grid Dominance", desc: "Grants permanent +50% global revenue across all assets.", cost: 75000000 }
+        };
+
+        const skillData = {
+            hustler: { name: "Master Hustler", desc: "+10% Cash payout per level from all operations." },
+            cleaner: { name: "Financial Sanitizer", desc: "+10% Money laundering conversion rate per level." },
+            stealth: { name: "Ghost Operative", desc: "-10% Heat generated per level from all actions." },
+            commander: { name: "Warlord Tactician", desc: "+15% Crew combat power per level against rivals." }
+        };
+
+        const sectorData = {
+            downtown: { name: "Downtown District", desc: "Commercial hub.", cost: 5000, infReward: 10, bonus: "+15% Yields", x: 150, y: 110 },
+            industrial: { name: "Industrial Zone", desc: "Warehouses.", cost: 30000, infReward: 30, bonus: "+Smuggling", x: 280, y: 70 },
+            docks: { name: "The Harbor & Docks", desc: "Import corridors.", cost: 150000, infReward: 80, bonus: "+30% Wash Speed", x: 420, y: 60 }
+        };
+
+        const diplomacyData = {
+            bratva: { name: "Bratva Non-Aggression Pact", costClean: 25000, costInf: 20, desc: "+10% global crime payout and raid immunity." },
+            yakuza: { name: "Yakuza Cyber Accord", costClean: 120000, costInf: 60, desc: "+20% cyber heist payout speed and efficiency." },
+            cartel_pact: { name: "Trans-National Narcotics Treaty", costClean: 750000, costInf: 150, desc: "+35% global clean capital wash throughput." }
+        };
+
+        const shippingData = {
+            fast_boat: { name: "Smuggler Speedboat", cost: 10000, rate: 150, desc: "Runs coastal contraband for clean funds ($150/s)." },
+            cargo_ship: { name: "Container Freighter", cost: 85000, rate: 1200, desc: "Massive maritime cargo capacity ($1,200/s)." },
+            private_jet: { name: "Executive Jet", cost: 500000, rate: 7500, desc: "High-altitude confidential asset transport ($7,500/s)." }
+        };
+
+        const safehouseData = {
+            armory: { name: "Underground Armory", cost: 20000, desc: "+20 Enforcer combat power bonus." },
+            surveillance: { name: "Secure Surveillance Grid", cost: 75000, desc: "Passively lowers heat generation by 15%." },
+            bunker: { name: "Titanium Panic Bunker", cost: 350000, desc: "Protects 50% of dirty cash during police raids." }
+        };
+
+        const governmentData = {
+            ordinance_heat: { name: "Police Oversight Ordinance", cost: 50000, desc: "Permanently reduces baseline police heat accrual by 30%." },
+            judge_pardon: { name: "Federal Judge Retainer", cost: 250000, desc: "Eliminates all heat penalties upon raids entirely." },
+            senate_seat: { name: "Mayoral Control Acquisition", cost: 2000000, desc: "Grants massive prestige and constant influence generation (+1 Inf/s)." }
+        };
+
+        const missionData = {
+            smuggling_run: { name: "Contraband Border Run", duration: 10000, rewardClean: 1200, rewardXp: 150, desc: "Transport illegal goods across state lines." },
+            data_extraction: { name: "Secured Server Hack", duration: 30000, rewardClean: 5500, rewardXp: 450, desc: "Extract confidential government bank transcripts." },
+            heist_prep: { name: "Casino Vault Recon", duration: 75000, rewardClean: 25000, rewardXp: 1500, desc: "Reconnoiter underground casino vulnerabilities." }
+        };
+
+        const blackMarketData = {
+            weapons: { name: "Silenced Submachine Guns", cost: 15000, desc: "+15 Combat power for all syndicate Enforcers." },
+            forged_docs: { name: "Diplomatic Passports", cost: 45000, desc: "Reduces all police heat accrual by 25%." },
+            encrypted_radio: { name: "Quantum Comms Gear", cost: 150000, desc: "+30% crime speed across all active rackets." }
+        };
+
+        const achievementData = {
+            first_crime: { name: "First Blood", desc: "Execute your very first street crime.", check: () => game.stats.totalCrimes >= 1 },
+            millionaire: { name: "Syndicate Millionaire", desc: "Amass $1,000,000 in lifetime clean capital.", check: () => game.stats.totalClean >= 1000000 },
+            crime_lord: { name: "Underworld Overlord", desc: "Reach Boss Level 10.", check: () => game.player.level >= 10 },
+            territory_master: { name: "King of the City", desc: "Conquer all 3 core city sectors.", check: () => game.sectors.downtown.controlled && game.sectors.industrial.controlled && game.sectors.docks.controlled }
+        };
+
+        let crimeProgress = { pickpocket: { active: false, progress: 0 }, shoplifting: { active: false, progress: 0 }, mugging: { active: false, progress: 0 }, burglary: { active: false, progress: 0 }, car_theft: { active: false, progress: 0 }, extortion: { active: false, progress: 0 }, cyber_crime: { active: false, progress: 0 }, bank_heist: { active: false, progress: 0 } };
+
+        function setBuyMultiplier(amount) {
+            game.buyAmount = amount;
+            document.querySelectorAll('.multiplier-btn').forEach(btn => btn.classList.remove('active'));
+            if (amount === 1) document.getElementById('mult-1').classList.add('active');
+            if (amount === 10) document.getElementById('mult-10').classList.add('active');
+            if (amount === 'max') document.getElementById('mult-max').classList.add('active');
+            initLists();
+        }
+
+        function cycleAvatar() {
+            game.avatarIdx = (game.avatarIdx + 1) % avatars.length;
+            document.getElementById('player-avatar-btn').innerText = avatars[game.avatarIdx];
+        }
+
+        function updateOrgName(val) {
+            game.orgName = val || "Shadow Syndicate";
+        }
+
+        function addXP(amt) {
+            game.player.xp += amt;
+            while (game.player.xp >= game.player.xpReq) {
+                game.player.xp -= game.player.xpReq;
+                game.player.level++;
+                game.player.skillPoints++;
+                game.player.xpReq = Math.floor(game.player.xpReq * 1.5);
+                addLog(`LEVEL UP! You reached Boss Level ${game.player.level}! +1 Skill Point gained.`, 'event');
+                playTone(880, 0.2, 'triangle');
+                setTimeout(() => playTone(1100, 0.2, 'triangle'), 100);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            let targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                let onclickAttr = btn.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(`'${tabId}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (tabId === 'territory') drawCityMap();
+        }
+
+        function drawCityMap() {
+            let canvas = document.getElementById('city-map-canvas');
+            if (!canvas) return;
+            let ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw tactical grid lines
+            ctx.strokeStyle = '#1e2636';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Draw connecting lines between nodes
+            ctx.strokeStyle = 'rgba(88, 166, 255, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(sectorData.downtown.x, sectorData.downtown.y);
+            ctx.lineTo(sectorData.industrial.x, sectorData.industrial.y);
+            ctx.lineTo(sectorData.docks.x, sectorData.docks.y);
+            ctx.lineTo(sectorData.downtown.x, sectorData.downtown.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw sector nodes
+            for (let id in sectorData) {
+                let s = sectorData[id];
+                let controlled = game.sectors[id] ? game.sectors[id].controlled : false;
+
+                if (controlled) {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, 20, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'rgba(46, 160, 67, 0.15)';
+                    ctx.fill();
+                }
+
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 12, 0, 2 * Math.PI);
+                ctx.fillStyle = controlled ? '#2ea043' : '#1e2636';
+                ctx.fill();
+                ctx.strokeStyle = controlled ? '#3fb950' : '#8b949e';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#c9d1d9';
+                ctx.font = '10px monospace';
+                ctx.fillText(s.name.split(' ')[0], s.x - 22, s.y - 18);
+            }
+        }
+
+        function handleMapClick(e) {
+            let canvas = document.getElementById('city-map-canvas');
+            if (!canvas) return;
+            let rect = canvas.getBoundingClientRect();
+            let scaleX = canvas.width / rect.width;
+            let scaleY = canvas.height / rect.height;
+            let x = (e.clientX - rect.left) * scaleX;
+            let y = (e.clientY - rect.top) * scaleY;
+
+            for (let id in sectorData) {
+                let s = sectorData[id];
+                if (Math.hypot(x - s.x, y - s.y) < 22) {
+                    inspectSector(id);
+                    playTone(600, 0.05);
+                    break;
+                }
+            }
+        }
+
+        function inspectSector(id) {
+            let s = sectorData[id];
+            let controlled = game.sectors[id] ? game.sectors[id].controlled : false;
+            let enforcersAssigned = game.sectors[id].enforcersAssigned || 0;
+            document.getElementById('map-sector-inspect').innerHTML = `
+                <strong>${s.name}</strong> [${controlled ? '<span style="color:var(--accent-green)">CONTROLLED</span>' : '<span style="color:var(--accent-yellow)">UNSECURED</span>'}]<br>
+                ${s.desc} | Cost: $${s.cost.toLocaleString()} | Bonus: ${s.bonus}<br>
+                Enforcers on Patrol: <strong>${enforcersAssigned}</strong>
+                ${!controlled ? `<br><button class="action-btn primary" style="margin-top:8px;" onclick="conquerSector('${id}')">Takeover Sector</button>` : `
+                    <div class="flex-row" style="margin-top:8px;">
+                        <button class="action-btn primary" onclick="assignEnforcerToSector('${id}', 1)">Assign Enforcer (+1)</button>
+                        <button class="action-btn" onclick="assignEnforcerToSector('${id}', -1)">Recall Enforcer (-1)</button>
+                    </div>
+                `}
+            `;
+        }
+
+        function assignEnforcerToSector(id, delta) {
+            let totalEnforcers = game.agents.enforcer.owned;
+            let currentAssigned = 0;
+            for (let k in game.sectors) currentAssigned += (game.sectors[k].enforcersAssigned || 0);
+
+            if (delta > 0) {
+                if (currentAssigned < totalEnforcers) {
+                    game.sectors[id].enforcersAssigned = (game.sectors[id].enforcersAssigned || 0) + 1;
+                    addLog(`Assigned an enforcer to patrol ${sectorData[id].name}.`, 'success');
+                } else {
+                    addLog(`No unassigned enforcers available! Hire more in Crew Roster.`, 'warning');
+                }
+            } else if (delta < 0) {
+                if ((game.sectors[id].enforcersAssigned || 0) > 0) {
+                    game.sectors[id].enforcersAssigned--;
+                    addLog(`Recalled an enforcer from ${sectorData[id].name}.`, 'warning');
+                }
+            }
+            inspectSector(id);
+            initLists();
+            renderUI();
+        }
+
+        function conquerSector(id) {
+            let s = sectorData[id];
+            if (game.cleanCapital >= s.cost) {
+                game.cleanCapital -= s.cost;
+                game.sectors[id].controlled = true;
+                game.influence += s.infReward;
+                addLog(`Conquered ${s.name}! Influence +${s.infReward}.`, 'success');
+                drawCityMap();
+                inspectSector(id);
+                renderUI();
+                initLists();
+            } else {
+                addLog(`Insufficient clean capital to conquer ${s.name}!`, 'warning');
+            }
+        }
+
+        function renderUI() {
+            document.getElementById('stat-dirty').innerText = '$' + Math.floor(game.dirtyCash).toLocaleString();
+            document.getElementById('stat-clean').innerText = '$' + Math.floor(game.cleanCapital).toLocaleString();
+            document.getElementById('stat-heat').innerText = game.heat.toFixed(1);
+            
+            let tierBadge = document.getElementById('heat-tier-display');
+            if (game.heat >= 100) {
+                game.heatTier = 5;
+                tierBadge.innerText = 'Tier 5: Collapse Risk!';
+                tierBadge.style.backgroundColor = 'var(--tier-5)';
+                document.body.classList.add('manhunt-flash');
+            } else if (game.heat >= 85) {
+                game.heatTier = 4;
+                tierBadge.innerText = 'Tier 4: Federal Manhunt';
+                tierBadge.style.backgroundColor = 'var(--tier-4)';
+                document.body.classList.add('manhunt-flash');
+            } else if (game.heat >= 70) {
+                game.heatTier = 3;
+                tierBadge.innerText = 'Tier 3: Asset Freeze';
+                tierBadge.style.backgroundColor = 'var(--tier-3)';
+                document.body.classList.remove('manhunt-flash');
+            } else if (game.heat >= 50) {
+                game.heatTier = 2;
+                tierBadge.innerText = 'Tier 2: Operative Raids';
+                tierBadge.style.backgroundColor = 'var(--tier-2)';
+                document.body.classList.remove('manhunt-flash');
+            } else if (game.heat >= 30) {
+                game.heatTier = 1;
+                tierBadge.innerText = 'Tier 1: Patrol Shakedowns';
+                tierBadge.style.backgroundColor = 'var(--tier-1)';
+                document.body.classList.remove('manhunt-flash');
+            } else {
+                game.heatTier = 0;
+                tierBadge.innerText = 'Tier 0: Clear';
+                tierBadge.style.backgroundColor = 'var(--accent-green)';
+                document.body.classList.remove('manhunt-flash');
+            }
+
+            document.getElementById('stat-loyalty').innerText = Math.floor(game.crewLoyalty) + '%';
+            document.getElementById('operatives-loyalty-text').innerText = Math.floor(game.crewLoyalty) + '%';
+            document.getElementById('stat-influence').innerText = Math.floor(game.influence);
+            document.getElementById('stat-level').innerText = game.player.level;
+            document.getElementById('stat-xp').innerText = `${game.player.xp}/${game.player.xpReq}`;
+            document.getElementById('stat-prestige-tokens').innerText = game.prestigeTokens;
+            document.getElementById('skill-points-display').innerText = game.player.skillPoints;
+            document.getElementById('player-title-display').innerText = `Rank: ${getRankTitle(game.player.level)} (Lvl ${game.player.level})`;
+
+            let totalCrew = 0;
+            for (let k in game.agents) totalCrew += game.agents[k].owned;
+            document.getElementById('sidebar-crew-size').innerText = `${totalCrew} Agents`;
+
+            let controlledCount = 0;
+            let totalSectors = Object.keys(sectorData).length;
+            for (let k in game.sectors) {
+                if (game.sectors[k].controlled) controlledCount++;
+            }
+            document.getElementById('sidebar-sectors').innerText = `${controlledCount} / ${totalSectors}`;
+
+            let smallCost = 500 * game.player.level;
+            let largeCost = 2500 * game.player.level;
+            document.getElementById('bribe-cost-1').innerText = smallCost.toLocaleString();
+            document.getElementById('bribe-cost-2').innerText = largeCost.toLocaleString();
+
+            let bribeBtn1 = document.getElementById('bribe-btn-small');
+            let bribeBtn2 = document.getElementById('bribe-btn-large');
+            let cdText = document.getElementById('bribe-cd-text');
+
+            if (game.bribeCooldown > 0) {
+                bribeBtn1.disabled = true;
+                bribeBtn2.disabled = true;
+                cdText.innerText = `Bribe Cooldown: ${Math.ceil(game.bribeCooldown)}s`;
+            } else {
+                bribeBtn1.disabled = game.cleanCapital < smallCost;
+                bribeBtn2.disabled = game.cleanCapital < largeCost;
+                cdText.innerText = "Status: Precinct Ready";
+            }
+
+            const heatFill = document.getElementById('sidebar-heat-fill');
+            heatFill.style.width = Math.min(game.heat, 100) + '%';
+            heatFill.style.backgroundColor = game.heat >= 85 ? 'var(--tier-5)' : (game.heat >= 50 ? 'var(--tier-2)' : 'var(--accent-green)');
+            document.getElementById('sidebar-heat-text').innerText = `Tier ${game.heatTier}`;
+
+            let claimable = Math.floor(Math.sqrt(game.stats.totalClean / 100000));
+            document.getElementById('prestige-claim-count').innerText = claimable;
+        }
+
+        function getRankTitle(lvl) {
+            if (lvl < 5) return "Street Punk";
+            if (lvl < 15) return "Enforcer";
+            if (lvl < 30) return "Caporegime";
+            if (lvl < 50) return "Underboss";
+            return "Underworld Overlord";
+        }
+
+        function calculateBulkCost(baseCost, ratio, currentOwned, count) {
+            let total = 0;
+            for (let i = 0; i < count; i++) {
+                total += baseCost * Math.pow(ratio, currentOwned + i);
+            }
+            return Math.floor(total);
+        }
+
+        function getMaxPurchasable(baseCost, ratio, currentOwned, currentMoney) {
+            let count = 0;
+            let cost = 0;
+            while (true) {
+                let nextCost = baseCost * Math.pow(ratio, currentOwned + count);
+                if (cost + nextCost <= currentMoney) {
+                    cost += nextCost;
+                    count++;
+                } else break;
+            }
+            return { count: Math.max(1, count), totalCost: Math.floor(cost) };
+        }
+
+        function calculateFrontCost(id) {
+            let base = frontData[id].cost;
+            let owned = game.fronts[id].owned;
+            let accountantCount = game.agents.accountant ? game.agents.accountant.owned : 0;
+            let accountantDiscount = Math.max(0.3, 1 - (accountantCount * 0.05));
+            let mafiaBonus = game.bosses.mafia_family.defeated ? 0.85 : 1.0;
+            let effectiveInflation = 1 + ((game.economy.inflation - 1) * accountantDiscount);
+
+            let qty = game.buyAmount === 'max' ? getMaxPurchasable(base, 1.22, owned, game.cleanCapital).count : game.buyAmount;
+            let cost = calculateBulkCost(base, 1.22, owned, qty);
+            return { cost: Math.floor(cost * effectiveInflation * mafiaBonus), qty: qty };
+        }
+
+        function calculateSmugglingCost(id) {
+            let base = smugglingData[id].cost;
+            let owned = game.smuggling[id].owned;
+            let qty = game.buyAmount === 'max' ? getMaxPurchasable(base, 1.25, owned, game.cleanCapital).count : game.buyAmount;
+            return { cost: calculateBulkCost(base, 1.25, owned, qty), qty: qty };
+        }
+
+        function calculateAgentCost(id) {
+            let base = agentData[id].cost;
+            let owned = game.agents[id] ? game.agents[id].owned : 0;
+            let qty = game.buyAmount === 'max' ? getMaxPurchasable(base, 1.3, owned, game.cleanCapital).count : game.buyAmount;
+            return { cost: calculateBulkCost(base, 1.3, owned, qty), qty: qty };
+        }
+
+        function calculateAgentLevelCost(id) {
+            let lvl = game.agents[id].level || 1;
+            return Math.floor(agentData[id].cost * 2.5 * Math.pow(1.5, lvl - 1));
+        }
+
+        function levelUpAgent(id) {
+            let cost = calculateAgentLevelCost(id);
+            if (game.cleanCapital >= cost) {
+                game.cleanCapital -= cost;
+                game.agents[id].level = (game.agents[id].level || 1) + 1;
+                initLists();
+                renderUI();
+                addLog(`Leveled up ${agentData[id].name} division to Division Level ${game.agents[id].level}!`, 'success');
+                playTone(850, 0.1);
+            } else {
+                addLog(`Not enough clean capital ($${cost.toLocaleString()} required) to level up division!`, 'warning');
+            }
+        }
+
+        function boostLoyaltyWithBonus() {
+            if (game.cleanCapital >= 2000) {
+                game.cleanCapital -= 2000;
+                game.crewLoyalty = Math.min(100, game.crewLoyalty + 25);
+                addLog(`Distributed $2,000 cash bonus to operatives. Crew Loyalty restored to ${Math.floor(game.crewLoyalty)}%!`, 'success');
+                renderUI();
+                playTone(700, 0.1);
+            } else {
+                addLog(`Not enough clean capital ($2,000 required) to pay crew bonuses!`, 'warning');
+            }
+        }
+
+        function bailOutAgent(index) {
+            let arr = game.arrestedAgents[index];
+            if (!arr) return;
+            if (game.cleanCapital >= arr.bailCost) {
+                game.cleanCapital -= arr.bailCost;
+                game.agents[arr.type].owned++;
+                game.arrestedAgents.splice(index, 1);
+                addLog(`Paid $${arr.bailCost.toLocaleString()} bail. Released ${agentData[arr.type].name} back to roster!`, 'success');
+                initLists();
+                renderUI();
+                playTone(800, 0.1);
+            } else {
+                addLog(`Not enough clean capital ($${arr.bailCost.toLocaleString()} needed) for bail!`, 'warning');
+            }
+        }
+
+        function toggleBossWarState(id) {
+            let current = game.bosses[id].state || 'Peace';
+            if (current === 'Peace') {
+                game.bosses[id].state = 'War';
+                addLog(`⚔️ WAR DECLARED against ${bossData[id].name}! Prepare for hit operation.`, 'danger');
+            } else {
+                game.bosses[id].state = 'Peace';
+                addLog(`🕊️ Ceasefire maintained with ${bossData[id].name}.`, 'warning');
+            }
+            initLists();
+        }
+
+        function initLists() {
+            let crimeHtml = '';
+            for (let id in crimeData) {
+                let c = crimeData[id];
+                let isRunning = crimeProgress[id] && crimeProgress[id].active;
+                crimeHtml += `
+                    <div class="list-item">
+                        <div class="list-item-header"><span>${c.name}</span> <span style="color:var(--accent-green);">+$${c.cash.toLocaleString()}</span></div>
+                        <div class="list-item-desc">${c.desc} (+${c.xp} XP)</div>
+                        <div class="progress-bar-container"><div class="progress-bar-fill" id="crime-bar-${id}"></div></div>
+                        <div class="list-item-footer">
+                            <span class="text-muted">Heat: +${c.heat}%</span>
+                            <button class="action-btn primary" id="crime-btn-${id}" ${isRunning ? 'disabled' : ''} onclick="startCrime('${id}')">
+                                ${isRunning ? 'Running...' : 'Execute'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('crime-list-container').innerHTML = crimeHtml;
+
+            let frontsHtml = '';
+            for (let id in frontData) {
+                let f = frontData[id];
+                let calc = calculateFrontCost(id);
+                frontsHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${f.name}</span> <span class="badge">Owned: <span id="front-count-${id}">${game.fronts[id].owned}</span></span></div>
+                            <div class="list-item-desc">${f.desc} | Wash: $${f.rate.toLocaleString()}/s</div>
+                        </div>
+                        <button class="action-btn primary" onclick="buyFront('${id}', event)">Buy +${calc.qty} ($${calc.cost.toLocaleString()})</button>
+                    </div>
+                `;
+            }
+            document.getElementById('fronts-list-container').innerHTML = frontsHtml;
+
+            let smugHtml = '';
+            for (let id in smugglingData) {
+                let sm = smugglingData[id];
+                let owned = game.smuggling[id].owned;
+                let calc = calculateSmugglingCost(id);
+                smugHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${sm.name}</span> <span class="badge">Active Routes: ${owned}</span></div>
+                            <div class="list-item-desc">${sm.desc}</div>
+                        </div>
+                        <button class="action-btn primary" onclick="buySmugglingRoute('${id}', event)">Expand +${calc.qty} ($${calc.cost.toLocaleString()})</button>
+                    </div>
+                `;
+            }
+            document.getElementById('smuggling-list-container').innerHTML = smugHtml;
+
+            let jailHtml = '';
+            if (game.arrestedAgents.length > 0) {
+                jailHtml += `<div class="card" style="border-color:var(--accent-red); margin-bottom:12px;">
+                    <div class="card-title" style="color:var(--accent-red);">🚨 Jailed Operatives (In Custody)</div>`;
+                game.arrestedAgents.forEach((arr, idx) => {
+                    jailHtml += `
+                        <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>${agentData[arr.type].name}</strong>
+                                <div class="list-item-desc">Bail Set: $${arr.bailCost.toLocaleString()}</div>
+                            </div>
+                            <button class="action-btn primary" onclick="bailOutAgent(${idx})">Pay Bail</button>
+                        </div>
+                    `;
+                });
+                jailHtml += `</div>`;
+            }
+            document.getElementById('jail-container').innerHTML = jailHtml;
+
+            let crewHtml = '';
+            for (let id in agentData) {
+                let a = agentData[id];
+                let count = game.agents[id] ? game.agents[id].owned : 0;
+                let lvl = game.agents[id] ? (game.agents[id].level || 1) : 1;
+                let calc = calculateAgentCost(id);
+                let lvlCost = calculateAgentLevelCost(id);
+                crewHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${a.name}</span> <span class="badge">Count: ${count} | Division Lvl: ${lvl}</span></div>
+                            <div class="list-item-desc">${a.desc}<br><span style="color:var(--accent-purple);">Trait: ${a.trait} | Weakness: ${a.weakness}</span></div>
+                        </div>
+                        <div class="flex-row">
+                            <button class="action-btn primary" onclick="buyAgent('${id}', event)">Hire +${calc.qty} ($${calc.cost.toLocaleString()})</button>
+                            <button class="action-btn" onclick="levelUpAgent('${id}')">Train Div ($${lvlCost.toLocaleString()})</button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('recruit-list-container').innerHTML = crewHtml;
+
+            let skillHtml = '';
+            for (let id in skillData) {
+                let s = skillData[id];
+                let lvl = game.player.skills[id] || 0;
+                skillHtml += `
+                    <div class="tech-card">
+                        <div class="list-item-header"><span>${s.name}</span> <span class="badge">Lvl: ${lvl}</span></div>
+                        <div class="list-item-desc">${s.desc}</div>
+                        <button class="action-btn primary" onclick="upgradeSkill('${id}')">Upgrade Perk (1 SP)</button>
+                    </div>
+                `;
+            }
+            document.getElementById('skills-list-container').innerHTML = skillHtml;
+
+            let techHtml = '';
+            for (let id in upgradeData) {
+                let u = upgradeData[id];
+                let bought = game.upgrades[id] || false;
+                techHtml += `
+                    <div class="tech-card">
+                        <div class="list-item-header"><span>${u.name}</span></div>
+                        <div class="list-item-desc">${u.desc}</div>
+                        <button class="action-btn primary" ${bought ? 'disabled' : ''} onclick="buyUpgrade('${id}')">
+                            ${bought ? 'Unlocked' : 'Research ($' + u.cost.toLocaleString() + ')'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('upgrades-list-container').innerHTML = techHtml;
+
+            let advTechHtml = '';
+            for (let id in advancedTechData) {
+                let at = advancedTechData[id];
+                let bought = game.advancedTech[id] || false;
+                advTechHtml += `
+                    <div class="tech-card">
+                        <div class="list-item-header"><span>${at.name}</span></div>
+                        <div class="list-item-desc">${at.desc}</div>
+                        <button class="action-btn primary" ${bought ? 'disabled' : ''} onclick="buyAdvancedTech('${id}')">
+                            ${bought ? 'Integrated' : 'Acquire ($' + at.cost.toLocaleString() + ')'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('advanced-tech-list-container').innerHTML = advTechHtml;
+
+            let bossHtml = '';
+            for (let id in bossData) {
+                let b = bossData[id];
+                let defeated = game.bosses[id] ? game.bosses[id].defeated : false;
+                let state = game.bosses[id] ? (game.bosses[id].state || 'Peace') : 'Peace';
+                bossHtml += `
+                    <div class="list-item">
+                        <div class="list-item-header"><span>${b.name}</span> <span style="color:var(--accent-red);">Power Req: ${b.power}</span></div>
+                        <div class="list-item-desc">${b.desc}<br>
+                        <span style="color:var(--accent-yellow);">State: <strong>${state}</strong> | Temperament: ${b.temperament} | Weakness: ${b.weakness}</span><br>
+                        <span style="color:var(--accent-green);">Signature Bonus: ${b.signatureBonus}</span></div>
+                        <div class="flex-row" style="margin-top:5px;">
+                            ${!defeated ? `<button class="action-btn" onclick="toggleBossWarState('${id}')">${state === 'Peace' ? 'Declare War' : 'Sign Ceasefire'}</button>` : ''}
+                            <button class="action-btn primary" ${defeated || state !== 'War' ? 'disabled' : ''} onclick="fightBoss('${id}')">
+                                ${defeated ? 'Eliminated (' + b.signatureBonus + ' Active)' : (state === 'War' ? 'Launch Strike' : 'Must Declare War First')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('boss-list-container').innerHTML = bossHtml;
+
+            let presPerksHtml = '';
+            for (let id in prestigePerksData) {
+                let perk = prestigePerksData[id];
+                let bought = game.prestigeUpgrades[id];
+                presPerksHtml += `
+                    <div class="tech-card">
+                        <div class="list-item-header"><span>${perk.name}</span> <span style="color:var(--accent-yellow);">${perk.cost} 👑</span></div>
+                        <div class="list-item-desc">${perk.desc}</div>
+                        <button class="action-btn primary" style="margin-top:5px;" ${bought ? 'disabled' : ''} onclick="buyPrestigePerk('${id}')">
+                            ${bought ? 'Active Permanent Legacy' : 'Acquire Perk (' + perk.cost + ' Tokens)'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('prestige-perks-container').innerHTML = presPerksHtml;
+
+            let dipHtml = '';
+            for (let id in diplomacyData) {
+                let d = diplomacyData[id];
+                let signed = game.diplomacy[id] || false;
+                dipHtml += `
+                    <div class="list-item">
+                        <div class="list-item-header"><span>${d.name}</span></div>
+                        <div class="list-item-desc">${d.desc} | Cost: $${d.costClean.toLocaleString()} + ${d.costInf} Inf</div>
+                        <button class="action-btn primary" style="margin-top:5px;" ${signed ? 'disabled' : ''} onclick="signTreaty('${id}')">
+                            ${signed ? 'Treaty Active' : 'Sign Treaty'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('diplomacy-list-container').innerHTML = dipHtml;
+
+            let shipHtml = '';
+            for (let id in shippingData) {
+                let s = shippingData[id];
+                let count = game.shipping[id].owned;
+                shipHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${s.name}</span> <span class="badge">Owned: ${count}</span></div>
+                            <div class="list-item-desc">${s.desc}</div>
+                        </div>
+                        <button class="action-btn primary" onclick="buyShipping('${id}')">Buy ($${s.cost.toLocaleString()})</button>
+                    </div>
+                `;
+            }
+            document.getElementById('shipping-list-container').innerHTML = shipHtml;
+
+            let safeHtml = '';
+            for (let id in safehouseData) {
+                let sh = safehouseData[id];
+                let owned = game.safehouse[id].owned > 0;
+                safeHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${sh.name}</span> <span class="badge">${owned ? 'Installed' : 'Not Installed'}</span></div>
+                            <div class="list-item-desc">${sh.desc}</div>
+                        </div>
+                        <button class="action-btn primary" ${owned ? 'disabled' : ''} onclick="buySafehouse('${id}')">
+                            ${owned ? 'Installed' : 'Build ($' + sh.cost.toLocaleString() + ')'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('safehouse-list-container').innerHTML = safeHtml;
+
+            let govHtml = '';
+            for (let id in governmentData) {
+                let g = governmentData[id];
+                let bought = game.government[id] || false;
+                govHtml += `
+                    <div class="list-item">
+                        <div class="list-item-header"><span>${g.name}</span></div>
+                        <div class="list-item-desc">${g.desc} | Cost: $${g.cost.toLocaleString()} Clean</div>
+                        <button class="action-btn primary" style="margin-top:5px;" ${bought ? 'disabled' : ''} onclick="buyGovernment('${id}')">
+                            ${bought ? 'Passed into Law' : 'Pass Ordinance'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('government-list-container').innerHTML = govHtml;
+
+            let secHtml = '';
+            for (let id in sectorData) {
+                let sec = sectorData[id];
+                let controlled = game.sectors[id].controlled;
+                let enforcersAssigned = game.sectors[id].enforcersAssigned || 0;
+                secHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${sec.name}</span> <span class="badge" style="color:${controlled ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${controlled ? 'Controlled (' + enforcersAssigned + ' Enforcers)' : 'Uncontrolled'}</span></div>
+                            <div class="list-item-desc">${sec.desc} Bonus: ${sec.bonus}</div>
+                        </div>
+                        ${!controlled ? `<button class="action-btn primary" onclick="conquerSector('${id}')">Takeover ($${sec.cost.toLocaleString()})</button>` : `<button class="action-btn" onclick="switchTab('territory'); inspectSector('${id}');">Manage Turf</button>`}
+                    </div>
+                `;
+            }
+            document.getElementById('sectors-list-container').innerHTML = secHtml;
+
+            let misHtml = '';
+            for (let id in missionData) {
+                let m = missionData[id];
+                let isRunning = game.missions[id].active;
+                misHtml += `
+                    <div class="list-item">
+                        <div class="list-item-header"><span>${m.name}</span> <span style="color:var(--accent-green);">+$${m.rewardClean.toLocaleString()} Clean</span></div>
+                        <div class="list-item-desc">${m.desc} (+${m.rewardXp} XP)</div>
+                        <div class="progress-bar-container"><div class="progress-bar-fill" id="mission-bar-${id}"></div></div>
+                        <button class="action-btn primary" style="margin-top:6px;" ${isRunning ? 'disabled' : ''} onclick="startMission('${id}')">
+                            ${isRunning ? 'In Progress...' : 'Dispatch Operatives'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('missions-list-container').innerHTML = misHtml;
+
+            let bmHtml = '';
+            for (let id in blackMarketData) {
+                let bm = blackMarketData[id];
+                let owned = game.blackmarket[id].owned > 0;
+                bmHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${bm.name}</span> <span class="badge">${owned ? 'Acquired' : 'Available'}</span></div>
+                            <div class="list-item-desc">${bm.desc}</div>
+                        </div>
+                        <button class="action-btn primary" ${owned ? 'disabled' : ''} onclick="buyBlackMarket('${id}')">
+                            ${owned ? 'Acquired' : 'Buy ($' + bm.cost.toLocaleString() + ')'}
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('blackmarket-list-container').innerHTML = bmHtml;
+
+            let achHtml = '';
+            for (let id in achievementData) {
+                let ach = achievementData[id];
+                let unlocked = false;
+                if (id === 'first_crime') unlocked = game.achievements.first_crime;
+                if (id === 'millionaire') unlocked = game.achievements.first_million;
+                if (id === 'crime_lord') unlocked = game.achievements.crime_lord;
+                if (id === 'territory_master') unlocked = game.achievements.territory_master;
+                achHtml += `
+                    <div class="list-item" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="list-item-header"><span>${ach.name}</span> <span class="badge" style="color:${unlocked ? 'var(--accent-green)' : 'var(--text-muted)'};">${unlocked ? 'Unlocked' : 'Locked'}</span></div>
+                            <div class="list-item-desc">${ach.desc}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('achievements-list-container').innerHTML = achHtml;
+        }
+
+        function buyAgent(id, e) {
+            let calc = calculateAgentCost(id);
+            if (game.cleanCapital >= calc.cost) {
+                game.cleanCapital -= calc.cost;
+                game.agents[id].owned += calc.qty;
+                initLists();
+                renderUI();
+                if (e && e.clientX) spawnFloatingText(e.clientX, e.clientY, `-${calc.cost.toLocaleString()}`, '#da3633');
+                playBuySfx();
+            } else {
+                addLog(`Insufficient clean funds to hire ${agentData[id].name}!`, 'warning');
+            }
+        }
+
+        function buySmugglingRoute(id, e) {
+            let calc = calculateSmugglingCost(id);
+            if (game.cleanCapital >= calc.cost) {
+                game.cleanCapital -= calc.cost;
+                game.smuggling[id].owned += calc.qty;
+                initLists();
+                renderUI();
+                if (e && e.clientX) spawnFloatingText(e.clientX, e.clientY, `-${calc.cost.toLocaleString()}`, '#da3633');
+                playBuySfx();
+            } else {
+                addLog(`Insufficient clean funds for smuggling route expansion!`, 'warning');
+            }
+        }
+
+        function buyUpgrade(id) {
+            let u = upgradeData[id];
+            if (!game.upgrades[id] && game.cleanCapital >= u.cost) {
+                game.cleanCapital -= u.cost;
+                game.upgrades[id] = true;
+                initLists();
+                renderUI();
+                addLog(`Researched Tech: ${u.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function buyAdvancedTech(id) {
+            let at = advancedTechData[id];
+            if (!game.advancedTech[id] && game.cleanCapital >= at.cost) {
+                game.cleanCapital -= at.cost;
+                game.advancedTech[id] = true;
+                initLists();
+                renderUI();
+                addLog(`Integrated Advanced Tech: ${at.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function buyPrestigePerk(id) {
+            let perk = prestigePerksData[id];
+            if (!game.prestigeUpgrades[id] && game.prestigeTokens >= perk.cost) {
+                game.prestigeTokens -= perk.cost;
+                game.prestigeUpgrades[id] = true;
+                initLists();
+                renderUI();
+                addLog(`👑 Acquired Permanent Legacy Perk: ${perk.name}!`, 'event');
+                playBuySfx();
+            } else {
+                addLog(`Not enough Infamy Tokens for ${perk.name}!`, 'warning');
+            }
+        }
+
+        function upgradeSkill(id) {
+            if (game.player.skillPoints > 0) {
+                game.player.skillPoints--;
+                game.player.skills[id] = (game.player.skills[id] || 0) + 1;
+                initLists();
+                renderUI();
+                addLog(`Upgraded skill: ${skillData[id].name}!`, 'success');
+                playTone(700, 0.1);
+            } else {
+                addLog(`No Skill Points available! Level up to earn more.`, 'warning');
+            }
+        }
+
+        function fightBoss(id) {
+            let b = bossData[id];
+            let enforcerPower = (game.agents.enforcer.owned * 10 * (game.agents.enforcer.level || 1)) + ((game.safehouse.armory.owned > 0) ? 20 : 0) + ((game.blackmarket.weapons.owned > 0) ? 15 : 0);
+            let commandBonus = 1 + (game.player.skills.commander * 0.15);
+            
+            let weaknessCounterBonus = 1.0;
+            if (id === 'local_gang' && game.agents.driver.owned > 0) weaknessCounterBonus = 1.35;
+            if (id === 'mafia_family' && game.agents.hacker.owned > 0) weaknessCounterBonus = 1.35;
+            if (id === 'cartel' && game.agents.enforcer.owned >= 5) weaknessCounterBonus = 1.35;
+            if (id === 'syndicate' && game.agents.fixer.owned > 0) weaknessCounterBonus = 1.35;
+
+            let totalPower = enforcerPower * commandBonus * weaknessCounterBonus;
+
+            // Combat Modal Animation
+            let combatModal = document.getElementById('combat-modal');
+            let statusText = document.getElementById('combat-status-text');
+            let progressBar = document.getElementById('combat-progress-bar');
+            let combatLog = document.getElementById('combat-log');
+            
+            combatModal.style.display = 'flex';
+            statusText.innerText = `Engaging ${b.name}...`;
+            progressBar.style.width = '0%';
+            combatLog.innerText = `[OPERATION START] Dispatched strike force against ${b.name}.\nCalculated Combat Power: ${Math.floor(totalPower)} / Req: ${b.power}\n`;
+
+            let progress = 0;
+            let timer = setInterval(() => {
+                progress += 25;
+                progressBar.style.width = progress + '%';
+                playTone(300 + (progress * 4), 0.08, 'sawtooth');
+
+                if (progress === 50) {
+                    combatLog.innerText += `[TACTICAL PHASE] Breaching rival defenses...\n`;
+                }
+
+                if (progress >= 100) {
+                    clearInterval(timer);
+                    setTimeout(() => {
+                        combatModal.style.display = 'none';
+                        if (totalPower >= b.power) {
+                            game.bosses[id].defeated = true;
+                            game.bosses[id].state = 'Defeated';
+                            game.cleanCapital += b.rewardClean;
+                            game.influence += b.rewardInf;
+                            game.stats.bossesDefeated++;
+                            addLog(`Victory! Defeated ${b.name}. Earned $${b.rewardClean.toLocaleString()} Clean, +${b.rewardInf} Inf, and unlocked ${b.signatureBonus}!`, 'success');
+                            
+                            if (id === 'final_boss') {
+                                document.getElementById('victory-modal').style.display = 'flex';
+                            }
+
+                            initLists();
+                            renderUI();
+                            playTone(950, 0.3, 'triangle');
+                        } else {
+                            addLog(`Combat failure against ${b.name}! Required Power: ${b.power}, Your Power: ${Math.floor(totalPower)}. Train/recruit division operatives!`, 'danger');
+                            playTone(250, 0.3, 'sawtooth');
+                        }
+                    }, 400);
+                }
+            }, 300);
+        }
+
+        function signTreaty(id) {
+            let d = diplomacyData[id];
+            if (!game.diplomacy[id] && game.cleanCapital >= d.costClean && game.influence >= d.costInf) {
+                game.cleanCapital -= d.costClean;
+                game.influence -= d.costInf;
+                game.diplomacy[id] = true;
+                addLog(`Successfully signed treaty: ${d.name}!`, 'success');
+                initLists();
+                renderUI();
+                playTone(800, 0.2);
+            } else {
+                addLog(`Insufficient funds or influence for treaty ${d.name}!`, 'warning');
+            }
+        }
+
+        function buyShipping(id) {
+            let s = shippingData[id];
+            if (game.cleanCapital >= s.cost) {
+                game.cleanCapital -= s.cost;
+                game.shipping[id].owned++;
+                initLists();
+                renderUI();
+                addLog(`Acquired maritime unit: ${s.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function buySafehouse(id) {
+            let sh = safehouseData[id];
+            if (game.safehouse[id].owned === 0 && game.cleanCapital >= sh.cost) {
+                game.cleanCapital -= sh.cost;
+                game.safehouse[id].owned = 1;
+                initLists();
+                renderUI();
+                addLog(`Installed safehouse upgrade: ${sh.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function buyGovernment(id) {
+            let g = governmentData[id];
+            if (!game.government[id] && game.cleanCapital >= g.cost) {
+                game.cleanCapital -= g.cost;
+                game.government[id] = true;
+                initLists();
+                renderUI();
+                addLog(`Passed political ordinance: ${g.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function startMission(id) {
+            if (game.missions[id].active) return;
+            game.missions[id].active = true;
+            game.missions[id].progress = 0;
+            initLists();
+            playTone(400, 0.1);
+        }
+
+        function buyBlackMarket(id) {
+            let bm = blackMarketData[id];
+            if (game.blackmarket[id].owned === 0 && game.cleanCapital >= bm.cost) {
+                game.cleanCapital -= bm.cost;
+                game.blackmarket[id].owned = 1;
+                initLists();
+                renderUI();
+                addLog(`Acquired black market asset: ${bm.name}!`, 'success');
+                playBuySfx();
+            }
+        }
+
+        function startCrime(id) {
+            if (crimeProgress[id].active) return;
+            crimeProgress[id].active = true;
+            crimeProgress[id].progress = 0;
+            let btn = document.getElementById(`crime-btn-${id}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "Running...";
+            }
+            playTone(300, 0.08);
+        }
+
+        function manualWash(amount, e) {
+            let toWash = amount === 'all' ? game.dirtyCash : amount;
+            if (toWash <= 0) return;
+            if (game.dirtyCash < toWash) {
+                addLog(`Not enough dirty cash to wash $${toWash.toLocaleString()}!`, 'warning');
+                return;
+            }
+            game.dirtyCash -= toWash;
+            let skillBonus = 1 + (game.player.skills.cleaner * 0.1);
+            let cleanGained = Math.floor(toWash * 0.5 * skillBonus);
+            game.cleanCapital += cleanGained;
+            game.stats.totalClean += cleanGained;
+            if (e && e.clientX) spawnFloatingText(e.clientX, e.clientY, `+$${cleanGained.toLocaleString()}`, '#2ea043');
+            addLog(`Washed $${toWash.toLocaleString()} dirty cash into $${cleanGained.toLocaleString()} clean capital.`, 'success');
+            playCashSfx();
+        }
+
+        function buyFront(id, e) {
+            let calc = calculateFrontCost(id);
+            if (game.cleanCapital >= calc.cost) {
+                game.cleanCapital -= calc.cost;
+                game.fronts[id].owned += calc.qty;
+                initLists();
+                renderUI();
+                if (e && e.clientX) spawnFloatingText(e.clientX, e.clientY, `-${calc.cost.toLocaleString()}`, '#da3633');
+                playBuySfx();
+            }
+        }
+
+        function payBribe(heatAmt, baseCost, e) {
+            let cost = baseCost * game.player.level;
+            if (game.bribeCooldown > 0) return;
+
+            if (game.cleanCapital >= cost && game.heat > 0) {
+                game.cleanCapital -= cost;
+                game.heat = Math.max(0, game.heat - heatAmt);
+                game.bribeCooldown = 20;
+                addLog(`Precinct bribed ($${cost.toLocaleString()}). Heat lowered by ${heatAmt}%.`, 'success');
+                if (e && e.clientX) spawnFloatingText(e.clientX, e.clientY, `-${heatAmt}% Heat`, '#58a6ff');
+                playTone(400, 0.1);
+                renderUI();
+            } else if (game.cleanCapital < cost) {
+                addLog(`Not enough clean funds ($${cost.toLocaleString()} required) to bribe precinct!`, 'warning');
+            }
+        }
+
+        function triggerPrestige() {
+            let claimable = Math.floor(Math.sqrt(game.stats.totalClean / 100000));
+            if (claimable <= 0) {
+                addLog(`You need more total lifetime clean capital to earn Infamy Tokens!`, 'warning');
+                return;
+            }
+            if (confirm(`Rebirth your empire? You will claim ${claimable} Infamy Tokens and reset current progress.`)) {
+                game.prestigeTokens += claimable;
+                game.dirtyCash = 0;
+                game.cleanCapital = game.prestigeUpgrades.golden_connections ? 10000 : 1000;
+                game.influence = game.prestigeUpgrades.golden_connections ? 5 : 0;
+                game.heat = 0;
+                game.crewLoyalty = 100;
+                game.arrestedAgents = [];
+
+                for (let k in game.fronts) game.fronts[k].owned = 0;
+                for (let k in game.smuggling) game.smuggling[k].owned = 0;
+                for (let k in game.agents) {
+                    game.agents[k].owned = 0;
+                    game.agents[k].level = 1;
+                }
+                for (let k in game.sectors) {
+                    game.sectors[k].controlled = false;
+                    game.sectors[k].enforcersAssigned = 0;
+                }
+                initLists();
+                renderUI();
+                addLog(`REBIRTH COMPLETE! Claimed ${claimable} Infamy Tokens! Permanent legacy perks active.`, 'event');
+                playTone(1200, 0.5);
+            }
+        }
+
+        function resetGameSave() {
+            if (confirm("Are you sure you want to reset your entire game progress? This cannot be undone!")) {
+                localStorage.removeItem('shadow_syndicate_autosave');
+                for (let i = 1; i <= 3; i++) {
+                    localStorage.removeItem(`shadow_syndicate_slot_${i}`);
+                }
+                location.reload();
+            }
+        }
+
+        function changeDifficulty(val) {
+            game.difficulty = val;
+            addLog(`Difficulty setting adjusted to: ${val.toUpperCase()}`, 'warning');
+        }
+
+        function openSaveModal() {
+            updateSlotDescriptions();
+            document.getElementById('save-modal').style.display = 'flex';
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').style.display = 'none';
+        }
+
+        function updateSlotDescriptions() {
+            for (let i = 1; i <= 3; i++) {
+                let data = localStorage.getItem(`shadow_syndicate_slot_${i}`);
+                let el = document.getElementById(`slot-${i}-desc`);
+                if (data) {
+                    let parsed = JSON.parse(data);
+                    el.innerText = `${parsed.orgName || 'Empire'} (Lvl ${parsed.player ? parsed.player.level : 1})`;
+                } else {
+                    el.innerText = "Empty Slot";
+                }
+            }
+        }
+
+        function saveToSlot(slot) {
+            game.lastSaveTime = Date.now();
+            localStorage.setItem(`shadow_syndicate_slot_${slot}`, JSON.stringify(game));
+            updateSlotDescriptions();
+            addLog(`Game state saved to Slot ${slot}.`, 'success');
+            playTone(900, 0.1);
+        }
+
+        function autoSaveGame() {
+            game.lastSaveTime = Date.now();
+            localStorage.setItem('shadow_syndicate_autosave', JSON.stringify(game));
+            let toast = document.getElementById('autosave-toast');
+            if (toast) {
+                toast.style.opacity = '1';
+                setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            }
+        }
+
+        function deepMerge(target, source) {
+            for (let key in source) {
+                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    if (!target[key]) target[key] = {};
+                    deepMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
+        }
+
+        function loadFromSlot(slot) {
+            let data = localStorage.getItem(`shadow_syndicate_slot_${slot}`);
+            if (data) {
+                try {
+                    let parsed = JSON.parse(data);
+                    deepMerge(game, parsed);
+                    syncUIWithGame();
+                    initLists();
+                    renderUI();
+                    closeSaveModal();
+                    addLog(`Loaded state from Slot ${slot}.`, 'success');
+                    playTone(950, 0.1);
+                } catch(e) {
+                    alert("Error parsing save data!");
+                }
+            } else {
+                alert("Slot is empty!");
+            }
+        }
+
+        function syncUIWithGame() {
+            document.getElementById('org-name-input').value = game.orgName || "Shadow Syndicate";
+            document.getElementById('player-avatar-btn').innerText = avatars[game.avatarIdx || 0];
+            document.getElementById('difficulty-select').value = game.difficulty || "normal";
+        }
+
+        function openExportImportModal() {
+            document.getElementById('save-string-box').value = btoa(JSON.stringify(game));
+            document.getElementById('export-modal').style.display = 'flex';
+        }
+
+        function importSaveString() {
+            try {
+                let decoded = JSON.parse(atob(document.getElementById('save-string-box').value));
+                if (decoded && typeof decoded === 'object') {
+                    deepMerge(game, decoded);
+                    syncUIWithGame();
+                    initLists();
+                    renderUI();
+                    document.getElementById('export-modal').style.display = 'none';
+                    addLog(`Import string loaded successfully!`, 'success');
+                }
+            } catch(e) {
+                alert("Invalid save string!");
+            }
+        }
+
+        function addLog(text, type = '') {
+            let logContainer = document.getElementById('terminal-log');
+            if (!logContainer) return;
+            let entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+            logContainer.prepend(entry);
+            if (logContainer.children.length > 50) logContainer.removeChild(logContainer.lastChild);
+        }
+
+        // OFFLINE PROGRESS ENGINE
+        function processOfflineEarnings() {
+            let now = Date.now();
+            let last = game.lastSaveTime || now;
+            let diffSec = Math.floor((now - last) / 1000);
+
+            if (diffSec > 10) {
+                let capSec = Math.min(diffSec, 43200); // Cap at 12 hours
+                
+                let classGodfatherMult = game.prestigeUpgrades.class_godfather ? 1.5 : 1.0;
+                let prestigeMult = (1 + (game.prestigeTokens * 0.15)) * classGodfatherMult;
+                let shadowGridMult = game.advancedTech.shadow_grid ? 1.5 : 1.0;
+                let neuralNetMult = game.advancedTech.neural_net ? 2.0 : 1.0;
+                let aiWashMod = (game.upgrades.ai_ops ? 1.25 : 1.0) * (game.diplomacy.cartel_pact ? 1.35 : 1.0);
+
+                // Smuggling offline
+                let smugglingRate = 0;
+                for (let id in smugglingData) {
+                    smugglingRate += smugglingData[id].rate * (game.smuggling[id].owned || 0);
+                }
+                let smugglingEarned = Math.floor(smugglingRate * neuralNetMult * prestigeMult * shadowGridMult * capSec);
+
+                // Shipping offline
+                let shippingRate = 0;
+                for (let id in shippingData) {
+                    shippingRate += shippingData[id].rate * (game.shipping[id].owned || 0);
+                }
+                let shippingEarned = Math.floor(shippingRate * prestigeMult * shadowGridMult * capSec);
+
+                // Laundering offline
+                let frontWashRate = 0;
+                for (let id in frontData) {
+                    frontWashRate += frontData[id].rate * (game.fronts[id].owned || 0);
+                }
+                let potentialWash = frontWashRate * aiWashMod * prestigeMult * shadowGridMult * capSec;
+                let actualWash = Math.min(game.dirtyCash, potentialWash);
+                let dirtyWashed = Math.floor(actualWash * 0.5);
+
+                game.dirtyCash -= actualWash;
+                game.cleanCapital += (smugglingEarned + shippingEarned + dirtyWashed);
+                game.stats.totalClean += (smugglingEarned + shippingEarned + dirtyWashed);
+
+                // Display Offline Report Modal
+                let hrs = Math.floor(capSec / 3600);
+                let mins = Math.floor((capSec % 3600) / 60);
+                let secs = capSec % 60;
+                document.getElementById('offline-time-text').innerText = `${hrs}h ${mins}m ${secs}s`;
+                document.getElementById('offline-washed-text').innerText = '$' + dirtyWashed.toLocaleString();
+                document.getElementById('offline-smuggled-text').innerText = '$' + smugglingEarned.toLocaleString();
+                document.getElementById('offline-shipping-text').innerText = '$' + shippingEarned.toLocaleString();
+                document.getElementById('offline-modal').style.display = 'flex';
+            }
+            game.lastSaveTime = now;
+        }
+
+        function closeOfflineModal() {
+            document.getElementById('offline-modal').style.display = 'none';
+        }
+
+        // 5-TIER DYNAMIC HEAT EVALUATOR
+        function processHeatConsequences(dt) {
+            if (game.heat < 30) return;
+
+            if (Math.random() < 0.008) {
+                if (game.heat >= 100) {
+                    if (game.government.judge_pardon || game.advancedTech.quantum_vault) {
+                        addLog(`TIER 5 COLLAPSE RAID SUPPRESSED! Quantum Vault/Pardon shielded all assets!`, 'event');
+                        game.heat = 40;
+                    } else {
+                        let raidPenalty = game.upgrades.ghost_protocol ? 0.25 : 0.5;
+                        let bunkerProtect = game.safehouse.bunker.owned > 0 ? 0.5 : 0.0;
+                        let lostDirty = game.dirtyCash * (raidPenalty - (bunkerProtect * raidPenalty));
+                        game.dirtyCash -= lostDirty;
+                        game.heat = 40;
+                        playRaidAlarm();
+                        addLog(`💥 TIER 5 SYNDICATE COLLAPSE: Federal forces stormed HQ! Lost $${Math.floor(lostDirty).toLocaleString()} dirty cash!`, 'danger');
+                    }
+                }
+                else if (game.heat >= 85) {
+                    addLog(`🚨 TIER 4 FEDERAL MANHUNT: Operations slowed & heavy federal surveillance active!`, 'danger');
+                }
+                else if (game.heat >= 70 && !game.government.judge_pardon && !game.advancedTech.quantum_vault) {
+                    let frozenAmount = Math.floor(game.cleanCapital * 0.15);
+                    if (frozenAmount > 0) {
+                        game.cleanCapital -= frozenAmount;
+                        addLog(`🚨 TIER 3 POLICE ASSET FREEZE: Feds froze $${frozenAmount.toLocaleString()} of clean capital!`, 'danger');
+                        playRaidAlarm();
+                    }
+                } 
+                else if (game.heat >= 50) {
+                    let availableTypes = Object.keys(game.agents).filter(k => game.agents[k].owned > 0);
+                    if (availableTypes.length > 0) {
+                        let agentType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                        game.agents[agentType].owned--;
+                        let bail = calculateAgentCost(agentType).cost * 1.5;
+                        game.arrestedAgents.push({ type: agentType, bailCost: Math.floor(bail) });
+                        addLog(`⚖️ TIER 2 OPERATIVE ARREST: Police picked up a ${agentData[agentType].name}! Bail required in Crew Roster.`, 'warning');
+                        initLists();
+                    }
+                }
+                else if (game.heat >= 30) {
+                    let bribeDemand = Math.floor(game.dirtyCash * 0.1);
+                    if (bribeDemand > 0) {
+                        game.dirtyCash -= bribeDemand;
+                        addLog(`👮 TIER 1 PATROL SHAKEDOWN: Patrol officers seized $${bribeDemand.toLocaleString()} dirty cash as hush money.`, 'warning');
+                    }
+                }
+            }
+        }
+
+        // CREW LOYALTY & BETRAYALS
+        function updateCrewLoyalty(dt) {
+            if (game.heat > 60) {
+                game.crewLoyalty = Math.max(0, game.crewLoyalty - (0.15 * dt));
+            } else {
+                game.crewLoyalty = Math.min(100, game.crewLoyalty + (0.05 * dt));
+            }
+
+            if (game.crewLoyalty < 30 && Math.random() < 0.002) {
+                let stolen = Math.floor(game.dirtyCash * 0.2);
+                game.dirtyCash -= stolen;
+                game.heat = Math.min(100, game.heat + 15);
+                addLog(`🗡️ BETRAYAL! Disloyal crew members stole $${stolen.toLocaleString()} dirty cash and leaked syndicate info! (+15% Heat)`, 'danger');
+                playRaidAlarm();
+            }
+        }
+
+        // RANDOM ENCOUNTERS SYSTEM
+        function triggerRandomEvent() {
+            if (game.activeEvent) return;
+            let roll = Math.random();
+            if (roll < 0.35) {
+                game.activeEvent = {
+                    type: 'mole',
+                    title: '🚨 ENCOUNTER: INFORMANT LEAK',
+                    desc: 'An FBI mole offers internal raid schedules for $5,000 clean cash. Pay to suppress all heat immediately?'
+                };
+            } else if (roll < 0.7) {
+                game.activeEvent = {
+                    type: 'fire',
+                    title: '🔥 ENCOUNTER: WAREHOUSE FIRE',
+                    desc: 'Rival thugs torched a front business storage bay! Pay $2,500 for emergency repairs or suffer a temporary wash penalty.'
+                };
+            } else {
+                game.activeEvent = {
+                    type: 'flash_sale',
+                    title: '⚡ ENCOUNTER: BLACK MARKET FLASH SALE',
+                    desc: 'A rogue arms dealer is unloading Quantum Comms hardware at a 50% discount ($75,000 Clean)!'
+                };
+            }
+            renderActiveEventBanner();
+        }
+
+        function renderActiveEventBanner() {
+            let card = document.getElementById('active-event-card');
+            if (!card) return;
+            if (!game.activeEvent) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = 'block';
+            document.getElementById('event-title').innerText = game.activeEvent.title;
+            document.getElementById('event-desc').innerText = game.activeEvent.desc;
+            
+            let actionsHtml = '';
+            if (game.activeEvent.type === 'mole') {
+                actionsHtml = `<button class="action-btn primary" onclick="resolveEvent('pay_mole')">Pay $5,000 (-50 Heat)</button>
+                               <button class="action-btn" onclick="resolveEvent('ignore')">Decline</button>`;
+            } else if (game.activeEvent.type === 'fire') {
+                actionsHtml = `<button class="action-btn primary" onclick="resolveEvent('pay_fire')">Repair ($2,500)</button>
+                               <button class="action-btn" onclick="resolveEvent('ignore')">Ignore</button>`;
+            } else if (game.activeEvent.type === 'flash_sale') {
+                actionsHtml = `<button class="action-btn primary" onclick="resolveEvent('buy_flash')">Acquire Gear ($75,000)</button>
+                               <button class="action-btn" onclick="resolveEvent('ignore')">Pass</button>`;
+            }
+            document.getElementById('event-actions').innerHTML = actionsHtml;
+        }
+
+        function resolveEvent(action) {
+            if (action === 'pay_mole') {
+                if (game.cleanCapital >= 5000) {
+                    game.cleanCapital -= 5000;
+                    game.heat = Math.max(0, game.heat - 50);
+                    addLog(`Informant paid off successfully. Police heat plunged by 50%.`, 'success');
+                } else {
+                    addLog(`Not enough clean funds to pay off the informant!`, 'warning');
+                    return;
+                }
+            } else if (action === 'pay_fire') {
+                if (game.cleanCapital >= 2500) {
+                    game.cleanCapital -= 2500;
+                    addLog(`Emergency warehouse repairs completed. Operations normalized.`, 'success');
+                } else {
+                    game.cleanCapital -= 1000;
+                    addLog(`Unable to pay full repairs. Front output temporarily throttled.`, 'danger');
+                }
+            } else if (action === 'buy_flash') {
+                if (game.cleanCapital >= 75000) {
+                    game.cleanCapital -= 75000;
+                    game.blackmarket.encrypted_radio.owned = 1;
+                    addLog(`Acquired discounted Quantum Comms Gear from flash sale!`, 'success');
+                } else {
+                    addLog(`Insufficient clean funds for flash sale equipment!`, 'warning');
+                    return;
+                }
+            } else {
+                addLog(`Encounter dismissed.`, 'warning');
+            }
+            game.activeEvent = null;
+            renderActiveEventBanner();
+        }
+
+        function updateEconomy() {
+            let flux = (Math.random() * 0.2 - 0.1);
+            game.economy.inflation = Math.max(0.8, Math.min(1.5, game.economy.inflation + flux));
+            let ind = document.getElementById('econ-indicator');
+            if (ind) ind.innerText = `Market: Normal (Inflation: ${Math.round((game.economy.inflation - 1) * 100)}%)`;
+        }
+
+        function checkAchievements() {
+            if (!game.achievements.first_crime && achievementData.first_crime.check()) {
+                game.achievements.first_crime = true;
+                addLog(`Milestone Unlocked: First Blood!`, 'event');
+            }
+            if (!game.achievements.first_million && achievementData.millionaire.check()) {
+                game.achievements.first_million = true;
+                addLog(`Milestone Unlocked: Syndicate Millionaire!`, 'event');
+            }
+            if (!game.achievements.crime_lord && achievementData.crime_lord.check()) {
+                game.achievements.crime_lord = true;
+                addLog(`Milestone Unlocked: Underworld Overlord!`, 'event');
+            }
+            if (!game.achievements.territory_master && achievementData.territory_master.check()) {
+                game.achievements.territory_master = true;
+                addLog(`Milestone Unlocked: King of the City!`, 'event');
+            }
+        }
+
+        function gameLoop() {
+            let dt = 0.1;
+            let diffHeatMult = game.difficulty === 'easy' ? 0.5 : (game.difficulty === 'hard' ? 1.5 : (game.difficulty === 'nightmare' ? 2.0 : 1.0));
+            let diffYieldMult = game.difficulty === 'easy' ? 1.5 : (game.difficulty === 'hard' ? 0.75 : 1.0);
+            let classGodfatherMult = game.prestigeUpgrades.class_godfather ? 1.5 : 1.0;
+            let prestigeMult = (1 + (game.prestigeTokens * 0.15)) * classGodfatherMult;
+            let shadowGridMult = game.advancedTech.shadow_grid ? 1.5 : 1.0;
+            let bratvaMult = game.diplomacy.bratva ? 1.1 : 1.0;
+            let gangBonusMult = game.bosses.local_gang.defeated ? 1.1 : 1.0;
+            let manhuntIncomePenalty = game.heatTier >= 4 ? 0.5 : 1.0;
+
+            processHeatConsequences(dt);
+            updateCrewLoyalty(dt);
+
+            if (game.bribeCooldown > 0) {
+                game.bribeCooldown -= dt;
+                if (game.bribeCooldown < 0) game.bribeCooldown = 0;
+            }
+
+            if (game.government.senate_seat) {
+                game.influence += dt;
+            }
+
+            let classHeatMod = game.prestigeUpgrades.class_godfather ? 0.7 : 1.0;
+            let shellMod = (game.upgrades.shell_corp ? 0.8 : 1.0) * (game.safehouse.surveillance.owned > 0 ? 0.85 : 1.0) * (game.blackmarket.forged_docs.owned > 0 ? 0.75 : 1.0) * (game.government.ordinance_heat ? 0.7 : 1.0) * classHeatMod;
+            let speedMod = (game.upgrades.crime_speed_1 ? 1.35 : 1.0) * (game.blackmarket.encrypted_radio.owned > 0 ? 1.3 : 1.0) * (game.diplomacy.yakuza ? 1.2 : 1.0) * (game.prestigeUpgrades.master_mind ? 1.2 : 1.0);
+            let aiWashMod = (game.upgrades.ai_ops ? 1.25 : 1.0) * (game.diplomacy.cartel_pact ? 1.35 : 1.0) * (game.bosses.syndicate.defeated ? 1.5 : 1.0);
+
+            for (let id in crimeProgress) {
+                let cp = crimeProgress[id];
+                if (cp.active) {
+                    cp.progress += ((dt * 1000) / crimeData[id].time * 100) * speedMod;
+                    if (cp.progress >= 100) {
+                        cp.progress = 0;
+                        cp.active = false;
+                        
+                        let btn = document.getElementById(`crime-btn-${id}`);
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerText = "Execute";
+                        }
+
+                        let c = crimeData[id];
+                        let skillCashMult = 1 + (game.player.skills.hustler * 0.1);
+                        let thugBonus = (game.agents.thug ? game.agents.thug.owned : 0) * 10 * (game.agents.thug.level || 1);
+                        let earned = Math.floor((c.cash + thugBonus) * skillCashMult * diffYieldMult * prestigeMult * shadowGridMult * bratvaMult * gangBonusMult * manhuntIncomePenalty);
+                        
+                        game.dirtyCash += earned;
+                        game.stats.totalDirty += earned;
+                        game.stats.totalCrimes++;
+                        
+                        let driverCount = game.agents.driver ? game.agents.driver.owned : 0;
+                        let driverHeatMod = Math.max(0.1, 1 - (driverCount * 0.05));
+                        let stealthMod = Math.max(0.1, 1 - (game.player.skills.stealth * 0.1));
+                        game.heat = Math.min(100, game.heat + (c.heat * diffHeatMult * stealthMod * shellMod * driverHeatMod));
+                        
+                        addXP(c.xp);
+                        addLog(`Executed ${c.name}. Earned +$${earned.toLocaleString()} dirty cash!`, 'success');
+                    }
+                    let bar = document.getElementById(`crime-bar-${id}`);
+                    if (bar) bar.style.width = Math.min(100, cp.progress) + '%';
+                }
+            }
+
+            for (let id in game.missions) {
+                let m = game.missions[id];
+                let md = missionData[id];
+                if (m.active) {
+                    m.progress += ((dt * 1000) / md.duration * 100);
+                    if (m.progress >= 100) {
+                        m.progress = 0;
+                        m.active = false;
+                        game.cleanCapital += md.rewardClean;
+                        game.stats.totalClean += md.rewardClean;
+                        game.stats.missionsCompleted++;
+                        addXP(md.rewardXp);
+                        addLog(`Contract Completed: ${md.name}! Earned +$${md.rewardClean.toLocaleString()} Clean Capital.`, 'success');
+                        initLists();
+                    }
+                    let bar = document.getElementById(`mission-bar-${id}`);
+                    if (bar) bar.style.width = Math.min(100, m.progress) + '%';
+                }
+            }
+
+            let shippingIncome = 0;
+            for (let id in shippingData) {
+                let count = game.shipping[id].owned;
+                if (count > 0) {
+                    shippingIncome += shippingData[id].rate * count * prestigeMult * shadowGridMult * manhuntIncomePenalty;
+                }
+            }
+            if (shippingIncome > 0) {
+                let inc = shippingIncome * dt;
+                game.cleanCapital += inc;
+                game.stats.totalClean += inc;
+            }
+
+            let smugglingIncome = 0;
+            let totalHeatSuppress = 0;
+            let neuralNetMult = game.advancedTech.neural_net ? 2.0 : 1.0;
+            let cartelBossBonus = game.bosses.cartel.defeated ? 1.25 : 1.0;
+            for (let id in smugglingData) {
+                let count = game.smuggling[id].owned;
+                if (count > 0) {
+                    smugglingIncome += smugglingData[id].rate * count * neuralNetMult * prestigeMult * shadowGridMult * cartelBossBonus * manhuntIncomePenalty;
+                    totalHeatSuppress += smugglingData[id].heatSuppress * count;
+                }
+            }
+            if (smugglingIncome > 0) {
+                let inc = smugglingIncome * dt;
+                game.cleanCapital += inc;
+                game.stats.totalClean += inc;
+                game.heat = Math.max(0, game.heat - (totalHeatSuppress * dt));
+            }
+
+            let totalWash = 0;
+            for (let id in frontData) {
+                let count = game.fronts[id].owned;
+                if (count > 0) {
+                    totalWash += frontData[id].rate * count;
+                }
+            }
+
+            if (totalWash > 0) {
+                let washSkillBonus = 1 + (game.player.skills.cleaner * 0.1);
+                let actualWash = Math.min(game.dirtyCash, totalWash * aiWashMod * washSkillBonus * prestigeMult * shadowGridMult * dt);
+                if (actualWash > 0) {
+                    game.dirtyCash -= actualWash;
+                    let cleanProduced = actualWash * 0.5;
+                    game.cleanCapital += cleanProduced;
+                    game.stats.totalClean += cleanProduced;
+                }
+            }
+
+            let fixerCount = game.agents.fixer ? game.agents.fixer.owned : 0;
+            let sectorPatrolSuppress = 0;
+            for (let k in game.sectors) {
+                if (game.sectors[k].controlled) {
+                    sectorPatrolSuppress += (game.sectors[k].enforcersAssigned || 0) * 0.05;
+                }
+            }
+            let immunityPerkMult = game.prestigeUpgrades.corrupt_empire ? 2.0 : 1.0;
+            let totalCooldownRate = (0.05 + (fixerCount * 0.08) + sectorPatrolSuppress) * immunityPerkMult;
+            if (game.heat > 0) {
+                game.heat = Math.max(0, game.heat - (totalCooldownRate * dt));
+            }
+
+            checkAchievements();
+            renderUI();
+        }
+
+        // HOTKEY LISTENERS
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            // Number Keys 1-0 for Navigation
+            const tabKeys = ['terminal', 'laundering', 'smuggling', 'operatives', 'skills', 'bosses', 'diplomacy', 'shipping', 'safehouse', 'government'];
+            if (e.key >= '1' && e.key <= '9') {
+                let idx = parseInt(e.key) - 1;
+                if (tabKeys[idx]) switchTab(tabKeys[idx]);
+            } else if (e.key === '0') {
+                switchTab('government');
+            }
+
+            // [Space] Quick Execute Top Operation or Wash Cash
+            if (e.code === 'Space') {
+                e.preventDefault();
+                let activePanel = document.querySelector('.tab-panel.active').id;
+                if (activePanel === 'tab-terminal') {
+                    startCrime('pickpocket');
+                } else if (activePanel === 'tab-laundering') {
+                    manualWash('all');
+                }
+            }
+
+            // [B] Quick Bribe
+            if (e.key === 'b' || e.key === 'B') {
+                payBribe(15, 500);
+            }
+
+            // [S] Open Save Modal
+            if (e.key === 's' || e.key === 'S') {
+                openSaveModal();
+            }
+
+            // [Escape] Close Modals
+            if (e.key === 'Escape') {
+                closeSaveModal();
+                closeOfflineModal();
+                document.getElementById('export-modal').style.display = 'none';
+            }
+        });
+
+        // Initialize on load
+        window.onload = function() {
+            let saved = localStorage.getItem('shadow_syndicate_autosave');
+            if (saved) {
+                try {
+                    deepMerge(game, JSON.parse(saved));
+                    syncUIWithGame();
+                } catch(e) {}
+            }
+            
+            processOfflineEarnings();
+            initLists();
+            renderUI();
+
+            setInterval(gameLoop, 100);
+            setInterval(autoSaveGame, 30000);
+            setInterval(updateEconomy, 45000);
+            setInterval(triggerRandomEvent, 60000);
+        };
+    </script>
+</body>
+</html>

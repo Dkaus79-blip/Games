@@ -1,0 +1,3261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Master — Massive Integrated Edition</title>
+    <style>
+        :root {
+            --bg-main: #07090e;
+            --bg-panel: rgba(20, 24, 34, 0.88);
+            --bg-card: #1c2230;
+            --bg-card-hover: #2a3448;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-gold: #f59e0b;
+            --accent-gem: #ec4899;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-divine: #00f2ff;
+
+            /* Rarities */
+            --rarity-common: #94a3b8;
+            --rarity-uncommon: #10b981;
+            --rarity-rare: #3b82f6;
+            --rarity-epic: #8b5cf6;
+            --rarity-legendary: #f59e0b;
+            --rarity-mythic: #ef4444;
+            --rarity-divine: #00f2ff;
+            --rarity-cosmic: #e879f9;
+            --rarity-ether: #facc15;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #07090e 70%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 12px;
+            user-select: none;
+            min-height: 100vh;
+        }
+
+        /* Top Resource Bar */
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 12px;
+            gap: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .resource-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .res-gold { color: var(--accent-gold); text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+        .res-gems { color: var(--accent-gem); text-shadow: 0 0 10px rgba(236, 72, 153, 0.4); }
+        .res-scrap { color: #a855f7; }
+        .res-renown { color: var(--accent-divine); text-shadow: 0 0 10px rgba(0, 242, 255, 0.4); }
+
+        .control-group { display: flex; gap: 8px; align-items: center; }
+
+        .save-controls { display:flex; align-items:center; gap:7px; padding:4px; border:1px solid rgba(255,255,255,.08); background:rgba(2,6,23,.35); border-radius:10px; }
+        .save-status { font-size:.72rem; color:var(--text-muted); padding:0 4px; white-space:nowrap; }
+        .save-status.saved { color:var(--accent-green); }
+        .save-status.loaded { color:var(--accent-blue); }
+        .save-status.warn { color:var(--accent-gold); }
+        .btn-load { background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; border-color:rgba(147,197,253,.45); }
+        .btn-load:hover { filter:brightness(1.12); transform:translateY(-1px); }
+        button:focus-visible { outline:2px solid var(--accent-divine); outline-offset:2px; }
+        @media (max-width: 760px) {
+            .top-bar { padding:9px 12px; }
+            .control-group { width:100%; flex-wrap:wrap; }
+            .save-controls { margin-left:auto; }
+            .save-status { display:none; }
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .tab-btn {
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { background: var(--bg-card-hover); color: #fff; border-color: #64748b; }
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Layouts & Panels */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) { .grid-2col { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .panel-header h2, .panel-header h3 { margin: 0; color: #fff; font-weight: 700; }
+
+        /* UI Controls & Buttons */
+        button {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        button:hover:not(:disabled) { transform: translateY(-1px); border-color: #94a3b8; color: #fff; }
+        button:active:not(:disabled) { transform: translateY(0); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-green { background: #15803d; border-color: #16a34a; color: #fff; }
+        .btn-green:hover:not(:disabled) { background: #16a34a; box-shadow: 0 0 12px rgba(22, 163, 74, 0.5); }
+        .btn-purple { background: #7e22ce; border-color: #9333ea; color: #fff; }
+        .btn-purple:hover:not(:disabled) { background: #9333ea; box-shadow: 0 0 12px rgba(147, 51, 234, 0.5); }
+        .btn-gold { background: #b45309; border-color: #d97706; color: #fff; }
+        .btn-gold:hover:not(:disabled) { background: #d97706; box-shadow: 0 0 12px rgba(217, 119, 6, 0.5); }
+        .btn-red { background: #b91c1c; border-color: #dc2626; color: #fff; }
+        .btn-red:hover:not(:disabled) { background: #dc2626; }
+        .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+        /* Battle Arena & Canvas FX */
+        .battle-arena {
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 240px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+            cursor: crosshair;
+        }
+
+        #battle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .battle-arena::before {
+            content: "⚡ CLICK ENEMY TO ATTACK ACTIVELY! ⚡";
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .arena-team { display: flex; gap: 10px; z-index: 2; align-items: center; }
+
+        .unit-avatar {
+            width: 82px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.1s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .unit-avatar.take-damage { animation: flashRed 0.25s ease-in-out; }
+        .unit-avatar.heal-effect { animation: flashGreen 0.25s ease-in-out; }
+
+        @keyframes flashRed {
+            0% { background: var(--bg-card); }
+            50% { background: #7f1d1d; border-color: #ef4444; }
+            100% { background: var(--bg-card); }
+        }
+
+        @keyframes flashGreen {
+            0% { background: var(--bg-card); }
+            50% { background: #064e3b; border-color: #10b981; }
+            100% { background: var(--bg-card); }
+        }
+
+        .shake-arena { animation: arenaShake 0.3s ease-in-out; }
+        @keyframes arenaShake {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-6px, 5px); }
+            40% { transform: translate(6px, -5px); }
+            60% { transform: translate(-4px, -3px); }
+            80% { transform: translate(4px, 3px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .pos-badge {
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.62rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .bg-front { background: #b45309; color: #fff; }
+        .bg-back { background: #1d4ed8; color: #fff; }
+
+        .unit-avatar .unit-icon { font-size: 2rem; margin-bottom: 2px; }
+        .unit-avatar .unit-name { font-size: 0.72rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .bar-container { background: #000; height: 7px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .bar-fill-hp { background: var(--accent-red); height: 100%; width: 100%; transition: width 0.3s ease; }
+        .bar-fill-xp { background: var(--accent-blue); height: 100%; width: 0%; transition: width 0.3s ease; }
+
+        /* Floating Numbers & Combo Meter */
+        .combo-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 6;
+        }
+        .combo-badge.active { opacity: 1; }
+
+        .floating-text {
+            position: absolute;
+            font-weight: 900;
+            font-size: 1.15rem;
+            pointer-events: none;
+            z-index: 10;
+            animation: floatAndFade 0.8s ease-out forwards;
+            text-shadow: 0 2px 4px #000;
+        }
+
+        @keyframes floatAndFade {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            50% { transform: translateY(-22px) scale(1.25); }
+            100% { opacity: 0; transform: translateY(-40px) scale(0.9); }
+        }
+
+        /* Combat Log */
+        .combat-log {
+            height: 160px;
+            background: #030712;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.82rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 4px;
+        }
+
+        /* Active Spells Bar */
+        .spells-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            background: rgba(0,0,0,0.4);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        /* Cards & Grids */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            max-height: 650px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .hero-card, .item-card, .building-card, .perk-card, .quest-card, .relic-card, .pet-card, .banner-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .hero-card:hover, .item-card:hover, .pet-card:hover, .banner-card:hover { border-color: #64748b; transform: translateY(-2px); }
+        .hero-card.in-party { border: 2px solid var(--accent-green); background: rgba(16, 185, 129, 0.08); }
+        .pet-card.active-pet { border: 2px solid var(--accent-gold); background: rgba(245, 158, 11, 0.08); }
+
+        /* Glowing Rarities Visual Animations */
+        .rarity-Common { color: var(--rarity-common); border-color: var(--rarity-common); }
+        .rarity-Uncommon { color: var(--rarity-uncommon); border-color: var(--rarity-uncommon); }
+        .rarity-Rare { color: var(--rarity-rare); border-color: var(--rarity-rare); }
+        .rarity-Epic { color: var(--rarity-epic); border-color: var(--rarity-epic); }
+        
+        .rarity-Legendary { 
+            color: var(--rarity-legendary); 
+            border-color: var(--rarity-legendary); 
+            animation: goldGlow 3s infinite alternate; 
+        }
+        .rarity-Mythic { 
+            color: var(--rarity-mythic); 
+            border-color: var(--rarity-mythic); 
+            animation: redGlow 2.5s infinite alternate; 
+        }
+        .rarity-Divine { 
+            color: var(--rarity-divine); 
+            border-color: var(--rarity-divine); 
+            animation: divinePulse 2s infinite alternate; 
+        }
+        .rarity-Cosmic { 
+            color: var(--rarity-cosmic); 
+            border-color: var(--rarity-cosmic); 
+            animation: cosmicShimmer 2.2s infinite alternate; 
+        }
+        .rarity-Ether { 
+            color: var(--rarity-ether); 
+            border-color: var(--rarity-ether); 
+            animation: etherGlow 1.8s infinite alternate; 
+        }
+
+        @keyframes goldGlow {
+            0% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+            100% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.7); }
+        }
+        @keyframes redGlow {
+            0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+        }
+        @keyframes divinePulse {
+            0% { box-shadow: 0 0 10px rgba(0, 242, 255, 0.4); }
+            100% { box-shadow: 0 0 24px rgba(0, 242, 255, 0.9); }
+        }
+        @keyframes cosmicShimmer {
+            0% { box-shadow: 0 0 10px rgba(232, 121, 249, 0.4); }
+            100% { box-shadow: 0 0 25px rgba(232, 121, 249, 0.9); }
+        }
+        @keyframes etherGlow {
+            0% { box-shadow: 0 0 12px rgba(250, 204, 21, 0.5); }
+            100% { box-shadow: 0 0 30px rgba(250, 204, 21, 1); }
+        }
+
+        .badge {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.1);
+            display: inline-block;
+        }
+
+        .gear-slots {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin: 8px 0;
+        }
+        .gear-slot {
+            background: rgba(0,0,0,0.4);
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .gear-slot.filled { border-style: solid; }
+
+        .synergy-box {
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            font-size: 0.85rem;
+            margin: 10px 0;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-bar select, .filter-bar input {
+            background: var(--bg-card);
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        .auto-sell-options {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .stars { color: #f59e0b; font-size: 0.85rem; margin-left: 4px; }
+
+        /* Pity Progress Bar */
+        .pity-bar-container {
+            background: #000;
+            border-radius: 6px;
+            height: 12px;
+            overflow: hidden;
+            margin: 6px 0;
+            border: 1px solid var(--border-color);
+        }
+        .pity-bar-fill {
+            background: linear-gradient(90deg, #ec4899, #00f2ff);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Gacha / Summoning layout */
+        .gacha-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 0 15px 0;
+            width: 100%;
+            align-items: stretch;
+            grid-auto-flow: row;
+        }
+        .gacha-grid .banner-card {
+            width: 100%;
+            min-width: 0;
+            min-height: 156px;
+            height: auto;
+            box-sizing: border-box;
+        }
+        .gacha-grid .banner-card > div:last-child {
+            margin-top: auto !important;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 900px) {
+            .gacha-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 520px) {
+            .gacha-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Tooltip */
+        #ui-tooltip {
+            position: fixed;
+            display: none;
+            pointer-events: none;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--accent-blue);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            max-width: 260px;
+        }
+    </style>
+
+<style id="gacha-layout-polish">
+#tab-gacha .card-grid,
+#tab-summon .card-grid,
+.gacha-grid,
+.summon-grid {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:14px !important;
+  align-items:stretch !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+#tab-gacha .hero-card,
+#tab-summon .hero-card,
+.gacha-grid .hero-card,
+.gacha-grid .banner-card,
+.summon-grid .hero-card {
+  width:100% !important;
+  min-width:0 !important;
+  min-height:285px !important;
+  height:100% !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+#tab-gacha .hero-card > :last-child,
+#tab-summon .hero-card > :last-child,
+.gacha-grid .hero-card > :last-child,
+.summon-grid .hero-card > :last-child {
+  margin-top:auto !important;
+}
+
+#tab-gacha .hero-card button,
+#tab-summon .hero-card button,
+.gacha-grid .hero-card button,
+.summon-grid .hero-card button {
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+@media (max-width:700px) {
+  #tab-gacha .card-grid,
+  #tab-summon .card-grid,
+  .gacha-grid,
+  .summon-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width:520px) {
+  #tab-gacha .card-grid, #tab-summon .card-grid, .gacha-grid, .summon-grid { grid-template-columns:1fr !important; }
+}
+</style>
+</head>
+<body>
+
+    <div id="ui-tooltip"></div>
+
+    <!-- TOP RESOURCE BAR -->
+    <div class="top-bar">
+        <div class="resource-group">
+            <div class="resource-item res-gold">🪙 Gold: <span id="res-gold">0</span></div>
+            <div class="resource-item res-gems">💎 Gems: <span id="res-gems">0</span></div>
+            <div class="resource-item res-scrap">⚙️ Scrap: <span id="res-scrap">0</span></div>
+            <div class="resource-item res-renown">🌟 Renown: <span id="res-renown">0</span></div>
+        </div>
+        <div class="control-group">
+            <button class="btn-sm btn-green" onclick="toggleAutoBattle()" id="autobattle-btn">⚔️ Auto-Battle: ON</button>
+            <button class="btn-sm" onclick="toggleAudio()" id="audio-toggle-btn">🔊 Audio: On</button>
+            <button class="btn-sm" onclick="cycleSpeed()" id="speed-btn">⚡ Speed: 1x</button>
+            <div class="save-controls" aria-label="Save controls">
+                <span id="save-status" class="save-status">● Auto-save ready</span>
+                <button class="btn-sm btn-gold" onclick="saveGame(true)">💾 Save</button>
+                <button class="btn-sm btn-load" onclick="loadGameManual()">📂 Load</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TAB NAVIGATION -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-battle')">⚔️ Combat & Dungeon</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-roster')">🛡️ Hero Guild (<span id="roster-count">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-pets')">🐾 Pets & Companions (<span id="pet-count">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-vault')">🎒 Vault & Forge (<span id="vault-count">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-relics')">🏆 Relics (<span id="relic-count">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-market')">💎 Gem Market</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-quests')">📜 Quests & Goals</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-town')">🏰 Guild Town</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-ascend')">🌌 Ascension</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-stats')">📊 Statistics</button>
+    </div>
+
+    <!-- TAB 1: BATTLE & DUNGEON / TOWER -->
+    <div id="tab-battle" class="tab-content active">
+        <div class="grid-2col">
+            <div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <button id="mode-dungeon-btn" class="btn-purple" onclick="setCombatMode('dungeon')">🗺️ Dungeon Progression</button>
+                    <button id="mode-tower-btn" onclick="setCombatMode('tower')">🏰 Tower of Trials (Floor <span id="tower-floor-text">1</span>)</button>
+                </div>
+
+                <!-- Visual Arena with Particle Canvas -->
+                <div class="battle-arena" id="battle-arena-box" onclick="manualClickArena(event)">
+                    <canvas id="battle-canvas"></canvas>
+                    <div class="arena-team" id="arena-heroes"></div>
+                    <div class="vs-badge" style="font-size: 1.5rem; font-weight: 900; color: #475569; font-style: italic;">VS</div>
+                    <div class="arena-team" id="arena-enemy"></div>
+                    <div class="combo-badge" id="combo-meter">0x TAP COMBO (+0% DPS)</div>
+                </div>
+
+                <!-- Spells Bar -->
+                <div class="spells-bar">
+                    <span style="font-size:0.8rem; font-weight:bold; color:var(--text-muted); margin-right:4px;">TACTICAL SPELLS:</span>
+                    <button id="spell-meteor-btn" class="btn-gold btn-sm" onclick="castSpell('meteor')">☄️ Meteor (CD: <span id="cd-meteor">0</span>s)</button>
+                    <button id="spell-heal-btn" class="btn-green btn-sm" onclick="castSpell('heal')">💖 Mass Heal (CD: <span id="cd-heal">0</span>s)</button>
+                    <button id="spell-shield-btn" class="btn-purple btn-sm" onclick="castSpell('shield')">🛡️ Aegis Shield (CD: <span id="cd-shield">0</span>s)</button>
+                </div>
+
+                <!-- Dungeon Progress & Combat Log -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="dungeon-zone-title">Zone 1: Goblin Outskirts</h2>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;" id="dungeon-floor-text">Floor 1 / 10 (Kills: 0/5)</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="auto-advance-btn" onclick="toggleAutoAdvance()" class="btn-green">Auto-Advance: ON</button>
+                            <button id="boss-fight-btn" onclick="challengeBoss()" disabled class="btn-purple">Challenge Boss</button>
+                        </div>
+                    </div>
+                    <div class="combat-log" id="combat-log"></div>
+                </div>
+            </div>
+
+            <!-- Squad Panel & Synergies -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Squad Formation (<span id="party-count-text">0/4</span>)</h3>
+                    <button class="btn-sm btn-green" onclick="autoFormParty()">Auto-Fill</button>
+                </div>
+                
+                <div class="synergy-box" id="synergies-list">
+                    <strong>✨ Active Squad Synergies:</strong> None
+                </div>
+
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">
+                    🛡️ Positions 1 & 2 = <strong>Frontline</strong> (+15% DEF, targeted 80% of hits)<br>
+                    🏹 Positions 3 & 4 = <strong>Backline</strong> (+15% ATK, safe from direct frontline hits)
+                </div>
+                <div id="quick-party-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: HERO ROSTER & MULTI-BANNER GACHA -->
+    <div id="tab-roster" class="tab-content">
+        <div class="panel" style="margin-bottom: 12px;">
+            <div class="panel-header">
+                <h3>Summoning Gate & Featured Banners</h3>
+                <span style="font-size:0.85rem; color:var(--accent-gold);">👑 Guaranteed Legendary+ in <span id="pity-count-text">30</span> Summons!</span>
+            </div>
+
+            <div class="pity-bar-container">
+                <div class="pity-bar-fill" id="pity-bar"></div>
+            </div>
+            
+            <div class="gacha-grid">
+                <!-- Banner 1: Standard -->
+                <div class="banner-card">
+                    <h4>🗡️ Standard Guild Gate</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Standard hero recruitment banner using Gold.</p>
+                    <div style="display:flex; gap:4px; margin-top:8px;">
+                        <button class="btn-green btn-sm" onclick="summonBanner('standard', 1)">1x (100 Gold)</button>
+                        <button class="btn-purple btn-sm" onclick="summonBanner('standard', 10)">10x (1,000 Gold)</button>
+                        <button class="btn-gold btn-sm" onclick="summonBanner('standard', 50)">50x (5,000 Gold)</button>
+                    </div>
+                </div>
+
+                <!-- Banner 2: Arcane Rate-Up -->
+                <div class="banner-card" style="border-color: var(--accent-purple);">
+                    <h4 style="color:var(--accent-purple);">🔥 Arcane & Shadow Rate-Up</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">60% increased chance for Mages, Sorcerers & Assassins!</p>
+                    <div style="display:flex; gap:4px; margin-top:8px;">
+                        <button class="btn-purple btn-sm" onclick="summonBanner('rateup', 1)">1x (10 Gems)</button>
+                        <button class="btn-gold btn-sm" onclick="summonBanner('rateup', 10)">10x (90 Gems)</button>
+                    </div>
+                </div>
+                <div class="banner-card" style="border-color:var(--accent-green);">
+                    <h4 style="color:var(--accent-green);">🌿 Wildwood & Nature Rate-Up</h4>
+                    <p style="font-size:0.8rem;color:var(--text-muted);">Focuses on Rangers, Druids, Clerics and support heroes.</p>
+                    <div style="display:flex;gap:4px;margin-top:8px;">
+                        <button class="btn-green btn-sm" onclick="summonBanner('nature',1)">1x (14 Gems)</button>
+                        <button class="btn-gold btn-sm" onclick="summonBanner('nature',10)">10x (125 Gems)</button>
+                    </div>
+                </div>
+                <div class="banner-card" style="border-color:#ef4444;">
+                    <h4 style="color:#ef4444;">💀 Void & Abyss Rate-Up</h4>
+                    <p style="font-size:0.8rem;color:var(--text-muted);">Focuses on Assassins, Necromancers, Warlocks and Berserkers.</p>
+                    <div style="display:flex;gap:4px;margin-top:8px;">
+                        <button class="btn-purple btn-sm" onclick="summonBanner('void',1)">1x (16 Gems)</button>
+                        <button class="btn-gold btn-sm" onclick="summonBanner('void',10)">10x (145 Gems)</button>
+                    </div>
+                </div>
+
+                <!-- Banner 3: Divine Pity Gate -->
+                <div class="banner-card rarity-Divine">
+                    <h4 style="color:var(--accent-divine);">👑 Divine High-Tier Gate</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Guaranteed Rare or higher! Increases Pity meter by +2 per pull.</p>
+                    <div style="display:flex; gap:4px; margin-top:8px;">
+                        <button class="btn-gold btn-sm" onclick="summonBanner('divine', 1)">1x (20 Gems)</button>
+                        <button class="btn-purple btn-sm" onclick="summonBanner('divine', 10)">10x (180 Gems)</button>
+                    </div>
+                </div>
+
+                <div class="banner-card" style="border-color:#10b981;">
+                    <h4 style="color:#10b981;">🛡️ Guardian Vanguard Rate-Up</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Focused on Warriors, Paladins, Clerics & Berserkers. Excellent for frontline squads.</p>
+                    <div style="display:flex; gap:4px; margin-top:8px;">
+                        <button class="btn-green btn-sm" onclick="summonBanner('guardian', 1)">1x (12 Gems)</button>
+                        <button class="btn-purple btn-sm" onclick="summonBanner('guardian', 10)">10x (110 Gems)</button>
+                    </div>
+                </div>
+                <div class="banner-card" style="border-color:#e879f9;">
+                    <h4 style="color:#e879f9;">🔮 Arcane Dominion Rate-Up</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Focused on Mage, Sorcerer, Necromancer, Warlock & Druid heroes.</p>
+                    <div style="display:flex; gap:4px; margin-top:8px;">
+                        <button class="btn-purple btn-sm" onclick="summonBanner('arcane', 1)">1x (15 Gems)</button>
+                        <button class="btn-gold btn-sm" onclick="summonBanner('arcane', 10)">10x (135 Gems)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <select id="roster-sort" onchange="renderRoster()">
+                    <option value="power">Sort by Power</option>
+                    <option value="level">Sort by Level</option>
+                    <option value="rarity">Sort by Rarity</option>
+                </select>
+
+                <button class="btn-sm btn-gold" onclick="combineAllDuplicates()">✨ Combine Duplicates (3x)</button>
+                <button class="btn-sm" onclick="autoEquipAllHeroes()">⚔️ Smart Auto-Equip All</button>
+                <button class="btn-sm btn-red" onclick="sellUncommonHeroes()">Sell Common/Uncommon</button>
+
+                <div class="auto-sell-options">
+                    <span>⚡ Auto-Sell:</span>
+                    <label><input type="checkbox" id="autosell-common" onchange="toggleAutoSellSetting('Common', this.checked)"> Common</label>
+                    <label><input type="checkbox" id="autosell-uncommon" onchange="toggleAutoSellSetting('Uncommon', this.checked)"> Uncommon</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-grid" id="roster-grid"></div>
+    </div>
+
+    <!-- TAB 3: PETS & COMPANIONS -->
+    <div id="tab-pets" class="tab-content">
+        <div class="panel">
+            <h3>🐾 Guild Pet Companions</h3>
+            <p style="color:var(--text-muted);">Adopt and raise magical pets! Deploy 1 active pet to attack in combat and provide massive team-wide bonuses.</p>
+            <div class="card-grid" id="pets-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 4: VAULT & FORGE -->
+    <div id="tab-vault" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Loot Vault</h3>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-sm btn-purple" onclick="combineAllGear()">✨ Fuse All Gear (3x)</button>
+                        <button class="btn-sm btn-red" onclick="salvageByRarity('Common')">Salvage Common</button>
+                        <button class="btn-sm btn-red" onclick="salvageByRarity('Uncommon')">Salvage Uncommon</button>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="vault-sort" onchange="renderVault()">
+                        <option value="rarity">Sort by Rarity</option>
+                        <option value="slot">Sort by Slot</option>
+                    </select>
+
+                    <div class="auto-sell-options">
+                        <span>⚙️ Auto-Salvage Gear:</span>
+                        <label><input type="checkbox" id="autosalvage-common" onchange="toggleAutoSalvageSetting('Common', this.checked)"> Common</label>
+                        <label><input type="checkbox" id="autosalvage-uncommon" onchange="toggleAutoSalvageSetting('Uncommon', this.checked)"> Uncommon</label>
+                    </div>
+                </div>
+
+                <div class="card-grid" id="vault-grid"></div>
+            </div>
+
+            <!-- Blacksmith Forge -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Blacksmith Forge</h3>
+                </div>
+                <div id="forge-selected-item" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                    Select an item from the vault to enhance or dismantle.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: RELICS -->
+    <div id="tab-relics" class="tab-content">
+        <div class="panel">
+            <h3>🏆 Global Boss Relics & Artifacts</h3>
+            <p style="color:var(--text-muted);">Defeat Bosses in Dungeon and Tower mode to collect permanent Artifacts that buff your entire guild!</p>
+            <div class="card-grid" id="relics-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 6: GEM MARKET -->
+    <div id="tab-market" class="tab-content">
+        <div class="panel">
+            <h3>💎 Gem Market & Merchant</h3>
+            <p style="color:var(--text-muted);">Spend your Gems on guaranteed high-tier rewards and powerful boosts!</p>
+            <div class="card-grid">
+                <div class="hero-card rarity-Legendary">
+                    <h3>👑 Royal Summon</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Guaranteed Epic or higher Hero!</p>
+                    <button class="btn-gold" onclick="buyGemShop('royalSummon')">Summon (50 Gems)</button>
+                </div>
+                <div class="hero-card rarity-Epic">
+                    <h3>📦 Divine Gear Chest</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Contains 3 high-tier gear pieces.</p>
+                    <button class="btn-purple" onclick="buyGemShop('gearChest')">Open (30 Gems)</button>
+                </div>
+                <div class="hero-card rarity-Uncommon">
+                    <h3>⌛ 1-Hour Gold Warp</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Instantly grants 1 Hour worth of Gold earnings.</p>
+                    <button class="btn-green" onclick="buyGemShop('goldWarp')">Claim (20 Gems)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 7: QUESTS -->
+    <div id="tab-quests" class="tab-content">
+        <div class="panel">
+            <h3>📜 Active Guild Quests & Dynamic Goals</h3>
+            <div class="card-grid" id="quests-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 8: GUILD TOWN -->
+    <div id="tab-town" class="tab-content">
+        <div class="card-grid" id="town-grid"></div>
+    </div>
+
+    <!-- TAB 9: ASCENSION -->
+    <div id="tab-ascend" class="tab-content">
+        <div class="panel" style="text-align: center; margin-bottom: 12px; padding: 30px;">
+            <h2 style="color: var(--accent-divine);">Guild Ascension / Rebirth</h2>
+            <p style="max-width: 600px; margin: 10px auto; color: var(--text-muted);">
+                Reset hero roster, gold, and floor progression to ascend. 
+                Retain all **Gems**, **Pets**, **Boss Relics**, **Town Upgrades**, and earn **Renown Points** for permanent Godly Perks!
+            </p>
+            <p style="font-size:0.85rem; color:var(--accent-gold);">Requires Floor 15+ to Ascend.</p>
+            <h3>Pending Renown Earnings: <span id="pending-renown" style="color:var(--accent-gold);">0</span> 🌟</h3>
+            <button class="btn-gold" style="font-size: 1.1rem; padding: 12px 24px;" onclick="ascendGuild()">Ascend Now</button>
+        </div>
+
+        <div class="panel">
+            <h3>Godly Perks Tree</h3>
+            <div class="card-grid" id="perks-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 10: STATISTICS -->
+    <div id="tab-stats" class="tab-content">
+        <div class="panel">
+            <h3>Guild Records</h3>
+            <div class="stat-grid" id="stats-grid"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn-red" onclick="hardReset()">⚠️ Hard Reset Game</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- GAME CONSTANTS & TABLES ---
+    const RARITIES = {
+        Common: { color: "#94a3b8", mult: 1, weight: 50, next: "Uncommon" },
+        Uncommon: { color: "#10b981", mult: 1.6, weight: 25, next: "Rare" },
+        Rare: { color: "#3b82f6", mult: 2.5, weight: 12, next: "Epic" },
+        Epic: { color: "#8b5cf6", mult: 4.2, weight: 6, next: "Legendary" },
+        Legendary: { color: "#f59e0b", mult: 7.5, weight: 3, next: "Mythic" },
+        Mythic: { color: "#ef4444", mult: 14.0, weight: 1.2, next: "Divine" },
+        Divine: { color: "#00f2ff", mult: 30.0, weight: 0.5, next: "Cosmic" },
+        Cosmic: { color: "#e879f9", mult: 65.0, weight: 0.2, next: "Ether" },
+        Ether: { color: "#facc15", mult: 150.0, weight: 0.05, next: null }
+    };
+
+    const HERO_CLASSES = {
+        Warrior: { icon: "⚔️", hp: 140, atk: 14, def: 6, skill: "Slash (1.5x Dmg)" },
+        Paladin: { icon: "🛡️", hp: 180, atk: 10, def: 10, skill: "Shield Wall (-25% Party Dmg Taken)" },
+        Mage: { icon: "🔮", hp: 75, atk: 26, def: 1, skill: "Arcane Blast (2x Burst Dmg)" },
+        Ranger: { icon: "🏹", hp: 95, atk: 20, def: 3, skill: "Snipe (1.8x Dmg)" },
+        Assassin: { icon: "🗡️", hp: 80, atk: 28, def: 2, skill: "Critical Strike (2.5x Dmg)" },
+        Cleric: { icon: "✨", hp: 110, atk: 12, def: 4, skill: "Holy Light (Heals Squad Member)" },
+        Berserker: { icon: "🪓", hp: 130, atk: 22, def: 2, skill: "Frenzy (Damage increases as HP drops)" },
+        Necromancer: { icon: "💀", hp: 85, atk: 24, def: 2, skill: "Life Drain (Restores HP on Hit)" },
+        Sorcerer: { icon: "⚡", hp: 70, atk: 30, def: 1, skill: "Chain Lightning (Multi-Target Hit)" },
+        Druid: { icon: "🌿", hp: 120, atk: 16, def: 5, skill: "Nature's Grace (Regens HP over time)" },
+        Warlock: { icon: "🧿", hp: 90, atk: 25, def: 3, skill: "Curse of Doom (Debuffs Enemy ATK)" },
+        Bard: { icon: "🎵", hp: 105, atk: 15, def: 4, skill: "War Song (+20% Squad Stats Boost)" }
+    };
+
+    const PET_TYPES = {
+        drake: { id: "drake", name: "🔥 Ember Drake", icon: "🐉", desc: "+20% Gold Earned & Fireball attack", gemCost: 40, goldBonus: 0.2 },
+        wolf: { id: "wolf", name: "🐺 Shadow Wolf", icon: "🐺", desc: "+15% Squad Atk & Shadow Critical Bite", gemCost: 30, atkBonus: 0.15 },
+        owl: { id: "owl", name: "🦉 Celestial Owl", icon: "🦉", desc: "+25% Squad XP Gain & Healing Light", gemCost: 35, xpBonus: 0.25 },
+        fox: { id: "fox", name: "🦊 Spirit Fox", icon: "🦊", desc: "+15% Tap Damage & Mana Regeneration", gemCost: 50, tapBonus: 0.15 },
+        phoenix: { id: "phoenix", name: "🔥 Phoenix Chick", icon: "🐦‍🔥", desc: "+20% Squad HP & a chance to recover a fallen hero", gemCost: 60, hpBonus: 0.20 },
+        turtle: { id: "turtle", name: "🐢 Ancient Tortoise", icon: "🐢", desc: "+20% Squad Defense & stronger shields", gemCost: 45, defBonus: 0.20 },
+        fae: { id: "fae", name: "🧚 Star Fae", icon: "🧚", desc: "+20% Gems from boss victories", gemCost: 65, gemBonus: 0.20 },
+        gryphon: { id: "gryphon", name: "🦅 Royal Gryphon", icon: "🦅", desc: "+20% Boss Damage & Gold", gemCost: 70, bossBonus: 0.20 },
+        emberfox: { id: "emberfox", name: "🦊 Ember Fox", icon: "🦊", desc: "+12% Gold & +10% Manual Tap Damage", gemCost: 55, goldBonus: 0.12, tapBonus: 0.10 },
+        voidhound: { id: "voidhound", name: "🐕 Void Hound", icon: "🐕", desc: "+12% Squad Attack & +8% Critical Damage", gemCost: 75, atkBonus: 0.12 },
+        crystalwyrm: { id: "crystalwyrm", name: "🐲 Crystal Wyrmling", icon: "🐲", desc: "+15% Gear Drop Luck & +10% Boss Damage", gemCost: 80, bossBonus: 0.10 },
+        moonrabbit: { id: "moonrabbit", name: "🐇 Moon Rabbit", icon: "🐇", desc: "+15% Gems from Bosses & +10% XP", gemCost: 85, gemBonus: 0.15, xpBonus: 0.10 },
+        stormraven: { id: "stormraven", name: "🦅 Storm Raven", icon: "🦅", desc: "+15% Spell Damage & +10% Squad Attack", gemCost: 90, atkBonus: 0.10 },
+        ironbehemoth: { id: "ironbehemoth", name: "🦏 Iron Behemoth", icon: "🦏", desc: "+15% Squad Defense & +15% Squad HP", gemCost: 95, defBonus: 0.15, hpBonus: 0.15 },
+        abysscat: { id: "abysscat", name: "🐈 Abyssal Cat", icon: "🐈", desc: "+10% Rare+ Gear Drops & +10% Gold", gemCost: 100, goldBonus: 0.10 }
+    };
+
+    const ALL_RELICS = {
+        midasCrown: { name: "👑 Midas Crown", desc: "+25% Gold Earned", icon: "👑" },
+        excalibur: { name: "⚔️ Blade of Mastery", desc: "+20% Party Attack", icon: "⚔️" },
+        aegisShield: { name: "🛡️ Aegis Relic", desc: "+20% Party Defense", icon: "🛡️" },
+        lightningGauntlet: { name: "⚡ Gauntlet of Thunder", desc: "+100% Manual Tap Strike Damage", icon: "⚡" },
+        soulGem: { name: "🔮 Soul Prism", desc: "+25% Squad XP Gain", icon: "🔮" },
+        dragonHeart: { name: "🐉 Dragon Heart", desc: "+15% Boss Damage", icon: "🐉" },
+        starCompass: { name: "🧭 Star Compass", desc: "+15% Dungeon Gold and XP", icon: "🧭" },
+        titanCore: { name: "🗿 Titan Core", desc: "+15% Party HP", icon: "🗿" },
+        voidLens: { name: "🔮 Void Lens", desc: "+15% Critical Strike Chance", icon: "🔮" },
+        phoenixAsh: { name: "🔥 Phoenix Ash", desc: "+10% Healing and recovery", icon: "🔥" },
+        etherCrown: { name: "👑 Ether Crown", desc: "+10% to all combat rewards", icon: "👑" },
+        warchiefTotem: { name: "🗿 Warchief Totem", desc: "+10% Gold from Dungeon Bosses", icon: "🗿" },
+        drownedPearl: { name: "🔱 Drowned Pearl", desc: "+10% Hero XP from Dungeon", icon: "🔱" },
+        infernoCore: { name: "🔥 Inferno Core", desc: "+12% Attack against Bosses", icon: "🔥" },
+        voidEye: { name: "👁️ Void Eye", desc: "+8% Critical Strike Chance", icon: "👁️" },
+        seraphFeather: { name: "🪽 Seraph Feather", desc: "+12% Healing and recovery", icon: "🪽" },
+        dragonScale: { name: "🐲 Dragon Scale", desc: "+10% Boss Damage and +10% Boss Gold", icon: "🐲" },
+        astralShard: { name: "🌌 Astral Shard", desc: "+10% Tower rewards", icon: "🌌" },
+        frostCrown: { name: "❄️ Frost Crown", desc: "+10% Squad Defense", icon: "❄️" },
+        briarHeart: { name: "🌹 Briar Heart", desc: "+10% Squad HP", icon: "🌹" },
+        obsidianFang: { name: "🖤 Obsidian Fang", desc: "+10% Manual Tap Damage", icon: "🖤" },
+        lunarSigil: { name: "🌙 Lunar Sigil", desc: "+10% Gem rewards", icon: "🌙" },
+        etherShard: { name: "💠 Ether Shard", desc: "+15% to all Guild rewards", icon: "💠" }
+    };
+
+    const GEAR_SLOTS = ["Weapon", "Armor", "Helmet", "Ring", "Amulet"];
+    const ZONES = [
+        { name: "Goblin Outskirts", boss: "👑 Goblin Warchief Grukk" },
+        { name: "Sunken Catacombs", boss: "👑 The Drowned King" },
+        { name: "Burning Infernal Peak", boss: "👑 Inferno Tyrant Vhal" },
+        { name: "Void Citadel", boss: "👑 Void Overlord Nox" },
+        { name: "Celestial Realm", boss: "👑 Seraph of the Fallen Stars" },
+        { name: "Dragonfall Wilds", boss: "👑 Ashwing the Ancient" },
+        { name: "Astral Ruins", boss: "👑 Astral Devourer" },
+        { name: "Frostgrave Expanse", boss: "👑 The Glacial Emperor" },
+        { name: "Thornwood Dominion", boss: "👑 Queen Briarheart" },
+        { name: "Obsidian Wastes", boss: "👑 The Black Colossus" },
+        { name: "Moonlit Sanctum", boss: "👑 Lunar Archon" },
+        { name: "Etherium Throne", boss: "👑 The Ether King" }
+    ];
+
+    const NAME_PREFIXES = ["Brave", "Shadow", "Iron", "Sun", "Grim", "Frost", "Blood", "Storm", "Void", "Celestial", "Arcane", "Doom",
+        "Silver", "Ember", "Moon", "Star", "Thunder", "Crimson", "Verdant", "Obsidian", "Radiant", "Ancient", "Royal", "Golden", "Mystic", "Dawn", "Dusk", "Wild", "Frozen", "Infernal", "Astral", "Lunar", "Ether", "Briar", "Titan", "Seraphic", "Runic", "Arcane"];
+    const NAME_BASES = ["Valerie", "Aria", "Kael", "Thorne", "Lyra", "Gideon", "Soren", "Ember", "Nyx", "Balthazar", "Zephyr", "Rowan",
+        "Mira", "Cassian", "Elara", "Riven", "Seraphine", "Darius", "Vesper", "Orion", "Selene", "Draven", "Astra", "Corvin", "Aveline", "Briar", "Cyrus", "Dahlia", "Evander", "Freya", "Galen", "Isolde", "Juno", "Kieran", "Liora", "Magnus", "Nerissa", "Oberon", "Petra", "Quillon", "Roselyn", "Sylas", "Talia", "Ulric", "Valen", "Wren", "Xanthe", "Yara", "Zorin"];
+
+    const BASE_QUEST_TEMPLATES = [
+        { type: "kills", desc: "Defeat {req} Monsters", req: 25, reward: "gems", amount: 15 },
+        { type: "summons", desc: "Summon {req} Heroes", req: 10, reward: "gold", amount: 1000 },
+        { type: "bosses", desc: "Slain {req} Dungeon Bosses", req: 3, reward: "gems", amount: 25 },
+        { type: "taps", desc: "Perform {req} Manual Taps", req: 50, reward: "scrap", amount: 50 },
+        { type: "spells", desc: "Cast {req} Tactical Spells", req: 5, reward: "gems", amount: 10 },
+        { type: "salvage", desc: "Salvage {req} Gear Pieces", req: 5, reward: "gold", amount: 500 },
+        { type: "kills", desc: "Defeat {req} monsters in the current zone", req: 75, reward: "gems", amount: 20 },
+        { type: "bosses", desc: "Defeat {req} zone bosses", req: 5, reward: "renown", amount: 8 },
+        { type: "summons", desc: "Perform {req} summons", req: 25, reward: "gems", amount: 35 },
+        { type: "tower", desc: "Reach Tower Floor {req}", req: 20, reward: "gold", amount: 2500 },
+        { type: "relics", desc: "Unlock {req} Boss Relics", req: 3, reward: "gems", amount: 30 },
+        { type: "pets", desc: "Own {req} Guild Pets", req: 4, reward: "gems", amount: 25 }
+    ];
+
+    // --- GAME STATE ---
+    let state = {
+        gold: 150,
+        gems: 10,
+        scrap: 0,
+        renown: 0,
+        divinePity: 0,
+        maxPity: 30,
+        combatMode: 'dungeon',
+        dungeonFloor: 1,
+        towerFloor: 1,
+        floorKills: 0,
+        autoAdvance: true,
+        autoBattle: true,
+        gameSpeed: 1,
+        audioEnabled: true,
+        lastTick: Date.now(),
+        tapCombo: 0,
+        lastTapTime: 0,
+        relics: [],
+        pets: [],
+        activePetId: null,
+        spells: {
+            meteor: { cd: 0, maxCd: 12 },
+            heal: { cd: 0, maxCd: 15 },
+            shield: { cd: 0, maxCd: 20, activeTicks: 0 }
+        },
+        quests: [],
+        stats: { totalKills: 0, totalGold: 0, totalAscensions: 0, bossesDefeated: 0, totalSummons: 0, manualTaps: 0, spellsCast: 0, gearSalvaged: 0 },
+        roster: [],
+        inventory: [],
+        autoSellSettings: { Common: false, Uncommon: false },
+        autoSalvageSettings: { Common: false, Uncommon: false },
+        town: { goldMine: 1, expSanctuary: 0, summonGate: 1, blacksmith: 0, trainingGrounds: 0 },
+        perks: { goldBoost: 0, xpBoost: 0, atkBoost: 0, extraPartySlot: 0 },
+        activeEnemy: null,
+        selectedItemForForge: null
+    };
+
+    // --- CANVAS FX & PARTICLES ---
+    let canvas, ctx;
+    let particles = [];
+
+    function initCanvas() {
+        canvas = document.getElementById('battle-canvas');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        requestAnimationFrame(particleLoop);
+    }
+
+    function resizeCanvas() {
+        const box = document.getElementById('battle-arena-box');
+        if (canvas && box) {
+            canvas.width = box.clientWidth;
+            canvas.height = box.clientHeight;
+        }
+    }
+
+    function spawnParticles(x, y, color, count = 12, speed = 4) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = (Math.random() * 0.8 + 0.2) * speed;
+            particles.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * velocity,
+                vy: Math.sin(angle) * velocity,
+                radius: Math.random() * 3.5 + 1.5,
+                color: color,
+                alpha: 1.0,
+                life: Math.random() * 20 + 20
+            });
+        }
+    }
+
+    function particleLoop() {
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 1 / p.life;
+                
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        requestAnimationFrame(particleLoop);
+    }
+
+    // --- TOOLTIP CONTROLLER ---
+    function showTooltip(evt, text) {
+        const tt = document.getElementById('ui-tooltip');
+        tt.innerHTML = text;
+        tt.style.display = 'block';
+        tt.style.left = (evt.clientX + 14) + 'px';
+        tt.style.top = (evt.clientY + 14) + 'px';
+    }
+    function hideTooltip() { document.getElementById('ui-tooltip').style.display = 'none'; }
+
+    // --- AUDIO SYNTHESIZER ---
+    const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+    function playSound(type) {
+        if (!state.audioEnabled) return;
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'hit') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'tap') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+                osc.start(now); osc.stop(now + 0.06);
+            } else if (type === 'coin') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'level') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+        } catch(e) {}
+    }
+
+    function toggleAudio() {
+        state.audioEnabled = !state.audioEnabled;
+        document.getElementById('audio-toggle-btn').innerText = `🔊 Audio: ${state.audioEnabled ? 'On' : 'Off'}`;
+    }
+
+    function toggleAutoBattle() {
+        state.autoBattle = !state.autoBattle;
+        document.getElementById('autobattle-btn').innerText = `⚔️ Auto-Battle: ${state.autoBattle ? 'ON' : 'OFF'}`;
+        document.getElementById('autobattle-btn').className = state.autoBattle ? 'btn-sm btn-green' : 'btn-sm btn-red';
+    }
+
+    // --- VISUAL JUICE & FLOATING TEXT ---
+    function spawnFloatingText(targetEl, text, color = "#ef4444") {
+        if (!targetEl) return;
+        const rect = targetEl.getBoundingClientRect();
+        const arenaEl = document.getElementById('battle-arena-box');
+        const arenaRect = arenaEl.getBoundingClientRect();
+
+        const el = document.createElement('div');
+        el.className = 'floating-text';
+        el.innerText = text;
+        el.style.color = color;
+
+        const left = (rect.left - arenaRect.left) + (rect.width / 2) - 15 + (Math.random() * 24 - 12);
+        const top = (rect.top - arenaRect.top) + 10;
+
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
+
+        arenaEl.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+
+        spawnParticles(left + 15, top + 15, color, 8, 3);
+    }
+
+    function shakeArena() {
+        const box = document.getElementById('battle-arena-box');
+        box.classList.add('shake-arena');
+        setTimeout(() => box.classList.remove('shake-arena'), 300);
+    }
+
+    // --- PROCEDURAL GENERATION ---
+    function rollRarity(minRarity = null) {
+        const rarityKeys = Object.keys(RARITIES);
+        let validKeys = rarityKeys;
+        if (minRarity) {
+            const minIdx = rarityKeys.indexOf(minRarity);
+            validKeys = rarityKeys.slice(minIdx);
+        }
+
+        const totalWeight = validKeys.reduce((a, b) => a + RARITIES[b].weight, 0);
+        let roll = Math.random() * totalWeight;
+        for (const key of validKeys) {
+            if (roll < RARITIES[key].weight) return key;
+            roll -= RARITIES[key].weight;
+        }
+        return validKeys[0];
+    }
+
+    function generateHero(forcedMinRarity = null, focusClasses = null) {
+        let clsKeys = Object.keys(HERO_CLASSES);
+        if (focusClasses && Math.random() < 0.6) {
+            clsKeys = focusClasses;
+        }
+
+        const clsName = clsKeys[Math.floor(Math.random() * clsKeys.length)];
+        const cls = HERO_CLASSES[clsName];
+        const rarity = rollRarity(forcedMinRarity);
+        const rMult = RARITIES[rarity].mult;
+        const name = `${NAME_PREFIXES[Math.floor(Math.random()*NAME_PREFIXES.length)]} ${NAME_BASES[Math.floor(Math.random()*NAME_BASES.length)]}`;
+
+        return {
+            id: Date.now() + Math.random(),
+            name: name,
+            role: clsName,
+            rarity: rarity,
+            stars: 1,
+            level: 1,
+            xp: 0,
+            maxXp: 50,
+            hp: Math.floor(cls.hp * rMult),
+            maxHp: Math.floor(cls.hp * rMult),
+            atk: Math.floor(cls.atk * rMult),
+            def: Math.floor(cls.def * rMult),
+            inParty: false,
+            gear: { Weapon: null, Armor: null, Helmet: null, Ring: null, Amulet: null },
+            specialization: null
+        };
+    }
+
+    function generateGear(forcedRarity = null) {
+        const rarity = forcedRarity || rollRarity();
+        const slot = GEAR_SLOTS[Math.floor(Math.random() * GEAR_SLOTS.length)];
+        const rMult = RARITIES[rarity].mult;
+        const tier = Math.max(1, Math.floor(state.dungeonFloor / 2));
+        const baseStat = Math.floor((5 + tier * 4) * rMult);
+
+        const affixes = [
+            ['of the Titan','atk',Math.floor(baseStat*0.12)],
+            ['of the Guardian','def',Math.floor(baseStat*0.12)],
+            ['of Vitality','hp',Math.floor(baseStat*0.7)],
+            ['of Fortune','gold',0.05],
+            ['of the Slayer','boss',0.06]
+        ];
+        const affix = affixes[Math.floor(Math.random()*affixes.length)];
+        const item = {
+            id: Date.now() + Math.random(),
+            name: `${rarity} ${slot} T${tier} ${affix[0]}`,
+            slot: slot, rarity: rarity, level: 0, affix: affix[0],
+            atk: slot === 'Weapon' || slot === 'Ring' ? baseStat : 0,
+            def: slot === 'Armor' || slot === 'Helmet' ? Math.floor(baseStat * 0.6) : 0,
+            hp: slot === 'Amulet' ? baseStat * 5 : 0, goldBonus:0, bossBonus:0
+        };
+        if(affix[1]==='atk') item.atk+=affix[2];
+        if(affix[1]==='def') item.def+=affix[2];
+        if(affix[1]==='hp') item.hp+=affix[2];
+        if(affix[1]==='gold') item.goldBonus=affix[2];
+        if(affix[1]==='boss') item.bossBonus=affix[2];
+        return item;
+    }
+
+    // --- MULTI-BANNER GACHA SYSTEM ---
+    function summonBanner(type, count) {
+        let goldCost = 0, gemCost = 0;
+        let forcedMin = null;
+        let focusClasses = null;
+
+        if (type === 'standard') {
+            goldCost = count === 1 ? 100 : (count === 10 ? 1000 : 5000);
+            if (state.gold < goldCost) { alert("Not enough Gold!"); return; }
+            state.gold -= goldCost;
+        } else if (type === 'rateup') {
+            gemCost = count === 1 ? 10 : 90;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            focusClasses = ["Mage", "Sorcerer", "Assassin"];
+        } else if (type === 'divine') {
+            gemCost = count === 1 ? 20 : 180;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            forcedMin = "Rare";
+            state.divinePity += count * 2;
+        } else if (type === 'guardian') {
+            gemCost = count === 1 ? 12 : 110;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            forcedMin = "Uncommon";
+            focusClasses = ["Warrior", "Paladin", "Cleric", "Berserker"];
+        } else if (type === 'arcane') {
+            gemCost = count === 1 ? 15 : 135;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            forcedMin = "Uncommon";
+            focusClasses = ["Mage", "Sorcerer", "Necromancer", "Warlock", "Druid"];
+        } else if (type === 'nature') {
+            gemCost = count === 1 ? 14 : 125;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            forcedMin = "Uncommon";
+            focusClasses = ["Ranger", "Druid", "Cleric", "Bard"];
+        } else if (type === 'void') {
+            gemCost = count === 1 ? 16 : 145;
+            if (state.gems < gemCost) { alert("Not enough Gems!"); return; }
+            state.gems -= gemCost;
+            forcedMin = "Uncommon";
+            focusClasses = ["Assassin", "Necromancer", "Warlock", "Berserker"];
+        }
+
+        state.divinePity += count;
+        state.stats.totalSummons += count;
+        updateQuestProgress("summons", count);
+
+        let triggerPity = false;
+        if (state.divinePity >= state.maxPity) {
+            triggerPity = true;
+            state.divinePity = 0;
+        }
+
+        let autoSoldGold = 0, autoSoldScrap = 0;
+
+        for (let i = 0; i < count; i++) {
+            let hero;
+            if (triggerPity && i === 0) {
+                hero = generateHero("Legendary", focusClasses);
+                logCombat(`🌟 PITY TRIGGERED! Divine Gate granted ${hero.name} (${hero.rarity})!`, "#00f2ff");
+            } else {
+                hero = generateHero(forcedMin, focusClasses);
+            }
+
+            if (state.autoSellSettings[hero.rarity]) {
+                const values = getHeroSellValue(hero);
+                autoSoldGold += values.gold;
+                autoSoldScrap += values.scrap;
+            } else {
+                state.roster.push(hero);
+            }
+        }
+
+        state.gold += autoSoldGold;
+        state.scrap += autoSoldScrap;
+        playSound('coin');
+
+        let logMsg = `Summoned ${count} Hero(es) on ${type.toUpperCase()} Banner!`;
+        if (autoSoldGold > 0) logMsg += ` Auto-sold for +${autoSoldGold} Gold, +${autoSoldScrap} Scrap!`;
+        logCombat(logMsg, "#a855f7");
+
+        autoFormParty();
+        render();
+    }
+
+    function getHeroSellValue(hero) {
+        const rarityMult = RARITIES[hero.rarity].mult;
+        const goldVal = Math.floor(40 * rarityMult + (hero.level * 10) + (hero.stars * 20));
+        const scrapVal = Math.floor(5 * rarityMult + (hero.stars * 5));
+        return { gold: goldVal, scrap: scrapVal };
+    }
+
+    function sellHero(heroId) {
+        const index = state.roster.findIndex(h => h.id == heroId);
+        if (index === -1) return;
+        const hero = state.roster[index];
+
+        if (hero.inParty) { alert("Cannot sell a hero deployed in squad!"); return; }
+
+        GEAR_SLOTS.forEach(slot => { if (hero.gear[slot]) state.inventory.push(hero.gear[slot]); });
+
+        const val = getHeroSellValue(hero);
+        state.gold += val.gold;
+        state.scrap += val.scrap;
+        state.roster.splice(index, 1);
+
+        logCombat(`Sold ${hero.name} (${hero.rarity}) for +${val.gold} Gold & +${val.scrap} Scrap.`, "#f59e0b");
+        playSound('coin');
+        render();
+    }
+
+    function sellUncommonHeroes() {
+        const toSell = state.roster.filter(h => !h.inParty && (h.rarity === 'Common' || h.rarity === 'Uncommon'));
+        if (toSell.length === 0) { alert("No Common/Uncommon heroes available to sell."); return; }
+
+        let totalGold = 0, totalScrap = 0;
+        toSell.forEach(hero => {
+            GEAR_SLOTS.forEach(slot => { if (hero.gear[slot]) state.inventory.push(hero.gear[slot]); });
+            const val = getHeroSellValue(hero);
+            totalGold += val.gold;
+            totalScrap += val.scrap;
+        });
+
+        state.roster = state.roster.filter(h => h.inParty || (h.rarity !== 'Common' && h.rarity !== 'Uncommon'));
+        state.gold += totalGold;
+        state.scrap += totalScrap;
+
+        logCombat(`Sold ${toSell.length} heroes for +${totalGold} Gold & +${totalScrap} Scrap.`, "#f59e0b");
+        playSound('coin');
+        render();
+    }
+
+    function toggleAutoSellSetting(rarity, isChecked) { state.autoSellSettings[rarity] = isChecked; }
+    function toggleAutoSalvageSetting(rarity, isChecked) { state.autoSalvageSettings[rarity] = isChecked; }
+
+    function combineAllDuplicates() {
+        let combinations = 0, merged = true;
+
+        while (merged) {
+            merged = false;
+            const groups = {};
+
+            for (let hero of state.roster) {
+                if (hero.inParty) continue;
+                const key = `${hero.role}_${hero.rarity}_${hero.stars}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(hero);
+            }
+
+            for (let key in groups) {
+                if (groups[key].length >= 3) {
+                    const triple = groups[key].slice(0, 3);
+                    const targetHero = triple[0];
+
+                    if (targetHero.stars < 5) {
+                        targetHero.stars += 1;
+                        targetHero.atk = Math.floor(targetHero.atk * 1.4);
+                        targetHero.def = Math.floor(targetHero.def * 1.4);
+                        targetHero.maxHp = Math.floor(targetHero.maxHp * 1.4);
+                        targetHero.hp = targetHero.maxHp;
+                    } else if (RARITIES[targetHero.rarity].next) {
+                        const nextRarity = RARITIES[targetHero.rarity].next;
+                        targetHero.rarity = nextRarity;
+                        targetHero.stars = 1;
+                        targetHero.atk = Math.floor(targetHero.atk * 1.5);
+                        targetHero.def = Math.floor(targetHero.def * 1.5);
+                        targetHero.maxHp = Math.floor(targetHero.maxHp * 1.5);
+                        targetHero.hp = targetHero.maxHp;
+                    }
+
+                    [triple[1], triple[2]].forEach(f => {
+                        GEAR_SLOTS.forEach(slot => { if (f.gear[slot]) state.inventory.push(f.gear[slot]); });
+                        const idx = state.roster.findIndex(h => h.id === f.id);
+                        if (idx !== -1) state.roster.splice(idx, 1);
+                    });
+
+                    combinations++;
+                    merged = true;
+                    break;
+                }
+            }
+        }
+
+        if (combinations > 0) {
+            playSound('level');
+            logCombat(`✨ Combined hero duplicates ${combinations} time(s)!`, "#ec4899");
+            render();
+        } else {
+            alert("No matching hero duplicates found (Needs 3 undeployed heroes of identical Class, Rarity, and Stars).");
+        }
+    }
+
+    // --- PETS SYSTEM ---
+    function adoptPet(petTypeId) {
+        const petInfo = PET_TYPES[petTypeId];
+        if (!petInfo) return;
+        if (state.pets.some(p => p.typeId === petTypeId)) { alert("You already own this pet!"); return; }
+        if (state.gems < petInfo.gemCost) { alert(`Need ${petInfo.gemCost} Gems to adopt!`); return; }
+
+        state.gems -= petInfo.gemCost;
+        state.pets.push({
+            id: Date.now(),
+            typeId: petTypeId,
+            name: petInfo.name,
+            level: 1,
+            xp: 0,
+            maxXp: 100
+        });
+
+        if (!state.activePetId) state.activePetId = petTypeId;
+
+        playSound('level');
+        logCombat(`🐾 Adopted new Pet: ${petInfo.name}!`, "#f59e0b");
+        render();
+    }
+
+    function setActivePet(petTypeId) {
+        state.activePetId = petTypeId;
+        render();
+    }
+
+    function levelUpPet(petTypeId) {
+        const pet = state.pets.find(p => p.typeId === petTypeId);
+        if (!pet) return;
+        const cost = pet.level * 30;
+        if (state.scrap < cost) { alert(`Need ${cost} Scrap to level up pet!`); return; }
+
+        state.scrap -= cost;
+        pet.level++;
+        playSound('level');
+        logCombat(`🐾 ${pet.name} leveled up to Level ${pet.level}!`, "#10b981");
+        render();
+    }
+
+    // --- GEAR FUSION & SMART AUTO-EQUIP ---
+    function combineAllGear() {
+        let fusedCount = 0, merged = true;
+
+        while (merged) {
+            merged = false;
+            const groups = {};
+
+            for (let item of state.inventory) {
+                const key = `${item.slot}_${item.rarity}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(item);
+            }
+
+            for (let key in groups) {
+                if (groups[key].length >= 3) {
+                    const triple = groups[key].slice(0, 3);
+                    const target = triple[0];
+                    const nextRarity = RARITIES[target.rarity].next;
+
+                    if (nextRarity) {
+                        target.rarity = nextRarity;
+                        target.name = `${nextRarity} ${target.slot} T${Math.max(1, Math.floor(state.dungeonFloor / 2))}`;
+                        const rMult = RARITIES[nextRarity].mult;
+                        if (target.atk) target.atk = Math.floor(target.atk * rMult);
+                        if (target.def) target.def = Math.floor(target.def * rMult);
+                        if (target.hp) target.hp = Math.floor(target.hp * rMult);
+
+                        [triple[1], triple[2]].forEach(fodder => {
+                            const idx = state.inventory.findIndex(i => i.id === fodder.id);
+                            if (idx !== -1) state.inventory.splice(idx, 1);
+                        });
+
+                        fusedCount++;
+                        merged = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (fusedCount > 0) {
+            playSound('level');
+            logCombat(`🔨 Fused gear ${fusedCount} time(s) into higher rarities!`, "#8b5cf6");
+            render();
+        } else {
+            alert("No 3 matching pieces of gear (Same Slot & Rarity) found in Vault.");
+        }
+    }
+
+    function equipGear(heroId, itemId) {
+        const hero = state.roster.find(h => h.id === heroId);
+        const itemIdx = state.inventory.findIndex(i => i.id === itemId);
+        if (!hero || itemIdx === -1) return;
+
+        const item = state.inventory[itemIdx];
+        const currentGear = hero.gear[item.slot];
+
+        if (currentGear) state.inventory.push(currentGear);
+
+        hero.gear[item.slot] = item;
+        state.inventory.splice(itemIdx, 1);
+        playSound('hit');
+        render();
+    }
+
+    function autoEquipHero(hero) {
+        GEAR_SLOTS.forEach(slot => {
+            const bestGearIdx = state.inventory.reduce((bestIdx, item, idx) => {
+                if (item.slot !== slot) return bestIdx;
+                if (bestIdx === -1) return idx;
+                const currentBest = state.inventory[bestIdx];
+                return (item.atk + item.def + item.hp) > (currentBest.atk + currentBest.def + currentBest.hp) ? idx : bestIdx;
+            }, -1);
+
+            if (bestGearIdx !== -1) equipGear(hero.id, state.inventory[bestGearIdx].id);
+        });
+    }
+
+    function autoEquipAllHeroes() {
+        const party = getParty();
+        party.forEach(h => autoEquipHero(h));
+        state.roster.filter(h => !h.inParty).forEach(h => autoEquipHero(h));
+        logCombat("⚔️ Smart Auto-Equiped best items across all heroes!", "#3b82f6");
+        render();
+    }
+
+    function salvageItem(itemId) {
+        const idx = state.inventory.findIndex(i => i.id === itemId);
+        if (idx === -1) return;
+        const item = state.inventory[idx];
+        const scrapGain = Math.floor(RARITIES[item.rarity].mult * 5);
+        state.scrap += scrapGain;
+        state.stats.gearSalvaged++;
+        updateQuestProgress("salvage", 1);
+        state.inventory.splice(idx, 1);
+        if (state.selectedItemForForge && state.selectedItemForForge.id === itemId) state.selectedItemForForge = null;
+        render();
+    }
+
+    function salvageByRarity(rarity) {
+        const initial = state.inventory.length;
+        state.inventory = state.inventory.filter(item => {
+            if (item.rarity === rarity) {
+                state.scrap += Math.floor(RARITIES[rarity].mult * 5);
+                state.stats.gearSalvaged++;
+                updateQuestProgress("salvage", 1);
+                return false;
+            }
+            return true;
+        });
+        logCombat(`Salvaged ${initial - state.inventory.length} ${rarity} gear items.`, "#a855f7");
+        render();
+    }
+
+    function enhanceItem(item) {
+        const cost = Math.floor((item.level + 1) * 20 * RARITIES[item.rarity].mult);
+        if (state.scrap < cost) { alert("Not enough Scrap!"); return; }
+        state.scrap -= cost;
+        item.level++;
+        if (item.atk) item.atk = Math.floor(item.atk * 1.25) + 2;
+        if (item.def) item.def = Math.floor(item.def * 1.25) + 1;
+        if (item.hp) item.hp = Math.floor(item.hp * 1.25) + 10;
+        playSound('level');
+        render();
+    }
+
+    // --- GEM MARKET ---
+    function buyGemShop(type) {
+        if (type === 'royalSummon') {
+            if (state.gems < 50) { alert("Need 50 Gems!"); return; }
+            state.gems -= 50;
+            const hero = generateHero("Epic");
+            state.roster.push(hero);
+            logCombat(`👑 Royal Summon granted ${hero.name} (${hero.rarity})!`, "#f59e0b");
+            render();
+        } else if (type === 'gearChest') {
+            if (state.gems < 30) { alert("Need 30 Gems!"); return; }
+            state.gems -= 30;
+            state.inventory.push(generateGear("Rare"));
+            state.inventory.push(generateGear("Epic"));
+            state.inventory.push(generateGear("Legendary"));
+            logCombat("📦 Opened Divine Gear Chest!", "#8b5cf6");
+            render();
+        } else if (type === 'goldWarp') {
+            if (state.gems < 20) { alert("Need 20 Gems!"); return; }
+            state.gems -= 20;
+            const goldGain = Math.floor(3600 * (10 + state.dungeonFloor * 5));
+            state.gold += goldGain;
+            state.stats.totalGold += goldGain;
+            logCombat(`⌛ Gold Warp claimed: +${goldGain.toLocaleString()} Gold!`, "#f59e0b");
+            render();
+        }
+    }
+
+    // --- SPELLS & ULTIMATES ---
+    function castSpell(spellKey) {
+        const spell = state.spells[spellKey];
+        if (spell.cd > 0) return;
+
+        state.stats.spellsCast++;
+        updateQuestProgress("spells", 1);
+
+        if (spellKey === 'meteor') {
+            if (!state.activeEnemy) return;
+            const party = getParty();
+            const totalAtk = party.reduce((a, b) => a + b.atk, 0) || 50;
+            const dmg = totalAtk * 5;
+            state.activeEnemy.hp -= dmg;
+            spell.cd = spell.maxCd;
+            shakeArena();
+            spawnParticles(300, 100, "#f59e0b", 30, 6);
+            logCombat(`☄️ METEOR STRIKE cast! Dealt ${dmg} damage!`, "#f59e0b");
+            spawnFloatingText(document.getElementById('arena-enemy').children[0], `💥 ${dmg}`, "#f59e0b");
+        } else if (spellKey === 'heal') {
+            const party = getParty();
+            party.forEach(h => {
+                const healAmt = Math.floor(h.maxHp * 0.4);
+                h.hp = Math.min(h.maxHp, h.hp + healAmt);
+            });
+            spell.cd = spell.maxCd;
+            spawnParticles(150, 100, "#10b981", 30, 5);
+            logCombat(`💖 MASS HEAL cast! Party restored 40% HP!`, "#10b981");
+        } else if (spellKey === 'shield') {
+            spell.activeTicks = 5;
+            spell.cd = spell.maxCd;
+            spawnParticles(150, 100, "#3b82f6", 25, 4);
+            logCombat(`🛡️ AEGIS BARRIER cast! 50% Damage Reduction active!`, "#3b82f6");
+        }
+        render();
+    }
+
+    // --- CLASS SYNERGIES & SQUAD BUFFS ---
+    function getPartySynergies() {
+        const party = getParty();
+        const counts = {};
+        party.forEach(h => counts[h.role] = (counts[h.role] || 0) + 1);
+        
+        const syns = [];
+        if ((counts.Warrior || 0) >= 2) syns.push({ name: "Iron Fortress", desc: "+20% Squad DEF", defBoost: 0.2 });
+        if ((counts.Mage || 0) >= 2 || (counts.Sorcerer || 0) >= 2) syns.push({ name: "Arcane Overload", desc: "-25% Spell CDs", cdBoost: 0.25 });
+        if ((counts.Ranger || 0) >= 2 || (counts.Assassin || 0) >= 2) syns.push({ name: "Lethal Precision", desc: "+15% Atk & Crit", atkBoost: 0.15 });
+        if ((counts.Cleric || 0) >= 1 || (counts.Druid || 0) >= 1) syns.push({ name: "Holy Grace", desc: "+20% Max HP", hpBoost: 0.2 });
+        
+        const uniqueRoles = Object.keys(counts).length;
+        if (uniqueRoles >= 4) syns.push({ name: "Rainbow Squad", desc: "+15% All Stats", allBoost: 0.15 });
+        
+        return syns;
+    }
+
+    // --- COMBAT & DUNGEON LOOP ---
+    function getParty() { return state.roster.filter(h => h.inParty); }
+
+    function autoFormParty() {
+        const maxParty = 4 + (state.perks.extraPartySlot || 0);
+        state.roster.forEach(h => h.inParty = false);
+        const sorted = [...state.roster].sort((a, b) => getHeroPower(b) - getHeroPower(a));
+        for (let i = 0; i < Math.min(maxParty, sorted.length); i++) sorted[i].inParty = true;
+        render();
+    }
+
+    // --- HERO SPECIALIZATIONS ---
+    const HERO_SPECIALIZATIONS = {
+        Warrior: [['Berserker','+15% ATK, -5% DEF','offense'],['Guardian','+15% DEF, +10% HP','defense']],
+        Paladin: [['Crusader','+12% ATK, +8% boss damage','offense'],['Protector','+18% DEF, +10% HP','defense']],
+        Mage: [['Archmage','+18% ATK, +5% crit chance','offense'],['Elementalist','+10% ATK, +10% spell power','offense']],
+        Ranger: [['Deadeye','+15% ATK, +8% crit chance','offense'],['Scout','+10% ATK, +12% HP','utility']],
+        Assassin: [['Executioner','+20% ATK, +10% crit chance','offense'],['Shadow','+12% ATK, +15% dodge/survival','utility']],
+        Cleric: [['Oracle','+12% healing, +8% HP','support'],['Medic','+18% healing, +5% DEF','support']],
+        Berserker: [['Reaver','+20% ATK, -8% DEF','offense'],['Juggernaut','+15% HP, +12% DEF','defense']],
+        Necromancer: [['Soulbinder','+15% ATK, +8% life steal','offense'],['Gravekeeper','+15% HP, +10% DEF','defense']],
+        Sorcerer: [['Arcanist','+18% ATK, +8% spell power','offense'],['Hexer','+10% ATK, +10% boss damage','offense']],
+        Druid: [['Grovekeeper','+15% HP, +10% healing','support'],['Stormcaller','+15% ATK, +8% spell power','offense']],
+        Warlock: [['Doomcaller','+18% ATK, +10% boss damage','offense'],['Soulwarden','+12% DEF, +12% HP','defense']],
+        Bard: [['War Chanter','+10% ATK, +10% squad support','support'],['Virtuoso','+12% ATK, +12% XP gain','utility']]
+    };
+    function heroSpecs(role){ return HERO_SPECIALIZATIONS[role] || [['Vanguard','+10% ATK, +10% DEF','balanced'],['Veteran','+8% ATK, +12% HP','utility']]; }
+    function getSpec(h){ return heroSpecs(h.role).find(x=>x[0]===h.specialization) || null; }
+    function chooseHeroSpec(id,spec){
+        const h=state.roster.find(x=>String(x.id)===String(id)); if(!h) return;
+        if(h.specialization && h.specialization!==spec){ alert('Specialization is locked after choosing. Choose carefully.'); return; }
+        if(!heroSpecs(h.role).some(x=>x[0]===spec)) return;
+        h.specialization=spec; playSound('level'); logCombat(`🧭 ${h.name} specialized as ${spec}!`,'#a855f7'); render();
+    }
+    window.chooseHeroSpec=chooseHeroSpec;
+    function heroCombatMods(h){
+        const spec=getSpec(h), m={atk:1,def:1,hp:1,boss:1,crit:0,heal:1};
+        if(!spec) return m;
+        const kind=spec[2];
+        if(kind==='offense'){m.atk*=1.15;m.boss*=1.05;m.crit+=0.05;}
+        else if(kind==='defense'){m.def*=1.15;m.hp*=1.10;}
+        else if(kind==='support'){m.hp*=1.08;m.heal*=1.12;}
+        else {m.atk*=1.08;m.hp*=1.06;}
+        return m;
+    }
+
+    function getHeroPower(h) {
+        let atk = h.atk, def = h.def, hp = h.maxHp;
+        Object.values(h.gear).forEach(g => { if (g) { atk += g.atk; def += g.def; hp += g.hp; } });
+        
+        let relicAtk = state.relics.includes('excalibur') ? 0.2 : 0;
+        let perkAtk = state.perks.atkBoost * 0.1;
+
+        const spec = heroCombatMods(h);
+        return Math.floor((atk * spec.atk * 2 + def * spec.def * 1.5 + hp * spec.hp * 0.5) * (1 + relicAtk + perkAtk));
+    }
+
+    function setCombatMode(mode) {
+        mode = mode === 'tower' ? 'tower' : 'dungeon';
+        state.combatMode = mode;
+        const dungeonBtn = document.getElementById('mode-dungeon-btn');
+        const towerBtn = document.getElementById('mode-tower-btn');
+        if (dungeonBtn) dungeonBtn.className = mode === 'dungeon' ? 'btn-purple' : '';
+        if (towerBtn) towerBtn.className = mode === 'tower' ? 'btn-purple' : '';
+        spawnEnemy(false);
+        render();
+        saveGame(false);
+    }
+
+    function spawnEnemy(isBoss = false) {
+        if (state.combatMode === 'tower') {
+            const floor = state.towerFloor;
+            state.activeEnemy = {
+                name: `🏰 SPIRE GUARDIAN (Fl ${floor})`,
+                isBoss: true,
+                hp: Math.floor((250 + floor * 150) * 1.5),
+                maxHp: Math.floor((250 + floor * 150) * 1.5),
+                atk: Math.floor(25 + floor * 15),
+                rewardGold: Math.floor(50 + floor * 40),
+                rewardXp: Math.floor(60 + floor * 45)
+            };
+        } else {
+            const floor = state.dungeonFloor;
+            const zoneIdx = Math.min(ZONES.length - 1, Math.floor((floor - 1) / 10));
+            const zone = ZONES[zoneIdx];
+
+            const mult = isBoss ? 3.5 : 1.0;
+            const enemyNames = [
+                "Raider", "Stalker", "Brute", "Witch", "Sentinel", "Beast", "Marauder", "Cultist"
+            ];
+            const enemyType = enemyNames[Math.floor(Math.random() * enemyNames.length)];
+            state.activeEnemy = {
+                name: isBoss ? (zone.boss || `👑 ${zone.name} Overlord`) : `${zone.name} ${enemyType}`,
+                isBoss: isBoss,
+                zoneName: zone.name,
+                hp: Math.floor((60 + floor * 45) * mult),
+                maxHp: Math.floor((60 + floor * 45) * mult),
+                atk: Math.floor((10 + floor * 6) * mult),
+                rewardGold: Math.floor((15 + floor * 12) * mult),
+                rewardXp: Math.floor((20 + floor * 15) * mult)
+            };
+        }
+    }
+
+    // MANUAL TAP MECHANIC
+    function manualClickArena(evt) {
+        if (!state.activeEnemy || state.activeEnemy.hp <= 0) return;
+
+        const now = Date.now();
+        if (now - state.lastTapTime > 2000) state.tapCombo = 0;
+        state.lastTapTime = now;
+        state.tapCombo = Math.min(50, state.tapCombo + 1);
+        state.stats.manualTaps++;
+        updateQuestProgress("taps", 1);
+
+        const comboMult = 1 + (state.tapCombo * 0.1);
+        const relicTapBonus = state.relics.includes('lightningGauntlet') ? 2.0 : 1.0;
+        
+        let petTapBonus = 1.0;
+        if (state.activePetId === 'fox') petTapBonus = 1.15;
+
+        const party = getParty();
+        const baseAtk = party.reduce((acc, h) => acc + h.atk, 0) || 20;
+        const damage = Math.max(5, Math.floor((baseAtk * 0.4) * comboMult * relicTapBonus * petTapBonus));
+
+        state.activeEnemy.hp -= damage;
+        playSound('tap');
+
+        const enemyEl = document.getElementById('arena-enemy').children[0];
+        spawnFloatingText(enemyEl, `⚡ ${damage}`, "#f59e0b");
+
+        if (state.activeEnemy.hp <= 0) handleEnemyDefeated();
+        render();
+    }
+
+    function combatTick() {
+        if (Date.now() - state.lastTapTime > 2000 && state.tapCombo > 0) state.tapCombo = 0;
+
+        Object.keys(state.spells).forEach(k => {
+            if (state.spells[k].cd > 0) state.spells[k].cd--;
+        });
+        if (state.spells.shield.activeTicks > 0) state.spells.shield.activeTicks--;
+
+        if (state.town.trainingGrounds > 0) {
+            const idleXp = state.town.trainingGrounds * 2;
+            state.roster.filter(h => !h.inParty).forEach(h => {
+                h.xp += idleXp;
+                while (h.xp >= h.maxXp) {
+                    h.level++;
+                    h.xp -= h.maxXp;
+                    h.maxXp = Math.floor(h.maxXp * 1.4);
+                    h.maxHp += 25; h.hp = h.maxHp; h.atk += 5; h.def += 2;
+                }
+            });
+        }
+
+        if (!state.autoBattle) { render(); return; }
+
+        const party = getParty().filter(h => h.hp > 0);
+        if (party.length === 0) {
+            logCombat("Party wiped! Recovering at Guild House...", "#ef4444");
+            state.roster.forEach(h => h.hp = h.maxHp);
+            spawnEnemy(false);
+            render();
+            return;
+        }
+
+        if (!state.activeEnemy || state.activeEnemy.hp <= 0) spawnEnemy(false);
+
+        const enemy = state.activeEnemy;
+        const enemyEl = document.getElementById('arena-enemy').children[0];
+        const synergies = getPartySynergies();
+
+        // Active Pet Attack
+        if (state.activePetId) {
+            const petObj = state.pets.find(p => p.typeId === state.activePetId);
+            if (petObj) {
+                const petDmg = Math.floor((petObj.level * 15) + (enemy.maxHp * 0.02));
+                enemy.hp -= petDmg;
+                spawnFloatingText(enemyEl, `🐾 ${petDmg}`, "#a855f7");
+            }
+        }
+
+        // HEROES ATTACK
+        let hasPaladinShield = false;
+
+        party.forEach((hero, index) => {
+            let gearAtk = 0, gearBoss = 0;
+            Object.values(hero.gear).forEach(g => { if (g) { gearAtk += g.atk || 0; gearBoss += g.bossBonus || 0; } });
+            
+            const posMult = index >= 2 ? 1.15 : 1.0;
+            let synAtkBoost = synergies.reduce((a, s) => a + (s.atkBoost || s.allBoost || 0), 0);
+            let relicAtkBoost = state.relics.includes('excalibur') ? 0.2 : 0;
+
+            const specMods = heroCombatMods(hero);
+            let damage = Math.max(1, (hero.atk * specMods.atk + gearAtk) * (1 + state.perks.atkBoost * 0.1 + synAtkBoost + relicAtkBoost) * (1 + gearBoss) * posMult);
+            let isCrit = false;
+
+            if (hero.role === 'Mage' && Math.random() < 0.25) {
+                damage *= 2.0; isCrit = true; logCombat(`🔮 ${hero.name} cast Arcane Blast!`, "#ec4899");
+            } else if (hero.role === 'Sorcerer' && Math.random() < 0.3) {
+                damage *= 2.2; isCrit = true; logCombat(`⚡ ${hero.name} cast Chain Lightning!`, "#3b82f6");
+            } else if (hero.role === 'Assassin' && Math.random() < 0.35) {
+                damage *= 2.5; isCrit = true; logCombat(`🗡️ ${hero.name} scored a Critical Strike!`, "#ef4444");
+            } else if (hero.role === 'Paladin') {
+                hasPaladinShield = true;
+            } else if (hero.role === 'Cleric' && Math.random() < 0.3) {
+                const injured = party.sort((a,b) => (a.hp/a.maxHp) - (b.hp/b.maxHp))[0];
+                if (injured) {
+                    const healAmt = Math.floor(injured.maxHp * 0.2);
+                    injured.hp = Math.min(injured.maxHp, injured.hp + healAmt);
+                    logCombat(`✨ ${hero.name} healed ${injured.name} for +${healAmt} HP!`, "#10b981");
+                }
+            } else if (hero.role === 'Druid' && Math.random() < 0.3) {
+                party.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.floor(h.maxHp * 0.08)));
+                logCombat(`🌿 ${hero.name} cast Nature's Grace!`, "#10b981");
+            }
+
+            damage = Math.floor(damage);
+            enemy.hp -= damage;
+
+            if (isCrit) shakeArena();
+            spawnFloatingText(enemyEl, `${isCrit ? '💥 ' : ''}${damage}`, isCrit ? "#f59e0b" : "#ef4444");
+        });
+
+        playSound('hit');
+
+        if (enemy.hp <= 0) { handleEnemyDefeated(); render(); return; }
+
+        // ENEMY ATTACKS
+        let targetIndex = 0;
+        const frontline = party.filter((_, idx) => idx < 2);
+        
+        if (frontline.length > 0 && Math.random() < 0.8) {
+            targetIndex = Math.floor(Math.random() * frontline.length);
+        } else {
+            targetIndex = Math.floor(Math.random() * party.length);
+        }
+
+        const target = party[targetIndex];
+        let targetDef = target.def * heroCombatMods(target).def;
+        Object.values(target.gear).forEach(g => { if (g) targetDef += g.def; });
+
+        if (targetIndex < 2) targetDef = Math.floor(targetDef * 1.15);
+
+        let enemyDmg = Math.max(1, enemy.atk - Math.floor(targetDef * 0.5));
+        if (hasPaladinShield) enemyDmg = Math.floor(enemyDmg * 0.75);
+        if (state.spells.shield.activeTicks > 0) enemyDmg = Math.floor(enemyDmg * 0.5);
+
+        target.hp -= enemyDmg;
+
+        const heroAvatarEl = document.getElementById('arena-heroes').children[targetIndex];
+        if (heroAvatarEl) {
+            heroAvatarEl.classList.add('take-damage');
+            setTimeout(() => heroAvatarEl.classList.remove('take-damage'), 250);
+            spawnFloatingText(heroAvatarEl, `-${enemyDmg}`, "#ef4444");
+        }
+
+        if (target.hp <= 0) logCombat(`☠️ ${target.name} collapsed!`, "#ef4444");
+
+        render();
+    }
+
+    function handleEnemyDefeated() {
+        const enemy = state.activeEnemy;
+        const party = getParty();
+
+        let relicGoldBonus = state.relics.includes('midasCrown') ? 0.25 : 0;
+        let relicXpBonus = state.relics.includes('soulGem') ? 0.25 : 0;
+
+        let petGoldBonus = state.activePetId === 'drake' ? 0.20 : (state.activePetId === 'emberfox' ? 0.12 : (state.activePetId === 'abysscat' ? 0.10 : 0));
+        let petXpBonus = state.activePetId === 'owl' ? 0.25 : (state.activePetId === 'moonrabbit' ? 0.10 : 0);
+        let gearGoldBonus = 0, gearBossBonus = 0;
+        party.forEach(h => Object.values(h.gear).forEach(g => { if(g){ gearGoldBonus += g.goldBonus || 0; gearBossBonus += g.bossBonus || 0; } }));
+        const effectiveBossBonus = enemy.isBoss ? gearBossBonus : 0;
+
+        const goldEarned = Math.floor(enemy.rewardGold * (1 + state.perks.goldBoost * 0.15 + relicGoldBonus + petGoldBonus + gearGoldBonus) * (1 + state.town.goldMine * 0.1));
+        const xpEarned = Math.floor(enemy.rewardXp * (1 + state.perks.xpBoost * 0.15 + relicXpBonus + petXpBonus + effectiveBossBonus) * (1 + state.town.expSanctuary * 0.1));
+
+        state.gold += goldEarned;
+        state.stats.totalGold += goldEarned;
+        state.stats.totalKills++;
+        updateQuestProgress("kills", 1);
+
+        logCombat(`Defeated ${enemy.name}! +${goldEarned} Gold, +${xpEarned} XP`, "#f59e0b");
+
+        party.forEach(h => {
+            h.xp += xpEarned;
+            if (h.xp >= h.maxXp) {
+                h.level++;
+                h.xp -= h.maxXp;
+                h.maxXp = Math.floor(h.maxXp * 1.4);
+                h.maxHp += 25; h.hp = h.maxHp; h.atk += 5; h.def += 2;
+                logCombat(`🌟 ${h.name} reached Lvl ${h.level}!`, "#3b82f6");
+                playSound('level');
+            }
+        });
+
+        // Loot Drop
+        const gearDropChance = 0.4 + (['crystalwyrm','abysscat'].includes(state.activePetId) ? 0.15 : 0);
+        if (Math.random() < Math.min(0.75, gearDropChance)) {
+            const loot = generateGear();
+            if (state.autoSalvageSettings[loot.rarity]) {
+                const scrapGain = Math.floor(RARITIES[loot.rarity].mult * 5);
+                state.scrap += scrapGain;
+                logCombat(`⚙️ Auto-salvaged drop ${loot.name} for +${scrapGain} Scrap!`, "#a855f7");
+            } else {
+                state.inventory.push(loot);
+                logCombat(`📦 Loot dropped: ${loot.name}!`, RARITIES[loot.rarity].color);
+            }
+        }
+
+        // Boss Relic Drop
+        if (enemy.isBoss && (Math.random() < 0.35 || Object.keys(ALL_RELICS).filter(r => !state.relics.includes(r)).length === 1)) {
+            const relicKeys = Object.keys(ALL_RELICS);
+            const unowned = relicKeys.filter(r => !state.relics.includes(r));
+            if (unowned.length > 0) {
+                const wonRelic = unowned[Math.floor(Math.random() * unowned.length)];
+                state.relics.push(wonRelic);
+                logCombat(`🏆 BOSS RELIC UNLOCKED: ${ALL_RELICS[wonRelic].name}!`, "#00f2ff");
+                playSound('level');
+            }
+        }
+
+        if (state.combatMode === 'tower') {
+            state.gems += 3;
+            state.towerFloor++;
+            logCombat(`🏰 Cleared Tower Floor! +3 Gems!`, "#00f2ff");
+            party.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.floor(h.maxHp * 0.2)));
+        } else if (enemy.isBoss) {
+            state.stats.bossesDefeated++;
+            updateQuestProgress("bosses", 1);
+            state.gems += 5;
+            logCombat(`🏆 Boss SLAIN! +5 Gems!`, "#ec4899");
+            state.dungeonFloor++;
+            state.floorKills = 0;
+            party.forEach(h => h.hp = h.maxHp);
+        } else {
+            state.floorKills++;
+            if (state.floorKills >= 5 && state.autoAdvance) { challengeBoss(); return; }
+        }
+
+        spawnEnemy(false);
+    }
+
+    function challengeBoss() {
+        spawnEnemy(true);
+        logCombat(`⚠️ BOSS BATTLE: ${state.activeEnemy.name}!`, "#ec4899");
+        render();
+    }
+
+    function toggleAutoAdvance() {
+        state.autoAdvance = !state.autoAdvance;
+        saveGame(false);
+        document.getElementById('auto-advance-btn').innerText = `Auto-Advance: ${state.autoAdvance ? 'ON' : 'OFF'}`;
+        document.getElementById('auto-advance-btn').className = state.autoAdvance ? 'btn-green' : '';
+    }
+
+    function cycleSpeed() {
+        const speeds = [1, 2, 4, 8];
+        const nextIdx = (speeds.indexOf(state.gameSpeed) + 1) % speeds.length;
+        state.gameSpeed = speeds[nextIdx];
+        saveGame(false);
+        document.getElementById('speed-btn').innerText = `⚡ Speed: ${state.gameSpeed}x`;
+    }
+
+    // --- BASE QUEST SYSTEM ---
+    function initQuests() {
+        if (!state.quests || state.quests.length === 0) {
+            state.quests = [];
+            BASE_QUEST_TEMPLATES.forEach((tmpl, idx) => {
+                state.quests.push({
+                    id: idx + 1,
+                    type: tmpl.type,
+                    desc: tmpl.desc.replace('{req}', tmpl.req),
+                    req: tmpl.req,
+                    progress: 0,
+                    reward: tmpl.reward,
+                    amount: tmpl.amount,
+                    claimed: false,
+                    tier: 1
+                });
+            });
+        }
+    }
+
+    function updateQuestProgress(type, amt) {
+        if (!state.quests) return;
+        state.quests.forEach(q => {
+            if (q.type === type && !q.claimed) q.progress += amt;
+        });
+    }
+
+    function claimQuest(id) {
+        const quest = state.quests.find(q => q.id == id);
+        if (!quest || quest.progress < quest.req || quest.claimed) return;
+
+        quest.claimed = true;
+        if (quest.reward === 'gems') state.gems += quest.amount;
+        if (quest.reward === 'gold') state.gold += quest.amount;
+        if (quest.reward === 'scrap') state.scrap += quest.amount;
+        
+        playSound('coin');
+        logCombat(`📜 Quest Claimed: ${quest.desc}! +${quest.amount} ${quest.reward.toUpperCase()}!`, "#f59e0b");
+
+        const nextReq = Math.floor(quest.req * 2.2);
+        const nextAmt = Math.floor(quest.amount * 2.0);
+        state.quests.push({
+            id: Date.now() + Math.random(),
+            type: quest.type,
+            desc: quest.desc.replace(quest.req, nextReq),
+            req: nextReq,
+            progress: 0,
+            reward: quest.reward,
+            amount: nextAmt,
+            claimed: false,
+            tier: (quest.tier || 1) + 1
+        });
+
+        render();
+    }
+
+    // --- TOWN & ASCENSION ---
+    function upgradeTownBuilding(buildingKey) {
+        const level = state.town[buildingKey];
+        const cost = Math.floor(200 * Math.pow(1.8, level));
+        if (state.gold < cost) { alert("Not enough Gold!"); return; }
+        state.gold -= cost;
+        state.town[buildingKey]++;
+        playSound('coin');
+        render();
+    }
+
+    function calculatePendingRenown() {
+        if (state.dungeonFloor < 15) return 0;
+        const goldFactor = Math.floor(Math.pow(state.stats.totalGold / 100000, 0.4));
+        const floorFactor = Math.floor(Math.pow(state.dungeonFloor / 5, 1.5));
+        return goldFactor + floorFactor;
+    }
+
+    function ascendGuild() {
+        if (state.dungeonFloor < 15) { alert("Must reach Floor 15 or higher to Ascend!"); return; }
+        const earned = calculatePendingRenown();
+        if (earned <= 0) return;
+
+        if (confirm(`Ascend now for ${earned} Renown Points? Progress resets, but you retain permanent powers & pets!`)) {
+            state.renown += earned;
+            state.gold = 200;
+            state.dungeonFloor = 1;
+            state.floorKills = 0;
+            state.roster = [];
+            state.inventory = [];
+            state.stats.totalAscensions++;
+            
+            state.roster.push(generateHero());
+            state.roster.push(generateHero());
+            autoFormParty();
+            
+            playSound('level');
+            render();
+        }
+    }
+
+    function buyPerk(perkKey) {
+        const cost = Math.floor(10 * Math.pow(2, state.perks[perkKey]));
+        if (state.renown < cost) { alert("Not enough Renown!"); return; }
+        state.renown -= cost;
+        state.perks[perkKey]++;
+        render();
+    }
+
+    // --- RENDER ENGINE ---
+    function switchTab(evt, tabId) {
+        const panel = document.getElementById(tabId);
+        if (!panel) {
+            console.warn('Guild Master: tab not found:', tabId);
+            return false;
+        }
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        panel.classList.add('active');
+        const target = evt && (evt.currentTarget || evt.target);
+        if (target && target.classList && target.classList.contains('tab-btn')) target.classList.add('active');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        return false;
+    }
+
+    function logCombat(msg, color = "#10b981") {
+        const box = document.getElementById('combat-log');
+        if (box) box.innerHTML = `<div style="color:${color}">> ${msg}</div>` + box.innerHTML;
+    }
+
+    function render() {
+        document.getElementById('res-gold').innerText = state.gold.toLocaleString();
+        document.getElementById('res-gems').innerText = state.gems.toLocaleString();
+        document.getElementById('res-scrap').innerText = state.scrap.toLocaleString();
+        document.getElementById('res-renown').innerText = state.renown.toLocaleString();
+
+        document.getElementById('roster-count').innerText = state.roster.length;
+        document.getElementById('vault-count').innerText = state.inventory.length;
+        document.getElementById('relic-count').innerText = state.relics.length;
+        document.getElementById('pet-count').innerText = state.pets.length;
+
+        document.getElementById('autosell-common').checked = !!state.autoSellSettings.Common;
+        document.getElementById('autosell-uncommon').checked = !!state.autoSellSettings.Uncommon;
+        document.getElementById('autosalvage-common').checked = !!state.autoSalvageSettings.Common;
+        document.getElementById('autosalvage-uncommon').checked = !!state.autoSalvageSettings.Uncommon;
+
+        document.getElementById('tower-floor-text').innerText = state.towerFloor;
+
+        const zoneIdx = Math.min(ZONES.length - 1, Math.floor((state.dungeonFloor - 1) / 10));
+        document.getElementById('dungeon-zone-title').innerText = state.combatMode === 'tower' ? `Spire of Trials` : `Zone ${zoneIdx + 1}: ${ZONES[zoneIdx].name}`;
+        document.getElementById('dungeon-floor-text').innerText = state.combatMode === 'tower' ? `Floor ${state.towerFloor}` : `Floor ${state.dungeonFloor} (Kills: ${state.floorKills}/5)`;
+        document.getElementById('boss-fight-btn').disabled = state.combatMode === 'tower' || state.floorKills < 5;
+
+        const pityPct = Math.min(100, (state.divinePity / state.maxPity) * 100);
+        document.getElementById('pity-bar').style.width = `${pityPct}%`;
+        document.getElementById('pity-count-text').innerText = Math.max(0, state.maxPity - state.divinePity);
+
+        const comboEl = document.getElementById('combo-meter');
+        if (state.tapCombo > 0) {
+            comboEl.classList.add('active');
+            comboEl.innerText = `⚡ ${state.tapCombo}x TAP COMBO (+${state.tapCombo * 10}% DPS)`;
+        } else {
+            comboEl.classList.remove('active');
+        }
+
+        document.getElementById('cd-meteor').innerText = state.spells.meteor.cd;
+        document.getElementById('spell-meteor-btn').disabled = state.spells.meteor.cd > 0;
+        document.getElementById('cd-heal').innerText = state.spells.heal.cd;
+        document.getElementById('spell-heal-btn').disabled = state.spells.heal.cd > 0;
+        document.getElementById('cd-shield').innerText = state.spells.shield.cd;
+        document.getElementById('spell-shield-btn').disabled = state.spells.shield.cd > 0;
+
+        renderArena();
+        renderQuickParty();
+        renderRoster();
+        renderPets();
+        renderVault();
+        renderRelics();
+        renderQuests();
+        renderTown();
+        renderPerks();
+        renderStats();
+    }
+
+    function renderArena() {
+        const party = getParty();
+        const heroBox = document.getElementById('arena-heroes');
+        heroBox.innerHTML = '';
+        party.forEach((h, idx) => {
+            const cls = HERO_CLASSES[h.role];
+            const hpPct = Math.max(0, (h.hp / h.maxHp) * 100);
+            const isFront = idx < 2;
+            heroBox.innerHTML += `
+                <div class="unit-avatar rarity-${h.rarity}" onmouseenter="showTooltip(event, '${h.name} (${h.role})<br>Lvl ${h.level}<br>ATK: ${h.atk} | DEF: ${h.def}')" onmouseleave="hideTooltip()">
+                    <span class="pos-badge ${isFront ? 'bg-front' : 'bg-back'}">${isFront ? 'FRONT' : 'BACK'}</span>
+                    <div class="unit-icon">${cls.icon}</div>
+                    <div class="unit-name">${h.name}</div>
+                    <div class="bar-container"><div class="bar-fill-hp" style="width:${hpPct}%"></div></div>
+                </div>
+            `;
+        });
+
+        const enemyBox = document.getElementById('arena-enemy');
+        if (state.activeEnemy) {
+            const e = state.activeEnemy;
+            const hpPct = Math.max(0, (e.hp / e.maxHp) * 100);
+            enemyBox.innerHTML = `
+                <div class="unit-avatar" style="border-color: var(--accent-red); min-width: 90px;" onmouseenter="showTooltip(event, '${e.name}<br>HP: ${e.hp}/${e.maxHp}<br>ATK: ${e.atk}')" onmouseleave="hideTooltip()">
+                    <div class="unit-icon">${e.isBoss ? '👑' : '👾'}</div>
+                    <div class="unit-name" style="color:var(--accent-red);">${e.name}</div>
+                    <div class="bar-container"><div class="bar-fill-hp" style="width:${hpPct}%"></div></div>
+                </div>
+            `;
+        }
+    }
+
+    function renderQuickParty() {
+        const box = document.getElementById('quick-party-list');
+        box.innerHTML = '';
+        const party = getParty();
+        document.getElementById('party-count-text').innerText = `${party.length}/${4 + (state.perks.extraPartySlot || 0)}`;
+
+        const syns = getPartySynergies();
+        const synEl = document.getElementById('synergies-list');
+        if (syns.length > 0) {
+            synEl.innerHTML = `<strong>✨ Active Squad Synergies:</strong><br>` + syns.map(s => `• <span style="color:var(--accent-gold);">${s.name}</span>: ${s.desc}`).join('<br>');
+        } else {
+            synEl.innerHTML = `<strong>✨ Active Squad Synergies:</strong> None (Deploy 2+ of a class or 4 unique classes)`;
+        }
+
+        party.forEach((h, idx) => {
+            const isFront = idx < 2;
+            box.innerHTML += `
+                <div style="background:var(--bg-card); padding:8px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span class="badge ${isFront ? 'bg-front' : 'bg-back'}">${isFront ? 'Frontline' : 'Backline'}</span>
+                        <strong class="rarity-${h.rarity}">${h.name}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Lvl ${h.level} ${h.role} | Power: ${getHeroPower(h)}</div>
+                    </div>
+                    <button class="btn-sm btn-red" onclick="toggleParty('${h.id}')">Remove</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderRoster() {
+        const grid = document.getElementById('roster-grid');
+        grid.innerHTML = '';
+
+        const sortMode = document.getElementById('roster-sort')?.value || 'power';
+        const sorted = [...state.roster].sort((a, b) => {
+            if (sortMode === 'power') return getHeroPower(b) - getHeroPower(a);
+            if (sortMode === 'level') return b.level - a.level;
+            if (sortMode === 'rarity') return RARITIES[b.rarity].mult - RARITIES[a.rarity].mult;
+            return 0;
+        });
+
+        sorted.forEach(h => {
+            const cls = HERO_CLASSES[h.role];
+            const hpPct = Math.max(0, (h.hp / h.maxHp) * 100);
+            const xpPct = (h.xp / h.maxXp) * 100;
+            const starsHtml = '★'.repeat(h.stars);
+
+            let gearSlotsHtml = '';
+            GEAR_SLOTS.forEach(slot => {
+                const g = h.gear[slot];
+                gearSlotsHtml += `<div class="gear-slot ${g ? 'filled rarity-' + g.rarity : ''}" title="${g ? g.name : slot}">${g ? '⚔️' : slot[0]}</div>`;
+            });
+
+            grid.innerHTML += `
+                <div class="hero-card rarity-${h.rarity} ${h.inParty ? 'in-party' : ''}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>${cls.icon} ${h.name}</strong>
+                        <span class="badge rarity-${h.rarity}">${h.rarity}</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin: 4px 0;">
+                        Lvl ${h.level} ${h.role} <span class="stars">${starsHtml}</span>
+                    </div>
+                    
+                    <div class="bar-container"><div class="bar-fill-hp" style="width:${hpPct}%"></div></div>
+                    <div class="bar-container" style="margin-top:2px;"><div class="bar-fill-xp" style="width:${xpPct}%"></div></div>
+
+                    <div style="font-size:0.75rem; color:#a855f7; margin-top:4px;">
+                        ⚡ Skill: ${cls.skill}
+                    </div>
+                    <div style="font-size:0.72rem; color:#22d3ee; margin-top:4px;">
+                        🧭 ${h.specialization ? 'Specialization: '+h.specialization : 'Choose a specialization'}
+                    </div>
+                    ${!h.specialization ? `<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">${heroSpecs(h.role).map(sp=>`<button class="btn-sm" onclick="chooseHeroSpec('${h.id}','${sp[0]}')">${sp[0]}</button>`).join('')}</div>` : ''}
+
+                    <div style="font-size:0.78rem; margin-top:4px;">
+                        ⚔️ ATK: ${h.atk} | 🛡️ DEF: ${h.def} | ❤️ HP: ${h.maxHp}
+                    </div>
+
+                    <div class="gear-slots">${gearSlotsHtml}</div>
+
+                    <div style="display:flex; gap:4px; margin-top:6px;">
+                        <button class="btn-sm ${h.inParty ? 'btn-red' : 'btn-green'}" style="flex:1;" onclick="toggleParty('${h.id}')">
+                            ${h.inParty ? 'Leave Squad' : 'Deploy'}
+                        </button>
+                        <button class="btn-sm" onclick="autoEquipHero(state.roster.find(x=>x.id===${h.id}))">Equip</button>
+                        <button class="btn-sm btn-gold" ${h.inParty ? 'disabled' : ''} onclick="sellHero('${h.id}')">Sell</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function toggleParty(heroId) {
+        const hero = state.roster.find(h => h.id == heroId);
+        if (!hero) return;
+        const currentSize = getParty().length;
+        const maxParty = 4 + (state.perks.extraPartySlot || 0);
+
+        if (!hero.inParty && currentSize >= maxParty) {
+            alert(`Squad full! Max ${maxParty} heroes.`);
+            return;
+        }
+        hero.inParty = !hero.inParty;
+        render();
+    }
+
+    function renderPets() {
+        const grid = document.getElementById('pets-grid');
+        grid.innerHTML = '';
+
+        Object.keys(PET_TYPES).forEach(typeId => {
+            const petInfo = PET_TYPES[typeId];
+            const ownedPet = state.pets.find(p => p.typeId === typeId);
+            const isActive = state.activePetId === typeId;
+
+            if (ownedPet) {
+                grid.innerHTML += `
+                    <div class="pet-card ${isActive ? 'active-pet' : ''}">
+                        <h3>${petInfo.icon} ${ownedPet.name} (Lvl ${ownedPet.level})</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">${petInfo.desc}</p>
+                        <div style="display:flex; gap:6px; margin-top:10px;">
+                            <button class="${isActive ? 'btn-gold' : 'btn-green'} btn-sm" onclick="setActivePet('${typeId}')">
+                                ${isActive ? 'Active Pet' : 'Deploy Pet'}
+                            </button>
+                            <button class="btn-purple btn-sm" onclick="levelUpPet('${typeId}')">
+                                Level Up (${ownedPet.level * 30} Scrap)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML += `
+                    <div class="pet-card" style="opacity: 0.6;">
+                        <h3>${petInfo.icon} ${petInfo.name}</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">${petInfo.desc}</p>
+                        <button class="btn-gold btn-sm" style="margin-top:10px;" onclick="adoptPet('${typeId}')">
+                            Adopt Pet (${petInfo.gemCost} Gems)
+                        </button>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function renderVault() {
+        const grid = document.getElementById('vault-grid');
+        grid.innerHTML = '';
+
+        const sortMode = document.getElementById('vault-sort')?.value || 'rarity';
+        const sorted = [...state.inventory].sort((a, b) => {
+            if (sortMode === 'rarity') return RARITIES[b.rarity].mult - RARITIES[a.rarity].mult;
+            if (sortMode === 'slot') return a.slot.localeCompare(b.slot);
+            return 0;
+        });
+
+        sorted.forEach(item => {
+            grid.innerHTML += `
+                <div class="item-card rarity-${item.rarity}" onclick="selectItemForForge('${item.id}')">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${item.name} ${item.level ? '+'+item.level : ''}</strong>
+                        <span class="badge">${item.slot}</span>
+                    </div>
+                    <div style="font-size:0.8rem; margin: 6px 0;">
+                        ${item.atk ? '⚔️ ATK +'+item.atk : ''}
+                        ${item.def ? '🛡️ DEF +'+item.def : ''}
+                        ${item.hp ? '❤️ HP +'+item.hp : ''}
+                        ${item.goldBonus ? '🪙 Gold +'+Math.round(item.goldBonus*100)+'%' : ''}
+                        ${item.bossBonus ? '🐉 Boss +'+Math.round(item.bossBonus*100)+'%' : ''}
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn-sm btn-red" onclick="event.stopPropagation(); salvageItem('${item.id}')">Salvage</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function selectItemForForge(itemId) {
+        const item = state.inventory.find(i => i.id == itemId);
+        if (!item) return;
+        state.selectedItemForForge = item;
+
+        const box = document.getElementById('forge-selected-item');
+        const cost = Math.floor((item.level + 1) * 20 * RARITIES[item.rarity].mult);
+
+        box.innerHTML = `
+            <div class="item-card rarity-${item.rarity}" style="text-align:left;">
+                <h3>${item.name} (+${item.level})</h3>
+                <p>Rarity: ${item.rarity} | Slot: ${item.slot} | ${item.affix || 'No Affix'}</p>
+                <div style="margin: 10px 0;">
+                    ${item.atk ? '⚔️ ATK: '+item.atk : ''}<br>
+                    ${item.def ? '🛡️ DEF: '+item.def : ''}<br>
+                    ${item.hp ? '❤️ HP: '+item.hp : ''}
+                </div>
+                <button class="btn-purple" onclick="enhanceItem(state.selectedItemForForge)">
+                    Enhance (+1) - Cost: ${cost} Scrap
+                </button>
+            </div>
+        `;
+    }
+
+    function renderRelics() {
+        const grid = document.getElementById('relics-grid');
+        grid.innerHTML = '';
+
+        Object.keys(ALL_RELICS).forEach(key => {
+            const rel = ALL_RELICS[key];
+            const unlocked = state.relics.includes(key);
+
+            grid.innerHTML += `
+                <div class="relic-card ${unlocked ? 'rarity-Divine' : ''}" style="${!unlocked ? 'opacity:0.4;' : ''}">
+                    <h3>${rel.icon} ${rel.name}</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">${rel.desc}</p>
+                    <span class="badge ${unlocked ? 'btn-green' : ''}">${unlocked ? 'ACTIVE' : 'LOCKED (Defeat Bosses)'}</span>
+                </div>
+            `;
+        });
+    }
+
+    function renderQuests() {
+        const grid = document.getElementById('quests-grid');
+        grid.innerHTML = '';
+
+        const activeQuests = state.quests.filter(q => !q.claimed);
+
+        activeQuests.forEach(q => {
+            const isReady = q.progress >= q.req;
+            grid.innerHTML += `
+                <div class="quest-card">
+                    <h3>${q.desc} (Tier ${q.tier || 1})</h3>
+                    <p>Progress: ${Math.min(q.progress, q.req)} / ${q.req}</p>
+                    <p style="color:var(--accent-gold);">Reward: +${q.amount} ${q.reward.toUpperCase()}</p>
+                    <button class="${isReady ? 'btn-gold' : ''}" ${!isReady ? 'disabled' : ''} onclick="claimQuest('${q.id}')">
+                        ${isReady ? 'Claim Reward!' : 'In Progress'}
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function renderTown() {
+        const grid = document.getElementById('town-grid');
+        grid.innerHTML = '';
+
+        const buildings = [
+            { key: 'goldMine', name: '🪙 Gold Mine', desc: '+10% Gold Boost per level' },
+            { key: 'expSanctuary', name: '✨ EXP Sanctuary', desc: '+10% XP Boost per level' },
+            { key: 'summonGate', name: '⛩️ Summoning Shrine', desc: 'Increases higher rarity hero rates' },
+            { key: 'trainingGrounds', name: '🏋️ Training Grounds', desc: 'Passively levels up undeployed heroes' }
+        ];
+
+        buildings.forEach(b => {
+            const lvl = state.town[b.key] || 0;
+            const cost = Math.floor(200 * Math.pow(1.8, lvl));
+            grid.innerHTML += `
+                <div class="building-card">
+                    <h3>${b.name} (Lvl ${lvl})</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">${b.desc}</p>
+                    <button class="btn-gold" onclick="upgradeTownBuilding('${b.key}')">Upgrade (${cost} Gold)</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderPerks() {
+        document.getElementById('pending-renown').innerText = calculatePendingRenown();
+        const grid = document.getElementById('perks-grid');
+        grid.innerHTML = '';
+
+        const perkList = [
+            { key: 'goldBoost', name: '👑 Gold Hoarder', desc: '+15% Gold Earned per rank' },
+            { key: 'xpBoost', name: '📚 Fast Learner', desc: '+15% Hero XP per rank' },
+            { key: 'atkBoost', name: '⚔️ Divine Might', desc: '+10% Global Hero Attack per rank' },
+            { key: 'extraPartySlot', name: '🛡️ Grand Army', desc: '+1 Extra Hero Squad Slot' }
+        ];
+
+        perkList.forEach(p => {
+            const lvl = state.perks[p.key];
+            const cost = Math.floor(10 * Math.pow(2, lvl));
+            grid.innerHTML += `
+                <div class="perk-card">
+                    <h3>${p.name} (Rank ${lvl})</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">${p.desc}</p>
+                    <button class="btn-purple" onclick="buyPerk('${p.key}')">Upgrade (${cost} Renown)</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderStats() {
+        const grid = document.getElementById('stats-grid');
+        grid.innerHTML = `
+            <div class="stat-item">Monsters Defeated: <strong>${state.stats.totalKills}</strong></div>
+            <div class="stat-item">Total Gold Earned: <strong>${state.stats.totalGold.toLocaleString()}</strong></div>
+            <div class="stat-item">Bosses Slain: <strong>${state.stats.bossesDefeated}</strong></div>
+            <div class="stat-item">Total Summons: <strong>${state.stats.totalSummons}</strong></div>
+            <div class="stat-item">Manual Taps / Strikes: <strong>${state.stats.manualTaps}</strong></div>
+            <div class="stat-item">Spells Cast: <strong>${state.stats.spellsCast || 0}</strong></div>
+            <div class="stat-item">Items Salvaged: <strong>${state.stats.gearSalvaged || 0}</strong></div>
+            <div class="stat-item">Times Ascended: <strong>${state.stats.totalAscensions}</strong></div>
+        `;
+    }
+
+    // --- SAVE / LOAD & BALANCED OFFLINE ENGINE ---
+    function updateSaveStatus(message, kind = '') {
+        const el = document.getElementById('save-status');
+        if (!el) return;
+        el.textContent = '● ' + message;
+        el.className = 'save-status' + (kind ? ' ' + kind : '');
+    }
+
+    function saveGame(manual = false) {
+        try {
+            state.lastTick = Date.now();
+            localStorage.setItem('guild_master_expanded_save', JSON.stringify(state));
+            updateSaveStatus(manual ? 'Saved just now' : 'Auto-save ready', 'saved');
+            if (manual) alert("Game Saved Successfully!\n\nYour progress is safely stored in this browser.");
+            return true;
+        } catch (e) {
+            console.error('Save failed', e);
+            updateSaveStatus('Save failed', 'warn');
+            if (manual) alert('Unable to save the game. Your browser may be blocking local storage.');
+            return false;
+        }
+    }
+
+    function loadGameManual() {
+        const raw = localStorage.getItem('guild_master_expanded_save');
+        if (!raw) {
+            updateSaveStatus('No save found', 'warn');
+            alert('No saved game was found in this browser.');
+            return false;
+        }
+        if (!confirm('Load your last saved game?\n\nAny progress made since the last save will be replaced.')) return false;
+        try {
+            loadGame(true);
+            updateSaveStatus('Loaded just now', 'loaded');
+            render();
+            return true;
+        } catch (e) {
+            console.error('Manual load failed', e);
+            updateSaveStatus('Load failed', 'warn');
+            alert('The saved game could not be loaded safely. Your current progress was kept.');
+            return false;
+        }
+    }
+
+    function loadGame(manual = false) {
+        const raw = localStorage.getItem('guild_master_expanded_save');
+        if (raw) {
+            try {
+                const loaded = JSON.parse(raw);
+                if (!loaded || typeof loaded !== 'object' || Array.isArray(loaded)) throw new Error('Invalid save format');
+                state = { ...state, ...loaded };
+                state.stats = { totalKills:0,totalGold:0,totalAscensions:0,bossesDefeated:0,totalSummons:0,manualTaps:0,spellsCast:0,gearSalvaged:0,...(state.stats||{}) };
+                state.town = { goldMine:1,expSanctuary:0,summonGate:1,blacksmith:0,trainingGrounds:0,...(state.town||{}) };
+                state.perks = { goldBoost:0,xpBoost:0,atkBoost:0,extraPartySlot:0,...(state.perks||{}) };
+                state.autoSellSettings = { Common:false,Uncommon:false,...(state.autoSellSettings||{}) };
+                state.autoSalvageSettings = { Common:false,Uncommon:false,...(state.autoSalvageSettings||{}) };
+                state.relics = Array.isArray(state.relics) ? state.relics : [];
+                state.pets = Array.isArray(state.pets) ? state.pets : [];
+                state.roster = Array.isArray(state.roster) ? state.roster : [];
+                state.inventory = Array.isArray(state.inventory) ? state.inventory : [];
+                state.spells = { meteor:{cd:0,maxCd:12},heal:{cd:0,maxCd:15},shield:{cd:0,maxCd:20,activeTicks:0},...(state.spells||{}) };
+                state.divinePity = Number.isFinite(Number(state.divinePity)) ? Math.max(0, Number(state.divinePity)) : 0;
+                state.maxPity = 30;
+                state.gameSpeed = [1,2,4,8].includes(Number(state.gameSpeed)) ? Number(state.gameSpeed) : 1;
+                state.dungeonFloor = Math.max(1, Number(state.dungeonFloor) || 1);
+                state.towerFloor = Math.max(1, Number(state.towerFloor) || 1);
+                state.floorKills = Math.max(0, Number(state.floorKills) || 0);
+
+                if (state.lastTick) {
+                    const elapsedSecs = Math.min(Math.floor((Date.now() - state.lastTick) / 1000), 28800);
+                    if (elapsedSecs > 10) {
+                        const floor = state.dungeonFloor;
+                        const efficiencyRate = 0.35;
+                        const simulatedKills = Math.floor((elapsedSecs / 4) * efficiencyRate);
+
+                        const goldGain = Math.floor(simulatedKills * (15 + floor * 12));
+                        const scrapGain = Math.floor(simulatedKills * 0.15);
+                        const xpGain = Math.floor(simulatedKills * (20 + floor * 10));
+
+                        state.gold += goldGain;
+                        state.scrap += scrapGain;
+                        state.stats.totalGold += goldGain;
+
+                        const party = getParty();
+                        party.forEach(h => {
+                            h.xp += xpGain;
+                            while (h.xp >= h.maxXp) {
+                                h.level++;
+                                h.xp -= h.maxXp;
+                                h.maxXp = Math.floor(h.maxXp * 1.4);
+                                h.maxHp += 25; h.hp = h.maxHp; h.atk += 5; h.def += 2;
+                            }
+                        });
+
+                        setTimeout(() => {
+                            alert(`🌙 Welcome Back Guild Master!\n\nWhile away for ${Math.floor(elapsedSecs / 60)} minutes, your guild earned:\n• 🪙 +${goldGain.toLocaleString()} Gold\n• ⚙️ +${scrapGain.toLocaleString()} Scrap\n• ✨ +${xpGain.toLocaleString()} Squad XP`);
+                            render();
+                        }, 400);
+                    }
+                }
+            } catch(e) { console.error("Save load error", e); }
+        } else {
+            state.roster.push(generateHero());
+            state.roster.push(generateHero());
+            autoFormParty();
+        }
+        initQuests();
+    }
+
+    function hardReset() {
+        if (confirm("Erase all progress and restart?")) {
+            localStorage.removeItem('guild_master_expanded_save');
+            localStorage.removeItem('guild_master_command_center_v2');
+            localStorage.removeItem('guild_master_command_center_v3');
+            localStorage.removeItem('guild_master_command_center_v4');
+            location.reload();
+        }
+    }
+
+    // --- MAIN TICK LOOP ---
+    initCanvas();
+    loadGame(false);
+    render();
+    updateSaveStatus(localStorage.getItem('guild_master_expanded_save') ? 'Save loaded automatically' : 'Auto-save ready', 'loaded');
+
+    setInterval(() => {
+        for (let i = 0; i < state.gameSpeed; i++) {
+            combatTick();
+        }
+    }, 1000);
+
+    setInterval(() => {
+        saveGame(false);
+    }, 15000);
+
+    window.addEventListener('beforeunload', () => {
+        try { saveGame(false); } catch (e) { console.warn('Final save failed', e); }
+    });
+</script>
+
+<style id="guild-command-center-css">
+.gcc-shell{max-width:1500px;margin:14px auto;padding:0 12px}.gcc-hero{background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(49,46,129,.94));border:1px solid rgba(99,102,241,.45);border-radius:18px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.28)}
+.gcc-title{font-size:1.55rem;font-weight:950;margin:0 0 5px}.gcc-sub{color:#cbd5e1;font-size:.86rem}.gcc-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-top:14px}.gcc-stat{background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px}.gcc-stat b{display:block;font-size:1.15rem}.gcc-stat small{color:#94a3b8}
+.gcc-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.gcc-tabs button{border:1px solid rgba(148,163,184,.25);background:#0f172a;color:#e2e8f0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer}.gcc-tabs button.active{background:linear-gradient(135deg,#4f46e5,#0891b2);border-color:#22d3ee}.gcc-view{display:none}.gcc-view.active{display:block}.gcc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.gcc-card{background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.95));border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:14px}.gcc-card h3{margin:0 0 7px}.gcc-muted{color:#94a3b8;font-size:.84rem}.gcc-banner{border-color:rgba(34,211,238,.38);background:linear-gradient(135deg,rgba(8,47,73,.72),rgba(49,46,129,.45))}.gcc-btn{border:0;border-radius:10px;padding:9px 12px;margin:3px;background:linear-gradient(135deg,#2563eb,#0891b2);color:#fff;font-weight:850;cursor:pointer}.gcc-btn.green{background:linear-gradient(135deg,#16a34a,#10b981)}.gcc-btn.gold{background:linear-gradient(135deg,#d97706,#f59e0b)}.gcc-btn.red{background:linear-gradient(135deg,#dc2626,#e11d48)}.gcc-btn:disabled{opacity:.45;cursor:not-allowed}.gcc-progress{height:10px;background:#020617;border-radius:99px;overflow:hidden;margin:8px 0}.gcc-progress span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#06b6d4,#8b5cf6)}.gcc-feed{max-height:220px;overflow:auto;background:#020617;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px;font-size:.8rem}.gcc-feed div{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}.gcc-resource{display:flex;justify-content:space-between;padding:8px;border-radius:9px;background:rgba(2,6,23,.55);margin:4px 0}.gcc-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:7px}.gcc-objective{border-left:4px solid #22d3ee;padding-left:10px;margin:9px 0}.gcc-objective.ready{border-left-color:#22c55e}.gcc-objective small{color:#94a3b8}.gcc-chip{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25);font-size:.75rem;margin:2px}.gcc-danger{color:#fb7185}.gcc-good{color:#4ade80}.gcc-stage{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:9px 0}.gcc-stage div{padding:7px 3px;text-align:center;border-radius:8px;background:#0f172a;border:1px solid rgba(255,255,255,.08);font-size:.7rem}.gcc-stage .done{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.45)}.gcc-stage .current{background:rgba(34,211,238,.16);border-color:#22d3ee}.gcc-mini{min-height:145px}@media(max-width:800px){.gcc-title{font-size:1.25rem}.gcc-tabs{overflow:auto;flex-wrap:nowrap}.gcc-tabs button{white-space:nowrap}.gcc-stage{grid-template-columns:repeat(5,1fr)}}
+</style>
+
+<script id="guild-command-center">
+(()=>{'use strict';
+const KEY='guild_master_command_center_v4';
+const ZONE_NAMES=['Goblin Outskirts','Sunken Catacombs','Burning Infernal Peak','Void Citadel','Celestial Realm','Dragonfall Wilds','Astral Ruins','Frostgrave Expanse','Thornwood Dominion','Obsidian Wastes','Moonlit Sanctum','Etherium Throne'];
+const ZONE_BOSSES=['Goblin Warchief Grukk','The Drowned King','Inferno Tyrant Vhal','Void Overlord Nox','Seraph of the Fallen Stars','Ashwing the Ancient','Astral Devourer','The Glacial Emperor','Queen Briarheart','The Black Colossus','Lunar Archon','The Ether King'];
+const TITLES=[['First Blood',()=>n(core()?.stats?.totalKills)>=1],['Monster Slayer',()=>n(core()?.stats?.totalKills)>=100],['Boss Breaker',()=>n(core()?.stats?.bossesDefeated)>=10],['Summoner',()=>n(core()?.stats?.totalSummons)>=50],['Tower Walker',()=>n(core()?.towerFloor)>=25],['Relic Hunter',()=>n(core()?.relics?.length)>=3],['Beast Keeper',()=>n(core()?.pets?.length)>=3],['World Conqueror',()=>n(C.zone)>=12],['Ascended',()=>n(core()?.stats?.totalAscensions)>=1],['Void Walker',()=>n(core()?.towerFloor)>=100]];
+const DEFAULT={version:4,zone:1,stage:1,seasonXP:0,seasonLevel:1,activeView:'gcc-overview',resources:{wood:0,stone:0,iron:0,mana:0,essence:0,tokens:0},buildings:{hall:1,workshop:1,arcane:1,stable:1,academy:1},event:null,eventCount:0,miniGames:0,bossDamage:0,bossWins:0,bossPhase:1,bossTarget:100000,expeditions:[],expeditionsCompleted:0,log:[],dailyKey:'',weeklyKey:'',dailyObjectives:[],weeklyObjectives:[],unlockedTitles:[],currentTitle:'Guild Master',encounters:0,tutorialDone:false,lastSync:{kills:0,summons:0,bosses:0},lastEncounter:0};
+let C=clone(DEFAULT);
+function clone(o){return JSON.parse(JSON.stringify(o))} function n(v){return Math.max(0,Math.floor(Number(v)||0))} function core(){return(typeof state!=='undefined'&&state)?state:null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(C));if(typeof saveGame==='function')saveGame(false)}catch(e){}}
+function toast(msg){const d=document.createElement('div');d.className='gl-toast';d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function log(msg){C.log.unshift(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' — '+msg);C.log=C.log.slice(0,40);toast(msg);save();renderGuildCenter()}
+function addRes(k,v){if(k in C.resources)C.resources[k]=n(C.resources[k])+n(v)} function addCore(k,v){const s=core();if(!s)return;s[k]=n(s[k])+n(v)}
+function xp(v){C.seasonXP+=n(v);while(C.seasonXP>=C.seasonLevel*100){C.seasonXP-=C.seasonLevel*100;C.seasonLevel++;addCore('gems',10+C.seasonLevel*2);C.log.unshift('🌟 Season Level '+C.seasonLevel+' reached — bonus Gems!')}}
+
+// Fixed Local Time Keys & Countdowns
+function dayKey(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function weekKey(){
+    const d=new Date(),start=new Date(d);
+    start.setDate(d.getDate()-d.getDay());
+    return `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`;
+}
+function timeUntilNextDay(){
+    const now=new Date();
+    const nextMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+    const diff=Math.max(0,nextMidnight-now);
+    const hrs=Math.floor(diff/(1000*60*60));
+    const mins=Math.floor((diff%(1000*60*60))/(1000*60));
+    return `${hrs}h ${mins}m`;
+}
+function timeUntilNextWeek(){
+    const now=new Date();
+    const daysUntilSunday=(7-now.getDay())%7||7;
+    const nextWeek=new Date(now.getFullYear(),now.getMonth(),now.getDate()+daysUntilSunday);
+    const diff=Math.max(0,nextWeek-now);
+    const days=Math.floor(diff/(1000*60*60*24));
+    const hrs=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+    return `${days}d ${hrs}h`;
+}
+
+function getCurrentStatValue(type){
+    const s=core()||{},st=s.stats||{};
+    switch(type){
+        case 'kills': return n(st.totalKills);
+        case 'bosses': return n(st.bossesDefeated);
+        case 'summons': return n(st.totalSummons);
+        case 'tower': return n(s.towerFloor);
+        case 'taps': return n(st.manualTaps);
+        case 'spells': return n(st.spellsCast);
+        case 'salvage': return n(st.gearSalvaged);
+        case 'ascend': return n(st.totalAscensions);
+        case 'relics': return n(s.relics?.length);
+        case 'pets': return n(s.pets?.length);
+        case 'guildboss': return n(C.bossWins);
+        case 'expeditions': return n(C.expeditionsCompleted);
+        case 'events': return n(C.eventCount);
+        default: return 0;
+    }
+}
+
+// Relative progress from startVal snapshot
+function objectiveProgress(o){
+    if(!o) return 0;
+    if(o.type==='tower'){
+        const s=core()||{};
+        return n(s.towerFloor);
+    }
+    const current=getCurrentStatValue(o.type);
+    if(o.startVal===undefined){
+        o.startVal=o.claimed?Math.max(0,current-n(o.req)):current;
+    }
+    return Math.max(0,current-n(o.startVal));
+}
+
+function makeObjectives(key,weekly=false){
+    const day=key.split('-').reduce((a,b)=>a+n(b),0);
+    const daily=[
+        ['kills','Defeat '+(30+day%4*15)+' monsters',30+day%4*15,'Gems',8],
+        ['bosses','Defeat '+(2+day%3)+' bosses',2+day%3,'Tokens',10],
+        ['tower','Reach Tower Floor '+(5+day%5),5+day%5,'Gems',12],
+        ['summons','Summon '+(5+day%5)+' heroes',5+day%5,'Gold',800],
+        ['spells','Cast '+(3+day%4)+' tactical spells',3+day%4,'Gems',6]
+    ];
+    const weeklySet=[
+        ['kills','Defeat '+(300+day%4*150)+' monsters',300+day%4*150,'Renown',8],
+        ['bosses','Defeat '+(10+day%5*5)+' bosses',10+day%5*5,'Gems',35],
+        ['tower','Reach Tower Floor '+(30+day%5*15),30+day%5*15,'Renown',15],
+        ['expeditions','Complete '+(4+day%3)+' expeditions',4+day%3,'Tokens',45],
+        ['guildboss','Defeat '+(1+day%3)+' World Bosses',1+day%3,'Gems',60]
+    ];
+    return(weekly?weeklySet:daily).map((x,i)=>({
+        id:key+(weekly?'w':'d')+i,
+        type:x[0],
+        desc:x[1],
+        req:x[2],
+        reward:x[3],
+        amount:x[4],
+        startVal:getCurrentStatValue(x[0]),
+        claimed:false
+    }));
+}
+
+function ensureObjectives(){
+    const d=dayKey(),w=weekKey();
+    let updated=false;
+    if(C.dailyKey!==d){
+        C.dailyKey=d;
+        C.dailyClaimed=false;
+        C.dailyObjectives=makeObjectives(d,false);
+        C.log.unshift('🌅 Daily Objectives have refreshed for today!');
+        updated=true;
+    }
+    if(C.weeklyKey!==w){
+        C.weeklyKey=w;
+        C.weeklyObjectives=makeObjectives(w,true);
+        C.log.unshift('🏆 Weekly Guild Challenges have refreshed for the week!');
+        updated=true;
+    }
+    if(updated) save();
+}
+
+function claimObjective(id,weekly){
+    const arr=weekly?C.weeklyObjectives:C.dailyObjectives,o=arr.find(x=>x.id===id);
+    if(!o||o.claimed||objectiveProgress(o)<o.req)return;
+    if(o.reward==='Gems')addCore('gems',o.amount);
+    if(o.reward==='Gold')addCore('gold',o.amount);
+    if(o.reward==='Renown')addCore('renown',o.amount);
+    if(o.reward==='Tokens')addRes('tokens',o.amount);
+    o.claimed=true;
+    xp(weekly?50:20);
+    log('🎯 Objective complete: '+o.desc+' — +'+o.amount+' '+o.reward+'.');
+    renderGuildCenter();
+}
+
+function checkTitles(){
+    TITLES.forEach(t=>{if(!C.unlockedTitles.includes(t[0])&&t[1]()){C.unlockedTitles.push(t[0]);C.log.unshift('🏆 New title unlocked: '+t[0]+'!')}});
+    if(C.currentTitle==='Guild Master'&&C.unlockedTitles.length)C.currentTitle=C.unlockedTitles[C.unlockedTitles.length-1];
+}
+
+function syncCore(){
+    const s=core();if(!s)return;
+    ensureObjectives();
+    const kills=n(s.stats?.totalKills),summons=n(s.stats?.totalSummons),bosses=n(s.stats?.bossesDefeated);
+    const dk=Math.max(0,kills-n(C.lastSync.kills)),ds=Math.max(0,summons-n(C.lastSync.summons)),db=Math.max(0,bosses-n(C.lastSync.bosses));
+    if(dk){addRes('wood',dk*2);addRes('stone',dk);addRes('iron',Math.floor(dk*.5));xp(dk*2)}
+    if(ds){addRes('tokens',ds*3);addRes('mana',ds);xp(ds*5)}
+    if(db){addRes('essence',db*4);addRes('tokens',db*8);xp(db*15)}
+    const combatZone=Math.min(12,1+Math.floor(Math.max(0,n(s.dungeonFloor)-1)/10));
+    if(combatZone<C.zone){C.zone=combatZone;C.stage=1;C.log.unshift('🔄 Progression reset detected — world map synchronized.')}
+    else if(combatZone>C.zone){C.zone=combatZone;C.stage=1;addRes('tokens',15);addRes('essence',3);xp(60);C.log.unshift('🗺️ New region discovered: '+ZONE_NAMES[C.zone-1]+'!')}
+    C.stage=Math.max(1,((Math.max(1,n(s.dungeonFloor))-1)%10)+1);
+    C.lastSync={kills,summons,bosses};
+    checkTitles();
+    if(dk&&Math.random()<.03&&Date.now()-C.lastEncounter>90000&&!C.event)randomEncounter();
+}
+
+function tab(id,btn){
+    const valid=['gcc-overview','gcc-resources','gcc-world','gcc-guild','gcc-events','gcc-endgame'];
+    if(!valid.includes(id)) id='gcc-overview';
+    ensureObjectives();
+    C.activeView=id;
+    document.querySelectorAll('.gcc-view').forEach(x=>x.classList.toggle('active',x.id===id));
+    document.querySelectorAll('.gcc-tabs button').forEach(x=>x.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    else {
+        const activeBtn=[...document.querySelectorAll('.gcc-tabs button')].find(x=>(x.getAttribute('onclick')||'').includes("gccTab('"+id+"'"));
+        if(activeBtn) activeBtn.classList.add('active');
+    }
+    save();
+}
+
+function openObjectives(){
+    ensureObjectives();
+    C.activeView='gcc-overview';
+    const commandPanel=document.getElementById('gcc-tab');
+    const commandButton=document.getElementById('gcc-nav');
+    if(commandPanel && !commandPanel.classList.contains('active')){
+        if(typeof window.switchTab==='function') {
+            try { window.switchTab({currentTarget:commandButton,target:commandButton,preventDefault(){},stopPropagation(){}},'gcc-tab'); }
+            catch(e){
+                document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+                commandPanel.classList.add('active');
+            }
+        } else {
+            document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+            commandPanel.classList.add('active');
+        }
+    }
+    renderGuildCenter();
+    const overview=document.getElementById('gcc-overview');
+    if(overview) setTimeout(()=>overview.scrollIntoView({behavior:'smooth',block:'start'}),0);
+    return false;
+}
+window.gccTab=tab; window.gccOpenObjectives=openObjectives;
+
+function collect(){
+    const power=Math.max(1,typeof getParty==='function'?getParty().reduce((a,h)=>a+(h?.atk||0),0):100),
+    r={wood:5+Math.floor(Math.random()*8),stone:4+Math.floor(Math.random()*7),iron:2+Math.floor(Math.random()*5),mana:1+Math.floor(Math.random()*4),essence:Math.max(1,Math.floor(power/80))};
+    Object.entries(r).forEach(([k,v])=>addRes(k,v));
+    addRes('tokens',2);
+    xp(10);
+    if(Math.random()<.15)addCore('gems',2);
+    const msg='⛏️ Resource collection complete — resources added to your ledger.';
+    C.log.unshift(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' — '+msg);
+    C.log=C.log.slice(0,40);
+    save();
+    renderGuildCenter();
+    toast(msg);
+    return false;
+}
+
+function rollEvent(){
+    if(C.event){toast('Finish the current event first.');return}
+    const events=[
+        ['🐉 Dragon Scout','A wounded scout-dragon offers a shortcut through the next region.','Help it','Guard the road','Take the safe route'],
+        ['💎 Crystal Vault','A rare crystal seam has opened.','Mine it','Study it','Seal it'],
+        ['🛒 Merchant Caravan','A guild merchant offers a risky bargain.','Trade materials','Buy the cache','Pass'],
+        ['☄️ Meteor Fragments','Arcane fragments are scattered nearby.','Collect them','Study the crater','Mark the site']
+    ];
+    C.event={data:events[Math.floor(Math.random()*events.length)]};
+    C.eventCount++;
+    save();
+    renderGuildCenter();
+}
+
+function randomEncounter(){
+    C.lastEncounter=Date.now();
+    C.encounters++;
+    const events=[
+        ['🌟 Lost Treasure','You found an abandoned treasure cart.','Claim the gold','Search for relics','Leave it'],
+        ['🧙 Wandering Sage','A sage offers a blessing.','Power blessing','Fortune blessing','Decline'],
+        ['🐲 Rare Beast','A rare beast challenges your party.','Hunt it','Observe it','Avoid it']
+    ];
+    C.event={data:events[Math.floor(Math.random()*events.length)]};
+    C.eventCount++;
+}
+
+function eventChoice(i){
+    const e=C.event?.data;if(!e)return;const s=core();let msg='';
+    if(i===0){addRes('iron',8);addRes('essence',3);if(s)addCore('gems',4);msg='⚔️ Encounter won: rare materials recovered.'}
+    else if(i===1){addRes('stone',10);addRes('mana',4);xp(20);msg='✨ Investigation rewarded the guild.'}
+    else{addRes('wood',5);addRes('tokens',6);msg='🧭 Safe choice preserved your supplies.'}
+    C.event=null;
+    log(msg);
+}
+
+function upgrade(k){
+    const lv=C.buildings[k]||1,cost=Math.floor(200*Math.pow(1.65,lv-1)),s=core();
+    if(!s||s.gold<cost){toast('Need '+cost.toLocaleString()+' Gold.');return}
+    s.gold-=cost;C.buildings[k]=lv+1;addRes('tokens',10);xp(25);
+    log('🏰 '+k+' upgraded to Level '+C.buildings[k]+'.');
+}
+
+function bossTarget(){return Math.floor(100000*Math.pow(1.35,C.bossWins))}
+
+function worldBoss(){
+    const s=core(),party=typeof getParty==='function'?getParty():[],power=Math.max(100,party.reduce((a,h)=>a+(typeof getHeroPower==='function'?getHeroPower(h):h.atk||0),0)),difficulty=1+C.bossWins*.08,dmg=Math.floor(power*(1.0+Math.random()*.9)*difficulty);
+    C.bossTarget=bossTarget();
+    C.bossDamage+=dmg;
+    const pct=C.bossDamage/C.bossTarget;
+    const phase=pct>=.75?1:pct>=.5?2:pct>=.25?3:4;
+    if(phase!==C.bossPhase){C.bossPhase=phase;C.log.unshift('🐉 World Boss entered Phase '+phase+'!');}
+    addRes('essence',Math.max(1,Math.floor(dmg/250)));
+    addRes('tokens',3);
+    xp(15);
+    if(C.bossDamage>=C.bossTarget){
+        C.bossDamage=0;C.bossWins++;C.bossPhase=1;C.bossTarget=bossTarget();
+        if(s){s.gems+=50+Math.min(200,C.bossWins*5);s.renown+=10+Math.floor(C.bossWins/5)}
+        if(C.bossWins%5===0)addCore('gems',50);
+        log('👑 WORLD BOSS DEFEATED — the next boss is '+Math.floor(C.bossTarget/1000)+'K HP!');
+    } else log('🐉 World Boss hit for '+dmg.toLocaleString()+' damage.');
+}
+
+function dispatch(name,mode){
+    if(C.expeditions.length>=3){toast('Maximum 3 active expeditions.');return}
+    const modes={safe:{mult:1,duration:1,reward:1},balanced:{mult:1.5,duration:1.15,reward:1.6},danger:{mult:2.2,duration:1.35,reward:2.5}},m=modes[mode]||modes.balanced;
+    const base=name==='Ancient Ruins'?600000:name==='Dragon Nest'?1800000:3600000;
+    C.expeditions.push({name,mode,started:Date.now(),duration:Math.floor(base*m.duration),mult:m.reward});
+    addRes('tokens',5);
+    log('🚀 '+name+' expedition dispatched on '+mode+' route.');
+}
+
+function claimExpeditions(){
+    const now=Date.now();let claimed=0;
+    C.expeditions=C.expeditions.filter(x=>{
+        if(now-x.started>=x.duration){
+            claimed++;const m=x.mult||1;
+            addRes('essence',Math.floor(8*m));addRes('iron',Math.floor(6*m));addRes('tokens',Math.floor(10*m));
+            xp(Math.floor(30*m));C.expeditionsCompleted++;return false;
+        }
+        return true;
+    });
+    if(claimed)log('📦 '+claimed+' expedition(s) returned with scaled rewards.');
+    else toast('No expeditions are ready yet.');
+}
+
+function claimExpeditionsSilent(){
+    const now=Date.now();let claimed=0;
+    C.expeditions=C.expeditions.filter(x=>{
+        if(now-x.started>=x.duration){
+            claimed++;const m=x.mult||1;
+            addRes('essence',Math.floor(8*m));addRes('iron',Math.floor(6*m));addRes('tokens',Math.floor(10*m));
+            xp(Math.floor(30*m));C.expeditionsCompleted++;C.log.unshift('📦 '+x.name+' returned: rewards added.');
+            return false;
+        }
+        return true;
+    });
+    if(claimed){C.log=C.log.slice(0,40);save();}
+}
+
+function daily(){
+    const key=dayKey();
+    if(C.dailyKey===key&&C.dailyClaimed){toast('Daily Supply already claimed for today.');return}
+    C.dailyKey=key;C.dailyClaimed=true;
+    addRes('wood',15);addRes('stone',10);addRes('iron',5);addRes('tokens',15);addCore('gems',10);
+    xp(25);
+    log('🎁 Daily Supply collected.');
+}
+
+function startTower(){
+    try{
+        if(typeof window.switchTab==='function'){
+            const panel=document.getElementById('tab-battle');
+            const btn=[...document.querySelectorAll('.nav-tabs .tab-btn')].find(b=>(b.getAttribute('onclick')||'').includes("'tab-battle'"));
+            if(panel)window.switchTab({currentTarget:btn||panel,target:btn||panel,preventDefault(){},stopPropagation(){}},'tab-battle');
+        }
+        if(typeof setCombatMode==='function')setCombatMode('tower');
+        else if(typeof window.guildGo==='function')window.guildGo('tab-battle');
+        setTimeout(()=>{const el=document.getElementById('tab-battle');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},120);
+        return false;
+    }catch(e){
+        console.error('Guild Master: tower navigation failed',e);
+        if(typeof window.guildGo==='function')window.guildGo('tab-battle');
+        return false;
+    }
+}
+
+function guildGo(id){
+    const el=document.getElementById(id);if(!el){toast('That game area is unavailable.');return false}
+    const btn=[...document.querySelectorAll('.nav-tabs .tab-btn')].find(b=>(b.getAttribute('onclick')||'').includes("'"+id+"'"));
+    if(typeof window.switchTab==='function')window.switchTab({currentTarget:btn||null,target:btn||null},id);
+    else{document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+    return false;
+}
+window.guildGo=guildGo;
+
+function setTitle(t){
+    if(!C.unlockedTitles.includes(t)&&t!=='Guild Master')return;
+    C.currentTitle=t;save();renderGuildCenter();
+}
+
+function objectiveCard(o,weekly){
+    if(!o)return '';
+    const req=Math.max(1,n(o.req)),p=Math.min(objectiveProgress(o),req),pct=Math.min(100,Math.round(p/req*100)),ready=p>=req;
+    return `<div class="gcc-objective ${ready?'ready':''}">
+        <b>${o.desc}</b><br>
+        <small>${p.toLocaleString()} / ${req.toLocaleString()} • Reward +${o.amount} ${o.reward}</small>
+        <div class="gcc-progress"><span style="width:${pct}%"></span></div>
+        <button class="gcc-btn ${ready?'green':''}" ${ready&&!o.claimed?'':'disabled'} onclick="gccClaimObjective('${o.id}',${weekly})">
+            ${o.claimed?'Claimed':ready?'Claim Reward':'In Progress'}
+        </button>
+    </div>`;
+}
+
+function tutorial(){
+    const existing=document.querySelector('.gl-modal');if(existing)existing.remove();
+    const m=document.createElement('div');m.className='gl-modal';
+    m.innerHTML='<div class="gl-card"><h2>👑 Guild Master — How to Play</h2><p><b>Everything is connected.</b> Fight in Combat, build heroes, collect loot, improve the Guild, explore regions, complete objectives, beat the World Boss, then push the Endless Tower and Ascend.</p><p>🎯 <b>Start:</b> Follow the green Recommended Next Step on Overview.</p><p>⚔️ <b>Combat:</b> Your kills automatically feed Guild resources and progression.</p><p>🗺️ <b>World:</b> Each region has 10 stages. Stage 10 is its boss. After Zone 12, the Frontier is endless.</p><p>🏰 <b>Heroes:</b> Choose one specialization per hero. It cannot be changed, so build your squad intentionally.</p><p>🐉 <b>Endgame:</b> World Bosses scale after every victory. The Tower is endless and Ascension gives permanent power.</p><p>🎯 <b>Objectives:</b> Daily and weekly goals provide clear reasons to keep playing.</p><button class="gl-btn gl-good" onclick="this.closest(\'.gl-modal\').remove()">Got It — Start Playing</button></div>';
+    m.onclick=e=>{if(e.target===m)m.remove()};
+    document.body.appendChild(m);
+    C.tutorialDone=true;save();
+}
+
+window.gccCollect=collect; window.gccStartTower=startTower;window.gccEventRoll=rollEvent;window.gccEventChoice=eventChoice;window.gccUpgrade=upgrade;window.gccBoss=worldBoss;window.gccDispatch=dispatch;window.gccClaimExpeditions=claimExpeditions;window.gccDaily=daily;window.gccTutorial=tutorial;window.gccClaimObjective=claimObjective;window.gccSetTitle=setTitle;
+
+function renderGuildCenter(){
+    syncCore();
+    const root=document.getElementById('gcc-root');if(!root)return;
+    const s=core()||{},kills=n(s.stats?.totalKills),floor=Math.max(1,n(s.dungeonFloor)),stage=C.stage||1,zone=Math.min(12,C.zone),neededKills=Math.max(1,5-n(s.floorKills)),floorProgress=zone>=12?100:Math.min(100,Math.round(((floor-1)%10)/9*100)),activeView=['gcc-overview','gcc-resources','gcc-world','gcc-guild','gcc-events','gcc-endgame'].includes(C.activeView)?C.activeView:'gcc-overview';
+    C.dailyObjectives=Array.isArray(C.dailyObjectives)?C.dailyObjectives:[];
+    C.weeklyObjectives=Array.isArray(C.weeklyObjectives)?C.weeklyObjectives:[];
+    C.log=Array.isArray(C.log)?C.log:[];
+    C.resources=Object.assign(clone(DEFAULT.resources),C.resources||{});
+    C.expeditions=Array.isArray(C.expeditions)?C.expeditions:[];
+    const ready=C.event?.data,phasePct=Math.round((C.bossDamage/(C.bossTarget||bossTarget()))*100);
+    const rec=C.zone<12?'Push Combat to clear Floor '+floor+' and reach Stage 10.':floor<100?'Start the Endless Tower and chase a new personal best.':'Take on the scaled World Boss or Ascend for permanent Renown.';
+    
+    root.innerHTML=`<div class="gcc-shell"><div class="gcc-hero"><div class="gcc-title">🌌 Guild Command Center <span class="gcc-chip">${C.currentTitle}</span></div><div class="gcc-sub">One connected game: combat → heroes → loot → guild → world → bosses → tower → ascension.</div><div class="gcc-status"><div class="gcc-stat">⚔️ <b>${kills.toLocaleString()}</b><small>Total kills</small></div><div class="gcc-stat">🗺️ <b>Zone ${zone}</b><small>${ZONE_NAMES[zone-1]}</small></div><div class="gcc-stat">🏰 <b>Floor ${floor}</b><small>Stage ${stage}/10</small></div><div class="gcc-stat">🎟️ <b>${C.resources.tokens.toLocaleString()}</b><small>Guild Tokens</small></div><div class="gcc-stat">🌟 <b>${C.seasonLevel}</b><small>Season Level</small></div><div class="gcc-stat">🐉 <b>${C.bossWins}</b><small>World Boss wins</small></div></div></div><div class="gcc-tabs"><button type="button" class="${activeView==='gcc-overview'?'active':''}" onclick="gccTab('gcc-overview',this)">🏠 Overview</button><button type="button" class="${activeView==='gcc-resources'?'active':''}" onclick="gccTab('gcc-resources',this)">⛏️ Resources</button><button type="button" class="${activeView==='gcc-world'?'active':''}" onclick="gccTab('gcc-world',this)">🗺️ World</button><button type="button" class="${activeView==='gcc-guild'?'active':''}" onclick="gccTab('gcc-guild',this)">🏰 Guild</button><button type="button" class="${activeView==='gcc-events'?'active':''}" onclick="gccTab('gcc-events',this)">🎲 Events</button><button type="button" class="${activeView==='gcc-endgame'?'active':''}" onclick="gccTab('gcc-endgame',this)">♾️ Endgame</button></div>
+<div id="gcc-overview" class="gcc-view ${activeView==='gcc-overview'?'active':''}"><div class="gcc-card gcc-banner"><h3>🎯 Recommended Next Step</h3><p>${rec}</p><div class="gcc-progress"><span style="width:${floorProgress}%"></span></div><p class="gcc-muted">Zone ${zone} • ${ZONE_NAMES[zone-1]} • Stage ${stage}/10 • ${neededKills} combat kill${neededKills===1?'':'s'} until the next floor.</p><button class="gcc-btn green" onclick="guildGo('tab-battle')">⚔️ Go Fight</button><button class="gcc-btn" onclick="guildGo('tab-roster')">🛡️ Improve Heroes</button><button class="gcc-btn gold" type="button" onclick="return gccCollect()">⛏️ Collect Resources</button><button class="gcc-btn" onclick="gccStartTower()">🏰 Push Endless Tower</button><button class="gcc-btn" onclick="gccTutorial()">📘 How to Play</button></div><div class="gcc-grid" style="margin-top:12px"><div class="gcc-card"><div style="display:flex;justify-content:space-between;align-items:center;"><h3>🎯 Daily Objectives</h3><span class="gcc-muted" style="font-size:0.75rem;">⏳ Resets in ${timeUntilNextDay()}</span></div>${C.dailyObjectives.map(o=>objectiveCard(o,false)).join('')}</div><div class="gcc-card"><div style="display:flex;justify-content:space-between;align-items:center;"><h3>🏆 Weekly Guild Challenges</h3><span class="gcc-muted" style="font-size:0.75rem;">⏳ Resets in ${timeUntilNextWeek()}</span></div>${C.weeklyObjectives.map(o=>objectiveCard(o,true)).join('')}</div><div class="gcc-card"><h3>📜 Activity Feed</h3><div class="gcc-feed">${C.log.length?C.log.map(x=>'<div>'+x+'</div>').join(''):'<div>No activities yet.</div>'}</div></div></div></div>
+<div id="gcc-resources" class="gcc-view ${activeView==='gcc-resources'?'active':''}"><div class="gcc-card"><h3>⛏️ Resource Operations</h3><p class="gcc-muted">Combat automatically supplies materials. Use Resource Runs when you want a quick active boost.</p><button class="gcc-btn green" type="button" onclick="return gccCollect()">⛏️ Run Resource Collection</button><button class="gcc-btn gold" onclick="gccDaily()">🎁 Daily Supply</button></div><div class="gcc-grid" style="margin-top:12px">${[['wood','🌲 Wood'],['stone','🪨 Stone'],['iron','⛓️ Iron'],['mana','🔮 Mana'],['essence','✨ Essence'],['tokens','🎟️ Guild Tokens']].map(x=>'<div class="gcc-card"><h3>'+x[1]+'</h3><div style="font-size:1.5rem;font-weight:900">'+C.resources[x[0]].toLocaleString()+'</div><div class="gcc-muted">Collected and saved</div></div>').join('')}</div></div>
+<div id="gcc-world" class="gcc-view ${activeView==='gcc-world'?'active':''}"><div class="gcc-card gcc-banner"><h3>🗺️ Living World — ${ZONE_NAMES[zone-1]}</h3><p>${ZONE_BOSSES[zone-1]} awaits at Stage 10.</p><div class="gcc-stage">${Array.from({length:10},(_,i)=>`<div class="${i+1<stage?'done':i+1===stage?'current':''}">${i+1===10?'👑':'⚔️'}<br>${i+1}</div>`).join('')}</div><p class="gcc-muted">Your real Dungeon Floor controls the world. No hidden counter and no separate travel system.</p><button class="gcc-btn green" onclick="guildGo('tab-battle')">⚔️ Continue Region</button></div><div class="gcc-grid" style="margin-top:12px">${ZONE_NAMES.map((z,i)=>`<div class="gcc-card"><h3>${i+1<=zone?'🟢':'🔒'} Zone ${i+1}: ${z}</h3><p class="gcc-muted">${i+1<=zone?(i+1===zone?'Active region — Stage '+stage+'/10.':'Unlocked.'):'Reach Dungeon Floor '+((i)*10+1)+' to unlock.'}</p><p>${i+1<=zone?'👑 Boss: '+ZONE_BOSSES[i]:'Hidden until progression.'}</p></div>`).join('')}</div></div>
+<div id="gcc-guild" class="gcc-view ${activeView==='gcc-guild'?'active':''}"><div class="gcc-card gcc-banner"><h3>🏰 One Guild Town</h3><p class="gcc-muted">Use the existing Guild Town for permanent building upgrades. The Command Center does not duplicate your town.</p><button class="gcc-btn green" onclick="guildGo('tab-town')">🏰 Open Guild Town</button></div><div class="gcc-grid" style="margin-top:12px">${[['goldMine','🪙 Gold Mine','Boosts Gold income'],['expSanctuary','✨ EXP Sanctuary','Boosts Hero XP'],['summonGate','⛩️ Summoning Shrine','Improves hero recruitment'],['trainingGrounds','🏋️ Training Grounds','Supports undeployed heroes']].map(x=>`<div class="gcc-card"><h3>${x[1]}</h3><p>Level ${n(s.town?.[x[0]])} • ${x[2]}</p><button class="gcc-btn" onclick="guildGo('tab-town')">Open Upgrade</button></div>`).join('')}</div><div class="gcc-card" style="margin-top:12px"><h3>🏆 Titles & Collections</h3><p class="gcc-muted">Unlocked titles: ${C.unlockedTitles.length}/${TITLES.length}</p>${C.unlockedTitles.map(t=>`<button class="gcc-btn ${C.currentTitle===t?'green':''}" onclick="gccSetTitle('${t}')">${t}</button>`).join('')}</div></div>
+<div id="gcc-events" class="gcc-view ${activeView==='gcc-events'?'active':''}"><div class="gcc-card gcc-banner"><h3>🎲 Events & Rare Encounters</h3>${ready?'<h3>'+ready[0]+'</h3><p>'+ready[1]+'</p><div class="gcc-choice"><button class="gcc-btn gold" onclick="gccEventChoice(0)">'+ready[2]+'</button><button class="gcc-btn" onclick="gccEventChoice(1)">'+ready[3]+'</button><button class="gcc-btn red" onclick="gccEventChoice(2)">'+ready[4]+'</button></div>':'<p class="gcc-muted">Events appear from active play and can also be started here. Choices trade risk, safety and rewards.</p><button class="gcc-btn gold" onclick="gccEventRoll()">🎲 Start Event</button>'}</div><div class="gcc-grid" style="margin-top:12px"><div class="gcc-card"><h3>📜 Objective Hub</h3><p>Daily and weekly goals live on Overview so you always know what to do next.</p><button type="button" class="gcc-btn gold" onclick="gccOpenObjectives();return false;">🎯 View Objectives</button></div><div class="gcc-card"><h3>🌟 Rare Encounters</h3><p>Keep fighting. Unexpected treasure, sages and rare beasts can appear during progression.</p><p class="gcc-muted">Encounters found: ${C.encounters}</p></div></div></div>
+<div id="gcc-endgame" class="gcc-view ${activeView==='gcc-endgame'?'active':''}"><div class="gcc-grid"><div class="gcc-card gcc-banner"><h3>🐉 World Boss — Tier ${C.bossWins+1}</h3><p>Phase ${C.bossPhase}/4 • ${C.bossDamage.toLocaleString()} / ${(C.bossTarget||bossTarget()).toLocaleString()} damage</p><div class="gcc-progress"><span style="width:${Math.min(100,phasePct)}%"></span></div><p class="gcc-muted">Each victory increases HP and rewards. Push through four phases to earn the kill.</p><button class="gcc-btn red" onclick="gccBoss()">⚔️ Attack World Boss</button></div><div class="gcc-card"><h3>♾️ Endless Tower</h3><p>Floor ${n(s.towerFloor)} • No maximum floor.</p><p class="gcc-muted">Every floor gives progression, and high floors feed titles and Ascension goals.</p><button class="gcc-btn green" onclick="gccStartTower()">🏰 Enter Tower</button></div></div><div class="gcc-card" style="margin-top:12px"><h3>🚀 Expeditions</h3><p class="gcc-muted">Choose a risk level. Higher risk means longer travel but much better rewards.</p><div class="gcc-grid"><div class="gcc-card"><b>Ancient Ruins</b><br><button class="gcc-btn" onclick="gccDispatch('Ancient Ruins','safe')">Safe</button><button class="gcc-btn" onclick="gccDispatch('Ancient Ruins','balanced')">Balanced</button><button class="gcc-btn red" onclick="gccDispatch('Ancient Ruins','danger')">Danger</button></div><div class="gcc-card"><b>Dragon Nest</b><br><button class="gcc-btn" onclick="gccDispatch('Dragon Nest','safe')">Safe</button><button class="gcc-btn" onclick="gccDispatch('Dragon Nest','balanced')">Balanced</button><button class="gcc-btn red" onclick="gccDispatch('Dragon Nest','danger')">Danger</button></div><div class="gcc-card"><b>Void Observatory</b><br><button class="gcc-btn" onclick="gccDispatch('Void Observatory','safe')">Safe</button><button class="gcc-btn" onclick="gccDispatch('Void Observatory','balanced')">Balanced</button><button class="gcc-btn red" onclick="gccDispatch('Void Observatory','danger')">Danger</button></div></div><button class="gcc-btn green" onclick="gccClaimExpeditions()">📦 Check Returns</button><div class="gcc-grid" style="margin-top:10px">${C.expeditions.length?C.expeditions.map(x=>'<div class="gcc-card"><b>'+x.name+'</b><span class="gcc-chip">'+x.mode+'</span><p class="gcc-muted">'+(x.duration-(Date.now()-x.started)<=0?'READY':Math.ceil((x.duration-(Date.now()-x.started))/60000)+'m remaining')+'</p></div>').join(''):'<div class="gcc-muted">No active expeditions.</div>'}</div></div><div class="gcc-card" style="margin-top:12px"><h3>🌌 Ascension</h3><p>Reach Floor 15+ to reset normal progression and earn permanent Renown through the existing Ascension system.</p><button class="gcc-btn gold" onclick="guildGo('tab-ascend')">🌌 Open Ascension</button></div></div></div>`}
+
+function ensureNav(){
+    const nav=document.querySelector('.nav-tabs');if(!nav||document.getElementById('gcc-nav'))return;
+    const b=document.createElement('button');b.id='gcc-nav';b.className='tab-btn';b.textContent='🌌 Command Center';b.onclick=e=>switchTab(e,'gcc-tab');
+    nav.insertBefore(b,nav.firstElementChild);
+    const tabEl=document.createElement('div');tabEl.id='gcc-tab';tabEl.className='tab-content';tabEl.innerHTML='<div id="gcc-root"></div>';
+    nav.parentNode.insertBefore(tabEl,nav.nextSibling);
+}
+
+function load(){
+    try{
+        let raw=localStorage.getItem(KEY);
+        if(!raw)raw=localStorage.getItem('guild_master_command_center_v2');
+        if(!raw)raw=localStorage.getItem('guild_master_command_center_v3');
+        const x=JSON.parse(raw||'null');
+        if(x)C=Object.assign(clone(DEFAULT),x);
+    }catch(e){}
+    C.resources=Object.assign(clone(DEFAULT.resources),C.resources||{});
+    C.buildings=Object.assign(clone(DEFAULT.buildings),C.buildings||{});
+    C.expeditions=Array.isArray(C.expeditions)?C.expeditions:[];
+    C.log=Array.isArray(C.log)?C.log:[];
+    C.dailyObjectives=Array.isArray(C.dailyObjectives)?C.dailyObjectives:[];
+    C.weeklyObjectives=Array.isArray(C.weeklyObjectives)?C.weeklyObjectives:[];
+    C.unlockedTitles=Array.isArray(C.unlockedTitles)?C.unlockedTitles:[];
+    C.bossTarget=C.bossTarget||bossTarget();
+    if(!['gcc-overview','gcc-resources','gcc-world','gcc-guild','gcc-events','gcc-endgame'].includes(C.activeView))C.activeView='gcc-overview';
+    ensureObjectives();
+}
+
+function boot(){
+    load();
+    ensureNav();
+    syncCore();
+    renderGuildCenter();
+    if(!C.tutorialDone)setTimeout(tutorial,800);
+    setInterval(()=>{
+        syncCore();
+        claimExpeditionsSilent();
+        renderGuildCenter();
+    },10000);
+}
+
+window.gccRender=renderGuildCenter;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else setTimeout(boot,250);
+})()
+</script>
+</body>
+</html>

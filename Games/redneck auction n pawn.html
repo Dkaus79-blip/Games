@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redneck Auction & Repair Empire - 20/20 Definitive Edition</title>
+  <style>
+    :root {
+      --bg-dark: #0a0807;
+      --panel-bg: #14110f;
+      --panel-border: #2d251f;
+      --accent-gold: #f39c12;
+      --accent-green: #27ae60;
+      --accent-red: #c0392b;
+      --accent-blue: #2980b9;
+      --accent-orange: #d35400;
+      --accent-purple: #8e44ad;
+      --accent-cyan: #16a085;
+      --text-main: #f4f0e6;
+      --text-dim: #8c8175;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 6px;
+    }
+
+    #game-container {
+      max-width: 1650px;
+      width: 100%;
+      height: calc(100vh - 12px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: 44px 1fr;
+      gap: 6px;
+    }
+
+    header {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .hud-group {
+      display: flex;
+      gap: 14px;
+      font-size: 0.85em;
+      font-weight: 600;
+      align-items: center;
+    }
+
+    .hud-item span {
+      color: var(--accent-gold);
+      font-weight: 700;
+    }
+
+    .ticker-bar {
+      background: #0d0b0a;
+      border: 1px solid var(--panel-border);
+      color: var(--accent-gold);
+      font-size: 0.78em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      max-width: 440px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr;
+      gap: 6px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .panel-header {
+      font-size: 0.98em;
+      font-weight: 700;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--accent-gold);
+    }
+
+    .content-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    /* Scrollbar Styling */
+    .content-scroll::-webkit-scrollbar, .log-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    .content-scroll::-webkit-scrollbar-thumb, .log-box::-webkit-scrollbar-thumb {
+      background: var(--panel-border);
+      border-radius: 3px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: #0d0b0a;
+      padding: 4px;
+      border-radius: 5px;
+      border: 1px solid var(--panel-border);
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      flex: 1;
+      min-width: 65px;
+      background: #1c1714;
+      color: var(--text-dim);
+      border: 1px solid transparent;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 0.72em;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover {
+      background: #28211c;
+      color: var(--text-main);
+    }
+    .nav-tab.active {
+      background: var(--accent-gold);
+      color: #0d0b0a;
+      border-color: #f1c40f;
+    }
+
+    button {
+      background: #6e4425;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8em;
+      transition: all 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    button:hover { background: #8c5731; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button:disabled { background: #2d251f; color: #595048; cursor: not-allowed; transform: none; }
+
+    .btn-green { background: var(--accent-green); }
+    .btn-green:hover { background: #2ecc71; }
+    .btn-red { background: var(--accent-red); }
+    .btn-red:hover { background: #e74c3c; }
+    .btn-blue { background: var(--accent-blue); }
+    .btn-blue:hover { background: #3498db; }
+    .btn-orange { background: var(--accent-orange); }
+    .btn-orange:hover { background: #e67e22; }
+    .btn-purple { background: var(--accent-purple); }
+    .btn-purple:hover { background: #9b59b6; }
+    .btn-cyan { background: var(--accent-cyan); }
+    .btn-cyan:hover { background: #1abc9c; }
+
+    .card {
+      background: #1a1613;
+      border: 1px solid #2d251f;
+      border-radius: 5px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .card:hover {
+      border-color: var(--accent-gold);
+    }
+
+    .card-info { flex: 1; }
+    .card-title { font-weight: bold; font-size: 0.92em; color: var(--text-main); }
+    .card-flavor { font-size: 0.76em; color: var(--text-dim); font-style: italic; margin-top: 2px; }
+
+    .progress-bar-container {
+      background: #0d0b0a;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      overflow: hidden;
+      border: 1px solid #221c18;
+    }
+    .progress-bar-fill {
+      background: var(--accent-blue);
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    .log-box {
+      background: #0d0b0a;
+      border: 1px solid #221c18;
+      border-radius: 4px;
+      padding: 6px;
+      height: 130px;
+      overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.76em;
+      color: #b8aba0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tag {
+      background: #221c18;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      color: var(--accent-gold);
+      border: 1px solid #2d251f;
+      display: inline-block;
+    }
+
+    .auction-arena {
+      background: #1a1613;
+      border: 1px solid var(--accent-gold);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+    }
+
+    .bidders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin: 4px 0;
+    }
+
+    .bidder-card {
+      background: #0d0b0a;
+      border: 1px solid #2d251f;
+      border-radius: 5px;
+      padding: 6px;
+      font-size: 0.75em;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .bidder-card.leading {
+      border-color: var(--accent-green);
+      background: #122216;
+      box-shadow: 0 0 8px rgba(39, 174, 96, 0.4);
+    }
+
+    .chant-box {
+      background: #000;
+      color: var(--accent-gold);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #33271a;
+      text-align: center;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .live-bid-display {
+      font-size: 2.2em;
+      color: var(--accent-green);
+      font-weight: 800;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(39, 174, 96, 0.3);
+    }
+
+    .workbench-bay {
+      background: #14100d;
+      border: 1px dashed var(--accent-gold);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <header>
+    <div class="hud-group">
+      <div class="hud-item">Day: <span id="hud-day">1</span></div>
+      <div class="hud-item">Weather: <span id="hud-weather" style="color:var(--accent-blue);">Clear Skies</span></div>
+    </div>
+    
+    <div class="ticker-bar" id="news-ticker">📰 NEWS: County Auction Season opens with record salvage turnouts!</div>
+
+    <div class="hud-group">
+      <div class="hud-item">Cash: $<span id="hud-money">500.00</span></div>
+      <div class="hud-item">Trips: <span id="hud-auctions">4</span>/4</div>
+      <div class="hud-item">Rep: <span id="hud-rep">0</span></div>
+      <button onclick="toggleAudio()" id="audio-btn" style="font-size:0.7em; padding:2px 8px;">🔊 Sound: ON</button>
+    </div>
+  </header>
+
+  <div class="workspace-grid">
+    <div class="panel">
+      <div class="nav-tabs">
+        <button class="nav-tab active" id="tab-btn-map" onclick="switchMainTab('map')">Map</button>
+        <button class="nav-tab" id="tab-btn-shop" onclick="switchMainTab('shop')">Restoration</button>
+        <button class="nav-tab" id="tab-btn-contracts" onclick="switchMainTab('contracts')">Jobs</button>
+        <button class="nav-tab" id="tab-btn-retail" onclick="switchMainTab('retail')">Store</button>
+        <button class="nav-tab" id="tab-btn-broker" onclick="switchMainTab('broker')">Alley</button>
+        <button class="nav-tab" id="tab-btn-quests" onclick="switchMainTab('quests')">Quests</button>
+        <button class="nav-tab" id="tab-btn-mgmt" onclick="switchMainTab('mgmt')">Upgrades</button>
+        <button class="nav-tab" id="tab-btn-help" onclick="switchMainTab('help')">Help</button>
+      </div>
+      <div class="panel-header">
+        <span id="section-title">Select Auction Destination</span>
+        <span id="sub-header-info" class="tag">Map Active</span>
+      </div>
+      <div id="workspace" class="content-scroll"></div>
+    </div>
+
+    <div class="panel" style="gap: 6px;">
+      <div class="panel-header">
+        <span>Storage Yard</span>
+        <span id="inv-count-badge" class="tag">0/10</span>
+      </div>
+      <div id="inventory-list" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
+
+      <div style="display: flex; gap: 4px; margin-top: 2px;">
+        <button class="btn-blue" onclick="saveGame()" style="flex:1; font-size:0.75em; padding:5px;">Save</button>
+        <button class="btn-orange" onclick="loadGame()" style="flex:1; font-size:0.75em; padding:5px;">Load</button>
+        <button class="btn-red" onclick="hardResetGame()" style="flex:1; font-size:0.75em; padding:5px;">Reset</button>
+      </div>
+
+      <div class="panel-header" style="margin-top: 4px;">
+        <span>Logs</span>
+      </div>
+      <div id="log" class="log-box"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Audio Synthesizer (Web Audio API) ---
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) audioCtx = new AudioContext();
+    }
+  }
+
+  function toggleAudio() {
+    soundEnabled = !soundEnabled;
+    document.getElementById("audio-btn").textContent = soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+  }
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+      const now = audioCtx.currentTime;
+      if (type === 'gavel') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.14);
+        gain.gain.setValueAtTime(0.9, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } else if (type === 'cash') {
+        [987, 1318, 1567].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+          gain.gain.setValueAtTime(0.3, now + idx * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.05 + 0.16);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.16);
+        });
+      } else if (type === 'wrench') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.setValueAtTime(650, now + 0.04);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'bid') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(820, now);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      } else if (type === 'paint') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'loan') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+    } catch(e) {}
+  }
+
+  // --- Game State ---
+  let day = 1;
+  let money = 500.00;
+  let reputation = 0;
+  let phase = "Travel";
+  let activeMainTab = "map";
+  let maxAuctions = 4;
+  let auctionsLeft = 4;
+  let inventory = [];
+  let selectedWorkbenchIndex = null;
+  let activeLoan = 0;
+
+  let currentWeather = { name: "Clear Skies", desc: "Standard operating conditions.", feeMult: 1.0, custMult: 1.0 };
+  let currentNews = "County Auction Season opens with record salvage turnouts!";
+
+  let currentAuctionHouse = null;
+  let liveAuctionItem = null;
+  let isStorageUnitLot = false;
+  let storageUnitContents = [];
+  let currentBid = 0;
+  let rivalTimer = null;
+  let rivalCountdown = 4;
+  let lastBidderName = "Nobody";
+  let auctionChant = "Auctioneer stepping up to podium...";
+  let rivals = [];
+
+  let currentCustomer = null;
+
+  let stats = {
+    itemsWon: 0,
+    itemsFixed: 0,
+    itemsSold: 0,
+    totalEarned: 0
+  };
+
+  let contracts = [];
+
+  let quests = {
+    daily: [
+      { id: 'd1', desc: "Win 2 lots at auctions", target: 2, current: 0, reward: 100, claimed: false },
+      { id: 'd2', desc: "Perform 3 workshop restoration actions", target: 3, current: 0, reward: 120, claimed: false },
+      { id: 'd3', desc: "Sell 2 items to storefront customers", target: 2, current: 0, reward: 150, claimed: false }
+    ],
+    weekly: [
+      { id: 'w1', desc: "Win 8 auction lots", target: 8, current: 0, reward: 500, claimed: false },
+      { id: 'w2', desc: "Earn $2,000 total from sales & jobs", target: 2000, current: 0, reward: 750, claimed: false },
+      { id: 'w3', desc: "Reach 20 Reputation", target: 20, current: 0, reward: 600, claimed: false }
+    ],
+    story: [
+      { id: 's1', desc: "Begin Your Empire: Accumulate $1,200 cash & expand storage yard", target: 1200, current: 0, reward: 400, claimed: false, check: () => money >= 1200 && empireUpgrades.maxStorage > 10 },
+      { id: 's2', desc: "Master Craftsman: Fully restore 5 items in your yard", target: 5, current: 0, reward: 600, claimed: false, check: () => inventory.filter(i => i.quality >= 100).length >= 5 },
+      { id: 's3', desc: "County Salvage King: Reach Reputation 35", target: 35, current: 0, reward: 1200, claimed: false, check: () => reputation >= 35 }
+    ]
+  };
+
+  const weatherPool = [
+    { name: "Clear Skies", desc: "Standard operating conditions.", feeMult: 1.0, custMult: 1.0 },
+    { name: "Muddy Backroads", desc: "Heavy mud makes travel fees 50% higher.", feeMult: 1.5, custMult: 1.0 },
+    { name: "Heatwave", desc: "Buyers haggle harder, but pay +25% for working gear.", feeMult: 1.0, custMult: 1.25 },
+    { name: "Swap Meet Sunday", desc: "Retail demand spikes, boosting storefront sales by +30%.", feeMult: 1.0, custMult: 1.3 },
+    { name: "Heavy Thunderstorm", desc: "Auction turnouts drop! Bidding starts 20% lower.", feeMult: 0.8, custMult: 0.9 },
+    { name: "Golden Harvest Fair", desc: "Farmers & collectors paying premium cash for vintage machinery.", feeMult: 1.2, custMult: 1.4 }
+  ];
+
+  const newsPool = [
+    "Gas price surge boosts demand for generators & small engines!",
+    "Local collector craze sweeps town—vintage electronics fetching top dollar!",
+    "County Sheriff inspecting tool origins at local swap meets.",
+    "Storm coming next week! Farmers stocking up on heavy machinery.",
+    "Bidding war erupted at local barn auction yesterday over vintage tractor parts!",
+    "Rumors of military surplus hardware entering liquidation auctions soon.",
+    "Scrap metal market prices hit record highs across county!",
+    "Antique arcade collectors visiting town looking for rare coin-op cabinets."
+  ];
+
+  const rivalArchetypes = [
+    { name: "Aggressive Earl", style: "Aggressive", maxMult: 1.4, freq: 0.7, avatar: "🧔" },
+    { name: "Cautious Clara", style: "Cautious", maxMult: 0.85, freq: 0.4, avatar: "👩‍🌾" },
+    { name: "Collector Chad", style: "Collector", maxMult: 1.7, freq: 0.5, avatar: "🎩" },
+    { name: "Sly Pete", style: "Sniper", maxMult: 1.2, freq: 0.3, avatar: "🕶️" },
+    { name: "Bargain Bob", style: "Frugal", maxMult: 0.65, freq: 0.6, avatar: "👴" },
+    { name: "Wild Billy", style: "Wildcard", maxMult: 1.8, freq: 0.8, avatar: "🤠" },
+    { name: "Corporate Dan", style: "Deep Pockets", maxMult: 2.1, freq: 0.4, avatar: "💼" },
+    { name: "Aunt Gertrude", style: "Collector", maxMult: 1.5, freq: 0.5, avatar: "👵" }
+  ];
+
+  const auraModifiers = [
+    { name: "✨ Pristine Condition", mult: 1.4, textMod: "✨ Mint" },
+    { name: "🛑 Heavy Rust", mult: 0.75, textMod: "🛑 Rusty" },
+    { name: "💀 Cursed / Strange", mult: 1.6, textMod: "💀 Cursed" },
+    { name: "👽 Alien Tech", mult: 2.2, textMod: "👽 Alien" },
+    { name: "👑 Antique Masterpiece", mult: 1.8, textMod: "👑 Masterpiece" },
+    { name: "🔥 Dangerously Overclocked", mult: 1.5, textMod: "🔥 Overclocked" },
+    { name: "🏚️ Mud-Slick Patina", mult: 0.85, textMod: "🏚️ Patina" },
+    { name: "Standard Salvage", mult: 1.0, textMod: "Standard" }
+  ];
+
+  const paintStyles = [
+    { id: "original", name: "Factory Original", cost: 20, valBonus: 1.15 },
+    { id: "hotrod", name: "Hot-Rod Flame", cost: 45, valBonus: 1.35 },
+    { id: "chrome", name: "Chrome Sparkle", cost: 70, valBonus: 1.5 },
+    { id: "patina", name: "Rustic Patina", cost: 30, valBonus: 1.25 },
+    { id: "goldleaf", name: "Gold Leaf Accent", cost: 110, valBonus: 1.8 },
+    { id: "camo", name: "Tactical Camo", cost: 50, valBonus: 1.4 }
+  ];
+
+  const auctionLocations = [
+    { id: "barn", name: "Uncle Cletus's Barn", cost: 15, desc: "Rural barn full of old tools & generators.", quality: 1, minRep: 0 },
+    { id: "estate", name: "Widow Higgins' Estate", cost: 40, desc: "Vintage electronics and antique jukeboxes.", quality: 2, minRep: 0 },
+    { id: "sawmill", name: "Abandoned Timber Sawmill", cost: 60, desc: "Heavy mechanical saws, chainsaws, & diesel pumps.", quality: 2, minRep: 4 },
+    { id: "police", name: "County Impound Yard", cost: 85, desc: "Confiscated machinery, dirt bikes, & muscle engines.", quality: 3, minRep: 10 },
+    { id: "swap", name: "Flea Market Swap Meet", cost: 110, desc: "Bargain tools, ham radios, & retro coin-op arcades.", quality: 3, minRep: 12 },
+    { id: "hangar", name: "Airport Hangar Surplus", cost: 175, desc: "Aviation salvage & diesel jet starters.", quality: 4, minRep: 15 },
+    { id: "salvage", name: "Sunken Barge Salvage Yard", cost: 220, desc: "Heavy industrial pumps, generators, & copper coils.", quality: 4, minRep: 18 },
+    { id: "vault", name: "Federal Vault Liquidation", cost: 350, desc: "Classified military & high-tech hardware.", quality: 5, minRep: 25 },
+    { id: "mansion", name: "Foreclosed Luxury Mansion", cost: 450, desc: "High-end grand pianos, antique safes, & arcade classics.", quality: 5, minRep: 28 },
+    { id: "fair", name: "County Fair Livestock & Equipment", cost: 550, desc: "Vintage tractors, combine harvesters, & heavy gear.", quality: 6, minRep: 32 },
+    { id: "bunker", name: "Classified Area 51 Bunker", cost: 850, desc: "Experimental energy generators & alien guidance systems.", quality: 7, minRep: 40 },
+    { id: "storage", name: "Sealed Storage Lockers", cost: 220, desc: "Gamble on full unit lots containing 2-5 items!", quality: 3, minRep: 8, isStorage: true }
+  ];
+
+  const itemTemplates = {
+    1: [
+      { name: "Rusty Chainsaw", baseVal: 70, mech: 40, elec: 0, body: 50, flavor: "Pull cord sticks. Smells like stale gas.", category: "Tools" },
+      { name: "Busted Generator", baseVal: 100, mech: 60, elec: 30, body: 20, flavor: "Seized carburetor needs tender loving care.", category: "Power" },
+      { name: "Vintage Radio", baseVal: 80, mech: 0, elec: 70, body: 30, flavor: "Vacuum tubes glow amber when powered.", category: "Electronics" },
+      { name: "Antique Hand Pump", baseVal: 65, mech: 30, elec: 0, body: 40, flavor: "Heavy cast iron water pump with cracked handle.", category: "Tools" }
+    ],
+    2: [
+      { name: "Arcade Cabinet", baseVal: 260, mech: 20, elec: 80, body: 40, flavor: "CRT monitor works, coin door smashed.", category: "Vintage" },
+      { name: "Antique Jukebox", baseVal: 340, mech: 50, elec: 60, body: 30, flavor: "Missing spring coils and record arm.", category: "Vintage" },
+      { name: "Moonshine Copper Still", baseVal: 290, mech: 40, elec: 10, body: 60, flavor: "Dented copper tubing with authentic patina.", category: "Antiques" },
+      { name: "Ham Radio Station", baseVal: 220, mech: 10, elec: 75, body: 25, flavor: "Picks up distant emergency broadcasts.", category: "Electronics" }
+    ],
+    3: [
+      { name: "Seized Dirt Bike", baseVal: 550, mech: 80, elec: 30, body: 50, flavor: "No title, caked in dried mud.", category: "Vehicles" },
+      { name: "Air Compressor", baseVal: 480, mech: 60, elec: 40, body: 20, flavor: "Massive twin-cylinder pressure tank.", category: "Power" },
+      { name: "Pinball Machine", baseVal: 620, mech: 50, elec: 70, body: 30, flavor: "Flippers stick and scoreboard lights flicker.", category: "Vintage" },
+      { name: "Heavy Shop Lathe", baseVal: 510, mech: 70, elec: 20, body: 40, flavor: "Heavy cast iron machining bed.", category: "Tools" }
+    ],
+    4: [
+      { name: "Diesel Starter Unit", baseVal: 1200, mech: 70, elec: 70, body: 30, flavor: "Heavy copper wiring potential.", category: "Power" },
+      { name: "V8 Muscle Engine Block", baseVal: 1400, mech: 85, elec: 20, body: 45, flavor: "Needs piston rings and valve seats ground down.", category: "Vehicles" },
+      { name: "Industrial Water Cannon", baseVal: 1100, mech: 75, elec: 30, body: 40, flavor: "High pressure salvage pump.", category: "Power" }
+    ],
+    5: [
+      { name: "Missile Guidance Computer", baseVal: 2600, mech: 30, elec: 90, body: 20, flavor: "Surplus classified guidance gear.", category: "Military" },
+      { name: "Grand Piano", baseVal: 2300, mech: 60, elec: 0, body: 50, flavor: "Solid mahogany body needing tuning and polish.", category: "Antiques" },
+      { name: "Antique Heavy Safe", baseVal: 2100, mech: 80, elec: 10, body: 60, flavor: "Combination lock jammed shut.", category: "Antiques" }
+    ],
+    6: [
+      { name: "Vintage Steam Tractor", baseVal: 4800, mech: 90, elec: 20, body: 60, flavor: "Massive iron wheels and brass pressure gauge.", category: "Vehicles" },
+      { name: "Industrial Jet Turbine", baseVal: 5200, mech: 85, elec: 80, body: 30, flavor: "Ex-military auxiliary starter unit.", category: "Military" }
+    ],
+    7: [
+      { name: "Alien Plasma Coil", baseVal: 9500, mech: 50, elec: 95, body: 10, flavor: "Humming with mysterious blue energy.", category: "Classified" },
+      { name: "Prototype Energy Core", baseVal: 12000, mech: 70, elec: 90, body: 30, flavor: "Experimental cold-fusion reactor frame.", category: "Classified" }
+    ]
+  };
+
+  const customerPool = [
+    { name: "Old Man Earl", mult: 0.8, line: "Got a pocket of lint and a twenty.", pref: "Tools" },
+    { name: "Prepper Pam", mult: 1.25, line: "The grid's going down any day now.", pref: "Power" },
+    { name: "Collector Chad", mult: 1.45, line: "I know exact mint auction value on this.", pref: "Vintage" },
+    { name: "Local Sheriff", mult: 1.1, line: "Looking for gear that doesn't ask questions.", pref: "Vehicles" },
+    { name: "Farmer Zeke", mult: 1.2, line: "Need heavy equipment for the south field.", pref: "Tools" },
+    { name: "Mayor Hawkins", mult: 1.35, line: "Only the finest antique acquisitions for my parlour.", pref: "Antiques" },
+    { name: "Shady Vince", mult: 1.15, line: "I got buyers in the city waiting for military hardware.", pref: "Military" },
+    { name: "Professor Quantum", mult: 1.6, line: "This energy signature is unbelievable!", pref: "Classified" }
+  ];
+
+  let empireUpgrades = {
+    wrenchSpeed: 1, 
+    maxStorage: 10,
+    maxAuctions: 4,
+    sandblaster: false,
+    solderingStation: false,
+    paintBooth: false,
+    diagScanner: false,
+    hireCletus: false, 
+    hireBubba: false,
+    hireDaisy: false
+  };
+
+  const upgradeCatalog = [
+    { id: "wrenchSpeed", name: "Pro Tool Suite", cost: 350, desc: "Double repair progress per workshop action." },
+    { id: "maxStorage", name: "Yard Storage Expansion", cost: 250, desc: "+5 storage yard capacity." },
+    { id: "maxAuctions", name: "Heavy Hauler Trailer", cost: 450, desc: "+2 maximum daily auction trips." },
+    { id: "diagScanner", name: "Diagnostic Scanner", cost: 380, desc: "Reveals exact defects & value multipliers on workbench." },
+    { id: "sandblaster", name: "Industrial Sandblaster", cost: 400, desc: "Cuts body rust cleaning effort in half." },
+    { id: "solderingStation", name: "Precision Soldering Station", cost: 450, desc: "Boosts electrical fix efficiency by 50%." },
+    { id: "paintBooth", name: "Custom Paint Booth", cost: 550, desc: "Unlocks custom paint finishes for bonus item value." },
+    { id: "hireCletus", name: "Cousin Cletus (Handyman)", cost: 600, desc: "Auto-restores 1 item overnight in your yard." },
+    { id: "hireBubba", name: "Bubba (Sales Rep)", cost: 800, desc: "Permanent +15% retail storefront customer price markup." },
+    { id: "hireDaisy", name: "Daisy (Contract Scout)", cost: 750, desc: "Generates high-paying specialized repair contracts daily." }
+  ];
+
+  // --- Core Utility Functions ---
+  function log(msg, type = "normal") {
+    const box = document.getElementById("log");
+    if (!box) return;
+    let color = "#b8aba0";
+    if (type === "success") color = "var(--accent-green)";
+    if (type === "warning") color = "var(--accent-gold)";
+    if (type === "danger") color = "var(--accent-red)";
+    if (type === "purple") color = "var(--accent-purple)";
+    
+    box.innerHTML += `<div style="color: ${color};">> ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function updateHUD() {
+    document.getElementById("hud-day").textContent = day;
+    document.getElementById("hud-weather").textContent = currentWeather.name;
+    document.getElementById("hud-money").textContent = money.toFixed(2);
+    document.getElementById("hud-auctions").textContent = auctionsLeft;
+    document.getElementById("hud-rep").textContent = reputation;
+    document.getElementById("news-ticker").textContent = `📰 NEWS: ${currentNews}`;
+    renderInventorySidebar();
+    checkQuestProgress();
+  }
+
+  function switchMainTab(tab) {
+    if (phase === "Live Auction" && tab !== 'map') {
+      log("Cannot leave during active live auction!", "danger");
+      return;
+    }
+    activeMainTab = tab;
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const btn = document.getElementById(`tab-btn-${tab}`);
+    if (btn) btn.classList.add("active");
+
+    if (tab === 'map') startTravelPhase();
+    else if (tab === 'shop') startWorkshopPhase();
+    else if (tab === 'contracts') renderContractsTab();
+    else if (tab === 'retail') startStorefrontPhase();
+    else if (tab === 'broker') startBlackMarketPhase();
+    else if (tab === 'quests') renderQuestsTab();
+    else if (tab === 'mgmt') startManagementPhase();
+    else if (tab === 'help') renderHelpTab();
+  }
+
+  function renderInventorySidebar() {
+    const list = document.getElementById("inventory-list");
+    const badge = document.getElementById("inv-count-badge");
+    if (badge) badge.textContent = `${inventory.length}/${empireUpgrades.maxStorage}`;
+    if (!list) return;
+    
+    list.innerHTML = "";
+    if (inventory.length === 0) {
+      list.innerHTML = `<div style="font-size:0.75em; color:var(--text-dim); text-align:center; padding:8px;">Yard empty.</div>`;
+      return;
+    }
+
+    inventory.forEach((item, idx) => {
+      let isRestored = item.quality >= 100;
+      let statusHtml = isRestored 
+        ? `<span style="color:var(--accent-green); font-weight:bold;">100% Quality ($${item.baseVal})</span>` 
+        : `<span style="color:var(--accent-orange);">Quality: ${item.quality}%</span>`;
+
+      list.innerHTML += `
+        <div class="card" style="padding: 4px 6px;">
+          <div class="card-info" style="font-size:0.75em;">
+            <strong>${item.name}</strong> <span class="tag">${item.aura.textMod || 'Std'}</span><br>${statusHtml}
+          </div>
+          <button class="btn-blue" onclick="selectWorkbenchItem(${idx})" style="padding:2px 5px; font-size:0.65em;">Bench</button>
+        </div>
+      `;
+    });
+  }
+
+  // --- Phase 1: Travel Map & Auctions ---
+  function startTravelPhase() {
+    phase = "Travel Map";
+    activeMainTab = "map";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-map");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    
+    document.getElementById("section-title").textContent = "Select Auction Destination";
+    document.getElementById("sub-header-info").textContent = `${auctionsLeft} Trips Left`;
+    
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    if (auctionsLeft <= 0) {
+      ws.innerHTML = `
+        <div class="auction-arena" style="justify-content:center; align-items:center; text-align:center;">
+          <h2 style="color:var(--accent-gold); font-size:1.1em;">Daily Auction Trips Exhausted!</h2>
+          <p style="color:var(--text-dim); font-size:0.8em;">Visit your Restoration Bay, complete repair contracts, or sell gear at your Storefront, then End Day.</p>
+          <button class="btn-green" onclick="switchMainTab('shop')" style="margin-top:8px;">Open Restoration Bay ->></button>
+        </div>
+      `;
+      return;
+    }
+
+    if (inventory.length >= empireUpgrades.maxStorage) {
+      ws.innerHTML = `
+        <div class="auction-arena" style="justify-content:center; align-items:center; text-align:center;">
+          <h2 style="color:var(--accent-red); font-size:1.1em;">Storage Yard Full!</h2>
+          <p style="color:var(--text-dim); font-size:0.8em;">Sell items at storefront, pawn them in the alley, or upgrade yard capacity.</p>
+          <button class="btn-blue" onclick="switchMainTab('retail')" style="margin-top:8px;">Go to Storefront</button>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `<p style="color:var(--text-dim); font-size:0.8em;">Weather: <strong style="color:var(--accent-blue);">${currentWeather.name}</strong> (${currentWeather.desc})</p>`;
+    
+    auctionLocations.forEach(loc => {
+      let finalCost = Math.floor(loc.cost * currentWeather.feeMult);
+      let isUnlocked = reputation >= loc.minRep;
+
+      html += `
+        <div class="card">
+          <div class="card-info">
+            <div class="card-title">${loc.name} ${loc.isStorage ? `<span style="color:var(--accent-purple); font-size:0.75em;">[Multi-Item Lot]</span>` : ''} ${!isUnlocked ? `<span style="color:var(--accent-red); font-size:0.7em;">[Rep ${loc.minRep}]</span>` : ''}</div>
+            <div class="card-flavor">${loc.desc}</div>
+            <div style="margin-top:2px;"><span class="tag">Fee: $${finalCost}</span> <span class="tag" style="color:var(--accent-cyan);">Tier ${loc.quality}</span></div>
+          </div>
+          ${isUnlocked ? `<button class="btn-blue" onclick="travelToAuction('${loc.id}', ${finalCost})">Attend ($${finalCost})</button>` : `<button disabled>Locked</button>`}
+        </div>
+      `;
+    });
+    ws.innerHTML = html;
+  }
+
+  function travelToAuction(locId, cost) {
+    if (money < cost) {
+      log(`Insufficient funds for entry fee!`, "danger");
+      return;
+    }
+    money -= cost;
+    auctionsLeft--;
+    currentAuctionHouse = auctionLocations.find(l => l.id === locId);
+    updateHUD();
+    startAuctionInspection();
+  }
+
+  // --- Phase 2: Auction Pre-Inspection & Live Bidding ---
+  function createRandomItem(qualityTier) {
+    const pool = itemTemplates[qualityTier] || itemTemplates[1];
+    const template = pool[Math.floor(Math.random() * pool.length)];
+    const aura = auraModifiers[Math.floor(Math.random() * auraModifiers.length)];
+    const adjustedVal = Math.floor(template.baseVal * aura.mult);
+
+    return {
+      ...template,
+      baseVal: adjustedVal,
+      aura: aura,
+      id: Date.now() + Math.random(),
+      mech: template.mech,
+      elec: template.elec,
+      body: template.body,
+      quality: Math.floor(20 + Math.random() * 30),
+      paint: "Factory Original"
+    };
+  }
+
+  function startAuctionInspection() {
+    phase = "Inspection";
+    isStorageUnitLot = !!currentAuctionHouse.isStorage;
+
+    if (isStorageUnitLot) {
+      let count = Math.floor(Math.random() * 4) + 2; // 2-5 items
+      storageUnitContents = [];
+      for (let i = 0; i < count; i++) {
+        storageUnitContents.push(createRandomItem(Math.floor(Math.random() * 3) + 1));
+      }
+      liveAuctionItem = null;
+    } else {
+      liveAuctionItem = createRandomItem(currentAuctionHouse.quality);
+      storageUnitContents = [];
+    }
+
+    // Generate Bidders
+    rivals = rivalArchetypes.slice(0, 4).map(r => ({ ...r, status: "Active", lead: false }));
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    let lotDesc = isStorageUnitLot 
+      ? `Sealed Storage Locker Lot (${storageUnitContents.length} Salvage Items)`
+      : `${liveAuctionItem.aura.textMod} ${liveAuctionItem.name}`;
+
+    let detailsHtml = isStorageUnitLot
+      ? `<p style="color:var(--text-dim); font-size:0.82em;">Peering past the rolled-up door, you spot tarp-covered crates, toolboxes, and metal frames!</p>`
+      : `
+        <p style="color:var(--text-dim); font-size:0.82em;">"${liveAuctionItem.flavor}"</p>
+        <div style="font-size:0.8em; color:var(--accent-gold); margin-top:4px; background:#0d0b0a; padding:6px; border-radius:4px; border:1px solid #221c18;">
+          Est. Restored Value: ~$${liveAuctionItem.baseVal} | Category: <strong>${liveAuctionItem.category}</strong><br>
+          Defects: Mech ${liveAuctionItem.mech}%, Elec ${liveAuctionItem.elec}%, Body Rust ${liveAuctionItem.body}%
+        </div>
+      `;
+
+    ws.innerHTML = `
+      <div class="auction-arena" style="justify-content:center; align-items:center; text-align:center;">
+        <span class="tag">Lot Inspection Period</span>
+        <h2 style="color:var(--accent-gold); font-size:1.3em; margin:4px 0;">${lotDesc}</h2>
+        ${detailsHtml}
+        
+        <div style="margin-top:10px;">
+          <h4 style="font-size:0.82em; color:var(--text-main);">Competitors in Room:</h4>
+          <div style="display:flex; gap:8px; justify-content:center; margin-top:4px; flex-wrap:wrap;">
+            ${rivals.map(r => `<span class="tag">${r.avatar} ${r.name} (${r.style})</span>`).join('')}
+          </div>
+        </div>
+
+        <button class="btn-green" onclick="beginLiveBidding()" style="margin-top:14px; font-size:1em; padding:8px 22px;">Start Bidding Block ->></button>
+      </div>
+    `;
+  }
+
+  function beginLiveBidding() {
+    phase = "Live Auction";
+    updateHUD();
+    document.getElementById("section-title").textContent = `Bidding: ${currentAuctionHouse.name}`;
+    document.getElementById("sub-header-info").textContent = "Live Auction Floor";
+
+    let estValue = isStorageUnitLot 
+      ? storageUnitContents.reduce((a, b) => a + b.baseVal, 0) * 0.5
+      : liveAuctionItem.baseVal;
+
+    currentBid = Math.floor(estValue * 0.15);
+    rivalCountdown = 4;
+    lastBidderName = "Nobody";
+    auctionChant = `Auctioneer: "Opening bid set at $${currentBid}! Who'll step up?"`;
+
+    renderLiveAuctionRoom();
+
+    if (rivalTimer) clearInterval(rivalTimer);
+    rivalTimer = setInterval(() => {
+      if (phase !== "Live Auction") {
+        clearInterval(rivalTimer);
+        return;
+      }
+
+      rivalCountdown--;
+
+      if (rivalCountdown <= 0) {
+        clearInterval(rivalTimer);
+        if (lastBidderName === "Player") {
+          playSound('gavel');
+          if (money < currentBid) {
+            log(`Won bid at $${currentBid}, but couldn't cover funds! Lot forfeited.`, "danger");
+            startTravelPhase();
+            return;
+          }
+          money -= currentBid;
+          
+          if (isStorageUnitLot) {
+            storageUnitContents.forEach(item => inventory.push(item));
+            stats.itemsWon += storageUnitContents.length;
+            log(`Hammer drops! Claimed Storage Unit Lot (${storageUnitContents.length} items) for $${currentBid}!`, "success");
+          } else {
+            inventory.push(liveAuctionItem);
+            stats.itemsWon++;
+            log(`Hammer drops! Won ${liveAuctionItem.name} for $${currentBid}.`, "success");
+          }
+
+          updateHUD();
+          startTravelPhase();
+          return;
+        } else {
+          playSound('gavel');
+          log(`${lastBidderName} claimed the auction lot for $${currentBid}!`, "danger");
+          startTravelPhase();
+          return;
+        }
+      }
+
+      // AI Rival Bidding Logic
+      if (lastBidderName === "Player" || lastBidderName === "Nobody") {
+        let activeRivals = rivals.filter(r => r.status === "Active");
+        if (activeRivals.length > 0 && Math.random() < 0.7) {
+          let chosen = activeRivals[Math.floor(Math.random() * activeRivals.length)];
+          if (currentBid < estValue * chosen.maxMult) {
+            let raise = Math.floor(Math.random() * 15) + 5;
+            currentBid += raise;
+            lastBidderName = chosen.name;
+            rivalCountdown = 4;
+            playSound('bid');
+            auctionChant = `Auctioneer: "I got $${currentBid} from ${chosen.name}! Who'll give me $${currentBid + 15}?"`;
+            log(`${chosen.name} raises bid to $${currentBid}.`);
+          }
+        }
+      }
+
+      renderLiveAuctionRoom();
+    }, 1200);
+  }
+
+  function renderLiveAuctionRoom() {
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    let lotTitle = isStorageUnitLot 
+      ? `Storage Unit Lot (${storageUnitContents.length} Items)` 
+      : `${liveAuctionItem.aura.textMod} ${liveAuctionItem.name}`;
+
+    ws.innerHTML = `
+      <div class="auction-arena">
+        <div style="display:flex; justify-content:space-between; align-align:center; border-bottom:1px solid #2d251f; padding-bottom:4px;">
+          <span class="tag">Live Lot</span>
+          <strong style="color:var(--accent-gold); font-size:1em;">${lotTitle}</strong>
+          <span class="tag" style="color:var(--accent-red);">Hammer in: ${rivalCountdown}s</span>
+        </div>
+
+        <div class="bidders-grid">
+          <div class="bidder-card ${lastBidderName === 'Player' ? 'leading' : ''}">
+            <strong>👤 You (Player)</strong><br>
+            ${lastBidderName === 'Player' ? '<span style="color:var(--accent-green);">[Leading]</span>' : 'Waiting'}
+          </div>
+          ${rivals.map(r => `
+            <div class="bidder-card ${lastBidderName === r.name ? 'leading' : ''}">
+              <strong>${r.avatar} ${r.name}</strong><br>
+              ${lastBidderName === r.name ? '<span style="color:var(--accent-green);">[Leading]</span>' : 'Active'}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="chant-box">${auctionChant}</div>
+
+        <div class="live-bid-display">$${currentBid}</div>
+        <div style="text-align:center; font-size:0.78em; color:var(--text-dim);">High Bidder: <strong style="color:var(--accent-gold);">${lastBidderName}</strong></div>
+
+        <div style="display:flex; gap:6px; margin-top:auto; justify-content:center; flex-wrap:wrap;">
+          <button class="btn-blue" onclick="playerRaiseBid(10)">+$10</button>
+          <button class="btn-green" onclick="playerRaiseBid(25)">+$25</button>
+          <button class="btn-green" onclick="playerRaiseBid(50)">+$50</button>
+          <button class="btn-purple" onclick="playerRaiseBid(100)">+$100</button>
+          <button class="btn-purple" onclick="playerRaiseBid(250)">+$250</button>
+          <button class="btn-red" onclick="walkAwayAuction()">Walk Away</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function playerRaiseBid(amt) {
+    if (money < currentBid + amt) {
+      log("Insufficient funds to raise bid!", "danger");
+      return;
+    }
+    currentBid += amt;
+    lastBidderName = "Player";
+    rivalCountdown = 4;
+    playSound('bid');
+    auctionChant = `Auctioneer: "Player takes the lead at $${currentBid}! Looking for higher bids!"`;
+    renderLiveAuctionRoom();
+    log(`You raised the bid to $${currentBid}.`);
+  }
+
+  function walkAwayAuction() {
+    log(`Walked away from auction lot.`);
+    clearInterval(rivalTimer);
+    startTravelPhase();
+  }
+
+  // --- Phase 3: Interactive Restoration Bay ---
+  function startWorkshopPhase() {
+    phase = "Workshop";
+    activeMainTab = "shop";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-shop");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    document.getElementById("section-title").textContent = "Interactive Restoration Bay";
+    document.getElementById("sub-header-info").textContent = "Workbench Ready";
+    renderWorkshopUI();
+  }
+
+  function selectWorkbenchItem(idx) {
+    selectedWorkbenchIndex = idx;
+    switchMainTab('shop');
+  }
+
+  function renderWorkshopUI() {
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    if (inventory.length === 0) {
+      ws.innerHTML = `
+        <div class="auction-arena" style="justify-content:center; align-items:center;">
+          <h3 style="color:var(--accent-green);">Storage Yard Empty!</h3>
+          <p style="color:var(--text-dim); font-size:0.8em;">Win auction lots or buy blind crates to fill your restoration workbench.</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (selectedWorkbenchIndex === null || selectedWorkbenchIndex >= inventory.length) {
+      selectedWorkbenchIndex = 0;
+    }
+
+    let item = inventory[selectedWorkbenchIndex];
+
+    let diagInfo = empireUpgrades.diagScanner 
+      ? `<div style="color:var(--accent-cyan); font-size:0.75em; margin-top:2px;">🔬 Diagnostic Scan: Category '${item.category}' | Max Restored Base Value: $${item.baseVal}</div>`
+      : `<div style="color:var(--text-dim); font-size:0.72em;">Unlock Diagnostic Scanner in Upgrades to view exact hidden multipliers.</div>`;
+
+    let html = `
+      <div class="workbench-bay">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="color:var(--accent-gold); font-size:1.05em;">Bench: ${item.name} <span class="tag">${item.aura.textMod}</span></h3>
+          <span class="tag">Quality: ${item.quality}%</span>
+        </div>
+        <p style="font-style:italic; color:var(--text-dim); font-size:0.78em;">"${item.flavor}"</p>
+        ${diagInfo}
+        
+        <div style="background:#0d0b0a; padding:8px; border-radius:5px; font-size:0.78em; display:flex; flex-direction:column; gap:6px; border:1px solid #221c18;">
+          <div>
+            🔧 Mechanical Component Defect: <strong>${item.mech}%</strong>
+            <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${item.mech}%; background:var(--accent-red);"></div></div>
+          </div>
+          <div>
+            ⚡ Electrical Wiring Fault: <strong>${item.elec}%</strong>
+            <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${item.elec}%; background:var(--accent-cyan);"></div></div>
+          </div>
+          <div>
+            🛑 Exterior Body Rust: <strong>${item.body}%</strong>
+            <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${item.body}%; background:var(--accent-orange);"></div></div>
+          </div>
+          <div style="margin-top:2px;">🎨 Detailing Finish: <strong>${item.paint}</strong></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;">
+          <button class="btn-blue" onclick="repairComponent('mech')" ${item.mech <= 0 ? 'disabled' : ''}>Wrench Mechanics (-15%)</button>
+          <button class="btn-cyan" onclick="repairComponent('elec')" ${item.elec <= 0 ? 'disabled' : ''}>Solder Electrical (-15%)</button>
+          <button class="btn-orange" onclick="repairComponent('body')" ${item.body <= 0 ? 'disabled' : ''}>Scrub Body Rust (-15%)</button>
+          <button class="btn-purple" onclick="applyPaintFinish()" ${!empireUpgrades.paintBooth ? 'disabled' : ''}>${empireUpgrades.paintBooth ? 'Paint Booth' : 'Paint Booth (Locked)'}</button>
+        </div>
+      </div>
+
+      <h4 style="color:var(--text-dim); font-size:0.8em; margin-top:6px;">Select Other Yard Items:</h4>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+    `;
+
+    inventory.forEach((invItem, idx) => {
+      html += `
+        <div class="card" style="padding:4px 6px;">
+          <div class="card-info" style="font-size:0.78em;">
+            <strong>${invItem.name}</strong> - Quality: ${invItem.quality}%
+          </div>
+          <button class="btn-blue" onclick="selectWorkbenchItem(${idx})" style="padding:2px 6px; font-size:0.7em;">Select</button>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    ws.innerHTML = html;
+  }
+
+  function repairComponent(type) {
+    if (selectedWorkbenchIndex === null || !inventory[selectedWorkbenchIndex]) return;
+    let item = inventory[selectedWorkbenchIndex];
+
+    let speed = empireUpgrades.wrenchSpeed;
+    playSound('wrench');
+
+    if (type === 'mech' && item.mech > 0) {
+      item.mech = Math.max(0, item.mech - 15 * speed);
+      log(`Wrenched mechanical gears on ${item.name}.`, "success");
+    } else if (type === 'elec' && item.elec > 0) {
+      let elecBonus = empireUpgrades.solderingStation ? 1.5 : 1.0;
+      item.elec = Math.max(0, Math.floor(item.elec - 15 * speed * elecBonus));
+      log(`Soldered wiring terminals on ${item.name}.`, "success");
+    } else if (type === 'body' && item.body > 0) {
+      let bodyBonus = empireUpgrades.sandblaster ? 1.6 : 1.0;
+      item.body = Math.max(0, Math.floor(item.body - 15 * speed * bodyBonus));
+      log(`Cleaned body rust on ${item.name}.`, "success");
+    }
+
+    // Recalculate Quality
+    let totalDefects = item.mech + item.elec + item.body;
+    item.quality = Math.min(100, Math.floor(100 - totalDefects * 0.6));
+
+    if (item.quality >= 100) {
+      stats.itemsFixed++;
+      log(`Fully restored ${item.name} to 100% Mint Quality!`, "success");
+    }
+
+    renderWorkshopUI();
+    updateHUD();
+  }
+
+  function applyPaintFinish() {
+    if (selectedWorkbenchIndex === null || !inventory[selectedWorkbenchIndex]) return;
+    let item = inventory[selectedWorkbenchIndex];
+    
+    let style = paintStyles[Math.floor(Math.random() * paintStyles.length)];
+    if (money < style.cost) {
+      log(`Not enough cash for ${style.name} ($${style.cost})!`, "danger");
+      return;
+    }
+    money -= style.cost;
+    item.paint = style.name;
+    item.baseVal = Math.floor(item.baseVal * style.valBonus);
+    playSound('paint');
+    log(`Applied ${style.name} finish to ${item.name}! Base value increased to $${item.baseVal}.`, "purple");
+    renderWorkshopUI();
+    updateHUD();
+  }
+
+  // --- Phase 4: Repair Contracts (Jobs) ---
+  function generateContracts() {
+    if (contracts.length >= 4) return;
+    const names = ["Farmer Zeke", "Mechanic Ned", "Mayor Hawkins", "Diner Sally", "Sheriff Higgins", "Professor Quantum"];
+    let name = names[Math.floor(Math.random() * names.length)];
+    let payout = Math.floor(Math.random() * 180) + 120;
+
+    if (empireUpgrades.hireDaisy) payout = Math.floor(payout * 1.35);
+
+    contracts.push({
+      id: Date.now() + Math.random(),
+      client: name,
+      desc: `Fix ${name}'s broken gear (Requires Mech & Elec under 10%)`,
+      payout: payout,
+      repReward: 3
+    });
+  }
+
+  function renderContractsTab() {
+    phase = "Contracts";
+    activeMainTab = "contracts";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-contracts");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+
+    document.getElementById("section-title").textContent = "Townsfolk Repair Jobs";
+    document.getElementById("sub-header-info").textContent = "Contracts Board";
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    generateContracts();
+
+    let html = `<p style="color:var(--text-dim); font-size:0.8em;">Fulfill repair jobs for local residents using items on your workbench!</p>`;
+
+    contracts.forEach((contract, idx) => {
+      html += `
+        <div class="card">
+          <div class="card-info">
+            <div class="card-title">${contract.client}'s Contract</div>
+            <div class="card-flavor">${contract.desc}</div>
+            <div style="margin-top:2px;"><span class="tag">Reward: $${contract.payout} +${contract.repReward} Rep</span></div>
+          </div>
+          <button class="btn-green" onclick="fulfillContract(${idx})">Deliver Work</button>
+        </div>
+      `;
+    });
+
+    ws.innerHTML = html;
+  }
+
+  function fulfillContract(idx) {
+    if (selectedWorkbenchIndex === null || !inventory[selectedWorkbenchIndex]) {
+      log("Select an item on your workbench first to deliver for the contract!", "danger");
+      return;
+    }
+    let item = inventory[selectedWorkbenchIndex];
+    let contract = contracts[idx];
+
+    if (item.mech <= 10 && item.elec <= 10) {
+      money += contract.payout;
+      reputation += contract.repReward;
+      stats.totalEarned += contract.payout;
+      playSound('cash');
+      log(`Contract fulfilled for ${contract.client}! Earned $${contract.payout}.`, "success");
+      inventory.splice(selectedWorkbenchIndex, 1);
+      contracts.splice(idx, 1);
+      selectedWorkbenchIndex = null;
+      updateHUD();
+      renderContractsTab();
+    } else {
+      log(`Item defects too high for contract! Fix mechanical & electrical defects under 10% first.`, "danger");
+    }
+  }
+
+  // --- Phase 5: Storefront Sales & Negotiation ---
+  function startStorefrontPhase() {
+    phase = "Storefront";
+    activeMainTab = "retail";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-retail");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    document.getElementById("section-title").textContent = "Storefront Showroom";
+    document.getElementById("sub-header-info").textContent = "Retail Open";
+    nextCustomer();
+  }
+
+  function nextCustomer() {
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+
+    if (inventory.length === 0) {
+      ws.innerHTML = `
+        <div class="auction-arena" style="justify-content:center; align-items:center;">
+          <h3 style="color:var(--accent-red);">Showroom Floor Empty!</h3>
+          <p style="color:var(--text-dim); font-size:0.8em;">No items ready in storage yard.</p>
+          <button class="btn-orange" onclick="endDay()" style="margin-top:8px;">End Day & Restock ->></button>
+        </div>
+      `;
+      return;
+    }
+
+    currentCustomer = customerPool[Math.floor(Math.random() * customerPool.length)];
+    let randomItem = inventory[Math.floor(Math.random() * inventory.length)];
+    
+    let bubbaBonus = empireUpgrades.hireBubba ? 1.15 : 1.0;
+    let prefBonus = (currentCustomer.pref === randomItem.category) ? 1.3 : 1.0;
+    let qualityMult = 0.5 + (randomItem.quality / 100) * 0.7;
+    let offerPrice = Math.floor(randomItem.baseVal * currentCustomer.mult * currentWeather.custMult * bubbaBonus * prefBonus * qualityMult * (0.9 + Math.random() * 0.2));
+
+    ws.innerHTML = `
+      <div class="auction-arena" style="text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2d251f; padding-bottom:4px;">
+          <h3 style="color:var(--accent-gold); font-size:1em;">Customer: ${currentCustomer.name}</h3>
+          <span class="tag">Prefers: ${currentCustomer.pref}</span>
+        </div>
+        <p style="font-style:italic; color:var(--text-dim); font-size:0.82em;">"${currentCustomer.line}"</p>
+        
+        <div style="background:#0d0b0a; padding:8px; border-radius:5px; border:1px solid #221c18; margin-top:4px;">
+          <div style="font-size:0.8em;">Inspecting: <strong style="color:var(--text-main);">${randomItem.name}</strong> (${randomItem.quality}% Quality)</div>
+          <div style="font-size:1.1em; color:var(--accent-green); font-weight:700; margin-top:4px;">Customer Offer: $<span>${offerPrice}</span></div>
+        </div>
+
+        <div style="display:flex; gap:6px; margin-top:8px; justify-content:center;">
+          <button class="btn-green" onclick="acceptCustomerOffer(${inventory.indexOf(randomItem)}, ${offerPrice})" style="flex:1;">Accept Offer</button>
+          <button class="btn-orange" onclick="counterCustomerOffer(${inventory.indexOf(randomItem)}, ${offerPrice})" style="flex:1;">Counter (+25%)</button>
+          <button class="btn-red" onclick="rejectCustomer()" style="flex:1;">Decline</button>
+        </div>
+      </div>
+      <div style="margin-top:auto; padding-top:6px; display:flex; justify-content:flex-end;">
+        <button class="btn-orange" onclick="endDay()">End Day & Restock ->></button>
+      </div>
+    `;
+  }
+
+  function acceptCustomerOffer(itemIdx, price) {
+    let item = inventory[itemIdx];
+    money += price;
+    reputation += 1;
+    stats.itemsSold++;
+    stats.totalEarned += price;
+    playSound('cash');
+    inventory.splice(itemIdx, 1);
+    log(`Sold ${item.name} to ${currentCustomer.name} for $${price}!`, "success");
+    updateHUD();
+    nextCustomer();
+  }
+
+  function counterCustomerOffer(itemIdx, baseOffer) {
+    let item = inventory[itemIdx];
+    let counterPrice = Math.floor(baseOffer * 1.25);
+    let roll = Math.random();
+
+    if (roll < 0.3) {
+      log(`${currentCustomer.name} scoffed at the counter offer and walked out!`, "danger");
+      nextCustomer();
+    } else if (roll < 0.7) {
+      let comp = Math.floor((baseOffer + counterPrice) / 2);
+      money += comp;
+      reputation += 1;
+      stats.itemsSold++;
+      stats.totalEarned += comp;
+      playSound('cash');
+      inventory.splice(itemIdx, 1);
+      log(`Compromised with ${currentCustomer.name}. Sold for $${comp}.`, "warning");
+      updateHUD();
+      nextCustomer();
+    } else {
+      money += counterPrice;
+      reputation += 2;
+      stats.itemsSold++;
+      stats.totalEarned += counterPrice;
+      playSound('cash');
+      inventory.splice(itemIdx, 1);
+      log(`${currentCustomer.name} accepted counter! Sold for $${counterPrice}.`, "success");
+      updateHUD();
+      nextCustomer();
+    }
+  }
+
+  function rejectCustomer() {
+    log(`${currentCustomer.name} walked out.`);
+    nextCustomer();
+  }
+
+  // --- Phase 6: Fast-Cash Pete's Alleyway & Loan Shark ---
+  function startBlackMarketPhase() {
+    phase = "Black Market";
+    activeMainTab = "broker";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-broker");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    document.getElementById("section-title").textContent = "Fast-Cash Pete's Alleyway";
+    document.getElementById("sub-header-info").textContent = "Shady Contacts";
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+    ws.innerHTML = `
+      <div class="auction-arena" style="text-align:left;">
+        <h3 style="color:var(--accent-purple); font-size:1em;">Fast-Cash Pete & Loan Shark</h3>
+        <p style="font-style:italic; color:var(--text-dim); font-size:0.8em;">"Need quick cash, loans, or wanna gamble on a sealed crate?"</p>
+        
+        <div class="card" style="margin-top:4px;">
+          <div class="card-info">
+            <div class="card-title">Rust Bucket Blind Crate</div>
+            <div class="card-flavor">Guaranteed low-tier salvage item inside.</div>
+            <div style="margin-top:2px;"><span class="tag">Price: $75</span></div>
+          </div>
+          <button class="btn-purple" onclick="buyBlindCrate(1, 75)">Buy ($75)</button>
+        </div>
+
+        <div class="card" style="margin-top:4px;">
+          <div class="card-info">
+            <div class="card-title">High-Roller Lockbox</div>
+            <div class="card-flavor">Contains mid-to-high tier vintage or vehicle components.</div>
+            <div style="margin-top:2px;"><span class="tag">Price: $300</span></div>
+          </div>
+          <button class="btn-purple" onclick="buyBlindCrate(3, 300)">Buy ($300)</button>
+        </div>
+
+        <div class="card" style="margin-top:4px;">
+          <div class="card-info">
+            <div class="card-title">Classified Vault Crate</div>
+            <div class="card-flavor">Contains rare military or alien tech salvage!</div>
+            <div style="margin-top:2px;"><span class="tag">Price: $750</span></div>
+          </div>
+          <button class="btn-purple" onclick="buyBlindCrate(5, 750)">Buy ($750)</button>
+        </div>
+
+        <div class="card" style="margin-top:4px;">
+          <div class="card-info">
+            <div class="card-title">Quick Pawn Liquidation</div>
+            <div class="card-flavor">Instantly pawn oldest yard item for 45% base value.</div>
+          </div>
+          <button class="btn-orange" onclick="quickPawnItem()">Pawn Item</button>
+        </div>
+
+        <div class="card" style="margin-top:4px; border-color:var(--accent-red);">
+          <div class="card-info">
+            <div class="card-title">Shady Loan Shark</div>
+            <div class="card-flavor">Current Debt: <strong style="color:var(--accent-red);">$${activeLoan.toFixed(2)}</strong> (10% daily interest)</div>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn-red" onclick="takeLoan(250)">Borrow $250</button>
+            <button class="btn-green" onclick="payLoan()" ${activeLoan <= 0 ? 'disabled' : ''}>Pay Debt</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function buyBlindCrate(tier, price) {
+    if (money < price) {
+      log(`Pete sneers: "Come back when you have $${price}."`, "danger");
+      return;
+    }
+    if (inventory.length >= empireUpgrades.maxStorage) {
+      log(`Storage yard is full!`, "danger");
+      return;
+    }
+    money -= price;
+    let item = createRandomItem(tier);
+    inventory.push(item);
+    stats.itemsWon++;
+    log(`Opened blind crate and found a ${item.aura.textMod} ${item.name}!`, "purple");
+    updateHUD();
+    startBlackMarketPhase();
+  }
+
+  function quickPawnItem() {
+    if (inventory.length === 0) {
+      log(`Pete says: "You ain't got anything in your yard to pawn!"`, "danger");
+      return;
+    }
+    let item = inventory.shift();
+    let payout = Math.floor(item.baseVal * 0.45);
+    money += payout;
+    playSound('cash');
+    log(`Pawned ${item.name} for quick cash: $${payout}.`, "warning");
+    updateHUD();
+    startBlackMarketPhase();
+  }
+
+  function takeLoan(amt) {
+    if (activeLoan > 1000) {
+      log("Loan Shark refuses to lend more until debt is paid!", "danger");
+      return;
+    }
+    activeLoan += amt;
+    money += amt;
+    playSound('loan');
+    log(`Took $${amt} loan from Shady Pete. Daily interest applies!`, "warning");
+    updateHUD();
+    startBlackMarketPhase();
+  }
+
+  function payLoan() {
+    if (money < activeLoan) {
+      log("Not enough cash to pay full loan debt!", "danger");
+      return;
+    }
+    money -= activeLoan;
+    activeLoan = 0;
+    playSound('cash');
+    log("Paid off loan debt completely!", "success");
+    updateHUD();
+    startBlackMarketPhase();
+  }
+
+  // --- Quests & Milestones ---
+  function checkQuestProgress() {
+    if (!quests) return;
+
+    quests.daily.forEach(q => {
+      if (q.id === 'd1') q.current = Math.min(q.target, stats.itemsWon);
+      if (q.id === 'd2') q.current = Math.min(q.target, stats.itemsFixed);
+      if (q.id === 'd3') q.current = Math.min(q.target, stats.itemsSold);
+    });
+
+    quests.weekly.forEach(q => {
+      if (q.id === 'w1') q.current = Math.min(q.target, stats.itemsWon);
+      if (q.id === 'w2') q.current = Math.min(q.target, stats.totalEarned);
+      if (q.id === 'w3') q.current = Math.min(q.target, reputation);
+    });
+
+    quests.story.forEach(q => {
+      try {
+        if (typeof q.check === 'function' && q.check()) q.current = q.target;
+      } catch(e) {}
+    });
+  }
+
+  function renderQuestsTab() {
+    phase = "Quests";
+    activeMainTab = "quests";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-quests");
+    if (tb) tb.classList.add("active");
+    
+    updateHUD();
+    document.getElementById("section-title").textContent = "Missions & Milestones";
+    document.getElementById("sub-header-info").textContent = "Contracts Log";
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+    
+    let html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">`;
+    
+    html += `<h4 style="color:var(--accent-gold); font-size:0.85em;">📅 Daily Chores</h4>`;
+    quests.daily.forEach((q, idx) => html += renderQuestCard(q, 'daily', idx));
+
+    html += `<h4 style="color:var(--accent-blue); font-size:0.85em; margin-top:4px;">📊 Weekly Contracts</h4>`;
+    quests.weekly.forEach((q, idx) => html += renderQuestCard(q, 'weekly', idx));
+
+    html += `<h4 style="color:var(--accent-purple); font-size:0.85em; margin-top:4px;">🏆 Story Milestones</h4>`;
+    quests.story.forEach((q, idx) => html += renderQuestCard(q, 'story', idx));
+
+    html += `</div>`;
+    ws.innerHTML = html;
+  }
+
+  function renderQuestCard(q, type, idx) {
+    let isComplete = (q.current >= q.target);
+    let statusBtn = "";
+    if (q.claimed) {
+      statusBtn = `<span style="color:var(--text-dim); font-size:0.75em; font-weight:bold;">Claimed</span>`;
+    } else if (isComplete) {
+      statusBtn = `<button class="btn-green" onclick="claimReward('${type}', ${idx})" style="padding:3px 8px; font-size:0.75em;">Claim $${q.reward}</button>`;
+    } else {
+      statusBtn = `<span style="color:var(--accent-red); font-size:0.75em; font-weight:bold;">Incomplete</span>`;
+    }
+
+    return `
+      <div class="card" style="padding:4px 8px;">
+        <div class="card-info">
+          <div class="card-title" style="font-size:0.8em;">${q.desc}</div>
+          <div style="font-size:0.7em; color:var(--text-dim);">Progress: ${q.current} / ${q.target}</div>
+        </div>
+        ${statusBtn}
+      </div>
+    `;
+  }
+
+  function claimReward(type, idx) {
+    let q = quests[type][idx];
+    if (q.claimed || q.current < q.target) return;
+    q.claimed = true;
+    money += q.reward;
+    playSound('cash');
+    log(`Claimed quest reward: "${q.desc}" (+$${q.reward})!`, "success");
+    updateHUD();
+    renderQuestsTab();
+  }
+
+  // --- Upgrades & Staff Management ---
+  function startManagementPhase() {
+    phase = "Management";
+    activeMainTab = "mgmt";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-mgmt");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    document.getElementById("section-title").textContent = "Empire Upgrades & Staff";
+    document.getElementById("sub-header-info").textContent = "Business Growth";
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+    let html = `<p style="color:var(--text-dim); font-size:0.8em;">Invest capital into tools, staff, and storage upgrades.</p>`;
+
+    upgradeCatalog.forEach(upg => {
+      let isOwned = empireUpgrades[upg.id] === true || 
+                   (upg.id === 'wrenchSpeed' && empireUpgrades.wrenchSpeed > 1) || 
+                   (upg.id === 'maxStorage' && empireUpgrades.maxStorage > 10) ||
+                   (upg.id === 'maxAuctions' && empireUpgrades.maxAuctions > 4);
+
+      html += `
+        <div class="card">
+          <div class="card-info">
+            <div class="card-title">${upg.name}</div>
+            <div class="card-flavor">${upg.desc}</div>
+            <div style="margin-top:2px;"><span class="tag">Cost: $${upg.cost}</span></div>
+          </div>
+          ${isOwned ? `<span style="color:var(--accent-green); font-weight:bold; font-size:0.8em;">Owned</span>` : `<button class="btn-green" onclick="buyUpgrade('${upg.id}', ${upg.cost})">Buy</button>`}
+        </div>
+      `;
+    });
+    ws.innerHTML = html;
+  }
+
+  function buyUpgrade(id, cost) {
+    if (money < cost) {
+      log(`Insufficient funds for upgrade!`, "danger");
+      return;
+    }
+    money -= cost;
+    if (id === 'wrenchSpeed') empireUpgrades.wrenchSpeed = 2;
+    if (id === 'maxStorage') empireUpgrades.maxStorage = 15;
+    if (id === 'maxAuctions') { empireUpgrades.maxAuctions = 6; maxAuctions = 6; }
+    if (id === 'diagScanner') empireUpgrades.diagScanner = true;
+    if (id === 'sandblaster') empireUpgrades.sandblaster = true;
+    if (id === 'solderingStation') empireUpgrades.solderingStation = true;
+    if (id === 'paintBooth') empireUpgrades.paintBooth = true;
+    if (id === 'hireCletus') empireUpgrades.hireCletus = true;
+    if (id === 'hireBubba') empireUpgrades.hireBubba = true;
+    if (id === 'hireDaisy') empireUpgrades.hireDaisy = true;
+
+    playSound('cash');
+    log(`Acquired upgrade: ${id}!`, "success");
+    updateHUD();
+    startManagementPhase();
+  }
+
+  function renderHelpTab() {
+    phase = "Help";
+    activeMainTab = "help";
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    const tb = document.getElementById("tab-btn-help");
+    if (tb) tb.classList.add("active");
+    updateHUD();
+    document.getElementById("section-title").textContent = "How To Play";
+    document.getElementById("sub-header-info").textContent = "Game Guide";
+
+    const ws = document.getElementById("workspace");
+    if (!ws) return;
+    ws.innerHTML = `
+      <div style="background:#1a1613; border:1px solid #2d251f; border-radius:6px; padding:10px; font-size:0.82em; display:flex; flex-direction:column; gap:8px;">
+        <h3 style="color:var(--accent-gold);">Welcome to Redneck Auction & Repair Empire!</h3>
+        <p style="color:var(--text-dim);">Build a thriving salvage empire starting from $500 cash reserve!</p>
+        
+        <div>
+          <strong style="color:var(--accent-blue);">1. Live Auctions & Storage Lockers:</strong>
+          <p style="color:var(--text-dim);">Inspect items and outbid rival AI competitors like Aggressive Earl and Collector Chad before the hammer drops!</p>
+        </div>
+
+        <div>
+          <strong style="color:var(--accent-green);">2. Interactive Restoration Bay:</strong>
+          <p style="color:var(--text-dim);">Select items onto your workbench. Fix mechanics, electrical fault wiring, rust, and paint items in custom finishes!</p>
+        </div>
+
+        <div>
+          <strong style="color:var(--accent-orange);">3. Townsfolk Repair Jobs & Storefront:</strong>
+          <p style="color:var(--text-dim);">Complete repair contracts for townsfolk or negotiate retail customer sales on your showroom floor.</p>
+        </div>
+
+        <div>
+          <strong style="color:var(--accent-purple);">4. Alleyway Crate Gambling & Loan Shark:</strong>
+          <p style="color:var(--text-dim);">Pawn items for fast cash, buy blind crates, or take emergency loans from Shady Pete.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Persistence & End Day ---
+  function saveGame() {
+    const saveData = { day, money, reputation, maxAuctions, auctionsLeft, inventory, empireUpgrades, currentWeather, stats, quests, activeLoan };
+    localStorage.setItem("redneck_auction_pro_save", JSON.stringify(saveData));
+    log("Game saved successfully!", "success");
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem("redneck_auction_pro_save");
+    if (!saved) {
+      log("No save file found!", "danger");
+      return;
+    }
+    try {
+      const data = JSON.parse(saved);
+      day = data.day;
+      money = data.money;
+      reputation = data.reputation;
+      maxAuctions = data.maxAuctions || 4;
+      auctionsLeft = data.auctionsLeft;
+      inventory = data.inventory;
+      empireUpgrades = data.empireUpgrades;
+      currentWeather = data.currentWeather;
+      if (data.activeLoan) activeLoan = data.activeLoan;
+      if (data.stats) stats = data.stats;
+      if (data.quests) quests = data.quests;
+      
+      updateHUD();
+      switchMainTab(activeMainTab);
+      log("Game loaded successfully!", "success");
+    } catch(e) {
+      log("Failed to load save file!", "danger");
+    }
+  }
+
+  function hardResetGame() {
+    if (confirm("Reset all game progress?")) {
+      localStorage.removeItem("redneck_auction_pro_save");
+      location.reload();
+    }
+  }
+
+  function endDay() {
+    day++;
+    auctionsLeft = empireUpgrades.maxAuctions || maxAuctions;
+    currentWeather = weatherPool[Math.floor(Math.random() * weatherPool.length)];
+    currentNews = newsPool[Math.floor(Math.random() * newsPool.length)];
+
+    // Loan interest
+    if (activeLoan > 0) {
+      let interest = Math.floor(activeLoan * 0.1);
+      activeLoan += interest;
+      log(`Loan Shark charged $${interest} daily interest on your loan! Total debt: $${activeLoan}`, "danger");
+    }
+
+    if (quests && quests.daily) {
+      quests.daily.forEach(q => { q.current = 0; q.claimed = false; });
+    }
+
+    if (empireUpgrades.hireCletus && inventory.length > 0) {
+      let target = inventory.find(i => i.quality < 100);
+      if (target) {
+        target.mech = 0;
+        target.elec = 0;
+        target.body = 0;
+        target.quality = 100;
+        stats.itemsFixed++;
+        log(`Cousin Cletus stayed up late and fully restored ${target.name}!`, "success");
+      }
+    }
+
+    log(`=== Day ${day} Sunrise. Weather: ${currentWeather.name}. ===`, "warning");
+    switchMainTab('map');
+  }
+
+  startTravelPhase();
+</script>
+
+</body>
+</html>

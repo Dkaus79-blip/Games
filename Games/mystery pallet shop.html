@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pallet Reseller Sim: Liquidation Depot</title>
+  <style>
+    :root {
+      --bg: #0a0e12;
+      --card-bg: #151b20;
+      --card-hover: #202a30;
+      --border: #33434a;
+      --accent: #0ea5a8;
+      --accent-glow: #5eead4;
+      --green: #10b981;
+      --gold: #f59e0b;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --orange: #f97316;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 12% 0%, #1d2a2d 0, transparent 34%), var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP PERSISTENT HUD */
+    #topbar {
+      height: 54px;
+      background: #0f172a;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+    .hud-group { display: flex; align-items: center; gap: 10px; }
+    .hud-pill {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hud-val { color: var(--green); font-size: 15px; }
+
+    /* STATION NAV BUTTONS */
+    .nav-tabs { display: flex; gap: 6px; }
+    .nav-btn {
+      background: #1e293b;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+    .nav-btn:hover { color: var(--text); background: #334155; }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent-glow);
+    }
+    .nav-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--red);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      animation: pulse 1s infinite;
+    }
+
+    /* MAIN VIEWPORT */
+    #viewport {
+      flex: 1;
+      padding: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .station-view {
+      display: none;
+      height: 100%;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .station-view.active { display: flex; }
+
+    /* UTILITY BUTTONS */
+    button {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.1s;
+    }
+    button:hover:not(:disabled) { background: #334155; border-color: var(--accent-glow); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green { background: #065f46; border-color: var(--green); color: #fff; }
+    .btn-green:hover:not(:disabled) { background: #047857; }
+    .btn-blue { background: #0369a1; border-color: var(--accent-glow); color: #fff; }
+    .btn-red { background: #991b1b; border-color: var(--red); color: #fff; }
+    .btn-gold { background: #78350f; border-color: var(--gold); color: #fff; }
+
+    /* --- STATION 1: STOREFRONT SHELVES --- */
+    .store-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+      height: 100%;
+    }
+    .shelf-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .shelf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 4px;
+    }
+
+    .shelf-slot {
+      background: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .shelf-slot.empty {
+      border: 2px dashed #243552;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    /* PRODUCT CARD STYLES */
+    .barcode { font-family: monospace; font-size: 9px; letter-spacing: 2px; color: var(--text-dim); }
+    .prod-brand { font-size: 10px; font-weight: 700; color: var(--accent-glow); text-transform: uppercase; }
+    .prod-title { font-size: 13px; font-weight: 700; margin: 2px 0 6px 0; }
+    .prod-meta { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .b-gradeA { background: #064e3b; color: #6ee7b7; }
+    .b-gradeB { background: #78350f; color: #fde68a; }
+    .b-gradeC { background: #7f1d1d; color: #fca5a5; }
+    .b-unchecked { background: #334155; color: #cbd5e1; }
+    .b-tested { background: #164e63; color: #a5f3fc; }
+    .b-online { background: #115e59; color: #99f6e4; }
+    .item-visual { display:flex; align-items:center; gap:10px; margin:7px 0; }
+    .item-icon { width:42px; height:42px; display:grid; place-items:center; border:1px solid #40545a; border-radius:8px; background:linear-gradient(145deg,#253238,#10171b); font-size:23px; flex:none; }
+    .meter { height:5px; background:#263239; border-radius:99px; overflow:hidden; margin:4px 0 8px; }
+    .meter > span { display:block; height:100%; background:linear-gradient(90deg,var(--orange),var(--green)); }
+    .item-note { font-size:10px; color:var(--text-dim); line-height:1.35; min-height:27px; }
+
+    /* STORE SIDEBAR */
+    .store-sidebar { display: flex; flex-direction: column; gap: 10px; }
+    .status-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    /* --- STATION 2: POS REGISTER --- */
+    .pos-screen {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      height: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .register-device {
+      background: #111827;
+      border: 2px solid #374151;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    .pos-lcd {
+      background: #042f2e;
+      border: 2px solid #115e59;
+      border-radius: 6px;
+      color: #2dd4bf;
+      font-family: monospace;
+      padding: 12px;
+      margin-bottom: 12px;
+      min-height: 110px;
+    }
+    .pos-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* --- STATION 3: UNPACKING BAY --- */
+    .unboxing-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      height: 100%;
+    }
+    .pallet-dock-card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* --- STATION 4: BACK OFFICE PC --- */
+    .pc-monitor {
+      background: #020617;
+      border: 8px solid #334155;
+      border-radius: 12px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 30px -10px rgba(0,0,0,0.7);
+    }
+    .pc-titlebar {
+      background: #1e293b;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .browser-tabs { display: flex; gap: 4px; }
+    .browser-tab {
+      background: #0f172a;
+      padding: 4px 12px;
+      border-radius: 4px 4px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-dim);
+    }
+    .browser-tab.active { background: #1e293b; color: var(--text); }
+    .pc-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: #0f172a;
+    }
+
+    /* POPUP SHOPLIFTER TOAST */
+    #thiefModal {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #7f1d1d;
+      border: 2px solid var(--red);
+      padding: 14px 24px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(239,68,68,0.5);
+      display: none;
+      z-index: 200;
+      animation: alertPulse 0.8s infinite;
+      text-align: center;
+    }
+    @keyframes alertPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.03); }
+    }
+
+    /* HOW TO PLAY MODAL */
+    #helpModal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .help-card {
+      background: #111827;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 720px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+    .help-header {
+      background: #1e293b;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .help-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    .help-section {
+      background: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+    .help-section h3 {
+      font-size: 14px;
+      color: var(--accent-glow);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* GUIDED FIRST SHIFT */
+    #tutorialCard {
+      position: fixed;
+      right: 18px;
+      bottom: 64px;
+      width: min(360px, calc(100vw - 36px));
+      background: #111827;
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 14px 35px rgba(0,0,0,0.55);
+      z-index: 500;
+    }
+    #tutorialCard[hidden] { display: none; }
+    .tutorial-kicker {
+      color: var(--accent-glow);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tutorial-title { font-size: 16px; font-weight: 800; margin-top: 3px; }
+    .tutorial-copy { color: var(--text-dim); font-size: 12px; line-height: 1.45; margin: 6px 0 12px; }
+    .tutorial-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+    #victoryModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* LOG FOOTER */
+    #bottomLog {
+      height: 48px;
+      background: #030712;
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      font-family: monospace;
+      font-size: 11px;
+      overflow-y: auto;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 1050px) {
+      #topbar { height:auto; min-height:54px; flex-wrap:wrap; gap:8px; padding:8px 10px; }
+      .hud-group { flex-wrap:wrap; }
+      .nav-tabs { order:3; width:100%; overflow-x:auto; padding-bottom:2px; }
+      .nav-btn { white-space:nowrap; }
+      #viewport { overflow-y:auto; }
+      .store-layout, .unboxing-layout, .pos-screen { grid-template-columns:1fr; height:auto; min-height:640px; }
+      .store-sidebar { display:grid; grid-template-columns:1fr 1fr; }
+      .status-panel[style*="flex:1"] { min-height:150px; }
+      .shelf-grid { min-height:420px; }
+    }
+    @media (max-width: 620px) {
+      .hud-pill { padding:4px 7px; font-size:11px; }
+      .hud-pill:nth-child(3), .hud-pill:nth-child(4) { display:none; }
+      .store-sidebar { grid-template-columns:1fr; }
+      #viewport { padding:8px; }
+      .shelf-grid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+      .pc-titlebar { overflow-x:auto; }
+      .browser-tabs { min-width:max-content; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR HUD -->
+  <div id="topbar">
+    <div class="hud-group">
+      <div class="hud-pill">💵 Cash: <span class="hud-val" id="hudCash">$250.00</span></div>
+      <div class="hud-pill">📅 Day: <span id="hudDay">1</span></div>
+      <div class="hud-pill">⭐ Rep: <span style="color:var(--gold);" id="hudRep">4.5</span></div>
+      <div class="hud-pill">🏷️ Rent: <span style="color:var(--red);">$35/day</span></div>
+      <div class="hud-pill" id="goalPill">🎯 Goal: Day 7 · $500 · Rep 4.8</div>
+    </div>
+
+    <!-- STATION NAVIGATION -->
+    <div class="nav-tabs">
+      <div class="nav-btn active" onclick="switchStation('store')">🏪 Storefront</div>
+      <div class="nav-btn" onclick="switchStation('pos')" id="navPosBtn">
+        🛎️ POS Register
+        <span class="nav-badge" id="posBadge" style="display:none;">1</span>
+      </div>
+      <div class="nav-btn" onclick="switchStation('bay')">📦 Unpacking Bay</div>
+      <div class="nav-btn" onclick="switchStation('pc')">💻 Office PC</div>
+    </div>
+
+    <div class="hud-group">
+      <button class="btn-gold" onclick="toggleHelpModal(true)">❓ How to Play</button>
+      <button class="btn-green" id="storeToggleBtn" onclick="toggleStoreOpen()">🚪 Open Doors (30s)</button>
+      <button class="btn-blue" onclick="endDay()">🌙 End Day & Pay Rent</button>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT -->
+  <div id="viewport">
+
+    <!-- SHIFT THEFT ALERT -->
+    <div id="thiefModal">
+      <div style="font-weight:800; font-size:14px;">🚨 SHOPLIFTER CAUGHT ON CAMERA!</div>
+      <div style="font-size:12px; margin:4px 0;" id="thiefText">A thief is grabbing merchandise!</div>
+      <button class="btn-red" style="margin-top:6px;" onclick="tackleThief()">🚨 TACKLE THIEF & RECOVER ITEM</button>
+    </div>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div id="helpModal">
+      <div class="help-card">
+        <div class="help-header">
+          <h2 style="font-size:16px; font-weight:700;">📖 Pallet Reseller Handbook: Quick Guide</h2>
+          <button style="padding:4px 8px;" onclick="toggleHelpModal(false)">✕ Close</button>
+        </div>
+        <div class="help-body">
+          <div class="help-section">
+            <h3>🚦 Start Here: Your First Shift</h3>
+            <p>New games begin with a guided tutorial. You begin with <strong>$250</strong>. A reliable opening is: buy the <strong>$95 Target Clean Customer Returns</strong> pallet, unpack it, then inspect and test the items. Put tested items on shelves before opening the doors. Save the <strong>$140 Online Marketplace + Shipping</strong> upgrade for after your first sale unless online selling is your priority.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>🎯 Campaign Goal</h3>
+            <p>Build a sustainable depot by reaching <strong>Day 7</strong> with at least <strong>$500 cash</strong> and <strong>4.8 reputation</strong>. The target stays visible in the top bar, and the depot success screen appears after rent is paid.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>💻 1. Procurement (Office PC)</h3>
+            <p>Go to your <strong>Office PC ➔ LiquiBids</strong> to bid on wholesale liquidation pallets (Target, Home Depot, Best Buy). Freight delivery arrives immediately at your loading dock.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>📦 2. Processing & Refurbishing (Unpacking Bay)</h3>
+            <p>Visit the <strong>Unpacking Bay</strong> and click <strong>Tear Wrap ✂️</strong> on delivered pallets. New stock is uninspected, so work each card through the small readiness flow:</p>
+            <ul style="padding-left:18px; margin-top:4px;">
+              <li><strong>Inspect:</strong> reveal grade, demand, and the condition note.</li>
+              <li><strong>Test:</strong> discover hidden faults before a customer does.</li>
+              <li><strong>Repair:</strong> optional; pay the item-specific quote to remove a fault and recover some value.</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3>🏷️ 3. Pricing Strategy & Storefront</h3>
+            <p>Display items on your <strong>Storefront Shelves</strong> and pick your pricing tags:</p>
+            <ul style="padding-left:18px; margin-top:4px;">
+              <li><strong>Fair / -15%:</strong> demand-sensitive shoppers can buy instantly from the shelf.</li>
+              <li><strong>+30%:</strong> a customer archetype may carry it to the <strong>POS Register</strong> with a negotiation offer.</li>
+              <li><strong>Online:</strong> install the <strong>$140 Online Marketplace + Shipping</strong> upgrade, then list inspected and tested items from the backroom or shelves. Remote orders pay an 8% marketplace fee.</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3>🛎️ 4. Store Hours & Register Management</h3>
+            <p>Click <strong>🚪 Open Doors</strong> to start your 30-second shift. When a red badge appears on <strong>POS Register</strong>, a customer is waiting at the counter! You can accept their card, take cash and dispense change, or refuse them.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>🚨 5. Shoplifters & Daily Rent</h3>
+            <p>Watch out! Thieves will occasionally try to pocket items during business hours. Click <strong>Tackle Thief</strong> within 4 seconds to retrieve your stock and collect a <strong>$25 bounty</strong>. Buy security cameras on your PC to eliminate theft permanently. Save after installing upgrades so your new depot layout comes back with the rest of your stock.</p>
+            <p style="margin-top:6px; color:var(--red);"><strong>Warning:</strong> At the end of each shift, make sure the store is closed, then click <strong>🌙 End Day</strong> to pay your <strong>$35 commercial landlord rent</strong>. Falling into bankruptcy resets your store! Use <strong>Save Game</strong> on the Office PC after major purchases.</p>
+          </div>
+        </div>
+        <div style="padding:12px 20px; background:#1e293b; border-top:1px solid var(--border); text-align:right;">
+          <button class="btn-blue" style="padding:8px 16px; margin-right:6px;" onclick="toggleHelpModal(false); startTutorial();">▶ Guided Tutorial</button>
+          <button class="btn-green" style="padding:8px 16px;" onclick="toggleHelpModal(false)">Got It! Let's Make Money ➔</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUIDED FIRST SHIFT -->
+    <div id="tutorialCard" hidden>
+      <div class="tutorial-kicker" id="tutorialProgress">First shift training · 1 of 6</div>
+      <div class="tutorial-title" id="tutorialTitle">Buy your first pallet</div>
+      <div class="tutorial-copy" id="tutorialCopy">Start at the Office PC and buy the $95 Target returns pallet. It is the safest way to learn the loop.</div>
+      <div class="tutorial-actions">
+        <button onclick="skipTutorial()">Skip tutorial</button>
+        <button class="btn-blue" id="tutorialGoBtn" onclick="tutorialGo()">Go to Office PC ➜</button>
+      </div>
+    </div>
+
+      <div id="victoryModal">
+        <div class="help-card" style="max-width:520px;">
+          <div class="help-header">
+            <h2 style="font-size:16px; font-weight:700;">🏆 Depot Success</h2>
+            <button style="padding:4px 8px;" onclick="closeVictoryModal()">Keep playing</button>
+          </div>
+          <div class="help-body">
+            <div class="help-section">
+              <h3>🎉 You built a sustainable business</h3>
+              <p id="victoryText">Your depot reached the campaign goal.</p>
+              <p style="margin-top:8px; color:var(--text-dim);">You can keep playing, buy remaining upgrades, or start a new depot from the Office PC.</p>
+            </div>
+          </div>
+          <div style="padding:12px 20px; background:#1e293b; border-top:1px solid var(--border); text-align:right;">
+            <button class="btn-green" onclick="closeVictoryModal()">Keep Running the Depot ➜</button>
+          </div>
+        </div>
+      </div>
+
+    <!-- STATION 1: STOREFRONT SHELVES -->
+    <div class="station-view active" id="station-store">
+      <div class="store-layout">
+        <div class="shelf-container">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <strong style="text-transform:uppercase; font-size:13px; color:var(--text-dim);">Store Display Shelves</strong>
+            <span style="font-size:12px; color:var(--accent-glow);" id="shelfCapacity">0 / 8 Shelves Full</span>
+          </div>
+          <div class="shelf-grid" id="shelfGrid"></div>
+        </div>
+
+        <div class="store-sidebar">
+          <div class="status-panel">
+            <h3 style="font-size:13px; margin-bottom:8px;">🏪 Storefront Status</h3>
+            <div style="font-size:12px; color:var(--text-dim); line-height:1.5;" id="storeTrafficInfo">
+              Doors are currently closed. Stock shelves from the Unpacking Bay and click "Open Doors".
+            </div>
+          </div>
+          <div class="status-panel" style="flex:1;">
+            <h3 style="font-size:13px; margin-bottom:8px;">💡 Reseller Tips</h3>
+            <ul style="font-size:11px; color:var(--text-dim); line-height:1.6; padding-left:14px;">
+              <li><strong>Fair / Cheap Pricing:</strong> Customers grab it & pay instantly.</li>
+              <li><strong>High Pricing:</strong> Customers will bring it to your POS Register to haggle.</li>
+              <li><strong>Refurbishing:</strong> Grade C items sell for 2.5x once cleaned in the Bay.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATION 2: POS REGISTER -->
+    <div class="station-view" id="station-pos">
+      <div class="pos-screen">
+        <div class="register-device">
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px; color:var(--text-dim);">
+            <span>NCR POS TERMINAL 4500</span>
+            <span id="posStatusIndicator">ONLINE ●</span>
+          </div>
+
+          <div class="pos-lcd" id="posLcd">
+            WELCOME TO LIQUIDATION DEPOT<br>
+            AWAITING CUSTOMER AT COUNTER...
+          </div>
+
+          <div id="posActionArea" style="display:none;">
+            <div style="font-size:12px; font-weight:700; margin-bottom:6px;" id="posCustDialogue">Customer wants to pay...</div>
+            <div class="pos-actions">
+              <button class="btn-green" id="posPayCardBtn" onclick="processPayment('card')">💳 Tap / Chip Card</button>
+              <button class="btn-blue" id="posPayCashBtn" onclick="processPayment('cash')">💵 Take Cash & Change</button>
+              <button class="btn-red" style="grid-column: span 2;" onclick="refuseCustomer()">🚫 Refuse & Kick Out</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+          <div id="customerAvatar" style="font-size:54px; margin-bottom:10px;">🚶</div>
+          <h3 id="customerName" style="font-size:16px;">Counter is Empty</h3>
+          <p id="customerDesc" style="font-size:12px; color:var(--text-dim); max-width:320px; margin-top:4px;">
+            When customers want to negotiate high-priced items or pay at the register, they will appear here.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATION 3: UNPACKING BAY -->
+    <div class="station-view" id="station-bay">
+      <div class="unboxing-layout">
+        <div class="status-panel" style="display:flex; flex-direction:column;">
+          <h3 style="font-size:13px; margin-bottom:10px; text-transform:uppercase;">Truck Delivery Bay</h3>
+          <div style="overflow-y:auto; flex:1;" id="dockList">
+            <div style="text-align:center; padding:30px; font-size:12px; color:var(--text-dim);">
+              No pallets waiting.<br>Order wholesale lots from your <strong>Office PC</strong>!
+            </div>
+          </div>
+        </div>
+
+        <div class="shelf-container">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <strong style="text-transform:uppercase; font-size:13px; color:var(--text-dim);">Warehouse Staging & Refurbishing</strong>
+            <span style="font-size:12px; color:var(--text-dim);" id="stagingCount">0 items ready</span>
+          </div>
+          <div class="shelf-grid" id="stagingGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATION 4: BACK OFFICE PC -->
+    <div class="station-view" id="station-pc">
+      <div class="pc-monitor">
+        <div class="pc-titlebar">
+          <div class="browser-tabs">
+            <div class="browser-tab active" onclick="switchPcTab('liquibids')">🌐 LiquiBids Wholesale</div>
+            <div class="browser-tab" onclick="switchPcTab('supplies')">🏪 Store Upgrades</div>
+            <div class="browser-tab" onclick="switchPcTab('save')">💾 System & Save Slots</div>
+          </div>
+          <span style="font-family:monospace; font-size:11px; color:#64748b;">PalletOS v4.2</span>
+        </div>
+
+        <div class="pc-content">
+          <div id="pctab-liquibids">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <div>
+                <h2 style="font-size:16px;">📦 Active Liquidation Auctions</h2>
+                <div style="font-size:12px; color:var(--text-dim);">Overstock, customer returns, and salvage lots ready for direct truck freight.</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;" id="auctionGrid"></div>
+          </div>
+
+          <div id="pctab-supplies" style="display:none;">
+            <h2 style="font-size:16px; margin-bottom:12px;">🛠️ Depot Hardware & Expansion Supplies</h2>
+            <div style="display:flex; flex-direction:column; gap:8px;" id="upgradeList"></div>
+          </div>
+
+          <div id="pctab-save" style="display:none; max-width:480px;">
+            <h2 style="font-size:16px; margin-bottom:12px;">💾 Profile & Storage Management</h2>
+            <div id="saveStatus" style="font-size:12px; color:var(--text-dim); background:#0b111e; border:1px solid var(--border); border-radius:6px; padding:9px 10px; margin-bottom:12px;">Slot 1: checking...</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <button class="btn-green" onclick="saveGameSlot(1)">Save to Slot 1</button>
+              <button class="btn-blue" onclick="loadGameSlot(1)">Load Slot 1</button>
+              <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
+              <button class="btn-red" onclick="resetGame()">⚠️ Factory Reset (New Game)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PERSISTENT BOTTOM LOG -->
+  <div id="bottomLog"></div>
+
+  <script>
+    const audioCtx = window.AudioContext || window.webkitAudioContext ? new (window.AudioContext || window.webkitAudioContext)() : null;
+    function playBeep(type) {
+      if (!audioCtx) return;
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const t = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      const tones = { scan: [1800, 0.08, 0.08], register: [120, 0.15, 0.25], card: [880, 0.08, 0.2], rip: [320, 0.06, 0.12] };
+      const tone = tones[type] || tones.scan;
+      osc.type = type === "rip" ? "sawtooth" : type === "register" ? "triangle" : "sine";
+      osc.frequency.setValueAtTime(tone[0], t);
+      if (type === "register") osc.frequency.setValueAtTime(900, t + 0.05);
+      if (type === "card") osc.frequency.setValueAtTime(1760, t + 0.08);
+      gain.gain.setValueAtTime(tone[1], t); gain.gain.exponentialRampToValueAtTime(0.001, t + tone[2]);
+      osc.start(t); osc.stop(t + tone[2]);
+    }
+
+    let cash = 250, day = 1, rep = 4.5, gameWon = false;
+    const DAILY_RENT = 35;
+    const CAMPAIGN_GOAL = { day: 7, cash: 500, rep: 4.8 };
+    let isStoreOpen = false, storeTimer = null, trafficTimer = null, onlineTimer = null;
+    let maxShelves = 8, warehouseCapacity = 12, hasSecurity = false;
+    let palletDock = [], warehouse = [], shelves = [], activeCustomer = null, activeThief = null, thiefTimeout = null;
+    let upgradesOwned = {};
+    let tutorialActive = false, tutorialStep = 0, tutorialPosVisited = false;
+
+    const TUTORIAL_STEPS = [
+      { title: "Buy your first pallet", copy: "Start at the Office PC and buy the $95 Target returns pallet. It is the safest way to learn the loop.", station: "pc", button: "Go to Office PC ➜" },
+      { title: "Unpack the delivery", copy: "Go to the Unpacking Bay and click Tear Wrap. Your items will appear in staging, uninspected.", station: "bay", button: "Go to Unpacking Bay ➜" },
+      { title: "Inspect and test one item", copy: "On an item card, click Inspect and then Test. Testing costs $3 until you buy the Inspection Bench.", station: "bay", button: "Show staging ➜" },
+      { title: "Put stock on the shelf", copy: "Choose a tested item and click Display on shelf. Shelved items can sell during an open shift.", station: "bay", button: "Show staging ➜" },
+      { title: "Open for business", copy: "Go to the Storefront and click Open Doors. Your 30-second shift is now live.", station: "store", button: "Go to Storefront ➜" },
+      { title: "Check the POS Register", copy: "Fair-priced items may sell automatically. Items priced above fair can bring a shopper to the POS Register. Click POS Register when its red badge appears, then accept card or cash, or refuse the offer.", station: "pos", button: "Check POS Register ➜" }
+    ];
+
+    const PRODUCT_CATALOG = [
+      { brand: "Sony", name: "WH-1000XM5 ANC Headphones", cat: "Electronics", msrp: 399, icon: "🎧", demand: 0.92 },
+      { brand: "DeWalt", name: "20V MAX Cordless Drill Kit", cat: "Tools", msrp: 179, icon: "🛠️", demand: 0.84 },
+      { brand: "Nintendo", name: "Switch OLED Console", cat: "Gaming", msrp: 349, icon: "🎮", demand: 0.98 },
+      { brand: "Dyson", name: "V8 Cordless Stick Vacuum", cat: "Home", msrp: 449, icon: "🧹", demand: 0.68 },
+      { brand: "KitchenAid", name: "Artisan 5-Qt Stand Mixer", cat: "Home", msrp: 429, icon: "🍰", demand: 0.72 },
+      { brand: "Apple", name: "AirPods Pro (2nd Gen)", cat: "Electronics", msrp: 249, icon: "🎵", demand: 0.96 },
+      { brand: "Nike", name: "Air Jordan 1 Retro High", cat: "Apparel", msrp: 180, icon: "👟", demand: 0.78 },
+      { brand: "Milwaukee", name: "M18 Fuel Impact Driver", cat: "Tools", msrp: 199, icon: "🔩", demand: 0.81 },
+      { brand: "LEGO", name: "Star Wars Millennium Falcon", cat: "Toys", msrp: 169, icon: "🚀", demand: 0.74 }
+    ];
+    const WHOLESALE_LOTS = [
+      { id: "lot-budget", title: "Target Clean Customer Returns", cost: 95, size: 4, desc: "Mix of small household electronics & tools." },
+      { id: "lot-tools", title: "Home Depot Hardware Liquidation", cost: 180, size: 5, desc: "High value power tools and accessories." },
+      { id: "lot-tech", title: "Best Buy Grade-A Overstock Pallet", cost: 290, size: 5, desc: "Sealed overstock electronics and games." }
+    ];
+    const CUSTOMER_ARCHETYPES = [
+      { name: "Maya, Deal Hunter", avatar: "🧢", patience: 0.92, offer: 0.93, desc: "Sharp-eyed bargain hunter. Likes fair tags." },
+      { name: "Rob, Contractor", avatar: "👷", patience: 0.78, offer: 1.02, desc: "Pays up for tested tools and clean condition." },
+      { name: "Priya, Collector", avatar: "🕶️", patience: 0.86, offer: 1.05, desc: "Chases rare gaming, toys, and excellent grades." },
+      { name: "Derek, Flipper", avatar: "🧥", patience: 0.62, offer: 0.87, desc: "Lowball specialist. Fast decision, thin margins." }
+    ];
+    const storeUpgrades = [
+      { id: "inspection", name: "Inspection Bench", detail: "Inspect and test in one efficient pass.", cost: 90 },
+      { id: "repair", name: "Repair Bench", detail: "Cuts repair costs 30% and restores more value.", cost: 160 },
+      { id: "online", name: "Online Marketplace + Shipping", detail: "List stock online and unlock remote orders.", cost: 140 },
+      { id: "warehouse", name: "Warehouse Racking (+8 capacity)", detail: "Store more inventory before committing to a shelf.", cost: 110 },
+      { id: "shelf1", name: "Heavy-Duty Shelving Rack (+4 slots)", detail: "More products visible in-store.", cost: 120 },
+      { id: "marketing", name: "Local Flyer Campaign", detail: "Raises demand and customer traffic.", cost: 125 },
+      { id: "security", name: "HD Security Camera System", detail: "Stops shoplifters before they cost you stock.", cost: 190 }
+    ];
+
+    function log(msg) { const el = document.getElementById("bottomLog"), d = document.createElement("div"); d.textContent = `[Day ${day}] ${msg}`; el.appendChild(d); el.scrollTop = el.scrollHeight; }
+    function toggleHelpModal(show) { document.getElementById("helpModal").style.display = show ? "flex" : "none"; }
+    function closeVictoryModal() { document.getElementById("victoryModal").style.display = "none"; }
+    function checkCampaignGoal() {
+      if (gameWon || day < CAMPAIGN_GOAL.day || cash < CAMPAIGN_GOAL.cash || rep < CAMPAIGN_GOAL.rep) return;
+      gameWon = true;
+      document.getElementById("victoryText").textContent = `Day ${day}: $${cash.toFixed(2)} cash and ${rep.toFixed(1)} reputation. Your depot cleared the campaign target.`;
+      document.getElementById("victoryModal").style.display = "flex";
+      log("CAMPAIGN COMPLETE: the depot is profitable, trusted, and ready to expand.");
+    }
+    function startTutorial() { tutorialActive = true; tutorialStep = 0; tutorialPosVisited = false; document.getElementById("tutorialCard").hidden = false; updateTutorial(); }
+    function skipTutorial() { tutorialActive = false; document.getElementById("tutorialCard").hidden = true; localStorage.setItem("pallet_sim_tutorial_done", "1"); }
+    function tutorialGo() { if (tutorialActive) switchStation(TUTORIAL_STEPS[tutorialStep].station); }
+    function updateTutorial() {
+      if (!tutorialActive) return;
+      if (tutorialStep === 0 && palletDock.length) tutorialStep = 1;
+      if (tutorialStep === 1 && warehouse.length) tutorialStep = 2;
+      if (tutorialStep === 2 && warehouse.some(item => item.tested)) tutorialStep = 3;
+      if (tutorialStep === 3 && shelves.length) tutorialStep = 4;
+      if (tutorialStep === 4 && isStoreOpen) {
+        tutorialStep = 5;
+      }
+      if (tutorialStep === 5 && tutorialPosVisited) {
+        log("Guided first shift complete. Use How to Play for the deeper strategy.");
+        skipTutorial();
+        return;
+      }
+      const step = TUTORIAL_STEPS[tutorialStep];
+      document.getElementById("tutorialProgress").textContent = `First shift training · ${tutorialStep + 1} of ${TUTORIAL_STEPS.length}`;
+      document.getElementById("tutorialTitle").textContent = step.title;
+      document.getElementById("tutorialCopy").textContent = step.copy;
+      document.getElementById("tutorialGoBtn").textContent = step.button;
+    }
+    function switchStation(id) {
+      document.querySelectorAll(".station-view").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(`station-${id}`).classList.add("active");
+      const button = document.querySelector(`.nav-btn[onclick="switchStation('${id}')"]`);
+      if (button) button.classList.add("active");
+      if (id === "pos" && tutorialActive) { tutorialPosVisited = true; updateTutorial(); }
+    }
+    function switchPcTab(tabId) {
+      document.querySelectorAll(".browser-tab").forEach(t => t.classList.remove("active"));
+      ["liquibids", "supplies", "save"].forEach(id => { document.getElementById(`pctab-${id}`).style.display = id === tabId ? "block" : "none"; });
+      const tab = document.querySelector(`.browser-tab[onclick="switchPcTab('${tabId}')"]`);
+      if (tab) tab.classList.add("active");
+      if (tabId === "save") updateSaveStatus();
+    }
+    function hasUpgrade(id) { return Boolean(upgradesOwned[id]); }
+    function makeItem(prod, lotCost) {
+      const roll = Math.random(), grade = roll < 0.28 ? "Grade C (Salvage)" : roll < 0.68 ? "Grade B (Open Box)" : "Grade A";
+      const condition = grade.startsWith("Grade A") ? 0.84 : grade.startsWith("Grade B") ? 0.64 : 0.36;
+      const hiddenIssue = grade !== "Grade A" && Math.random() < 0.68;
+      const issue = hiddenIssue ? (Math.random() > 0.5 ? "Intermittent power fault" : "Cosmetic damage and missing accessory") : "No obvious issues";
+      const marketVal = Math.round(prod.msrp * condition);
+      return { id: Math.random().toString(36).slice(2), brand: prod.brand, name: prod.name, cat: prod.cat, icon: prod.icon, demand: prod.demand, grade, condition, msrp: prod.msrp, marketVal, price: marketVal, barcode: Math.floor(1000000000 + Math.random() * 9000000000), acquisitionCost: Math.round(lotCost), inspected: false, tested: false, repaired: false, hiddenIssue, issue, repairCost: Math.max(8, Math.round(prod.msrp * 0.08)), listedOnline: false };
+    }
+    function buyLot(lotId) {
+      const lot = WHOLESALE_LOTS.find(l => l.id === lotId);
+      if (cash < lot.cost) return log("Insufficient funds on company card.");
+      cash -= lot.cost; playBeep("register"); palletDock.push({ id: Math.random().toString(36).slice(2), title: lot.title, size: lot.size, cost: lot.cost });
+      log(`Purchased ${lot.title}. Freight truck arrived at the loading dock.`); renderAll();
+    }
+    function unboxPallet(id) {
+      const idx = palletDock.findIndex(p => p.id === id); if (idx < 0) return;
+      const pallet = palletDock[idx];
+      if (warehouse.length + pallet.size > warehouseCapacity) return log(`Staging is full. Clear ${warehouse.length + pallet.size - warehouseCapacity} slot(s) before opening this pallet.`);
+      palletDock.splice(idx, 1); playBeep("rip");
+      for (let i = 0; i < pallet.size; i++) warehouse.push(makeItem(PRODUCT_CATALOG[Math.floor(Math.random() * PRODUCT_CATALOG.length)], pallet.cost / pallet.size));
+      log(`Opened ${pallet.title}. ${pallet.size} items landed in staging, uninspected.`); renderAll();
+    }
+    function findItem(id) { return warehouse.find(i => i.id === id) || shelves.find(i => i.id === id); }
+    function inspectItem(id) {
+      const item = findItem(id); if (!item) return;
+      item.inspected = true; playBeep("scan");
+      log(`Inspected ${item.name}: ${item.grade}; ${item.issue}.`); renderAll();
+    }
+    function testItem(id) {
+      const item = findItem(id); if (!item) return;
+      if (!item.inspected) inspectItem(id);
+      const cost = hasUpgrade("inspection") ? 0 : 3;
+      if (cash < cost) return log(`Testing ${item.name} needs $${cost} in bench supplies.`);
+      cash -= cost; item.tested = true; playBeep("scan");
+      log(item.hiddenIssue ? `Test found a fault in ${item.name}. Repair quote: $${item.repairCost}.` : `${item.name} passed its functional test.`); renderAll();
+    }
+    function repairItem(id) {
+      const item = findItem(id); if (!item) return;
+      if (!item.tested) return log("Test the item first so you know what you are repairing.");
+      if (!item.hiddenIssue) return log(`${item.name} is already healthy; no repair needed.`);
+      const cost = Math.round(item.repairCost * (hasUpgrade("repair") ? 0.7 : 1));
+      if (cash < cost) return log(`Repair needs $${cost}; keep it in staging until the next sale.`);
+      cash -= cost; item.hiddenIssue = false; item.repaired = true; item.condition = Math.min(0.86, item.condition + 0.28); item.marketVal = Math.round(item.msrp * item.condition); item.price = item.marketVal; item.grade = "Grade A (Refurbished)";
+      playBeep("register"); log(`Repaired ${item.name} for $${cost}. New resale value: $${item.marketVal}.`); renderAll();
+    }
+    function listOnline(id) {
+      if (!hasUpgrade("online")) return log("Install Online Marketplace + Shipping on the Office PC first.");
+      const item = findItem(id); if (!item) return;
+      if (!item.inspected || !item.tested) return log("Inspect and test an item before listing it online.");
+      item.listedOnline = !item.listedOnline; log(`${item.listedOnline ? "Listed" : "Removed listing for"} ${item.name} ${item.listedOnline ? "online" : "from the marketplace"}.`); renderAll();
+    }
+    function stockItem(id) {
+      if (shelves.length >= maxShelves) return log("No display shelf slots remaining.");
+      const idx = warehouse.findIndex(i => i.id === id); if (idx < 0) return;
+      const item = warehouse[idx]; if (!item.inspected || !item.tested) return log("Inspect and test this item before putting it on the sales floor.");
+      shelves.push(warehouse.splice(idx, 1)[0]); playBeep("scan"); log(`${item.name} is now on the storefront floor.`); renderAll();
+    }
+    function returnToWarehouse(id) { const idx = shelves.findIndex(i => i.id === id); if (idx < 0) return; warehouse.push(shelves.splice(idx, 1)[0]); playBeep("scan"); renderAll(); }
+    function setItemPrice(id, mult) { const item = findItem(id); if (!item) return; item.price = Math.round(item.marketVal * mult); playBeep("scan"); renderAll(); }
+
+    function toggleStoreOpen() {
+      if (isStoreOpen || !shelves.length) return log(isStoreOpen ? "Store is already open." : "Put tested inventory on the shelves before opening.");
+      isStoreOpen = true; document.getElementById("storeToggleBtn").disabled = true; document.getElementById("storeTrafficInfo").textContent = "OPEN: shoppers are comparing your tested stock..."; log("Front doors unlocked. Store is open for business.");
+      updateTutorial();
+      let timeLeft = 30; storeTimer = setInterval(() => { timeLeft--; if (timeLeft <= 0) { clearInterval(storeTimer); clearInterval(trafficTimer); isStoreOpen = false; if (activeThief) { clearTimeout(thiefTimeout); activeThief = null; document.getElementById("thiefModal").style.display = "none"; } document.getElementById("storeToggleBtn").disabled = false; document.getElementById("storeTrafficInfo").textContent = "Closed. Restock, list, and settle the register."; log("Store shift ended."); } }, 1000);
+      trafficTimer = setInterval(customerSimulation, hasUpgrade("marketing") ? 3000 : 4000);
+    }
+    function customerSimulation() {
+      if (!isStoreOpen || !shelves.length) return;
+      if (!hasSecurity && !activeThief && Math.random() < 0.14) return triggerShoplifter();
+      const item = shelves[Math.floor(Math.random() * shelves.length)], archetype = CUSTOMER_ARCHETYPES[Math.floor(Math.random() * CUSTOMER_ARCHETYPES.length)];
+      const demand = item.demand * (hasUpgrade("marketing") ? 1.15 : 1), fair = item.marketVal * demand;
+      if (item.price <= fair) return completeSale(item, Math.round(item.price), "shelf sale");
+      if (!activeCustomer) { activeCustomer = { item, archetype, name: archetype.name, avatar: archetype.avatar, offer: Math.max(1, Math.round(fair * archetype.offer)), tenderType: Math.random() > 0.5 ? "card" : "cash" }; document.getElementById("posBadge").style.display = "block"; renderPOS(); }
+    }
+    function completeSale(item, amount, channel) { cash += amount; rep = Math.min(5, rep + (amount >= item.marketVal ? 0.04 : 0.02)); playBeep("register"); const fee = channel === "online" ? Math.round(amount * 0.08) : 0; cash -= fee; warehouse = warehouse.filter(i => i.id !== item.id); shelves = shelves.filter(i => i.id !== item.id); if (activeCustomer && activeCustomer.item.id === item.id) activeCustomer = null; log(`${channel === "online" ? "ONLINE ORDER" : "SALE"}: ${item.name} sold for $${amount}${fee ? ` ($${fee} marketplace fee)` : ""}.`); renderAll(); }
+    function onlineSimulation() { if (!hasUpgrade("online")) return; const item = [...warehouse, ...shelves].find(i => i.listedOnline); if (!item) return; const chance = item.demand * (item.price <= item.marketVal * 1.12 ? 0.55 : 0.2); if (Math.random() < chance) completeSale(item, item.price, "online"); }
+    function renderPOS() {
+      const lcd = document.getElementById("posLcd"), actions = document.getElementById("posActionArea");
+      if (!activeCustomer) { lcd.innerHTML = "NCR TERMINAL ONLINE<br>NO CUSTOMER AT REGISTER"; actions.style.display = "none"; document.getElementById("customerAvatar").textContent = "🚶"; document.getElementById("customerName").textContent = "Counter is Empty"; document.getElementById("customerDesc").textContent = "Customers with high-priced items appear here to negotiate."; document.getElementById("posBadge").style.display = "none"; return; }
+      document.getElementById("customerAvatar").textContent = activeCustomer.avatar; document.getElementById("customerName").textContent = activeCustomer.name; document.getElementById("customerDesc").textContent = activeCustomer.archetype.desc;
+      lcd.innerHTML = `ITEM: ${activeCustomer.item.name.substring(0, 18)}<br>TAGGED: $${activeCustomer.item.price}.00<br>OFFER: $${activeCustomer.offer}.00 [${activeCustomer.tenderType.toUpperCase()}]`;
+      document.getElementById("posCustDialogue").textContent = `"${activeCustomer.item.name}" for $${activeCustomer.offer}? ${activeCustomer.archetype.desc}`; actions.style.display = "block";
+    }
+    function processPayment(type) { if (!activeCustomer) return; const sale = activeCustomer; completeSale(sale.item, sale.offer, "negotiated sale"); activeCustomer = null; playBeep(type === "card" ? "card" : "register"); log(type === "card" ? "Card approved. Receipt printed." : `Cash accepted; change dispensed from till.`); renderPOS(); }
+    function refuseCustomer() { if (!activeCustomer) return; rep = Math.max(1, rep - 0.03); log(`Turned away ${activeCustomer.name}'s offer.`); activeCustomer = null; renderPOS(); }
+    function triggerShoplifter() { const item = shelves[Math.floor(Math.random() * shelves.length)]; activeThief = item; document.getElementById("thiefModal").style.display = "block"; document.getElementById("thiefText").textContent = `Shoplifter is pocketing: ${item.brand} ${item.name}!`; thiefTimeout = setTimeout(() => { if (!activeThief) return; shelves = shelves.filter(i => i.id !== activeThief.id); log(`STOLEN: ${activeThief.name} left the store.`); activeThief = null; document.getElementById("thiefModal").style.display = "none"; renderAll(); }, 4000); }
+    function tackleThief() { if (!activeThief) return; clearTimeout(thiefTimeout); cash += 25; log(`BUSTED: recovered ${activeThief.name} and collected a $25 bounty.`); activeThief = null; document.getElementById("thiefModal").style.display = "none"; playBeep("register"); renderAll(); }
+    function buyUpgrade(id) { const u = storeUpgrades.find(up => up.id === id); if (!u || hasUpgrade(id) || cash < u.cost) return; cash -= u.cost; upgradesOwned[id] = true; if (id === "shelf1") maxShelves += 4; if (id === "warehouse") warehouseCapacity += 8; if (id === "security") hasSecurity = true; log(`Installed upgrade: ${u.name}.`); if (id === "online" && !onlineTimer) onlineTimer = setInterval(onlineSimulation, 5000); playBeep("register"); renderAll(); }
+    function endDay() { if (isStoreOpen) return log("Close the store before ending the day."); if (activeCustomer) return log("Resolve the waiting customer at the POS Register before ending the day."); if (cash < DAILY_RENT) { alert("BANKRUPTCY: rent could not be covered. Starting a new depot."); return resetGame(); } cash -= DAILY_RENT; day++; playBeep("register"); log(`Paid $${DAILY_RENT} rent. Day ${day} begins.`); checkCampaignGoal(); renderAll(); }
+    function normalizeItem(item) { const prod = PRODUCT_CATALOG.find(p => p.name === item.name) || PRODUCT_CATALOG[0]; return { ...makeItem(prod, item.acquisitionCost || 20), ...item, icon: item.icon || prod.icon, demand: item.demand || prod.demand, inspected: Boolean(item.inspected), tested: Boolean(item.tested), listedOnline: Boolean(item.listedOnline), issue: item.issue || "No obvious issues", repairCost: item.repairCost || 15 }; }
+    function updateSaveStatus() { const el = document.getElementById("saveStatus"); if (!el) return; const raw = localStorage.getItem("pallet_sim_save_1"); if (!raw) { el.textContent = "Slot 1: Empty - no saved game yet."; return; } try { const data = JSON.parse(raw), savedAt = data.savedAt ? new Date(data.savedAt).toLocaleString() : "previously"; el.textContent = `Slot 1: Save found · Day ${data.day ?? 1} · $${Number(data.cash ?? 0).toFixed(2)} · Saved ${savedAt}`; } catch (error) { el.textContent = "Slot 1: Unreadable save data."; } }
+    function saveGameSlot(slot) { const data = { cash, day, rep, gameWon, maxShelves, warehouseCapacity, hasSecurity, upgradesOwned, palletDock, warehouse, shelves, savedAt: new Date().toISOString() }; localStorage.setItem(`pallet_sim_save_${slot}`, JSON.stringify(data)); updateSaveStatus(); playBeep("card"); alert(`Game saved successfully to Slot ${slot}!`); }
+    function loadGameSlot(slot) { const raw = localStorage.getItem(`pallet_sim_save_${slot}`); if (!raw) return alert(`No save found in Slot ${slot}`); try { const data = JSON.parse(raw); cash = data.cash ?? 250; day = data.day ?? 1; rep = data.rep ?? 4.5; gameWon = Boolean(data.gameWon); maxShelves = data.maxShelves ?? 8; warehouseCapacity = data.warehouseCapacity ?? 12; hasSecurity = Boolean(data.hasSecurity); upgradesOwned = data.upgradesOwned || {}; palletDock = data.palletDock || []; warehouse = (data.warehouse || []).map(normalizeItem); shelves = (data.shelves || []).map(normalizeItem); if (hasUpgrade("online") && !onlineTimer) onlineTimer = setInterval(onlineSimulation, 5000); renderAll(); updateSaveStatus(); alert(`Loaded Slot ${slot}!`); } catch (error) { alert("That save file is unreadable."); } }
+    function resetGame() { localStorage.removeItem("pallet_sim_save_1"); localStorage.removeItem("pallet_sim_tutorial_done"); location.reload(); }
+    function gradeClass(item) { return item.grade.includes("Grade A") ? "b-gradeA" : item.grade.includes("Grade B") ? "b-gradeB" : "b-gradeC"; }
+    function itemCard(item, location) {
+      const readiness = (item.inspected ? 34 : 0) + (item.tested ? 33 : 0) + (item.repaired || !item.hiddenIssue ? 33 : 0);
+      const actions = `<div class="prod-meta"><span class="badge ${item.inspected ? gradeClass(item) : "b-unchecked"}">${item.inspected ? item.grade : "UNINSPECTED"}</span>${item.tested ? '<span class="badge b-tested">TESTED</span>' : ""}${item.listedOnline ? '<span class="badge b-online">ONLINE</span>' : ""}</div><div class="meter"><span style="width:${readiness}%"></span></div><div class="item-note">${item.inspected ? item.issue : "Condition and faults are hidden until inspected."}</div>`;
+      const prep = `<button class="btn-blue" onclick="inspectItem('${item.id}')" ${item.inspected ? "disabled" : ""}>🔎 Inspect</button><button onclick="testItem('${item.id}')" ${item.tested ? "disabled" : ""}>⚡ Test${hasUpgrade("inspection") ? " free" : " $3"}</button>${item.tested && item.hiddenIssue ? `<button class="btn-gold" onclick="repairItem('${item.id}')">🪛 Repair $${Math.round(item.repairCost * (hasUpgrade("repair") ? 0.7 : 1))}</button>` : ""}`;
+      const online = `<button onclick="listOnline('${item.id}')">${item.listedOnline ? "Unlist" : "List online"}</button>`;
+      const price = `<div style="font-size:16px;font-weight:800;color:var(--green);margin:6px 0;">$${item.price}<span style="font-size:10px;color:var(--text-dim);"> / market $${item.marketVal}</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;"><button onclick="setItemPrice('${item.id}',.85)">-15%</button><button onclick="setItemPrice('${item.id}',1)">Fair</button><button onclick="setItemPrice('${item.id}',1.3)">+30%</button></div>`;
+      return `<div class="item-visual"><div class="item-icon">${item.icon}</div><div><div class="prod-brand">${item.brand} · ${item.cat}</div><div class="prod-title">${item.name}</div></div></div>${actions}<div style="font-size:11px;color:var(--text-dim);">MSRP $${item.msrp} · demand ${Math.round(item.demand * 100)}%</div><div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">${prep}${location === "warehouse" ? `${online}<button class="btn-green" onclick="stockItem('${item.id}')">Display on shelf ➜</button>` : `${price}${online}<button onclick="returnToWarehouse('${item.id}')">⬅ Backroom</button>`}</div>`;
+    }
+    function renderShelves() { const grid = document.getElementById("shelfGrid"); grid.innerHTML = shelves.map(item => `<div class="shelf-slot">${itemCard(item, "shelf")}</div>`).join(""); for (let i = shelves.length; i < maxShelves; i++) grid.insertAdjacentHTML("beforeend", `<div class="shelf-slot empty">EMPTY DISPLAY SHELF</div>`); updateUI(); }
+    function renderWarehouse() { const grid = document.getElementById("stagingGrid"); grid.innerHTML = warehouse.length ? warehouse.map(item => `<div class="shelf-slot">${itemCard(item, "warehouse")}</div>`).join("") : `<div class="shelf-slot empty">STAGING CLEAR<br><small>Unpack a pallet or buy more stock.</small></div>`; updateUI(); }
+    function renderDock() { const dock = document.getElementById("dockList"); dock.innerHTML = palletDock.length ? palletDock.map(p => `<div class="pallet-dock-card"><div><div style="font-weight:700;font-size:13px;">📦 ${p.title}</div><div style="font-size:11px;color:var(--text-dim);">${p.size} uninspected items · $${p.cost} landed</div></div><button class="btn-blue" onclick="unboxPallet('${p.id}')">Tear wrap ✂️</button></div>`).join("") : `<div style="text-align:center;padding:30px;font-size:12px;color:var(--text-dim);">No pallets waiting.<br>Order wholesale lots from your <strong>Office PC</strong>.</div>`; }
+    function renderAuctions() { document.getElementById("auctionGrid").innerHTML = WHOLESALE_LOTS.map(lot => `<div class="shelf-slot"><div><div style="font-size:13px;font-weight:700;">📦 ${lot.title}</div><div style="font-size:11px;color:var(--text-dim);margin:4px 0;">${lot.desc}</div><div style="font-size:12px;font-weight:700;color:var(--gold);">${lot.size} units · avg $${Math.round(lot.cost / lot.size)} each</div></div><div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:15px;font-weight:800;color:var(--green);">$${lot.cost}</span><button class="btn-green" onclick="buyLot('${lot.id}')">Bid & freight</button></div></div>`).join(""); }
+    function renderUpgrades() { document.getElementById("upgradeList").innerHTML = storeUpgrades.map(u => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0b111e;padding:10px;border-radius:6px;border:1px solid var(--border);"><div><div style="font-size:13px;font-weight:700;">${u.name}</div><div style="font-size:11px;color:var(--text-dim);">${u.detail} · $${u.cost}</div></div><button class="btn-blue" ${hasUpgrade(u.id) || cash < u.cost ? "disabled" : ""} onclick="buyUpgrade('${u.id}')">${hasUpgrade(u.id) ? "Installed" : "Purchase"}</button></div>`).join(""); }
+    function updateUI() { document.getElementById("hudCash").textContent = `$${cash.toFixed(2)}`; document.getElementById("hudDay").textContent = day; document.getElementById("hudRep").textContent = rep.toFixed(1); document.getElementById("shelfCapacity").textContent = `${shelves.length} / ${maxShelves} shelves full`; document.getElementById("stagingCount").textContent = `${warehouse.length} / ${warehouseCapacity} staged`; document.getElementById("storeToggleBtn").textContent = isStoreOpen ? "🚪 Doors Open" : "🚪 Open Doors (30s)"; const goalPill = document.getElementById("goalPill"); if (goalPill) goalPill.textContent = gameWon ? "🏆 Campaign Complete" : `🎯 Goal: Day ${CAMPAIGN_GOAL.day} · $${CAMPAIGN_GOAL.cash} · Rep ${CAMPAIGN_GOAL.rep.toFixed(1)}`; }
+    function renderAll() { updateUI(); renderShelves(); renderWarehouse(); renderDock(); renderAuctions(); renderUpgrades(); renderPOS(); updateTutorial(); }
+
+    log("Depot initialized. Buy a pallet, then inspect and test every item before pricing it.");
+    renderAll();
+    if (!localStorage.getItem("pallet_sim_save_1") && !localStorage.getItem("pallet_sim_tutorial_done")) startTutorial();
+  </script>
+</body>
+</html>

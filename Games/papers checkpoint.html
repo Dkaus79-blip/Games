@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Border Inspector: Deluxe Edition</title>
+<style>
+    * { box-sizing: border-box; user-select: none; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 0; }
+    
+    body {
+        background: #0f0d0b;
+        color: #e0d0b0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+    }
+
+    #game-container {
+        width: 100%;
+        height: 100%;
+        max-width: 1350px;
+        max-height: 900px;
+        background: #231b14;
+        border: 8px solid #4a3828;
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        grid-template-rows: 200px 1fr 65px;
+        gap: 8px;
+        padding: 8px;
+        position: relative;
+    }
+
+    /* Screen Shake Animation */
+    .shake {
+        animation: shakeAnim 0.15s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shakeAnim {
+        10%, 90% { transform: translate3d(-2px, 0, 0); }
+        20%, 80% { transform: translate3d(4px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+        40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    /* --- SIDEBAR --- */
+    #sidebar {
+        grid-row: 1 / 3;
+        background: #5c3a1e;
+        border: 3px solid #382210;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        overflow-y: auto;
+    }
+
+    .card {
+        background: #dcd0aa;
+        color: #111;
+        padding: 8px;
+        border: 2px solid #382210;
+        font-size: 0.85em;
+        line-height: 1.3;
+    }
+    .card h3 { margin-bottom: 4px; font-size: 0.95em; border-bottom: 2px solid #382210; }
+
+    .wanted-board {
+        background: #4a1515;
+        border: 2px solid #200;
+        padding: 6px;
+        color: #fff;
+    }
+    .wanted-item {
+        background: #6b2020;
+        border: 1px solid #8b0000;
+        padding: 4px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75em;
+    }
+    .wanted-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        border: 2px solid #fff; background: #222;
+        background-size: cover; background-position: center; flex-shrink: 0;
+    }
+
+    .city-cheat-sheet {
+        background: #231b14;
+        color: #d4af37;
+        border: 1px solid #5c3a1e;
+        padding: 6px;
+        margin-top: 6px;
+        border-radius: 4px;
+        font-size: 0.72em;
+    }
+    .city-cheat-sheet div { margin-bottom: 2px; }
+    .city-cheat-sheet b { color: #fff; }
+
+    /* --- BOOTH WINDOW --- */
+    #booth-window {
+        background: #20282e;
+        border: 3px solid #111;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        overflow: hidden;
+    }
+
+    #applicant-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        background: #444;
+        background-size: cover;
+        background-position: center;
+        margin-bottom: 4px;
+        z-index: 2;
+    }
+
+    #speech-bubble {
+        position: absolute;
+        top: 8px; left: 10px; right: 10px;
+        background: #fff; color: #000;
+        padding: 6px 10px; border-radius: 6px;
+        font-size: 0.85em; border: 2px solid #000;
+        z-index: 3; min-height: 42px; font-weight: bold;
+    }
+
+    .badge-tag {
+        position: absolute; top: 60px;
+        padding: 3px 6px; border-radius: 4px;
+        font-weight: bold; font-size: 0.75em;
+        border: 1px solid #fff; display: none; z-index: 4;
+    }
+    #bribe-badge { right: 10px; background: #2e7d32; color: #fff; }
+    #vip-badge { left: 10px; background: #d4af37; color: #000; }
+    #story-badge { left: 10px; top: 85px; background: #8e24aa; color: #fff; }
+
+    /* --- DESK AREA --- */
+    #desk {
+        grid-column: 2;
+        background: #36271c;
+        border: 3px solid #201710;
+        padding: 8px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        position: relative;
+    }
+
+    .doc-panel {
+        background: #fdf6e2;
+        color: #222;
+        border: 2px solid #777;
+        padding: 8px;
+        font-size: 0.8em;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+    .doc-panel h4 { border-bottom: 2px solid #555; margin-bottom: 4px; text-align: center; font-size: 0.9em; }
+
+    .passport-photo {
+        width: 50px; height: 50px; border: 2px solid #333; margin: 2px auto;
+        background-size: cover; background-position: center;
+    }
+
+    .doc-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .val { font-weight: bold; }
+
+    .tool-btn {
+        background: #3a4b5c; color: #fff;
+        border: 2px solid #111; padding: 5px;
+        font-size: 0.76em; cursor: pointer; margin-top: 3px;
+        width: 100%; text-align: left; font-weight: bold;
+        line-height: 1.2;
+    }
+    .tool-btn:hover { background: #4d6278; }
+
+    #stamp-mark {
+        position: absolute;
+        top: 35%;
+        left: 10%;
+        transform: rotate(-15deg) scale(2);
+        padding: 10px 20px;
+        border: 5px solid;
+        font-size: 1.8em;
+        font-weight: 900;
+        text-transform: uppercase;
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 10;
+        transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+    }
+    #stamp-mark.stamped {
+        opacity: 0.85;
+        transform: rotate(-12deg) scale(1);
+    }
+    #stamp-mark.approve { color: #2e7d32; border-color: #2e7d32; }
+    #stamp-mark.deny { color: #c62828; border-color: #c62828; }
+    #stamp-mark.detain { color: #d84315; border-color: #d84315; }
+
+    /* --- CONTROLS --- */
+    #controls {
+        grid-column: 1 / 3;
+        background: #14100c;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 12px;
+        border: 2px solid #2e2118;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        font-weight: bold;
+        font-size: 0.88em;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+
+    .btn-approve { background: #2e7d32; color: #fff; }
+    .btn-deny { background: #c62828; color: #fff; }
+    .btn-detain { background: #d84315; color: #fff; }
+    .btn-sys { background: #455a64; color: #fff; }
+
+    .overlay {
+        position: absolute; top:0; left:0; right:0; bottom:0;
+        background: rgba(0,0,0,0.94); z-index: 10;
+        display: none; flex-direction: column; padding: 20px; color: #fff;
+        overflow-y: auto; pointer-events: none;
+    }
+    .overlay.active { display: flex; pointer-events: auto; }
+    .shop-item {
+        background: #222; border: 1px solid #555;
+        padding: 8px; margin-bottom: 6px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 0.88em;
+    }
+
+    .rule-box {
+        background: #1c1815;
+        border: 2px solid #5c3a1e;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+    }
+    .rule-box h3 { color: #d4af37; margin-bottom: 4px; border-bottom: 1px solid #444; padding-bottom: 2px; }
+    .rule-box ul { margin-left: 18px; font-size: 0.85em; line-height: 1.4; }
+
+    .night-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px; background: #2a221b; border: 1px solid #5c3a1e; margin-bottom: 6px;
+    }
+
+    #bribe-modal {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: #2b1d14;
+        border: 4px solid #d4af37;
+        padding: 20px;
+        z-index: 20;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0,0,0,0.9);
+        width: 320px;
+    }
+    #bribe-modal h3 { color: #d4af37; margin-bottom: 10px; }
+    #bribe-modal p { font-size: 0.88em; margin-bottom: 15px; color: #e0d0b0; }
+
+    #ending-overlay { justify-content: center; align-items: center; text-align: center; }
+    .ending-card {
+        background: #211812;
+        border: 4px solid #d4af37;
+        padding: 24px;
+        max-width: 550px;
+        border-radius: 8px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.95);
+    }
+    .ending-card h1 { color: #d4af37; margin-bottom: 12px; font-size: 1.8em; }
+    .ending-card p { line-height: 1.5; margin-bottom: 18px; color: #e0d0b0; }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="bribe-modal">
+        <h3>💰 BRIBE OFFERED</h3>
+        <p id="bribe-modal-text">Accept cash to overlook document violations?</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-approve" onclick="confirmBribe(true)">ACCEPT CASH</button>
+            <button class="btn btn-deny" onclick="confirmBribe(false)">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="shop-overlay" class="overlay">
+        <h2>BUREAU EQUIPMENT & PERKS</h2>
+        <p style="font-size:0.85em; margin-bottom:12px;">Upgrade your booth to handle complex shift directives.</p>
+        <div id="shop-items"></div>
+        <button class="btn btn-approve" style="margin-top:auto;" onclick="toggleShop(false)">RETURN TO BOOTH</button>
+    </div>
+
+    <div id="instructions-overlay" class="overlay">
+        <h2>OFFICIAL STATION MANUAL & REGIONAL MAP</h2>
+        
+        <div class="rule-box">
+            <h3>🗺️ VALID ISSUING CITIES BY REGION</h3>
+            <ul>
+                <li><b>Fun-Land:</b> Joy City, Carnival Port</li>
+                <li><b>Gloom-Swamp:</b> Mud Haven, Bog Town</li>
+                <li><b>Cloud City:</b> Sky Peak, Aero Station</li>
+                <li><b>The Trash Heap:</b> Scrap Yard, Junk City</li>
+                <li><b>Shadow Realm:</b> Dark Citadel, Void Gate</li>
+            </ul>
+        </div>
+
+        <div class="rule-box">
+            <h3 style="color:#e57373;">❌ DENIAL PROTOCOL</h3>
+            <ul>
+                <li><b>Reason:</b> Entry reason is <i>"Sneaky Reasons"</i>.</li>
+                <li><b>Invalid City:</b> Passport Issuing City does NOT match Region Table.</li>
+                <li><b>Contraband:</b> Luggage contains illegal relics/explosives (unless VIP).</li>
+                <li><b>Height/Weight:</b> Mismatch between listed ID and physical booth measurements.</li>
+                <li><b>Forged Seals:</b> Passport fails UV Light Stamp scan!</li>
+                <li><b>Photo Mismatch:</b> ID Photo face does NOT match applicant physical portrait!</li>
+            </ul>
+        </div>
+
+        <div class="rule-box">
+            <h3 style="color:#ff8a65;">🚨 DETAIN PROTOCOL</h3>
+            <ul>
+                <li><b>Wanted Criminals:</b> Matches any fugitive on the Wanted Bulletin Board!</li>
+                <li><b>Fingerprint Mismatch:</b> Running fingerprints reveals a fraudulent alias!</li>
+            </ul>
+        </div>
+
+        <button class="btn btn-approve" style="margin-top:auto;" onclick="toggleInstructions(false)">BACK TO WORK</button>
+    </div>
+
+    <div id="nightly-overlay" class="overlay">
+        <h2>NIGHTLY HOUSEHOLD SUMMARY</h2>
+        <p style="font-size:0.85em; color:#aaa; margin-bottom:12px;">Manage your daily earnings to keep your family alive.</p>
+
+        <div class="night-row">
+            <div><b>Rent (Mandatory)</b><br><small>Prevents eviction</small></div>
+            <div>$20</div>
+        </div>
+        <div class="night-row">
+            <div><b>Food Supply</b><br><small>Status: <span id="family-hunger">Healthy</span></small></div>
+            <button class="btn btn-sys" id="btn-food" onclick="buyFamilyNeed('food', 15)">Pay Food ($15)</button>
+        </div>
+        <div class="night-row">
+            <div><b>Heating Supply</b><br><small>Status: <span id="family-warmth">Warm</span></small></div>
+            <button class="btn btn-sys" id="btn-heat" onclick="buyFamilyNeed('heat', 10)">Pay Heating ($10)</button>
+        </div>
+        <div class="night-row" id="row-medicine" style="display:none;">
+            <div><b>Medicine</b><br><small style="color:#e57373;">Family member is SICK!</small></div>
+            <button class="btn btn-deny" onclick="buyFamilyNeed('medicine', 25)">Buy Medicine ($25)</button>
+        </div>
+
+        <div style="margin-top:15px; font-size:1.1em; color:#d4af37;">Remaining Savings: <b id="night-gold">$0</b></div>
+        <button class="btn btn-approve" style="margin-top:auto;" onclick="startNextDay()">START NEXT DAY</button>
+    </div>
+
+    <div id="ending-overlay" class="overlay">
+        <div class="ending-card">
+            <h1 id="ending-title">ENDING REACHED</h1>
+            <p id="ending-desc">Your tenure at Border Station 7 has come to a close...</p>
+            <button class="btn btn-approve" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <div class="card">
+            <h3>OFFICIAL BADGE</h3>
+            <div>Rank: <b id="ui-rank">Rookie</b></div>
+            <div>Day: <b id="ui-day">1</b> | Money: <b id="ui-gold" style="color:#d4af37;">$50</b></div>
+            <div>Shift Quota: <span id="ui-quota">0/3</span></div>
+        </div>
+
+        <div class="card" style="background:#2c2219; color:#ffb74d;">
+            <h3 style="border-bottom-color:#ffb74d;">SHIFT MODIFIER & DIRECTIVES</h3>
+            <div id="ui-modifier" style="font-size:0.8em; font-weight:bold; margin-bottom:4px;">Standard Shift</div>
+            <div id="ui-dynamic-directive" style="font-size:0.75em; color:#fff; background:#4a2c11; padding:4px; border-radius:3px;">No special embargoes.</div>
+        </div>
+
+        <div class="wanted-board">
+            <h3 style="font-size:0.85em; border-bottom:1px solid #ff8a65; padding-bottom:2px;">📌 WANTED FUGITIVES</h3>
+            <div id="wanted-list"></div>
+        </div>
+
+        <div class="card" style="flex-grow:1;">
+            <h3>BASE RULES</h3>
+            <div id="ui-rules" style="font-size:0.75em; line-height:1.2;"></div>
+
+            <div id="city-cheat-box" class="city-cheat-sheet" style="display:none;">
+                <div style="color:#ffb74d; font-weight:bold; margin-bottom:3px; border-bottom:1px solid #5c3a1e;">🗺️ REGION CITY DIRECTORY</div>
+                <div><b>Fun-Land:</b> Joy City, Carnival Port</div>
+                <div><b>Gloom-Swamp:</b> Mud Haven, Bog Town</div>
+                <div><b>Cloud City:</b> Sky Peak, Aero Station</div>
+                <div><b>The Trash Heap:</b> Scrap Yard, Junk City</div>
+                <div><b>Shadow Realm:</b> Dark Citadel, Void Gate</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="booth-window">
+        <div id="speech-bubble">"Next in line!"</div>
+        <div id="bribe-badge" class="badge-tag">BRIBE OFFERED</div>
+        <div id="vip-badge" class="badge-tag">VIP DIPLOMAT</div>
+        <div id="story-badge" class="badge-tag">SPECIAL EVENT</div>
+        <div id="applicant-avatar"></div>
+    </div>
+
+    <div id="desk">
+        <div id="stamp-mark">APPROVED</div>
+
+        <div class="doc-panel">
+            <h4>1. PASSPORT</h4>
+            <div class="passport-photo" id="d-passport-photo"></div>
+            <div class="doc-row"><span>Name:</span><span class="val" id="d-name">-</span></div>
+            <div class="doc-row"><span>Origin:</span><span class="val" id="d-origin">-</span></div>
+            <div class="doc-row"><span>City:</span><span class="val" id="d-city">-</span></div>
+            <div class="doc-row"><span>Listed Ht:</span><span class="val" id="d-height">-</span></div>
+            <div class="doc-row"><span>Listed Wt:</span><span class="val" id="d-weight">-</span></div>
+            <div class="doc-row"><span>Reason:</span><span class="val" id="d-reason">-</span></div>
+            <div class="doc-row"><span>Expires:</span><span class="val" id="d-expiry">-</span></div>
+        </div>
+
+        <div class="doc-panel" id="panel-visa">
+            <h4>2. ENTRY VISA</h4>
+            <div class="doc-row"><span>Visa Status:</span><span class="val" id="d-visa-status">N/A</span></div>
+            <div class="doc-row"><span>Visa Name:</span><span class="val" id="d-visa-name">-</span></div>
+            <div class="doc-row"><span>Expires:</span><span class="val" id="d-visa-exp">-</span></div>
+            <h4 style="margin-top:6px;">3. WORK PERMIT</h4>
+            <div class="doc-row"><span>Permit Status:</span><span class="val" id="d-permit-status">N/A</span></div>
+            <div class="doc-row"><span>Job Role:</span><span class="val" id="d-permit-job">-</span></div>
+        </div>
+
+        <div class="doc-panel">
+            <h4>EXAMINATION TOOLS</h4>
+            <button class="tool-btn" onclick="useTool('scale')">⚖️ Scale & Height:<br><span id="t-scale" style="color:#d4af37;">Click to Measure</span></button>
+            <button class="tool-btn" onclick="useTool('xray')">🩻 Luggage X-Ray:<br><span id="t-xray" style="color:#d4af37;">Unscanned</span></button>
+            <button class="tool-btn" onclick="useTool('prints')">🐾 Fingerprints:<br><span id="t-prints" style="color:#d4af37;">Unscanned</span></button>
+            <button class="tool-btn" id="btn-uv" style="display:none;" onclick="useTool('uv')">🔦 UV Seal Scanner:<br><span id="t-uv" style="color:#d4af37;">Unscanned</span></button>
+            <button class="tool-btn" id="btn-photo" style="display:none;" onclick="useTool('photo')">📸 Photo Analyzer:<br><span id="t-photo" style="color:#d4af37;">Unchecked</span></button>
+            <button class="tool-btn" id="btn-interrogate" style="background:#5c3a1e; color:#ffd700;" onclick="interrogateApplicant()">🧪 Question / Interrogate</button>
+            <button class="tool-btn" id="btn-fast-stamp" style="display:none; background:#2e7d32; margin-top: auto;" onclick="useFastStamp()">⚡ Auto-Scan Station</button>
+            <div id="assistant-indicator" style="margin-top:auto; font-size:0.72em; font-weight:bold; text-align:center; display:none; padding:4px; border-radius:4px; background:#444;">Assist: Unchecked</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div>
+            <button class="btn btn-sys" onclick="toggleInstructions(true)">📜 Guide/Map</button>
+            <button class="btn btn-sys" onclick="toggleShop(true)">🛒 Shop</button>
+            <button class="btn btn-sys" onclick="saveGame()">💾 Save</button>
+            <button class="btn btn-sys" onclick="loadGame()">📂 Load</button>
+            <button class="btn btn-sys" style="background:#8b0000;" onclick="resetGame()">🔄 Reset</button>
+        </div>
+        <div id="ui-msg" style="font-weight:bold; font-size:0.9em;">Inspect documents!</div>
+        <div>
+            <button class="btn btn-deny" onclick="stamp('deny')">DENY</button>
+            <button class="btn btn-detain" onclick="stamp('detain')">DETAIN</button>
+            <button class="btn btn-approve" onclick="stamp('approve')">APPROVE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+    function playSound(type) {
+        initAudio();
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'stamp') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(20, now + 0.12);
+            gain.gain.setValueAtTime(1.0, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now); osc.stop(now + 0.12);
+        } else if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.08);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'citation') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(160, now);
+            osc.frequency.setValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.5, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now); osc.stop(now + 0.25);
+        } else if (type === 'scan') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(700, now);
+            osc.frequency.linearRampToValueAtTime(1300, now + 0.05);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now); osc.stop(now + 0.05);
+        } else if (type === 'cash') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(987.77, now);
+            osc.frequency.setValueAtTime(1318.51, now + 0.08);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now); osc.stop(now + 0.25);
+        }
+    }
+
+    function triggerScreenShake() {
+        const container = document.getElementById('game-container');
+        container.classList.remove('shake');
+        void container.offsetWidth; // Trigger reflow
+        container.classList.add('shake');
+    }
+
+    let day = 1;
+    let gold = 50;
+    let rankIdx = 0;
+    let quotaMet = 0;
+    let currentApp = null;
+    let shiftModifier = { name: "Normal Shift", desc: "Standard operations." };
+    let dynamicDirective = { type: "none", desc: "No special regional directives." };
+
+    let loyalistPoints = 0;
+    let rebelPoints = 0;
+    let corruptBribesTaken = 0;
+    let storyTriggeredToday = false;
+
+    let family = { foodPaid: true, heatPaid: true, sick: false };
+    const ranks = ["Rookie", "Gatekeeper", "Border Officer", "Senior Examiner", "High Warden"];
+
+    const wantedPool = [
+        { name: "Lord Snort", bounty: 50, crime: "Grand Heist", seed: "w_snort" },
+        { name: "Squeak the Thief", bounty: 30, crime: "Pickpocketing", seed: "w_squeak" },
+        { name: "Zorp the Rogue", bounty: 60, crime: "Smuggling", seed: "w_zorp" },
+        { name: "Glitter Gremlin", bounty: 40, crime: "Arson", seed: "w_gremlin" },
+        { name: "Cyber Shadow", bounty: 100, crime: "Espionage", seed: "w_shadow" },
+        { name: "Mad Baron", bounty: 80, crime: "Forgery", seed: "w_baron" },
+        { name: "Neon Phantom", bounty: 110, crime: "Data Theft", seed: "w_phantom" },
+        { name: "Ghost Pirate", bounty: 90, crime: "Contraband Trade", seed: "w_pirate" }
+    ];
+    let activeWanted = [];
+
+    const validCities = {
+        "Fun-Land": ["Joy City", "Carnival Port"],
+        "Gloom-Swamp": ["Mud Haven", "Bog Town"],
+        "Cloud City": ["Sky Peak", "Aero Station"],
+        "The Trash Heap": ["Scrap Yard", "Junk City"],
+        "Shadow Realm": ["Dark Citadel", "Void Gate"]
+    };
+
+    const origins = Object.keys(validCities);
+    const reasons = ["Vacation", "Sneaky Reasons", "Trade", "World Domination", "Visiting Family"];
+    const items = ["Harmless Bread", "Sparkly Glitterbomb", "Illegal Relic", "Bag of Screws", "A Live Duck", "Cursed Relic", "Dark Orb", "Banned Holo-Drive"];
+
+    const upgrades = {
+        atlasMap: { bought: false, cost: 75, name: "City Atlas Guide", desc: "Auto-flags invalid passport issuing cities in red!" },
+        uvScanner: { bought: false, cost: 60, name: "UV Stamp Detector", desc: "Checks for forged passport seals." },
+        photoAnalyzer: { bought: false, cost: 80, name: "Photo Analyzer", desc: "Detects fake ID photos." },
+        autoScanner: { bought: false, cost: 110, name: "Auto-XRay", desc: "X-Rays luggage instantly." },
+        stampAssistant: { bought: false, cost: 140, name: "Stamp Assistant", desc: "Shows correctness indicator." },
+        fastStamp: { bought: false, cost: 175, name: "Auto-Scan Station", desc: "Scans all tools with one click." },
+        coffee: { bought: false, cost: 50, name: "Espresso Machine", desc: "+$5 extra salary per correct verdict." },
+        bribePass: { bought: false, cost: 150, name: "Bribe Immunity", desc: "No audit penalty for taking bribes." }
+    };
+
+    function init() {
+        renderShop();
+        rollShiftModifierAndDirectives();
+        if(!loadGame(true)) nextApplicant();
+        updateUI();
+    }
+
+    function rollShiftModifierAndDirectives() {
+        storyTriggeredToday = false;
+        const rand = Math.random();
+
+        if (day === 10) shiftModifier = { name: "🚨 LOCKDOWN CRISIS", desc: "Station Security Alert! Fines for errors are doubled!", lockdown: true };
+        else if (rand < 0.25) shiftModifier = { name: "⚠️ Glitch Day", desc: "X-Ray scanner broken today!", xrayBroken: true };
+        else if (rand < 0.5) shiftModifier = { name: "🚀 Rush Hour", desc: "Double quota required, double payouts!", doublePayout: true };
+        else if (rand < 0.75) shiftModifier = { name: "💰 High Corruption", desc: "More bribe offers today!", highBribes: true };
+        else shiftModifier = { name: "☀️ Standard Shift", desc: "Normal station operations." };
+
+        const dirRand = Math.random();
+        if (day >= 3 && dirRand < 0.25) {
+            const embargoRegion = origins[Math.floor(Math.random() * origins.length)];
+            dynamicDirective = { type: "embargo", region: embargoRegion, desc: `🚫 EMBARGO: DENY all travelers from ${embargoRegion}!` };
+        } else if (day >= 4 && dirRand < 0.5) {
+            dynamicDirective = { type: "mandatory_xray", desc: "🔍 DIRECTIVE: DENY anyone carrying a 'Bag of Screws'!" };
+        } else if (day >= 5 && dirRand < 0.75) {
+            dynamicDirective = { type: "trade_permit", desc: "💼 TRADE LAWS: Travelers for 'Trade' MUST have a Work Permit!" };
+        } else {
+            dynamicDirective = { type: "none", desc: "No active special embargoes today." };
+        }
+
+        activeWanted = [];
+        let count = Math.min(3, 1 + Math.floor(day / 3));
+        let poolCopy = [...wantedPool];
+        for (let i = 0; i < count; i++) {
+            const idx = Math.floor(Math.random() * poolCopy.length);
+            activeWanted.push(poolCopy.splice(idx, 1)[0]);
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('ui-rank').innerText = ranks[rankIdx];
+        document.getElementById('ui-day').innerText = day;
+        document.getElementById('ui-gold').innerText = "$" + gold;
+        
+        const targetQuota = (3 + day * 2) * (shiftModifier.doublePayout ? 2 : 1);
+        document.getElementById('ui-quota').innerText = `${quotaMet}/${targetQuota}`;
+        document.getElementById('ui-modifier').innerText = `${shiftModifier.name}\n(${shiftModifier.desc})`;
+        document.getElementById('ui-dynamic-directive').innerText = dynamicDirective.desc;
+
+        const wList = document.getElementById('wanted-list');
+        wList.innerHTML = "";
+        activeWanted.forEach(w => {
+            const div = document.createElement('div');
+            div.className = "wanted-item";
+            div.innerHTML = `
+                <div class="wanted-avatar" style="background-image:url('https://api.dicebear.com/7.x/bottts/svg?seed=${w.seed}')"></div>
+                <div><b>${w.name}</b> ($${w.bounty})<br><small style="color:#ff8a65;">${w.crime}</small></div>`;
+            wList.appendChild(div);
+        });
+
+        let rules = "• Deny if Reason is <i>'Sneaky Reasons'</i>.<br>";
+        if (day >= 2) rules += "• Deny invalid Passport Issuing Cities.<br>";
+        if (day >= 3) rules += "• Deny if Contraband in Luggage or Height/Weight mismatch.<br>";
+        if (day >= 4) rules += "• Deny if <b>Entry Visa</b> is missing/expired or UV Seal forged.<br>";
+        if (day >= 5) rules += "• <b>DETAIN</b> wanted criminals or fingerprint fraud!<br>";
+        if (day >= 6) rules += "• Deny if ID Photo does not match physical face!<br>";
+        if (day >= 8) rules += "• Deny if <b>Work Permit</b> is missing.<br>";
+        document.getElementById('ui-rules').innerHTML = rules;
+
+        if (day >= 2) {
+            document.getElementById('city-cheat-box').style.display = 'block';
+        } else {
+            document.getElementById('city-cheat-box').style.display = 'none';
+        }
+
+        if (upgrades.uvScanner.bought) document.getElementById('btn-uv').style.display = 'block';
+        if (upgrades.photoAnalyzer.bought) document.getElementById('btn-photo').style.display = 'block';
+        if (upgrades.fastStamp.bought) document.getElementById('btn-fast-stamp').style.display = 'block';
+        if (upgrades.stampAssistant.bought) document.getElementById('assistant-indicator').style.display = 'block';
+    }
+
+    function nextApplicant() {
+        const stampMark = document.getElementById('stamp-mark');
+        stampMark.className = "";
+
+        const names = ["Gromm", "Blinky", "Glub", "Zorp", "Squeak", "Barnaby", "Jax", "Kaelen", "Vesper"];
+        let isStoryEvent = false;
+
+        let name = names[Math.floor(Math.random()*names.length)];
+        let storyQuote = null;
+
+        if (!storyTriggeredToday) {
+            if (day === 3) {
+                isStoryEvent = true; name = "Slick Rick"; storyQuote = '"Hey officer. Take this $120 cash and let my crate of dark relics through."';
+            } else if (day === 5) {
+                isStoryEvent = true; name = "Maya"; storyQuote = '"The rebellion needs passage. Approve my operative to join the cause!"';
+            } else if (day === 12) {
+                isStoryEvent = true; name = "High Warden Vane"; storyQuote = '"Ministry Inspection! I will be strictly auditing your procedure right now."';
+            }
+            if (isStoryEvent) storyTriggeredToday = true;
+        }
+
+        let isWantedFugitive = null;
+        if (!isStoryEvent && Math.random() < 0.25) {
+            isWantedFugitive = activeWanted[Math.floor(Math.random() * activeWanted.length)];
+            name = isWantedFugitive.name;
+        }
+
+        const origin = origins[Math.floor(Math.random()*origins.length)];
+        const validCityList = validCities[origin];
+        const isInvalidCity = !isStoryEvent && (day >= 2) && (Math.random() < 0.22);
+        const city = isInvalidCity ? "Fakeville" : validCityList[Math.floor(Math.random()*validCityList.length)];
+
+        const reason = (isStoryEvent && name === "Slick Rick") ? "Trade" : reasons[Math.floor(Math.random()*reasons.length)];
+        const item = (isStoryEvent && name === "Slick Rick") ? "Dark Orb" : items[Math.floor(Math.random()*items.length)];
+        
+        const listedHeight = Math.floor(Math.random() * 40) + 140;
+        const actualHeight = (!isStoryEvent && Math.random() < 0.18) ? listedHeight + 15 : listedHeight;
+
+        const listedWeight = Math.floor(Math.random() * 50) + 40;
+        const actualWeight = (!isStoryEvent && Math.random() < 0.18) ? listedWeight + 18 : listedWeight;
+
+        const expYear = (isStoryEvent && name !== "Slick Rick") ? 2028 : (Math.floor(Math.random() * 6) + 2023);
+
+        const hasVisa = isStoryEvent ? true : !(day >= 4 && Math.random() < 0.2);
+        const visaName = (hasVisa && Math.random() < 0.15 && !isStoryEvent) ? "Wrong Name" : name;
+        const visaExp = Math.floor(Math.random() * 5) + 2024;
+
+        const hasWorkPermit = isStoryEvent ? true : !(day >= 8 && Math.random() < 0.2);
+
+        const isUvSealForged = (day >= 4 && !isStoryEvent && Math.random() < 0.22);
+        const photoMatches = (day >= 6 && !isStoryEvent) ? (Math.random() >= 0.2) : true;
+
+        const printMatch = (day >= 5 && !isStoryEvent) ? (Math.random() >= 0.2) : true;
+        const faceSeed = isWantedFugitive ? isWantedFugitive.seed : (name + Math.random());
+        const photoSeed = photoMatches ? faceSeed : (name + "_fake_photo_" + Math.random());
+        
+        let isVip = (day >= 7 && Math.random() < 0.12 && !isStoryEvent);
+
+        let denyReasons = [];
+        let detainReasons = [];
+
+        if (isWantedFugitive) detainReasons.push("Wanted Criminal");
+        if (!printMatch) detainReasons.push("Fingerprint Fraud");
+
+        if (reason === "Sneaky Reasons") denyReasons.push("Sneaky Reason");
+        if (isInvalidCity) denyReasons.push("Invalid Issuing City");
+        if ((item === "Sparkly Glitterbomb" || item === "Illegal Relic" || item === "Cursed Relic" || item === "Dark Orb" || item === "Banned Holo-Drive") && !isVip) denyReasons.push("Contraband");
+        if ((actualHeight !== listedHeight || actualWeight !== listedWeight) && !isVip) denyReasons.push("Physical Mismatch");
+        if (expYear < 2026) denyReasons.push("Expired Passport");
+        if (day >= 4 && (!hasVisa || visaName !== name || visaExp < 2026)) denyReasons.push("Invalid Visa");
+        if (isUvSealForged) denyReasons.push("Forged Passport UV Seal");
+        if (!photoMatches) denyReasons.push("Photo Mismatch");
+        if (day >= 8 && !hasWorkPermit) denyReasons.push("Missing Work Permit");
+
+        if (dynamicDirective.type === "embargo" && origin === dynamicDirective.region) denyReasons.push("Embargo Violator");
+        if (dynamicDirective.type === "mandatory_xray" && item === "Bag of Screws") denyReasons.push("Restricted Item");
+        if (dynamicDirective.type === "trade_permit" && reason === "Trade" && !hasWorkPermit) denyReasons.push("Missing Trade Permit");
+
+        let correctAction = "approve";
+        if (detainReasons.length > 0) correctAction = "detain";
+        else if (denyReasons.length > 0) correctAction = "deny";
+
+        let bribeAmount = 0;
+        const isFlawed = (correctAction !== "approve");
+        const bribeChance = shiftModifier.highBribes ? 0.6 : 0.3;
+        
+        if (isFlawed && Math.random() < bribeChance && !isStoryEvent) {
+            bribeAmount = Math.floor(Math.random() * 35) + 30;
+        }
+
+        if (name === "Slick Rick") bribeAmount = 120;
+
+        currentApp = {
+            name, origin, city, isInvalidCity, reason, item, expYear, listedHeight, actualHeight,
+            listedWeight, actualWeight, hasVisa, visaName, visaExp, hasWorkPermit,
+            isWantedFugitive, printMatch, isVip, isStoryEvent, bribeAmount,
+            isUvSealForged, photoMatches, correctAction, detainReasons, denyReasons,
+            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${faceSeed}`,
+            photoAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${photoSeed}`
+        };
+
+        document.getElementById('d-name').innerText = name;
+        document.getElementById('d-origin').innerText = origin;
+        
+        // Atlas City Guide Upgrade check
+        if (upgrades.atlasMap.bought && isInvalidCity) {
+            document.getElementById('d-city').innerHTML = `${city} <span style="color:#e57373; font-weight:bold;">🔴 INVALID</span>`;
+        } else {
+            document.getElementById('d-city').innerText = city;
+        }
+
+        document.getElementById('d-height').innerText = listedHeight + " cm";
+        document.getElementById('d-weight').innerText = listedWeight + " kg";
+        document.getElementById('d-reason').innerText = reason;
+        document.getElementById('d-expiry').innerText = expYear;
+
+        document.getElementById('d-visa-status').innerText = day >= 4 ? (hasVisa ? "PRESENT" : "MISSING!") : "N/A";
+        document.getElementById('d-visa-name').innerText = hasVisa ? visaName : "-";
+        document.getElementById('d-visa-exp').innerText = hasVisa ? visaExp : "-";
+
+        document.getElementById('d-permit-status').innerText = day >= 8 ? (hasWorkPermit ? "VALID" : "MISSING!") : "N/A";
+        document.getElementById('d-permit-job').innerText = hasWorkPermit ? "Laborer" : "-";
+
+        document.getElementById('t-scale').innerText = "Click to Measure";
+        document.getElementById('t-scale').style.color = "#d4af37";
+        document.getElementById('t-xray').innerText = shiftModifier.xrayBroken ? "BROKEN" : "Unscanned";
+        document.getElementById('t-prints').innerText = "Unscanned";
+        document.getElementById('t-uv').innerText = "Unscanned";
+        document.getElementById('t-photo').innerText = "Unchecked";
+
+        document.getElementById('bribe-badge').style.display = bribeAmount > 0 ? "block" : "none";
+        document.getElementById('vip-badge').style.display = isVip ? "block" : "none";
+        document.getElementById('story-badge').style.display = isStoryEvent ? "block" : "none";
+        
+        document.getElementById('applicant-avatar').style.backgroundImage = `url('${currentApp.avatar}')`;
+        document.getElementById('d-passport-photo').style.backgroundImage = `url('${currentApp.photoAvatar}')`;
+        
+        document.getElementById('speech-bubble').innerText = storyQuote || (bribeAmount > 0 ? `"Look the other way for $${bribeAmount}?"` : '"Papers ready officer!"');
+        document.getElementById('ui-msg').innerText = "Inspect documents!";
+        document.getElementById('ui-msg').style.color = "#fff";
+
+        if (upgrades.autoScanner.bought && !shiftModifier.xrayBroken) useTool('xray');
+    }
+
+    function interrogateApplicant() {
+        if (!currentApp) return;
+        playSound('scan');
+
+        const bubble = document.getElementById('speech-bubble');
+        
+        if (currentApp.isStoryEvent) {
+            bubble.innerText = `"${currentApp.name}: You know what is at stake here, inspector."`;
+            return;
+        }
+
+        if (currentApp.correctAction === "approve") {
+            const cleanReplies = [
+                '"Everything is in order, officer. I have nothing to hide!"',
+                '"Is there a problem? My papers are completely legitimate."',
+                '"I am just traveling for honest business."'
+            ];
+            bubble.innerText = cleanReplies[Math.floor(Math.random() * cleanReplies.length)];
+        } else {
+            if (currentApp.denyReasons.includes("Invalid Issuing City")) {
+                bubble.innerText = '"City? Oh, uh... they just changed the regional boundaries yesterday!"';
+            } else if (currentApp.denyReasons.includes("Physical Mismatch")) {
+                bubble.innerText = '"I... uh... gained weight during the long journey!"';
+            } else if (currentApp.denyReasons.includes("Contraband")) {
+                bubble.innerText = '"That dangerous relic in my luggage? That\'s just a souvenir!"';
+            } else if (currentApp.denyReasons.includes("Expired Passport") || currentApp.denyReasons.includes("Invalid Visa")) {
+                bubble.innerText = '"Wait, expired?! Can I slip you $20 to pretend you didn\'t see that?"';
+            } else if (currentApp.detainReasons.includes("Wanted Criminal") || currentApp.detainReasons.includes("Fingerprint Fraud")) {
+                bubble.innerText = '"You\'ve got the wrong person! That isn\'t my record!"';
+            } else {
+                bubble.innerText = '"Please officer, I really need to cross today!"';
+            }
+        }
+    }
+
+    function useTool(tool) {
+        if (!currentApp) return;
+        playSound('scan');
+
+        if (tool === 'scale') {
+            const hMatch = currentApp.actualHeight === currentApp.listedHeight;
+            const wMatch = currentApp.actualWeight === currentApp.listedWeight;
+            const scaleElem = document.getElementById('t-scale');
+            
+            if (!hMatch || !wMatch) {
+                scaleElem.innerHTML = `Measured: ${currentApp.actualHeight}cm / ${currentApp.actualWeight}kg <br><span style="color:#f44336; font-weight:bold;">⚠️ MISMATCH!</span>`;
+            } else {
+                scaleElem.innerHTML = `Measured: ${currentApp.actualHeight}cm / ${currentApp.actualWeight}kg <br><span style="color:#4caf50; font-weight:bold;">✅ MATCHES ID</span>`;
+            }
+        }
+        if (tool === 'xray') {
+            if (shiftModifier.xrayBroken) return;
+            let res = currentApp.item;
+            document.getElementById('t-xray').innerText = res;
+        }
+        if (tool === 'prints') {
+            document.getElementById('t-prints').innerText = !currentApp.printMatch ? "⚠️ RECORD ALIAS FRAUD!" : (currentApp.isWantedFugitive ? "🚨 WANTED MATCH!" : "✅ Verified Clean");
+        }
+        if (tool === 'uv') {
+            document.getElementById('t-uv').innerText = currentApp.isUvSealForged ? "⚠️ FORGED SEAL DETECTED!" : "✅ Valid Official Seal";
+        }
+        if (tool === 'photo') {
+            document.getElementById('t-photo').innerText = currentApp.photoMatches ? "✅ Photo Matches Face" : "⚠️ PHOTO MISMATCH DETECTED!";
+        }
+
+        if (upgrades.stampAssistant.bought) {
+            const ind = document.getElementById('assistant-indicator');
+            if (currentApp.correctAction === "approve") { ind.innerText = "Assist: VALID"; ind.style.background = "#2e7d32"; }
+            if (currentApp.correctAction === "deny") { ind.innerText = "Assist: DENY"; ind.style.background = "#c62828"; }
+            if (currentApp.correctAction === "detain") { ind.innerText = "Assist: DETAIN"; ind.style.background = "#d84315"; }
+        }
+    }
+
+    function useFastStamp() {
+        useTool('scale'); useTool('xray'); useTool('prints');
+        if (upgrades.uvScanner.bought) useTool('uv');
+        if (upgrades.photoAnalyzer.bought) useTool('photo');
+    }
+
+    function stamp(action) {
+        if (!currentApp) return;
+
+        if (action === "approve" && currentApp.bribeAmount > 0) {
+            document.getElementById('bribe-modal-text').innerText = `Accept $${currentApp.bribeAmount} cash to overlook their violations and approve entry?`;
+            document.getElementById('bribe-modal').style.display = 'flex';
+            return;
+        }
+
+        executeStamp(action, false);
+    }
+
+    window.confirmBribe = function(accepted) {
+        document.getElementById('bribe-modal').style.display = 'none';
+        if (accepted) {
+            executeStamp("approve", true);
+        }
+    };
+
+    function executeStamp(action, tookBribe) {
+        playSound('stamp');
+        triggerScreenShake();
+
+        const stampMark = document.getElementById('stamp-mark');
+        stampMark.innerText = action.toUpperCase();
+        stampMark.className = `${action} stamped`;
+
+        let isCorrect = (action === currentApp.correctAction);
+        if (action === "deny" && currentApp.denyReasons.length > 0) isCorrect = true;
+        if (action === "detain" && currentApp.detainReasons.length > 0) isCorrect = true;
+
+        if (currentApp.name === "Maya" && action === "approve") rebelPoints += 3;
+        if (currentApp.name === "Maya" && action === "deny") loyalistPoints += 2;
+        if (isCorrect) loyalistPoints++;
+
+        if (tookBribe) {
+            playSound('cash');
+            gold += currentApp.bribeAmount;
+            corruptBribesTaken += currentApp.bribeAmount;
+            
+            const caught = !upgrades.bribePass.bought && (Math.random() < 0.25);
+            if (caught) {
+                playSound('citation');
+                const penalty = shiftModifier.lockdown ? 80 : 40;
+                gold = Math.max(0, gold - penalty);
+                document.getElementById('ui-msg').innerText = `AUDIT PENALTY! -$${penalty} fine for bribe!`;
+                document.getElementById('ui-msg').style.color = "#f44336";
+            } else {
+                document.getElementById('ui-msg').innerText = `BRIBE ACCEPTED! (+${currentApp.bribeAmount})`;
+                document.getElementById('ui-msg').style.color = "#d4af37";
+            }
+        } else {
+            let reward = (action === "detain") ? 30 : 15;
+            if (currentApp.isWantedFugitive && action === "detain") reward += currentApp.isWantedFugitive.bounty;
+            if (shiftModifier.doublePayout) reward *= 2;
+
+            if (isCorrect) {
+                playSound('correct');
+                if (upgrades.coffee.bought) reward += 5;
+                gold += reward;
+                quotaMet++;
+                document.getElementById('ui-msg').innerText = `CORRECT ${action.toUpperCase()}! (+${reward})`;
+                document.getElementById('ui-msg').style.color = "#4caf50";
+            } else {
+                playSound('citation');
+                const fine = shiftModifier.lockdown ? 24 : 12;
+                gold = Math.max(0, gold - fine);
+                document.getElementById('ui-msg').innerText = `CITATION ISSUED! (-$${fine})`;
+                document.getElementById('ui-msg').style.color = "#f44336";
+            }
+        }
+
+        const targetQuota = (3 + day * 2) * (shiftModifier.doublePayout ? 2 : 1);
+        if (quotaMet >= targetQuota) {
+            setTimeout(openNightlyExpenses, 800);
+        } else {
+            updateUI();
+            setTimeout(nextApplicant, 900);
+        }
+    }
+
+    function openNightlyExpenses() {
+        gold = Math.max(0, gold - 20);
+        document.getElementById('night-gold').innerText = "$" + gold;
+
+        if (!family.foodPaid || !family.heatPaid) family.sick = true;
+        document.getElementById('row-medicine').style.display = family.sick ? 'flex' : 'none';
+
+        document.getElementById('family-hunger').innerText = family.foodPaid ? "Healthy" : "Starving!";
+        document.getElementById('family-warmth').innerText = family.heatPaid ? "Warm" : "Freezing!";
+
+        family.foodPaid = false;
+        family.heatPaid = false;
+
+        document.getElementById('nightly-overlay').classList.add('active');
+    }
+
+    function buyFamilyNeed(type, cost) {
+        if (gold >= cost) {
+            playSound('cash');
+            gold -= cost;
+            if (type === 'food') family.foodPaid = true;
+            if (type === 'heat') family.heatPaid = true;
+            if (type === 'medicine') family.sick = false;
+            openNightlyExpenses();
+        } else alert("Not enough money!");
+    }
+
+    function startNextDay() {
+        document.getElementById('nightly-overlay').classList.remove('active');
+        day++;
+        quotaMet = 0;
+
+        if (day >= 15) {
+            triggerEnding();
+            return;
+        }
+
+        if (day % 2 === 0 && rankIdx < ranks.length - 1) rankIdx++;
+        rollShiftModifierAndDirectives();
+        saveGame(true);
+        updateUI();
+        nextApplicant();
+    }
+
+    function triggerEnding() {
+        const title = document.getElementById('ending-title');
+        const desc = document.getElementById('ending-desc');
+
+        if (corruptBribesTaken >= 300) {
+            title.innerText = "ENDING 1: CORRUPT TYCOON";
+            desc.innerText = `You accumulated over $${corruptBribesTaken} in illicit bribes! With your pockets lined with gold, you slipped past the border checkpoints yourself to live out a lavish life in luxury.`;
+        } else if (rebelPoints >= 5) {
+            title.innerText = "ENDING 2: REBEL HERO";
+            desc.innerText = "By covertly aiding Maya and defying oppressive Ministry directives, you helped spark the border rebellion. Station 7 was liberated!";
+        } else {
+            title.innerText = "ENDING 3: BUREAU LOYALIST";
+            desc.innerText = "Your unwavering dedication to station rules and strict protocol did not go unnoticed. You have been promoted to High Bureau Commissioner!";
+        }
+
+        document.getElementById('ending-overlay').classList.add('active');
+    }
+
+    function saveGame(silent = false) {
+        const data = { day, gold, rankIdx, quotaMet, upgrades, loyalistPoints, rebelPoints, corruptBribesTaken, family };
+        localStorage.setItem('border_inspector_expanded_save', JSON.stringify(data));
+        if(!silent) alert("Game Saved!");
+    }
+
+    function loadGame(silent = false) {
+        const raw = localStorage.getItem('border_inspector_expanded_save');
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        day = data.day; gold = data.gold; rankIdx = data.rankIdx; quotaMet = data.quotaMet;
+        loyalistPoints = data.loyalistPoints || 0; rebelPoints = data.rebelPoints || 0; corruptBribesTaken = data.corruptBribesTaken || 0;
+        if (data.family) family = data.family;
+        Object.assign(upgrades, data.upgrades);
+        renderShop(); updateUI(); nextApplicant();
+        if(!silent) alert("Game Loaded!");
+        return true;
+    }
+
+    function resetGame() {
+        localStorage.removeItem('border_inspector_expanded_save');
+        location.reload();
+    }
+
+    function toggleShop(show) { 
+        const shop = document.getElementById('shop-overlay');
+        if (show) shop.classList.add('active'); else shop.classList.remove('active');
+    }
+    function toggleInstructions(show) { 
+        const inst = document.getElementById('instructions-overlay');
+        if (show) inst.classList.add('active'); else inst.classList.remove('active');
+    }
+
+    function renderShop() {
+        const container = document.getElementById('shop-items');
+        container.innerHTML = "";
+        for (let key in upgrades) {
+            const item = upgrades[key];
+            const div = document.createElement('div');
+            div.className = "shop-item";
+            div.innerHTML = `
+                <div><b>${item.name}</b> ($${item.cost})<br><small>${item.desc}</small></div>
+                <button class="btn btn-approve" ${item.bought ? "disabled" : ""} onclick="buyUpgrade('${key}')">
+                    ${item.bought ? "PURCHASED" : "BUY"}
+                </button>`;
+            container.appendChild(div);
+        }
+    }
+
+    function buyUpgrade(key) {
+        const item = upgrades[key];
+        if (gold >= item.cost && !item.bought) {
+            playSound('cash');
+            gold -= item.cost;
+            item.bought = true;
+            renderShop(); updateUI();
+        } else alert("Not enough money!");
+    }
+
+    init();
+</script>
+</body>
+</html>

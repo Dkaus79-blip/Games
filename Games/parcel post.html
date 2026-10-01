@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dead Letter Logistics - Cozy Postal Inspector (20/20 Complete Edition)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&family=VT323&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
+        }
+
+        :root {
+            --bg-main: #07090e;
+            --panel-bg: rgba(20, 25, 34, 0.92);
+            --border-color: #30363d;
+            --accent-blue: #3b82f6;
+            --accent-green: #2ea043;
+            --accent-red: #da3633;
+            --accent-gold: #d29922;
+            --accent-purple: #8957e5;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+            font-size: 13px;
+            background-image: radial-gradient(circle at 50% 50%, #111827 0%, #07090e 100%);
+        }
+
+        body.crt::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            z-index: 999;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border: 1px solid var(--border-color);
+            border-top: 3px solid var(--accent-blue);
+            padding: 6px 14px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            height: 52px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .stats-group {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #f0f6fc;
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 310px 1fr 320px;
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .directive-banner {
+            background: rgba(31, 111, 235, 0.15);
+            border: 1px dashed #1f6feb;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            color: #7ee787;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1.3;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 18%;
+            background: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-dim);
+            padding: 6px 3px;
+            font-size: 10px;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover { background: #30363d; color: var(--text-main); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1f6feb 0%, #1158c7 100%);
+            color: #fff;
+            border-color: #58a6ff;
+            box-shadow: 0 0 10px rgba(31, 111, 235, 0.4);
+        }
+
+        .badge {
+            background: var(--accent-gold);
+            color: #0d1117;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 1px 5px;
+            font-size: 8px;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+        }
+
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 2px;
+        }
+
+        .queue-item {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s ease;
+        }
+
+        .queue-item:hover {
+            background: #161b22;
+            border-color: var(--text-dim);
+            transform: translateX(2px);
+        }
+
+        .queue-item.selected {
+            border-color: #58a6ff;
+            background: #1f2937;
+            box-shadow: inset 3px 0 0 #58a6ff;
+        }
+
+        .queue-item.vip-item {
+            border-color: var(--accent-gold);
+            background: linear-gradient(90deg, #262115 0%, #0d1117 100%);
+        }
+
+        .workspace-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .view-section.active { display: flex; }
+
+        /* Inspection Desk Mechanics */
+        .desk-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .desk-card {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        /* Parcel Canvas Rendering */
+        .parcel-viewport {
+            background: #11151c;
+            border: 1px solid #21262d;
+            border-radius: 4px;
+            height: 160px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        #parcel-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .scale-box {
+            background: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scale-readout {
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+            color: #7ee787;
+            background: #030508;
+            padding: 2px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            letter-spacing: 1px;
+        }
+
+        .scanner-box {
+            background: #030508;
+            border: 2px solid var(--accent-blue);
+            border-radius: 6px;
+            height: 130px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        #xray-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.85;
+        }
+
+        .scan-overlay-text {
+            position: relative;
+            z-index: 5;
+            color: #7ee787;
+            font-size: 11px;
+            text-align: center;
+            background: rgba(3, 5, 8, 0.75);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        /* Tools Bar */
+        .tools-bar {
+            display: flex;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px;
+            font-size: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover { background: #30363d; border-color: #58a6ff; }
+        .tool-btn.active { background: #1f6feb; color: #fff; border-color: #58a6ff; }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            flex: 1;
+            background: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover { background: #30363d; border-color: var(--text-dim); transform: translateY(-1px); }
+        .btn:active { transform: translateY(1px); }
+        .btn-green { background: rgba(35, 134, 54, 0.3); border-color: #238636; color: #7ee787; }
+        .btn-green:hover { background: rgba(35, 134, 54, 0.5); }
+        .btn-red { background: rgba(218, 54, 51, 0.3); border-color: var(--accent-red); color: #ff7b72; }
+        .btn-red:hover { background: rgba(218, 54, 51, 0.5); }
+        .btn-blue { background: rgba(31, 111, 235, 0.3); border-color: var(--accent-blue); color: #58a6ff; }
+        .btn-blue:hover { background: rgba(31, 111, 235, 0.5); }
+        .btn-gold { background: rgba(187, 128, 9, 0.3); border-color: var(--accent-gold); color: #f0883e; }
+        .btn-gold:hover { background: rgba(187, 128, 9, 0.5); }
+        .btn-purple { background: rgba(137, 87, 229, 0.3); border-color: var(--accent-purple); color: #d2a8ff; }
+        .btn-purple:hover { background: rgba(137, 87, 229, 0.5); }
+
+        /* Counter Customer View */
+        .customer-card {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .avatar-box {
+            width: 110px;
+            height: 110px;
+            background: #161b22;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .customer-dialogue-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        /* Atlas & Manual Styling */
+        .atlas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .atlas-box {
+            background: #161b22;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        /* Van View */
+        .van-slots {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .van-slot {
+            background: #0d1117;
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            height: 65px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 10px;
+        }
+
+        .van-slot.filled {
+            background: #161b22;
+            border: 1px solid var(--accent-blue);
+        }
+
+        /* Log Box */
+        .log-box {
+            flex: 1;
+            background: #030508;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-entry {
+            color: var(--text-dim);
+            border-bottom: 1px solid #161b22;
+            padding-bottom: 3px;
+        }
+        .log-success { color: #7ee787; }
+        .log-danger { color: #ff7b72; }
+        .log-warning { color: #f0883e; }
+
+        .footer-controls {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(3, 5, 8, 0.85);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-box {
+            background: #161b22;
+            border: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            width: 520px;
+            max-width: 90vw;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.9);
+        }
+
+        /* Stamp Inspector Lens Modal */
+        #stamp-lens-modal .modal-box {
+            width: 400px;
+            border-color: var(--accent-blue);
+        }
+
+        .lens-canvas-box {
+            width: 100%;
+            height: 220px;
+            background: #030508;
+            border: 2px solid var(--accent-blue);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #lens-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Achievements Modal */
+        .achieve-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .achieve-card {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            opacity: 0.5;
+        }
+
+        .achieve-card.unlocked {
+            border-color: var(--accent-gold);
+            opacity: 1;
+            background: linear-gradient(135deg, #1e1a0e 0%, #0d1117 100%);
+        }
+
+        /* Hotkey Help Bar */
+        .hotkeys-bar {
+            background: #030508;
+            border-top: 1px solid var(--border-color);
+            padding: 3px 8px;
+            font-size: 10px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="crt">
+
+    <!-- NEWSPAPER / SHIFT REPORT MODAL -->
+    <div class="modal-overlay" id="newspaper-modal">
+        <div class="modal-box">
+            <h3 style="color: var(--accent-gold); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-family: 'Special Elite', cursive; font-size: 18px;" id="news-headline">THE MUNICIPAL POST - DAILY CHRONICLE</h3>
+            <div id="news-body" style="font-size: 12px; color: var(--text-main); line-height: 1.5; font-family: 'Special Elite', cursive;">
+                Daily postal briefing loaded.
+            </div>
+            <button class="btn btn-gold" onclick="closeNewspaperAndStartNextDay()">Begin Next Shift</button>
+        </div>
+    </div>
+
+    <!-- STAMP MAGNIFIER MODAL -->
+    <div class="modal-overlay" id="stamp-lens-modal">
+        <div class="modal-box">
+            <h4 style="color: #58a6ff; text-align: center;">🔬 High-Precision Stamp Magnifier Lens</h4>
+            <div class="lens-canvas-box">
+                <canvas id="lens-canvas"></canvas>
+            </div>
+            <div id="stamp-lens-verdict" style="font-size: 11px; color: #7ee787; text-align: center; line-height: 1.3;">
+                Inspecting watermark microprint & municipal seal check-digit...
+            </div>
+            <button class="btn" onclick="closeStampLens()">Close Inspection Lens</button>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENTS MODAL -->
+    <div class="modal-overlay" id="achievements-modal">
+        <div class="modal-box">
+            <h3 style="color: var(--accent-gold); text-align: center;">🏆 Postal Service Inspector Medals</h3>
+            <div class="achieve-grid" id="achieve-container">
+                <!-- Populated dynamically -->
+            </div>
+            <button class="btn" onclick="toggleModal('achievements-modal', false)">Close Ledger</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="stats-group">
+            <div class="stat-box">
+                <span class="stat-label">Shift Day</span>
+                <span class="stat-value" id="day-val">1 / 20</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Funds</span>
+                <span class="stat-value" id="money-val">$150.00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Reputation</span>
+                <span class="stat-value" id="rep-val">100%</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Title</span>
+                <span class="stat-value" id="rank-val" style="color: #d2a8ff; font-size: 12px;">Junior Inspector</span>
+            </div>
+        </div>
+        <div class="stats-group">
+            <div class="stat-box">
+                <span class="stat-label">Queue Left</span>
+                <span class="stat-value" id="queue-left-val">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Strikes</span>
+                <span class="stat-value" id="strike-val" style="color: var(--accent-red);">0 / 3</span>
+            </div>
+            <button class="btn" id="music-toggle-btn" onclick="toggleCozyMusic()" style="font-size: 9px; padding: 4px 8px;">🎵 Lofi Chords: ON</button>
+            <button class="btn" id="audio-toggle-btn" onclick="toggleAudio()" style="font-size: 9px; padding: 4px 8px;">🔊 SFX: ON</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Panel: Operations Terminal -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>Operations Terminal</span>
+                <button class="btn" onclick="toggleModal('achievements-modal', true)" style="font-size: 9px; padding: 2px 6px;">🏆 Medals</button>
+            </div>
+            <div class="directive-banner" id="directive-display">
+                📢 Directive: Standard Inspection Protocols active.
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchView('inspect', event)">Inspect</button>
+                <button class="tab-btn" onclick="switchView('counter', event)">Counter</button>
+                <button class="tab-btn" onclick="switchView('van', event)" id="van-tab-btn">Van <span class="badge" id="van-badge" style="display:none;">READY</span></button>
+                <button class="tab-btn" onclick="switchView('atlas', event)">Atlas</button>
+                <button class="tab-btn" onclick="switchView('upgrades', event)">Shop</button>
+            </div>
+            <div class="panel-title" style="margin-top: 2px;">
+                <span id="queue-title">Incoming Parcels</span>
+                <span id="queue-count">0</span>
+            </div>
+            <div class="queue-list" id="queue-container">
+                <!-- Queued parcels inserted here -->
+            </div>
+        </div>
+
+        <!-- Center Panel: Active Workspace Area -->
+        <div class="panel">
+            <div class="panel-title">
+                <span id="workspace-title">Inspector Desk & Verification Workspace</span>
+                <span id="workspace-sub" style="color: #7ee787;">Relaxed Mode • No Timers</span>
+            </div>
+
+            <div class="workspace-content">
+                <!-- VIEW 1: INSPECTOR DESK -->
+                <div id="view-inspect" class="view-section active">
+                    <div class="desk-grid">
+                        <!-- Left Desk Box: Parcel Rendering & Scales -->
+                        <div class="desk-card">
+                            <div class="parcel-viewport" id="parcel-viewport">
+                                <canvas id="parcel-canvas"></canvas>
+                            </div>
+                            
+                            <div class="scale-box">
+                                <span style="font-size: 10px; color: var(--text-dim); font-weight: bold;">DIGITAL SCALE:</span>
+                                <div class="scale-readout" id="pkg-scale-weight">0.0 lbs</div>
+                            </div>
+
+                            <div style="font-size: 11px; background: #161b22; padding: 6px; border-radius: 4px; border: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 3px;">
+                                <div><strong>Sender:</strong> <span id="pkg-sender">--</span></div>
+                                <div><strong>Recipient:</strong> <span id="pkg-recipient">--</span></div>
+                                <div><strong>Address:</strong> <span id="pkg-address">--</span></div>
+                                <div><strong>District & Zip:</strong> <span id="pkg-district">--</span></div>
+                                <div><strong>Declared Weight:</strong> <span id="pkg-dec-weight">--</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Right Desk Box: X-Ray Scanner & Stamp Inspection -->
+                        <div class="desk-card">
+                            <div style="font-size: 10px; color: var(--text-dim); font-weight: bold; text-transform: uppercase;">X-Ray Density Monitor</div>
+                            <div class="scanner-box">
+                                <canvas id="xray-canvas"></canvas>
+                                <div class="scan-overlay-text" id="pkg-scan-desc">Select parcel to inspect content structure.</div>
+                            </div>
+
+                            <div style="font-size: 10px; color: var(--text-dim); font-weight: bold; text-transform: uppercase;">Postage Verification Tool</div>
+                            <button class="btn btn-blue" onclick="openStampLens()" style="font-size: 10px; padding: 8px;">
+                                🔍 Open Magnifier Lens on Postage Seal
+                            </button>
+
+                            <div class="tools-bar">
+                                <button class="tool-btn" id="uv-tool-btn" onclick="toggleUVTool()">🔦 UV Light [U]</button>
+                                <button class="tool-btn" id="atlas-verify-btn" onclick="quickVerifyAtlas()">📖 Check Atlas [A]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Process Rubber Stamps Bar -->
+                    <div class="action-row">
+                        <button class="btn btn-green" onclick="processPackage('approve')">✓ Stamp Approved [1]</button>
+                        <button class="btn btn-red" onclick="processPackage('confiscate')">✕ Confiscate Goods [2]</button>
+                        <button class="btn btn-blue" onclick="processPackage('return')">↩ Return to Sender [3]</button>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: PUBLIC COUNTER -->
+                <div id="view-counter" class="view-section">
+                    <div class="customer-card">
+                        <div class="avatar-box" id="avatar-container">
+                            <!-- Procedural SVG Customer Face rendered here -->
+                        </div>
+                        <div class="customer-dialogue-box">
+                            <div>
+                                <h3 id="cust-name" style="color: #58a6ff; font-family: 'Special Elite', cursive;">No Walk-In Customer</h3>
+                                <p id="cust-dialogue" style="font-size: 12px; color: var(--text-dim); margin-top: 6px; line-height: 1.4;">The counter window is currently quiet. Take your time inspecting queued parcels.</p>
+                            </div>
+                            <div id="cust-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="btn" id="cust-btn-1" onclick="handleCustomerChoice(1)" style="display: none;">Option 1</button>
+                                <button class="btn" id="cust-btn-2" onclick="handleCustomerChoice(2)" style="display: none;">Option 2</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: OUTBOUND DELIVERY VAN -->
+                <div id="view-van" class="view-section">
+                    <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 4px;" id="van-status-text">Outbound Delivery Van Storage Bins:</div>
+                    <div class="van-slots" id="van-slots-container">
+                        <!-- Van slots populated here -->
+                    </div>
+                    <button class="btn btn-green" onclick="dispatchVan()" id="dispatch-btn" style="padding: 12px;">🚚 Dispatch Delivery Van & Finalize Shift</button>
+                </div>
+
+                <!-- VIEW 4: POSTAL ATLAS & RULEBOOK -->
+                <div id="view-atlas" class="view-section">
+                    <div style="font-size: 11px; color: #58a6ff; font-weight: bold; font-family: 'Special Elite', cursive;">MUNICIPAL POSTAL ATLAS & INSPECTOR CODEBOOK</div>
+                    <div class="atlas-grid">
+                        <div class="atlas-box">
+                            <strong style="color: var(--accent-gold);">District Directory & Zip Codes:</strong><br>
+                            • District 1 - Central Hub (ZIP: 10101 - 10199)<br>
+                            • District 2 - Harbor Docks (ZIP: 20201 - 20299)<br>
+                            • District 3 - Upper Highlands (ZIP: 30301 - 30399)<br>
+                            • District 4 - Outskirts Quarantine (ZIP: 40401 - 40499)<br>
+                            • District 5 - Industrial Sector (ZIP: 50501 - 50599)
+                        </div>
+                        <div class="atlas-box">
+                            <strong style="color: var(--accent-gold);">Verification Rules:</strong><br>
+                            1. <strong>Weight Check:</strong> Scale vs Declared > 0.2 lbs diff = Discrepancy (Return).<br>
+                            2. <strong>Address Check:</strong> Zip code prefix MUST match District number.<br>
+                            3. <strong>Stamp Check:</strong> Counterfeit seals show smudged borders or illegal check-digit.
+                        </div>
+                        <div class="atlas-box">
+                            <strong style="color: var(--accent-red);">Prohibited Contraband:</strong><br>
+                            • Unlicensed Green Herbs & Solvents<br>
+                            • Mechanical Ticking Wire Bombs<br>
+                            • Unregistered Foil Currency Banknotes<br>
+                            • Syndicate Gold Bullion
+                        </div>
+                        <div class="atlas-box">
+                            <strong style="color: #7ee787;">Daily Directives:</strong><br>
+                            Always check top directive banner! Directives supersede standard rules (e.g. District embargoes require returning all parcels for that district).
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 5: EQUIPMENT SHOP -->
+                <div id="view-upgrades" class="view-section">
+                    <div style="display: flex; flex-direction: column; gap: 8px;" id="shop-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Activity Ledger & System Bar -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>Shift Activity Ledger</span>
+                <span style="font-size: 9px; color: var(--text-dim);" id="auto-save-status">Auto-Saved</span>
+            </div>
+            <div class="log-box" id="log-container">
+                <div class="log-entry log-success">[Day 1] Postal Terminal initialized. Cozy Inspection Mode active.</div>
+            </div>
+            <div class="footer-controls">
+                <button class="btn" onclick="saveGame()" style="font-size: 9px; padding: 6px;">Save</button>
+                <button class="btn" onclick="loadGame()" style="font-size: 9px; padding: 6px;">Load</button>
+                <button class="btn btn-red" onclick="resetGame()" style="font-size: 9px; padding: 6px;">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOTKEY LEGEND BAR -->
+    <div class="hotkeys-bar">
+        <span>[1] Approve</span>
+        <span>[2] Confiscate</span>
+        <span>[3] Return</span>
+        <span>[U] UV Light</span>
+        <span>[A] Quick Atlas</span>
+        <span>[M] Stamp Lens</span>
+        <span>[Space] Next Customer</span>
+    </div>
+
+<script>
+    /* ==========================================================================
+       1. AUDIO ENGINE (Synthesized SFX + Cozy Ambient Chord Generator)
+       ========================================================================== */
+    class CozyAudioEngine {
+        constructor() {
+            this.ctx = null;
+            this.sfxEnabled = true;
+            this.musicEnabled = true;
+            this.musicTimer = null;
+            this.chordIndex = 0;
+        }
+
+        init() {
+            if (!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        playSFX(type) {
+            if (!this.sfxEnabled) return;
+            this.init();
+            const now = this.ctx.currentTime;
+
+            if (type === 'stamp') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'click') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.03);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.03);
+            } else if (type === 'coin') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'error') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.setValueAtTime(110, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'uv') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        }
+
+        startCozyMusic() {
+            this.init();
+            if (this.musicTimer) clearInterval(this.musicTimer);
+
+            // Warm lofi ambient chords progression (Cmaj7 -> Am7 -> Fmaj7 -> G7)
+            const chords = [
+                [261.63, 329.63, 392.00, 493.88], // Cmaj7
+                [220.00, 261.63, 329.63, 392.00], // Am7
+                [174.61, 220.00, 261.63, 329.63], // Fmaj7
+                [196.00, 246.94, 293.66, 349.23]  // G7
+            ];
+
+            this.musicTimer = setInterval(() => {
+                if (!this.musicEnabled) return;
+                const now = this.ctx.currentTime;
+                const currentChord = chords[this.chordIndex % chords.length];
+
+                currentChord.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.05);
+
+                    gain.gain.setValueAtTime(0.01, now + i * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.025, now + i * 0.05 + 0.8);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 3.2);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.05);
+                    osc.stop(now + i * 0.05 + 3.3);
+                });
+
+                this.chordIndex++;
+            }, 3600);
+        }
+
+        stopMusic() {
+            if (this.musicTimer) clearInterval(this.musicTimer);
+        }
+    }
+
+    const audio = new CozyAudioEngine();
+
+    function toggleAudio() {
+        audio.sfxEnabled = !audio.sfxEnabled;
+        document.getElementById('audio-toggle-btn').innerText = audio.sfxEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
+    }
+
+    function toggleCozyMusic() {
+        audio.musicEnabled = !audio.musicEnabled;
+        if (audio.musicEnabled) {
+            audio.startCozyMusic();
+            document.getElementById('music-toggle-btn').innerText = "🎵 Lofi Chords: ON";
+        } else {
+            audio.stopMusic();
+            document.getElementById('music-toggle-btn').innerText = "🔇 Music: OFF";
+        }
+    }
+
+    /* ==========================================================================
+       2. GAME STATE & CONSTANTS
+       ========================================================================== */
+    let gameState = {
+        day: 1,
+        maxDays: 20,
+        money: 150.00,
+        reputation: 100,
+        strikes: 0,
+        activeView: 'inspect',
+        queue: [],
+        selectedPackageId: null,
+        vanPackages: [],
+        currentCustomer: null,
+        shiftActive: true,
+        waitingForDispatch: false,
+        currentDirective: 'standard',
+        uvToolActive: false,
+        stats: {
+            approved: 0,
+            confiscated: 0,
+            returned: 0,
+            totalEarned: 0
+        },
+        upgrades: {
+            scale: false,
+            van: false,
+            scanner: false,
+            blacklight: false,
+            chute: false,
+            coffee: false,
+            atlas_computer: false,
+            cat: false
+        },
+        achievements: {
+            first_day: false,
+            eagle_eye: false,
+            van_master: false,
+            syndicate_buster: false,
+            rich_inspector: false,
+            flawless_shift: false
+        }
+    };
+
+    const shopCatalog = [
+        { id: 'scale', name: 'Precision Digital Scale', price: 60, desc: 'Automatically highlights weight discrepancies on the scale.' },
+        { id: 'van', name: 'Express Delivery Van', price: 75, desc: 'Expands delivery van storage capacity from 5 to 10 slots.' },
+        { id: 'scanner', name: 'High-Res X-Ray Scanner', price: 100, desc: 'Renders crisp internal contraband shapes in density viewer.' },
+        { id: 'blacklight', name: 'UV Blacklight Lamp', price: 110, desc: 'Exposes glowing Syndicate UV ink for +$6 confiscation bounties.' },
+        { id: 'chute', name: 'Pneumatic Tube Chute', price: 150, desc: 'Auto-routes approved parcels straight to the van.' },
+        { id: 'coffee', name: 'Deluxe Espresso Machine', price: 80, desc: 'Increases walk-in customer payout by +$10.' },
+        { id: 'atlas_computer', name: 'Zip Code Auto-Computer', price: 90, desc: 'Enables Quick Atlas check [A] to highlight invalid zip codes.' },
+        { id: 'cat', name: 'Postal Inspector Desk Cat', price: 120, desc: 'A cozy calico cat companion that prevents 1 strike per day!' }
+    ];
+
+    const achievementDefs = {
+        first_day: { title: 'First Shift Complete', desc: 'Successfully finish Shift Day 1.' },
+        eagle_eye: { title: 'Eagle Eye Inspector', desc: 'Identify 5 forged stamps or discrepancies.' },
+        van_master: { title: 'Master Logistician', desc: 'Dispatch a fully loaded delivery van.' },
+        syndicate_buster: { title: 'Syndicate Buster', desc: 'Confiscate 3 illegal items in a single shift.' },
+        rich_inspector: { title: 'Post Master Coffers', desc: 'Accumulate over $300 in funds.' },
+        flawless_shift: { title: 'Flawless Operations', desc: 'Complete a shift with zero strikes.' }
+    };
+
+    const firstNames = ['Arthur', 'Beatrice', 'Charles', 'Diana', 'Evelyn', 'Frank', 'Gerald', 'Helen', 'Ivan', 'Julia', 'Leonard', 'Mabel', 'Victor', 'Clara'];
+    const lastNames = ['Vance', 'Sterling', 'Holloway', 'Pendleton', 'Cross', 'Sinclair', 'Blackwood', 'Mercer', 'Davenport', 'Frost', 'Vane', 'Gideon'];
+    const streetNames = ['Oak Street', 'Cobblestone Way', 'Grand Avenue', 'Harbor Boulevard', 'Highland Road', 'Factory Lane', 'Pine Crescent'];
+
+    const districtInfo = [
+        { num: 1, name: 'District 1 - Central Hub', zips: [10101, 10105, 10112, 10150] },
+        { num: 2, name: 'District 2 - Harbor Docks', zips: [20201, 20210, 20244, 20280] },
+        { num: 3, name: 'District 3 - Upper Highlands', zips: [30301, 30315, 30350, 30390] },
+        { num: 4, name: 'District 4 - Outskirts (Quarantine)', zips: [40401, 40420, 40466, 40499] },
+        { num: 5, name: 'District 5 - Industrial Sector', zips: [50501, 50533, 50577, 50599] }
+    ];
+
+    const itemTypes = [
+        { desc: 'Hand-rolled cigars stuffed with illicit green herbs.', illegal: true, shape: 'herbs' },
+        { desc: 'Mechanical ticking clockwork mechanism with wires.', illegal: true, shape: 'bomb' },
+        { desc: 'Unmarked glass vials with illegal chemical solvent.', illegal: true, shape: 'vials' },
+        { desc: 'Unregistered banknotes tightly wrapped in foil.', illegal: true, shape: 'cash' },
+        { desc: 'Solid Syndicate gold bullion bars.', illegal: true, shape: 'gold' },
+        { desc: 'Hardcover literature books and handwritten letters.', illegal: false, shape: 'books' },
+        { desc: 'Brass clockwork gears and spare copper wire.', illegal: false, shape: 'gears' },
+        { desc: 'Preserved jarred jams and knitted wool socks.', illegal: false, shape: 'jam' },
+        { desc: 'Handcrafted wooden toys and artisan soaps.', illegal: false, shape: 'toys' }
+    ];
+
+    const directives = {
+        standard: { desc: 'Standard Municipal Inspection Protocols active.' },
+        quarantine: { desc: '🚨 District 4 Embargo: Return ALL parcels destined for District 4!' },
+        crackdown: { desc: '🚨 Contraband Crackdown: $20.00 bounty for confiscating illegal goods.' },
+        heavy_tariff: { desc: '🚨 Weight Tariff: Parcels over 4.0 lbs require return to sender.' }
+    };
+
+    /* ==========================================================================
+       3. INITIALIZATION & CORE LOOP
+       ========================================================================== */
+    function initGame() {
+        audio.startCozyMusic();
+        rollDailyDirective();
+        generateDailyQueue();
+        renderShop();
+        renderAchievements();
+        updateUI();
+        logMessage('Cozy Postal Office ready. Relaxed verification mode online.', 'success');
+    }
+
+    function rollDailyDirective() {
+        if (gameState.day === 1) {
+            gameState.currentDirective = 'standard';
+        } else {
+            const keys = Object.keys(directives);
+            gameState.currentDirective = keys[Math.floor(Math.random() * keys.length)];
+        }
+        document.getElementById('directive-display').innerText = `📢 Directive: ${directives[gameState.currentDirective].desc}`;
+    }
+
+    function generateDailyQueue() {
+        gameState.shiftActive = true;
+        gameState.waitingForDispatch = false;
+        gameState.queue = [];
+        let count = 5 + gameState.day * 2;
+
+        for (let i = 0; i < count; i++) {
+            let sender = getRandomItem(firstNames) + ' ' + getRandomItem(lastNames);
+            let recipient = getRandomItem(firstNames) + ' ' + getRandomItem(lastNames);
+            let distObj = getRandomItem(districtInfo);
+            
+            // 20% chance zip code doesn't match district!
+            let hasAddressMismatch = Math.random() < 0.20;
+            let zip = hasAddressMismatch ? 90900 + Math.floor(Math.random()*99) : getRandomItem(distObj.zips);
+            let address = Math.floor(Math.random() * 80 + 1) + ' ' + getRandomItem(streetNames);
+            
+            let itemObj = getRandomItem(itemTypes);
+            let isForgedStamp = Math.random() < 0.28;
+            let hasWeightDiscrepancy = Math.random() < 0.28;
+            let hasSyndicateUV = Math.random() < 0.25;
+
+            let baseWeight = (Math.random() * 3.8 + 0.5);
+            let decWeight = baseWeight.toFixed(1) + ' lbs';
+            let actualWeight = hasWeightDiscrepancy ? (baseWeight + Math.random() * 1.5 + 0.4).toFixed(1) + ' lbs' : decWeight;
+
+            let isVip = Math.random() < 0.20;
+
+            gameState.queue.push({
+                id: 'pkg_' + Math.random().toString(36).substr(2, 9),
+                sender: sender,
+                recipient: recipient,
+                address: address,
+                district: distObj.name,
+                districtNum: distObj.num,
+                zip: zip,
+                hasAddressMismatch: hasAddressMismatch,
+                decWeight: decWeight,
+                actualWeight: actualWeight,
+                hasWeightDiscrepancy: hasWeightDiscrepancy,
+                isForgedStamp: isForgedStamp,
+                hasSyndicateUV: hasSyndicateUV,
+                isIllegal: itemObj.illegal,
+                shape: itemObj.shape,
+                description: itemObj.desc,
+                isVip: isVip,
+                boxColor: getRandomItem(['#8a5a36', '#a06e43', '#5a4535', '#6b5744'])
+            });
+        }
+
+        if (gameState.queue.length > 0) {
+            selectPackage(gameState.queue[0].id);
+        }
+    }
+
+    function selectPackage(id) {
+        gameState.selectedPackageId = id;
+        renderQueue();
+        let pkg = gameState.queue.find(p => p.id === id);
+        if (!pkg) return;
+
+        document.getElementById('pkg-sender').innerText = pkg.sender;
+        document.getElementById('pkg-recipient').innerText = pkg.recipient;
+        document.getElementById('pkg-address').innerText = pkg.address;
+        document.getElementById('pkg-district').innerText = `${pkg.district} (ZIP: ${pkg.zip})`;
+        document.getElementById('pkg-dec-weight').innerText = pkg.decWeight;
+
+        let scaleEl = document.getElementById('pkg-scale-weight');
+        scaleEl.innerText = pkg.actualWeight;
+        if (gameState.upgrades.scale && pkg.hasWeightDiscrepancy) {
+            scaleEl.style.color = '#f0883e';
+            scaleEl.innerText = pkg.actualWeight + ' [DISCREPANCY]';
+        } else {
+            scaleEl.style.color = '#7ee787';
+        }
+
+        let descText = pkg.description;
+        if (gameState.upgrades.scanner && pkg.isIllegal) {
+            descText = "⚠️ [CONTRABAND DETECTED] " + descText;
+        }
+        document.getElementById('pkg-scan-desc').innerText = descText;
+
+        // Render Graphics on Desk Canvas & X-Ray
+        drawParcelCanvas(pkg);
+        drawXRayCanvas(pkg);
+    }
+
+    /* ==========================================================================
+       4. INTERACTIVE CANVAS RENDERERS (Parcel, Stamps & X-Ray)
+       ========================================================================== */
+    function drawParcelCanvas(pkg) {
+        const canvas = document.getElementById('parcel-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Render Package Box
+        ctx.fillStyle = gameState.uvToolActive && pkg.hasSyndicateUV ? '#2d1b4e' : pkg.boxColor;
+        ctx.strokeStyle = '#21262d';
+        ctx.lineWidth = 3;
+        const boxX = 60, boxY = 25, boxW = canvas.width - 120, boxH = canvas.height - 50;
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // Tape Line
+        ctx.fillStyle = 'rgba(210, 180, 140, 0.4)';
+        ctx.fillRect(boxX + boxW / 2 - 10, boxY, 20, boxH);
+
+        // Postage Stamp Box Graphics
+        const stampX = boxX + boxW - 55, stampY = boxY + 10, stampW = 45, stampH = 40;
+        ctx.fillStyle = pkg.isForgedStamp ? '#d4a3a3' : '#e6f0fa';
+        ctx.fillRect(stampX, stampY, stampW, stampH);
+        ctx.strokeStyle = '#8b949e';
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(stampX, stampY, stampW, stampH);
+        ctx.setLineDash([]);
+
+        // Stamp Emblem
+        ctx.fillStyle = pkg.isForgedStamp ? '#da3633' : '#1f6feb';
+        ctx.font = '10px Share Tech Mono';
+        ctx.fillText(pkg.isForgedStamp ? 'FAKE' : 'POST', stampX + 8, stampY + 24);
+
+        // UV Glowing Syndicate Mark
+        if (gameState.uvToolActive && pkg.hasSyndicateUV) {
+            ctx.fillStyle = '#d2a8ff';
+            ctx.font = 'bold 16px Share Tech Mono';
+            ctx.shadowColor = '#d2a8ff';
+            ctx.shadowBlur = 10;
+            ctx.fillText('☠ SYNDICATE ☠', boxX + 20, boxY + boxH / 2);
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawXRayCanvas(pkg) {
+        const canvas = document.getElementById('xray-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // CRT Grid Scanlines
+        ctx.strokeStyle = 'rgba(31, 111, 235, 0.15)';
+        ctx.lineWidth = 1;
+        for (let y = 0; y < canvas.height; y += 8) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+
+        // Draw Silhouette based on item shape
+        ctx.fillStyle = pkg.isIllegal ? 'rgba(255, 123, 114, 0.7)' : 'rgba(126, 231, 135, 0.5)';
+        ctx.shadowColor = pkg.isIllegal ? '#ff7b72' : '#7ee787';
+        ctx.shadowBlur = 8;
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        if (pkg.shape === 'bomb') {
+            ctx.fillRect(cx - 20, cy - 15, 40, 30);
+            ctx.beginPath(); ctx.arc(cx + 25, cy - 10, 8, 0, Math.PI * 2); ctx.fill();
+        } else if (pkg.shape === 'herbs' || pkg.shape === 'cash') {
+            ctx.fillRect(cx - 30, cy - 20, 60, 40);
+        } else if (pkg.shape === 'vials') {
+            ctx.fillRect(cx - 25, cy - 15, 12, 30);
+            ctx.fillRect(cx, cy - 15, 12, 30);
+        } else {
+            // Books or toys
+            ctx.fillRect(cx - 35, cy - 15, 70, 30);
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    /* Magnifier Lens Window */
+    function openStampLens() {
+        if (!gameState.selectedPackageId) return;
+        audio.playSFX('click');
+        let pkg = gameState.queue.find(p => p.id === gameState.selectedPackageId);
+        toggleModal('stamp-lens-modal', true);
+
+        const canvas = document.getElementById('lens-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        ctx.fillStyle = '#0d1117';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Stamp Micro-details
+        ctx.strokeStyle = pkg.isForgedStamp ? '#da3633' : '#58a6ff';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(40, 30, canvas.width - 80, canvas.height - 60);
+
+        ctx.fillStyle = '#c9d1d9';
+        ctx.font = '14px Special Elite';
+        ctx.fillText('MUNICIPAL POSTAGE SEAL', 60, 70);
+
+        ctx.font = '11px Share Tech Mono';
+        ctx.fillText(`SERIAL: ${pkg.isForgedStamp ? 'ERR-990-X' : 'OK-1048-A'}`, 60, 100);
+        ctx.fillText(`WATERMARK: ${pkg.isForgedStamp ? 'SMUDGED / INVALID' : 'VERIFIED OFFICIAL'}`, 60, 125);
+
+        document.getElementById('stamp-lens-verdict').innerText = pkg.isForgedStamp ? 
+            "⚠️ MAGNIFICATION ANALYSIS: COUNTERFEIT STAMP DETECTED!" : 
+            "✓ MAGNIFICATION ANALYSIS: OFFICIAL GENUINE STAMP SEAL.";
+        
+        if (pkg.isForgedStamp) checkAchievement('eagle_eye');
+    }
+
+    function closeStampLens() {
+        toggleModal('stamp-lens-modal', false);
+    }
+
+    /* Tools Toggle */
+    function toggleUVTool() {
+        audio.playSFX('uv');
+        gameState.uvToolActive = !gameState.uvToolActive;
+        let btn = document.getElementById('uv-tool-btn');
+        btn.classList.toggle('active', gameState.uvToolActive);
+        if (gameState.selectedPackageId) {
+            let pkg = gameState.queue.find(p => p.id === gameState.selectedPackageId);
+            if (pkg) drawParcelCanvas(pkg);
+        }
+    }
+
+    function quickVerifyAtlas() {
+        if (!gameState.selectedPackageId) return;
+        audio.playSFX('click');
+        let pkg = gameState.queue.find(p => p.id === gameState.selectedPackageId);
+        if (!pkg) return;
+
+        if (pkg.hasAddressMismatch) {
+            logMessage(`[ATLAS SEARCH] ZIP ${pkg.zip} does NOT belong to ${pkg.district}! Address Discrepancy detected!`, 'danger');
+            if (gameState.upgrades.atlas_computer) checkAchievement('eagle_eye');
+        } else {
+            logMessage(`[ATLAS SEARCH] ZIP ${pkg.zip} correctly registered to ${pkg.district}.`, 'success');
+        }
+    }
+
+    /* ==========================================================================
+       5. PROCESSING PARCELS & LOGIC
+       ========================================================================== */
+    function processPackage(action) {
+        if (!gameState.shiftActive || gameState.waitingForDispatch || !gameState.selectedPackageId) return;
+        let index = gameState.queue.findIndex(p => p.id === gameState.selectedPackageId);
+        if (index === -1) return;
+        let pkg = gameState.queue[index];
+
+        let maxVanCap = gameState.upgrades.van ? 10 : 5;
+        let isEmbargoed = (gameState.currentDirective === 'quarantine' && pkg.districtNum === 4);
+        let isOverweight = (gameState.currentDirective === 'heavy_tariff' && parseFloat(pkg.actualWeight) > 4.0);
+        
+        let shouldReturn = pkg.isForgedStamp || pkg.hasWeightDiscrepancy || pkg.hasAddressMismatch || isEmbargoed || isOverweight;
+
+        if (action === 'approve') {
+            audio.playSFX('stamp');
+            if (!pkg.isIllegal && !shouldReturn) {
+                if (gameState.vanPackages.length < maxVanCap || gameState.upgrades.chute) {
+                    let reward = pkg.isVip ? 12.00 : 6.00;
+                    gameState.money += reward;
+                    gameState.stats.totalEarned += reward;
+                    gameState.stats.approved++;
+
+                    if (gameState.upgrades.chute) {
+                        logMessage(`Pneumatic tube auto-routed parcel for ${pkg.recipient}! (+$${reward.toFixed(2)})`, 'success');
+                    } else {
+                        gameState.vanPackages.push(pkg);
+                        logMessage(`Approved parcel for ${pkg.recipient}. Added to van.`, 'success');
+                    }
+                } else {
+                    audio.playSFX('error');
+                    logMessage(`VAN BINS FULL! Go to 'Van' tab to dispatch van before approving more!`, 'danger');
+                    return;
+                }
+            } else {
+                handleFault("Allowed contraband, embargoed, or forged parcel through!");
+            }
+        } else if (action === 'confiscate') {
+            audio.playSFX('stamp');
+            if (pkg.isIllegal) {
+                let payout = (gameState.currentDirective === 'crackdown') ? 20.00 : 12.00;
+                if (gameState.upgrades.blacklight && pkg.hasSyndicateUV) payout += 6.00;
+
+                gameState.money += payout;
+                gameState.stats.totalEarned += payout;
+                gameState.stats.confiscated++;
+                logMessage(`Confiscated contraband! Seizure bounty awarded: $${payout.toFixed(2)}.`, 'success');
+                if (gameState.stats.confiscated >= 3) checkAchievement('syndicate_buster');
+            } else {
+                handleFault("Confiscated perfectly legal personal mail!");
+            }
+        } else if (action === 'return') {
+            audio.playSFX('stamp');
+            if (shouldReturn || pkg.isIllegal) {
+                gameState.money += 5.00;
+                gameState.stats.totalEarned += 5.00;
+                gameState.stats.returned++;
+                logMessage(`Returned non-compliant parcel to ${pkg.sender}. (+$5.00)`, 'success');
+            } else {
+                handleFault("Returned a valid parcel unnecessarily!");
+            }
+        }
+
+        gameState.queue.splice(index, 1);
+        gameState.selectedPackageId = null;
+
+        if (gameState.queue.length > 0) {
+            selectPackage(gameState.queue[0].id);
+        } else {
+            triggerQueueCleared();
+        }
+
+        updateUI();
+    }
+
+    function handleFault(reason) {
+        audio.playSFX('error');
+        if (gameState.upgrades.cat && Math.random() < 0.4) {
+            logMessage(`AUDIT WARNING: ${reason} (Desk Cat distracted the inspector - Strike forgiven!)`, 'warning');
+        } else {
+            gameState.strikes++;
+            gameState.reputation -= 10;
+            logMessage(`AUDIT FAULT: ${reason} Strike incurred!`, 'danger');
+        }
+    }
+
+    function triggerQueueCleared() {
+        document.getElementById('pkg-sender').innerText = '--';
+        document.getElementById('pkg-recipient').innerText = '--';
+        document.getElementById('pkg-address').innerText = '--';
+        document.getElementById('pkg-district').innerText = '--';
+        document.getElementById('pkg-dec-weight').innerText = '--';
+        document.getElementById('pkg-scale-weight').innerText = '0.0 lbs';
+        document.getElementById('pkg-scan-desc').innerText = 'Shift Queue Cleared! Go to Van tab to dispatch and finish shift.';
+
+        gameState.waitingForDispatch = true;
+        logMessage(`All queue parcels processed! Switch to Van tab to dispatch van.`, 'warning');
+    }
+
+    /* ==========================================================================
+       6. PUBLIC COUNTER & CUSTOMER SERVICE
+       ========================================================================== */
+    function generateCustomer() {
+        let name = getRandomItem(firstNames) + ' ' + getRandomItem(lastNames);
+        let dialogues = [
+            { text: "Good day inspector! I need this urgent letter posted across town.", opt1: "Accept Parcel ($8 fee)", opt2: "Decline Service", res: 1 },
+            { text: "My delivery was delayed last week! I demand compensation!", opt1: "Issue Goodwill Credit ($10)", opt2: "Turn Away", res: 2 },
+            { text: "Psst... take this unmarked crate with no questions asked.", opt1: "Accept $20 Cash Bribe", opt2: "Report to Police", res: 3 }
+        ];
+        let diag = getRandomItem(dialogues);
+        gameState.currentCustomer = { name: name, ...diag };
+
+        document.getElementById('cust-name').innerText = name;
+        document.getElementById('cust-dialogue').innerText = diag.text;
+        document.getElementById('cust-btn-1').innerText = diag.opt1;
+        document.getElementById('cust-btn-1').style.display = 'block';
+        document.getElementById('cust-btn-2').innerText = diag.opt2;
+        document.getElementById('cust-btn-2').style.display = 'block';
+
+        renderCustomerAvatar();
+    }
+
+    function renderCustomerAvatar() {
+        const box = document.getElementById('avatar-container');
+        box.innerHTML = `
+            <svg width="90" height="90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="#21262d"/>
+                <circle cx="50" cy="40" r="22" fill="#d29922"/>
+                <path d="M 20 85 C 20 60, 80 60, 80 85 Z" fill="#1f6feb"/>
+                <circle cx="42" cy="38" r="3" fill="#0d1117"/>
+                <circle cx="58" cy="38" r="3" fill="#0d1117"/>
+                <path d="M 42 50 Q 50 56 58 50" stroke="#0d1117" stroke-width="2" fill="none"/>
+            </svg>
+        `;
+    }
+
+    function handleCustomerChoice(choice) {
+        audio.playSFX('click');
+        if (!gameState.currentCustomer) return;
+
+        let bonus = gameState.upgrades.coffee ? 10.00 : 0;
+
+        if (choice === 1) {
+            if (gameState.currentCustomer.res === 1) {
+                let payout = 8.00 + bonus;
+                gameState.money += payout;
+                audio.playSFX('coin');
+                logMessage(`Served ${gameState.currentCustomer.name}. Earned $${payout.toFixed(2)}.`, 'success');
+            } else if (gameState.currentCustomer.res === 2) {
+                gameState.money -= 10.00;
+                gameState.reputation += 5;
+                logMessage(`Issued goodwill credit to ${gameState.currentCustomer.name}. Rep increased!`, 'success');
+            } else if (gameState.currentCustomer.res === 3) {
+                gameState.money += 20.00;
+                audio.playSFX('coin');
+                logMessage(`Accepted secretive bribe from ${gameState.currentCustomer.name}.`, 'warning');
+            }
+        } else {
+            gameState.reputation -= 2;
+            logMessage(`Customer ${gameState.currentCustomer.name} left disappointed.`, 'warning');
+        }
+
+        gameState.currentCustomer = null;
+        document.getElementById('cust-name').innerText = 'No Walk-In Customer';
+        document.getElementById('cust-dialogue').innerText = 'The counter window is clear.';
+        document.getElementById('cust-btn-1').style.display = 'none';
+        document.getElementById('cust-btn-2').style.display = 'none';
+        updateUI();
+    }
+
+    /* ==========================================================================
+       7. VAN DELIVERY & DAY PROGRESSION
+       ========================================================================== */
+    function renderVanSlots() {
+        const container = document.getElementById('van-slots-container');
+        container.innerHTML = '';
+        let maxSlots = gameState.upgrades.van ? 10 : 5;
+
+        for (let i = 0; i < maxSlots; i++) {
+            let slot = document.createElement('div');
+            let pkg = gameState.vanPackages[i];
+            if (pkg) {
+                slot.className = 'van-slot filled';
+                slot.innerHTML = `<span style="color:#58a6ff; font-weight:bold;">Bin ${i+1}</span><span>To: ${pkg.recipient}</span>`;
+            } else {
+                slot.className = 'van-slot';
+                slot.innerHTML = `<span style="color:var(--text-dim);">Bin ${i+1}</span><span style="color:#30363d;">Empty</span>`;
+            }
+            container.appendChild(slot);
+        }
+    }
+
+    function dispatchVan() {
+        audio.playSFX('coin');
+        let count = gameState.vanPackages.length;
+        let earnings = count * 8.00;
+        gameState.money += earnings;
+
+        if (count > 0) {
+            logMessage(`Van route completed! Delivered ${count} parcels for $${earnings.toFixed(2)}.`, 'success');
+        }
+        if (count >= 5) checkAchievement('van_master');
+
+        gameState.vanPackages = [];
+        renderVanSlots();
+
+        if (gameState.waitingForDispatch) {
+            gameState.shiftActive = false;
+            showNewspaperModal();
+        }
+        updateUI();
+    }
+
+    function showNewspaperModal() {
+        toggleModal('newspaper-modal', true);
+        const headline = document.getElementById('news-headline');
+        const body = document.getElementById('news-body');
+
+        headline.innerText = `THE MUNICIPAL POST - SHIFT DAY ${gameState.day} CHRONICLE`;
+
+        let summary = `<strong>SHIFT SUMMARY REPORT:</strong><br>` +
+                      `• Approved: ${gameState.stats.approved} | Confiscated: ${gameState.stats.confiscated} | Returned: ${gameState.stats.returned}<br><br>`;
+
+        if (gameState.reputation >= 85) {
+            summary += `<strong>EXCELLENT SERVICE REPORTED!</strong><br>Town council commends your postal accuracy. Performance bonus: +$50.00!`;
+            gameState.money += 50.00;
+        } else {
+            summary += `<strong>STANDARD OPERATIONS MAINTAINED.</strong><br>Standard daily stipend granted: +$30.00.`;
+            gameState.money += 30.00;
+        }
+
+        if (gameState.strikes === 0) checkAchievement('flawless_shift');
+        checkAchievement('first_day');
+
+        body.innerHTML = summary;
+    }
+
+    function closeNewspaperAndStartNextDay() {
+        toggleModal('newspaper-modal', false);
+        audio.playSFX('click');
+
+        if (gameState.day >= gameState.maxDays) {
+            alert(`🎉 GAME COMPLETE! You finished all 20 Shifts with $${gameState.money.toFixed(2)} total funds and earned promotion to Master Post Master General!`);
+            resetGame();
+            return;
+        }
+
+        gameState.day++;
+        gameState.stats.approved = 0;
+        gameState.stats.confiscated = 0;
+        gameState.stats.returned = 0;
+
+        rollDailyDirective();
+        generateDailyQueue();
+        updateUI();
+        saveGame();
+    }
+
+    /* ==========================================================================
+       8. SHOP & ACHIEVEMENTS SYSTEM
+       ========================================================================== */
+    function renderShop() {
+        const container = document.getElementById('shop-container');
+        container.innerHTML = '<h3 style="color:#58a6ff; font-family:\'Special Elite\', cursive;">Equipment & Desk Supply Shop</h3>';
+
+        shopCatalog.forEach(item => {
+            let owned = gameState.upgrades[item.id];
+            let div = document.createElement('div');
+            div.style.cssText = "background:#161b22; border:1px solid var(--border-color); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;";
+            div.innerHTML = `
+                <div>
+                    <strong style="color:#f0f6fc;">${item.name}</strong><br>
+                    <span style="color:var(--text-dim); font-size:10px;">${item.desc}</span>
+                </div>
+                <button class="btn btn-purple" onclick="buyUpgrade('${item.id}')" ${owned ? 'disabled' : ''}>
+                    ${owned ? 'OWNED' : '$' + item.price}
+                </button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function buyUpgrade(id) {
+        let item = shopCatalog.find(i => i.id === id);
+        if (!item || gameState.upgrades[id]) return;
+
+        if (gameState.money >= item.price) {
+            audio.playSFX('coin');
+            gameState.money -= item.price;
+            gameState.upgrades[id] = true;
+            logMessage(`Purchased upgrade: ${item.name}!`, 'success');
+            renderShop();
+            updateUI();
+        } else {
+            audio.playSFX('error');
+            logMessage(`Not enough funds to buy ${item.name}!`, 'danger');
+        }
+    }
+
+    function renderAchievements() {
+        const container = document.getElementById('achieve-container');
+        container.innerHTML = '';
+
+        for (let key in achievementDefs) {
+            let unlocked = gameState.achievements[key];
+            let def = achievementDefs[key];
+            let div = document.createElement('div');
+            div.className = `achieve-card ${unlocked ? 'unlocked' : ''}`;
+            div.innerHTML = `
+                <div style="font-size:20px;">${unlocked ? '🏆' : '🔒'}</div>
+                <div>
+                    <strong style="color:#f0f6fc; font-size:11px;">${def.title}</strong><br>
+                    <span style="font-size:9px; color:var(--text-dim);">${def.desc}</span>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    function checkAchievement(key) {
+        if (!gameState.achievements[key]) {
+            gameState.achievements[key] = true;
+            audio.playSFX('coin');
+            logMessage(`🏆 MEDAL UNLOCKED: ${achievementDefs[key].title}!`, 'success');
+            renderAchievements();
+        }
+    }
+
+    /* ==========================================================================
+       9. UI NAVIGATION & HELPERS
+       ========================================================================== */
+    function switchView(viewName, evt) {
+        audio.playSFX('click');
+        gameState.activeView = viewName;
+
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
+        }
+
+        document.getElementById('view-' + viewName).classList.add('active');
+
+        if (viewName === 'inspect' && gameState.selectedPackageId) {
+            selectPackage(gameState.selectedPackageId);
+        } else if (viewName === 'counter' && !gameState.currentCustomer) {
+            generateCustomer();
+        } else if (viewName === 'van') {
+            renderVanSlots();
+        }
+
+        updateUI();
+    }
+
+    function renderQueue() {
+        const container = document.getElementById('queue-container');
+        container.innerHTML = '';
+        document.getElementById('queue-count').innerText = gameState.queue.length;
+        document.getElementById('queue-left-val').innerText = gameState.queue.length;
+
+        gameState.queue.forEach(pkg => {
+            let div = document.createElement('div');
+            div.className = `queue-item ${pkg.id === gameState.selectedPackageId ? 'selected' : ''} ${pkg.isVip ? 'vip-item' : ''}`;
+            div.innerHTML = `
+                <span>${pkg.isVip ? '★ PRIORITY' : 'To:'} ${pkg.recipient}</span>
+                <span style="font-size:10px; color:var(--text-dim);">${pkg.decWeight}</span>
+            `;
+            div.onclick = () => selectPackage(pkg.id);
+            container.appendChild(div);
+        });
+    }
+
+    function updateUI() {
+        document.getElementById('day-val').innerText = `${gameState.day} / ${gameState.maxDays}`;
+        document.getElementById('money-val').innerText = '$' + gameState.money.toFixed(2);
+        document.getElementById('rep-val').innerText = Math.max(0, gameState.reputation) + '%';
+        document.getElementById('strike-val').innerText = `${gameState.strikes} / 3`;
+
+        // Rank updates based on funds & day
+        if (gameState.money > 300) {
+            document.getElementById('rank-val').innerText = "Senior Commissioner";
+            checkAchievement('rich_inspector');
+        } else if (gameState.day > 10) {
+            document.getElementById('rank-val').innerText = "Lead Inspector";
+        }
+
+        let maxSlots = gameState.upgrades.van ? 10 : 5;
+        let badge = document.getElementById('van-badge');
+        if (gameState.vanPackages.length >= maxSlots || gameState.waitingForDispatch) {
+            badge.style.display = 'inline-block';
+            badge.innerText = gameState.waitingForDispatch ? 'READY!' : 'FULL';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        if (gameState.strikes >= 3 || gameState.reputation <= 0) {
+            alert('POSTAL INSPECTOR FIRED! Accumulated 3 strikes or 0% reputation.');
+            resetGame();
+        }
+    }
+
+    function toggleModal(id, show) {
+        document.getElementById(id).style.display = show ? 'flex' : 'none';
+    }
+
+    function getRandomItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function logMessage(text, type = 'normal') {
+        const container = document.getElementById('log-container');
+        let div = document.createElement('div');
+        div.className = `log-entry log-${type}`;
+        div.innerText = `[Day ${gameState.day}] ${text}`;
+        container.prepend(div);
+    }
+
+    /* Save / Load */
+    function saveGame() {
+        localStorage.setItem('parcel_inspector_2020_save', JSON.stringify(gameState));
+        document.getElementById('auto-save-status').innerText = 'Saved!';
+        setTimeout(() => document.getElementById('auto-save-status').innerText = 'Auto-Saved', 2000);
+    }
+
+    function loadGame() {
+        let saved = localStorage.getItem('parcel_inspector_2020_save');
+        if (saved) {
+            gameState = JSON.parse(saved);
+            rollDailyDirective();
+            renderShop();
+            renderAchievements();
+            updateUI();
+            if (gameState.queue.length > 0) selectPackage(gameState.queue[0].id);
+            logMessage('Saved game state restored.', 'success');
+        }
+    }
+
+    function resetGame() {
+        localStorage.removeItem('parcel_inspector_2020_save');
+        location.reload();
+    }
+
+    /* Keyboard Controls Listener */
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '1') processPackage('approve');
+        if (e.key === '2') processPackage('confiscate');
+        if (e.key === '3') processPackage('return');
+        if (e.key === 'u' || e.key === 'U') toggleUVTool();
+        if (e.key === 'a' || e.key === 'A') quickVerifyAtlas();
+        if (e.key === 'm' || e.key === 'M') openStampLens();
+        if (e.code === 'Space' && gameState.activeView === 'counter') generateCustomer();
+    });
+
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
