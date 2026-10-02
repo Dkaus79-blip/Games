@@ -2229,6 +2229,16 @@ function drawCatioTargets(w, h, time) {
   ctx.textBaseline = 'alphabetic';
 }
 
+function getFleaCombSpots(centerX, centerY) {
+  return [
+    { x: centerX - 42, y: centerY + 4 },
+    { x: centerX - 21, y: centerY + 25 },
+    { x: centerX, y: centerY + 30 },
+    { x: centerX + 21, y: centerY + 25 },
+    { x: centerX + 42, y: centerY + 4 }
+  ];
+}
+
 function renderCanvasScene() {
   const w = logicalWidth;
   const h = logicalHeight;
@@ -2747,6 +2757,23 @@ function renderCanvasScene() {
       }
     });
 
+    if (state.activeTool === 'flea_comb' && cat.illness.id === 'flea_bites') {
+      getFleaCombSpots(cx, cy).forEach((point, index) => {
+        if (state.fleaCombAreas.has(index)) return;
+        ctx.fillStyle = 'rgba(255, 247, 220, 0.96)';
+        ctx.strokeStyle = '#a94d36';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#633c32';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
     ctx.restore();
   }
 
@@ -3238,13 +3265,7 @@ function handleCanvasPointerClick(clientX, clientY) {
   }
 
   if (state.activeTool === 'flea_comb' && cat.illness.id === 'flea_bites') {
-    const fleaSpots = [
-      { x: catCenterX - 42, y: catCenterY + 4 },
-      { x: catCenterX - 21, y: catCenterY + 25 },
-      { x: catCenterX, y: catCenterY + 30 },
-      { x: catCenterX + 21, y: catCenterY + 25 },
-      { x: catCenterX + 42, y: catCenterY + 4 }
-    ];
+    const fleaSpots = getFleaCombSpots(catCenterX, catCenterY);
     const spot = fleaSpots.findIndex((point, index) => !state.fleaCombAreas.has(index) && Math.hypot(x - point.x, y - point.y) < 19);
     if (spot >= 0) {
       state.fleaCombAreas.add(spot);
