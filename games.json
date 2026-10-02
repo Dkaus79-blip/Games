@@ -32,6 +32,10 @@
     "type": "file"
   },
   {
+    "name": "cat cafe.html",
+    "type": "file"
+  },
+  {
     "name": "cat vet .html",
     "type": "file"
   },
@@ -44,12 +48,24 @@
     "type": "file"
   },
   {
+    "name": "claw_carnival_2_0_complete.html",
+    "type": "file"
+  },
+  {
     "name": "detective bornes.html",
     "type": "file"
   },
   {
     "name": "DrinkStandTycoon",
     "type": "dir"
+  },
+  {
+    "name": "endless rpg.html",
+    "type": "file"
+  },
+  {
+    "name": "Fashion_Empire_Ultimate.html",
+    "type": "file"
   },
   {
     "name": "find the belle.html",
@@ -100,6 +116,10 @@
     "type": "file"
   },
   {
+    "name": "noir_investigator.html",
+    "type": "file"
+  },
+  {
     "name": "number guess",
     "type": "dir"
   },
@@ -116,6 +136,10 @@
     "type": "file"
   },
   {
+    "name": "Realm Survivor.html",
+    "type": "file"
+  },
+  {
     "name": "redneck auction n pawn.html",
     "type": "file"
   },
@@ -125,6 +149,10 @@
   },
   {
     "name": "shadow syndicate.html",
+    "type": "file"
+  },
+  {
+    "name": "skeeter and lilys arcade tycoon.html",
     "type": "file"
   },
   {
@@ -156,7 +184,15 @@
     "type": "file"
   },
   {
+    "name": "vampire raid master.html",
+    "type": "file"
+  },
+  {
     "name": "wallstreet.html",
+    "type": "file"
+  },
+  {
+    "name": "Wandering Chef.html",
     "type": "file"
   },
   {
