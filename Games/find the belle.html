@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belle's Cozy Hide & Seek</title>
+<style>
+    :root {
+        --wood-dark: #22150c;
+        --wood-mid: #5c381e;
+        --gold: #f5cd79;
+        --emerald: #10ac84;
+        --pink: #f78fb3;
+        --cream: #fbf6ee;
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+        margin: 0;
+        padding: 6px 14px;
+        background: radial-gradient(circle at center, #2e1a0d 0%, #120904 100%);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        color: #fff;
+        height: 100vh;
+        max-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    /* Top Bar */
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 960px;
+        gap: 8px;
+        flex-shrink: 0;
+        margin-bottom: 4px;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    h1 {
+        margin: 0;
+        font-size: 20px;
+        color: var(--gold);
+        text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        white-space: nowrap;
+    }
+
+    .pill-btn {
+        background: rgba(255, 250, 242, 0.12);
+        border: 1px solid rgba(255, 220, 167, 0.42);
+        color: #fef4e8;
+        padding: 4px 10px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .pill-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+    .pill-btn.active {
+        background: linear-gradient(135deg, #f5cd79, #e67e22);
+        color: #2b1404;
+        border-color: #f5cd79;
+        box-shadow: 0 0 8px rgba(245, 205, 121, 0.5);
+    }
+    .btn-wardrobe {
+        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        border-color: #be2edd;
+        color: #fff;
+        font-weight: bold;
+    }
+    .btn-stash {
+        background: linear-gradient(135deg, #d35400, #e67e22);
+        border-color: #f39c12;
+        color: #fff;
+        font-weight: bold;
+    }
+    .btn-saves {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border-color: #5dade2;
+        color: #ecf0f1;
+        font-weight: bold;
+    }
+
+    /* HUD Bar & Controls */
+    .top-controls {
+        display: flex;
+        width: 100%;
+        max-width: 960px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        margin-bottom: 4px;
+    }
+
+    .hud {
+        display: flex;
+        gap: 10px;
+        background: rgba(30, 16, 9, 0.85);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1.5px solid var(--wood-mid);
+        align-items: center;
+    }
+    .hud-stat { font-size: 12px; font-weight: 700; color: #f5e4d3; }
+    .hud-stat span { color: var(--gold); }
+    .timer-stat span { color: #ff6b6b; font-weight: 800; }
+    .trophy-badge {
+        color: #ffd32a !important;
+        font-weight: 800;
+        text-shadow: 0 0 6px rgba(255, 211, 42, 0.4);
+    }
+    .daily-chip {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(245, 205, 121, 0.35);
+        border-radius: 999px;
+        padding: 4px 10px;
+        color: #ffd8a8;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+
+    .toolbelt {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .tool-btn {
+        background: linear-gradient(180deg, #4d2d18, #382010);
+        border: 1.5px solid #a86a3d;
+        color: #fffaf3;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: 0.15s;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    .tool-btn:hover { background: #5c381e; transform: scale(1.03); }
+    .tool-btn:active { transform: scale(0.96); }
+    .tool-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(0.8);
+    }
+    .tool-btn.active-tool {
+        background: #e67e22;
+        border-color: #f5cd79;
+        box-shadow: 0 0 8px #e67e22;
+    }
+
+    /* Room Tabs */
+    .room-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .tab-btn {
+        background: #2b180d;
+        border: 1px solid #6b4327;
+        color: #f9e6d1;
+        padding: 4px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        transition: 0.2s;
+        position: relative;
+        letter-spacing: 0.02em;
+    }
+    .tab-btn.active {
+        background: var(--gold);
+        color: #2e1708;
+        border-color: var(--gold);
+        font-weight: bold;
+    }
+    .tab-sparkle::after {
+        content: '✨';
+        position: absolute;
+        top: -7px;
+        right: -5px;
+        font-size: 12px;
+        animation: sparkleBob 1s infinite alternate;
+    }
+    @keyframes sparkleBob {
+        from { transform: translateY(0); }
+        to { transform: translateY(-3px); }
+    }
+
+    /* Stage */
+    .stage-container {
+        width: 100%;
+        max-width: 960px;
+        flex: 1 1 auto;
+        min-height: 0;
+        background: linear-gradient(to bottom, #eae0d0 0%, #d8c3a5 68%, #8e5831 68%, #573318 100%);
+        border: 4px solid #4a2712;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.15);
+        padding: 10px 14px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #flashlight-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        display: none;
+        z-index: 20;
+        background: radial-gradient(circle var(--flash-radius, 120px) at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent 0%, rgba(5, 2, 1, 0.93) 100%);
+    }
+
+    .room-badge {
+        position: absolute;
+        top: 8px;
+        left: 12px;
+        background: rgba(34, 18, 9, 0.9);
+        color: var(--gold);
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: bold;
+        z-index: 5;
+    }
+
+    .radar-bar {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: rgba(20, 10, 5, 0.9);
+        padding: 3px 10px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: bold;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #ff4757;
+        z-index: 5;
+    }
+    .radar-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ff4757;
+        animation: radarPulse 1s infinite alternate;
+    }
+    @keyframes radarPulse { from { transform: scale(0.8); opacity: 0.5; } to { transform: scale(1.3); opacity: 1; } }
+
+    /* 4x2 Hiding Spot Grid */
+    .objects-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+        margin-top: 14px;
+    }
+
+    .spot {
+        background: #ffffff;
+        border: 2px solid #5a3821;
+        border-radius: 12px;
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transition: transform 0.15s ease, box-shadow 0.15s;
+    }
+    .spot:hover {
+        transform: translateY(-2px) scale(1.02);
+        border-color: #e67e22;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    }
+
+    .spot-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 2px;
+        flex-shrink: 0;
+    }
+    .spot-name {
+        color: #381f0d;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+        line-height: 1.15;
+    }
+    .clue-hint {
+        font-size: 10px;
+        font-weight: bold;
+        color: #d35400;
+        display: none;
+    }
+
+    .loot-item {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        font-size: 24px;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        pointer-events: none;
+    }
+    .spot.searched-empty .loot-item {
+        transform: translate(-50%, -35%) scale(1);
+    }
+    .spot.searched-empty .clue-hint {
+        display: block;
+    }
+
+    .spot.searched-empty {
+        background: #e5ded6;
+        border-color: #a49182;
+        cursor: default;
+    }
+    .spot.searched-empty .spot-icon {
+        opacity: 0.25;
+        filter: grayscale(0.7);
+    }
+    .spot.searched-empty .spot-name {
+        color: #7d6b5e;
+    }
+
+    .spot.shake { animation: shake 0.35s ease-in-out; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px) rotate(-2deg); }
+        75% { transform: translateX(4px) rotate(2deg); }
+    }
+
+    /* Peeking Belle */
+    .belle-peeker {
+        position: absolute;
+        bottom: -110%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 80px;
+        transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 10;
+        pointer-events: none;
+    }
+    .spot.found .belle-peeker { bottom: 2px; }
+    .spot.found {
+        background: #fff8e7;
+        border-color: var(--emerald);
+        box-shadow: 0 0 20px rgba(16, 172, 132, 0.7);
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+        display: flex;
+        width: 100%;
+        max-width: 960px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 5px;
+        flex-shrink: 0;
+        min-height: 26px;
+    }
+
+    #status-banner {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--gold);
+        text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .loot-bar {
+        background: rgba(0,0,0,0.4);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #d8c3b0;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+    .loot-bar:hover { background: rgba(0,0,0,0.6); color: var(--gold); }
+    .loot-icons { display: flex; gap: 4px; font-size: 14px; }
+
+    /* Modals */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(5px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+    .modal-card {
+        background: #fff9f0;
+        color: #3b200c;
+        padding: 18px 22px;
+        border-radius: 20px;
+        border: 4px solid var(--wood-mid);
+        text-align: center;
+        max-width: 540px;
+        width: 94%;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        animation: popUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    @keyframes popUp { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-card h2 { color: #8a572c; margin: 0 0 4px 0; font-size: 21px; }
+
+    /* Save Slots Modal UI */
+    .save-slots-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 12px 0;
+    }
+    .save-slot-card {
+        background: #f5ece1;
+        border: 2px solid #d4bda8;
+        border-radius: 12px;
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        transition: 0.2s;
+    }
+    .save-slot-card.active-slot {
+        border-color: #27ae60;
+        background: #eafaf1;
+        box-shadow: 0 0 8px rgba(39, 174, 96, 0.3);
+    }
+    .slot-meta { font-size: 11px; color: #7f583f; margin-top: 3px; }
+    .slot-actions { display: flex; gap: 6px; }
+    .btn-danger {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-danger:hover { background: #c0392b; }
+
+    /* Wardrobe Filter Tabs */
+    .wardrobe-filter-tabs {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+        margin: 6px 0 8px 0;
+        flex-wrap: wrap;
+    }
+    .wardrobe-filter-btn {
+        background: #f1e4d3;
+        border: 1px solid #d4bda8;
+        border-radius: 12px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #5c381e;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+    .wardrobe-filter-btn.active {
+        background: #e67e22;
+        color: #fff;
+        border-color: #d35400;
+    }
+
+    /* Outfits Grid */
+    .wardrobe-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 4px 0 10px 0;
+        max-height: 330px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .outfit-card {
+        background: #fdf6ed;
+        border: 2px solid #d4bda8;
+        border-radius: 12px;
+        padding: 6px 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        transition: 0.15s;
+    }
+    .outfit-card:hover {
+        border-color: #e67e22;
+        transform: translateY(-2px);
+    }
+    .outfit-card.equipped {
+        border-color: #27ae60;
+        background: #e8f8f0;
+        box-shadow: 0 0 8px rgba(39, 174, 96, 0.4);
+    }
+    .outfit-card.locked {
+        opacity: 0.65;
+        filter: grayscale(0.5);
+    }
+    .outfit-preview { width: 52px; height: 52px; margin-bottom: 2px; }
+    .outfit-name { font-size: 11px; font-weight: bold; color: #3b200c; }
+    .outfit-perk {
+        font-size: 9px;
+        font-weight: 700;
+        color: #8e44ad;
+        background: rgba(142, 68, 173, 0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+        margin-top: 3px;
+        line-height: 1.15;
+    }
+    .outfit-cost { font-size: 10px; font-weight: 800; color: #d35400; margin-top: 4px; }
+
+    /* Stash Grid */
+    .stash-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin: 10px 0;
+        max-height: 310px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .stash-card {
+        background: #f5ece1;
+        border: 1.5px solid #d7c4b7;
+        border-radius: 10px;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+    }
+    .stash-card.locked {
+        opacity: 0.45;
+        filter: grayscale(1);
+    }
+    .stash-card-icon { font-size: 28px; flex-shrink: 0; }
+    .stash-card-title { font-size: 12px; font-weight: bold; color: #4a2712; }
+    .stash-card-desc { font-size: 10px; color: #7d5a44; line-height: 1.25; margin-top: 2px; }
+
+    /* Petting Zone */
+    .petting-zone {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 6px auto;
+        cursor: grab;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffeaa7 0%, transparent 70%);
+        touch-action: none;
+    }
+    .petting-zone:active { cursor: grabbing; }
+    .purr-container {
+        width: 100%;
+        background: #e2d1c3;
+        border-radius: 12px;
+        height: 18px;
+        overflow: hidden;
+        margin: 8px 0 6px 0;
+        border: 1.5px solid #8d562f;
+        position: relative;
+    }
+    .purr-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #ff9ff3, #f368e0, #ff4757);
+        transition: width 0.15s ease-out;
+    }
+    .purr-label {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 18px;
+        color: #2b1404;
+        top: 0;
+        left: 0;
+    }
+    .floating-heart {
+        position: absolute;
+        pointer-events: none;
+        font-size: 18px;
+        animation: floatUp 0.8s ease-out forwards;
+        z-index: 50;
+    }
+    @keyframes floatUp {
+        0% { transform: translateY(0) scale(0.6); opacity: 1; }
+        100% { transform: translateY(-40px) scale(1.3); opacity: 0; }
+    }
+
+    /* Help Modal */
+    .help-grid {
+        text-align: left;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        font-size: 12px;
+        color: #4a2712;
+        margin: 10px 0;
+        line-height: 1.4;
+        max-height: 360px;
+        overflow-y: auto;
+    }
+    .help-item {
+        background: #f1e4d3;
+        padding: 7px 10px;
+        border-radius: 8px;
+        border-left: 3px solid #8a572c;
+    }
+
+    /* First-run UI tour */
+    #tour-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background: rgba(12, 6, 2, 0.68);
+        z-index: 90;
+    }
+    .tour-highlight {
+        position: relative !important;
+        z-index: 91 !important;
+        pointer-events: none !important;
+        outline: 3px solid var(--gold) !important;
+        outline-offset: 3px;
+        box-shadow: 0 0 0 9999px rgba(12, 6, 2, 0.24), 0 0 18px rgba(245, 205, 121, 0.9) !important;
+    }
+    #tour-card {
+        position: fixed;
+        display: none;
+        width: min(340px, calc(100vw - 24px));
+        padding: 14px 16px;
+        border: 2px solid var(--gold);
+        border-radius: 12px;
+        background: #fff9f0;
+        color: #3b200c;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        text-align: left;
+        z-index: 102;
+    }
+    #tour-card h2 {
+        margin: 0 0 6px;
+        color: #8a572c;
+        font-size: 17px;
+    }
+    #tour-card p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+    .tour-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .tour-step-count {
+        color: #7f583f;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .tour-actions {
+        display: flex;
+        gap: 6px;
+    }
+    .tour-actions button { font-size: 11px; }
+    @media (prefers-reduced-motion: reduce) {
+        #tour-card { animation: none; }
+    }
+
+    /* Tabby Fur Styles */
+    .tabby-fur { fill: #8d562f; }
+    .tabby-stripe { fill: #44240c; }
+    .tabby-muzzle { fill: #f5e6d3; }
+    .tabby-nose { fill: #f39aa8; }
+    .tabby-eyes { fill: var(--emerald); }
+    .tabby-pupil { fill: #0f1412; }
+    .tabby-ear-inner { fill: #f8a5a5; }
+
+    #confetti-canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        pointer-events: none;
+        z-index: 99;
+    }
+
+    .cat-comment {
+        position: absolute;
+        left: 50%;
+        top: 18px;
+        transform: translateX(-50%);
+        background: rgba(255, 250, 244, 0.94);
+        color: #5a3821;
+        border: 2px solid #f5cd79;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        box-shadow: 0 8px 16px rgba(58, 35, 20, 0.16);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.45s ease, transform 0.45s ease;
+        pointer-events: none;
+        z-index: 15;
+        max-width: 72%;
+        text-align: center;
+    }
+    .cat-comment.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-2px);
+    }
+
+    .stage-sparkles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 6;
+        overflow: hidden;
+    }
+    .sparkle {
+        position: absolute;
+        font-size: 18px;
+        opacity: 0;
+        animation: sparkleFloat 1.6s ease-out forwards;
+        text-shadow: 0 0 12px rgba(255,255,255,0.8);
+    }
+    @keyframes sparkleFloat {
+        0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+        20% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-28px) scale(1.25); }
+    }
+
+    .pawprint-mini {
+        position: absolute;
+        font-size: 14px;
+        opacity: 0.18;
+        animation: pawDrift 7s ease-in-out infinite alternate;
+    }
+    @keyframes pawDrift {
+        from { transform: translateY(0) rotate(0deg); }
+        to { transform: translateY(-12px) rotate(8deg); }
+    }
+
+    svg { width: 100%; height: 100%; overflow: visible; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="tour-backdrop" aria-hidden="true"></div>
+<section id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-description">
+    <h2 id="tour-title"></h2>
+    <p id="tour-description"></p>
+    <div class="tour-footer">
+        <span class="tour-step-count" id="tour-step-count"></span>
+        <div class="tour-actions">
+            <button class="pill-btn" id="tour-skip" onclick="finishUITour()">Skip</button>
+            <button class="pill-btn active" id="tour-next" onclick="advanceUITour()">Next</button>
+        </div>
+    </div>
+</section>
+
+<!-- Top Row -->
+<header>
+    <div class="header-left">
+        <h1>🐾 Belle's Hide & Seek</h1>
+        <button class="pill-btn" id="guide-button" onclick="openHelpModal(false)">📖 Guide</button>
+        <button class="pill-btn btn-saves" onclick="openSaveSlotsModal()">💾 Slot <span id="current-slot-label">1</span></button>
+    </div>
+    <div style="display: flex; gap: 6px;">
+        <button class="pill-btn btn-stash" onclick="openStashModal()">🧦 Stash (<span id="stash-stat-badge">0/10</span>)</button>
+        <button class="pill-btn btn-wardrobe" onclick="openWardrobeModal()">👗 Closet (<span id="equipped-name">Classic</span>)</button>
+    </div>
+</header>
+
+<!-- Second Row: Controls -->
+<div class="top-controls">
+    <div class="hud">
+        <div class="hud-stat">
+            <button class="pill-btn active" id="mode-cozy" onclick="switchMode('cozy')">🛋️ Cozy</button>
+            <button class="pill-btn" id="mode-rush" onclick="switchMode('rush')">⚡ Zoomies</button>
+        </div>
+        <div class="hud-stat timer-stat" id="timer-box" style="display: none;">⏱️ <span id="time-left">30</span>s</div>
+        <div class="hud-stat">🔍 <span id="search-count">0</span></div>
+        <div class="hud-stat trophy-badge" title="Detective Trophies">🏆 <span id="trophy-count">0</span></div>
+        <div class="daily-chip" id="daily-challenge-chip">Daily: Loading...</div>
+    </div>
+
+    <div class="toolbelt" id="toolbelt">
+        <button class="tool-btn" id="treat-btn" onclick="shakeTreats()">🐟 Treats (<span id="treat-count">2</span>)</button>
+        <button class="tool-btn" id="radar-tool" onclick="toggleLaserRadar()">🔴 Radar</button>
+        <button class="tool-btn" id="flashlight-tool" onclick="toggleFlashlight()">🔦 Light</button>
+        <button class="tool-btn" onclick="startNewRound()">New Round</button>
+    </div>
+</div>
+
+<!-- Room Tabs -->
+<div class="room-tabs" id="room-tabs"></div>
+
+<!-- Main Game Stage -->
+<div class="stage-container" id="stage" onmousemove="updateFlashlight(event)">
+    <div id="flashlight-overlay"></div>
+    <div class="stage-sparkles" id="stage-sparkles"></div>
+    <div class="cat-comment" id="cat-comment">Belle is wondering where to hide next...</div>
+    <div class="room-badge" id="stage-badge">Living Room</div>
+    <div class="radar-bar" id="radar-gauge"><div class="radar-dot"></div> <span id="radar-text">COLD</span></div>
+    <div class="objects-grid" id="objects-grid"></div>
+</div>
+
+<!-- Bottom Status + Tray -->
+<div class="bottom-bar">
+    <div id="status-banner">Where is green-eyed Belle hiding? Search spots or shake treats!</div>
+    <div class="loot-bar" onclick="openStashModal()" title="View Belle's Secret Stash">
+        <span>🧦 Hoard:</span>
+        <div class="loot-icons" id="loot-collection"><span>🐾</span></div>
+    </div>
+</div>
+
+<!-- MODAL: SAVE SLOTS MANAGER -->
+<div class="modal-overlay" id="slots-modal">
+    <div class="modal-card">
+        <h2>💾 Save File Profiles</h2>
+        <div style="font-size: 12px; color: #6b4327; margin-bottom: 6px;">
+            Switch between profiles, load progress, or reset individual slots!
+        </div>
+        
+        <div class="save-slots-container" id="save-slots-container"></div>
+        <button class="pill-btn active" style="font-size: 13px; padding: 7px 22px; margin-top: 6px;" onclick="closeSaveSlotsModal()">Close Profiles</button>
+    </div>
+</div>
+
+<!-- MODAL: STASH GALLERY -->
+<div class="modal-overlay" id="stash-modal">
+    <div class="modal-card">
+        <h2>🧦 Belle's Secret Stash</h2>
+        <div style="font-size: 13px; color: #6b4327; margin-bottom: 6px;">
+            Items Belle dragged under the couch! Uncover empty spots to find them all.
+        </div>
+        <div style="font-size: 12px; font-weight: bold; color: #e67e22;" id="stash-completion-text">Collected: 0 / 10</div>
+        <div class="stash-grid" id="stash-grid"></div>
+        <button class="pill-btn active" style="font-size: 13px; padding: 7px 22px; margin-top: 6px;" onclick="closeStashModal()">Close Stash</button>
+    </div>
+</div>
+
+<!-- MODAL: WARDROBE SHOP WITH PERKS -->
+<div class="modal-overlay" id="wardrobe-modal">
+    <div class="modal-card">
+        <h2>👗 Belle's Dressing Room</h2>
+        <div style="font-size: 12px; color: #6b4327;">Every outfit gives Belle a unique cozy perk!</div>
+        
+        <div class="wardrobe-filter-tabs">
+            <button class="wardrobe-filter-btn active" onclick="filterWardrobe('all', this)">All (21)</button>
+            <button class="wardrobe-filter-btn" onclick="filterWardrobe('cozy', this)">Cozy & Cute</button>
+            <button class="wardrobe-filter-btn" onclick="filterWardrobe('adventurer', this)">Adventurer</button>
+            <button class="wardrobe-filter-btn" onclick="filterWardrobe('jobs', this)">Careers</button>
+            <button class="wardrobe-filter-btn" onclick="filterWardrobe('mythic', this)">Mythic & Fun</button>
+        </div>
+
+        <div class="wardrobe-grid" id="wardrobe-grid"></div>
+        <button class="pill-btn active" style="font-size: 13px; padding: 7px 22px;" onclick="closeWardrobeModal()">Close Closet</button>
+    </div>
+</div>
+
+<!-- MODAL: GUIDE -->
+<div class="modal-overlay" id="help-modal">
+    <div class="modal-card">
+        <h2 id="help-title">📖 Detective's Field Guide</h2>
+        <div id="first-time-welcome" style="display:none; font-size:12px; background:#ffeaa7; color:#2d3436; padding:6px; border-radius:8px; margin-bottom:6px; font-weight:bold;">
+            👋 Welcome to Belle's tiny cozy hiding game!
+        </div>
+        <div class="help-grid">
+            <div class="help-item">
+                <b>🎯 Cozy Hunt Objective:</b> Belle hides in 1 of 32 spots across 4 rooms. Search the house and find her favorite little secret spot.
+            </div>
+            <div class="help-item">
+                <b>⚡ Zoomies Mode Explained:</b> Belle gets the midnight crazies! You get <b>30 seconds</b> on a live countdown clock to locate her. 
+                <br>• Finding her with <b>≥ 15s left awards +3 🏆 Trophies</b>!
+                <br>• Finding her with under 15s awards <b>+2 🏆 Trophies</b>.
+                <br>• If time runs out, Belle escapes into another room!
+            </div>
+            <div class="help-item">
+                <b>💖 Pet & Purr Engine:</b> Whenever you uncover Belle, rub her cheeks on screen! Fill the Purr-o-Meter to 100% to claim a bonus 🏆.
+            </div>
+            <div class="help-item">
+                <b>✨ Costumes with Real Perks:</b> Spend trophies in the Closet to equip outfits that grant powers—such as adding extra Zoomies time (Warm Beanie), making purrs 2x faster (Fancy Bow), or adding extra treats (Chef Toque).
+            </div>
+            <div class="help-item">
+                <b>🧦 Swiped Hoard & Detective Tools:</b> Empty spots drop random stolen treasures. Shake treats (🐟) to hear directional meows, or use Radar (🔴) and Light (🔦) to track her down.
+            </div>
+            <div class="help-item">
+                <b>💾 Multiple Save Profiles:</b> Click the <b>💾 Slot</b> button anytime to maintain up to 3 separate profiles or reset progress independently.
+            </div>
+        </div>
+        <button class="pill-btn active" style="font-size: 13px; padding: 7px 22px; margin-top: 6px;" onclick="closeHelpModal()">Let's Play!</button>
+    </div>
+</div>
+
+<!-- MODAL: VICTORY & PET -->
+<div class="modal-overlay" id="end-modal">
+    <div class="modal-card">
+        <h2 id="modal-title">Purr-fect! You Found Belle!</h2>
+        
+        <div class="petting-zone" id="petting-zone" onmousemove="handlePetMove(event)" ontouchmove="handlePetTouch(event)">
+            <div style="width: 100px; height: 100px; margin: 15px auto;" id="modal-cat-art"></div>
+        </div>
+
+        <div class="purr-container">
+            <div class="purr-bar" id="purr-bar"></div>
+            <div class="purr-label" id="purr-label">Rub Belle to Make Her Purr! 0%</div>
+        </div>
+        
+        <p id="modal-desc" style="font-size: 12px; margin: 8px 0; color: #5a3821;"></p>
+        <button class="pill-btn active" style="font-size: 14px; padding: 8px 24px;" onclick="closeModalAndRestart()">Play Again</button>
+    </div>
+</div>
+
+<!-- Base SVG Template -->
+<template id="belle-template">
+    <svg viewBox="0 0 100 100">
+        <polygon points="20,40 10,10 40,25" class="tabby-fur"/>
+        <polygon points="18,35 13,15 35,26" class="tabby-ear-inner"/>
+        <polygon points="80,40 90,10 60,25" class="tabby-fur"/>
+        <polygon points="82,35 87,15 65,26" class="tabby-ear-inner"/>
+        <ellipse cx="50" cy="55" rx="38" ry="34" class="tabby-fur"/>
+        <path d="M 40,30 L 45,42 L 50,33 L 55,42 L 60,30" stroke="#44240c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 18,52 L 28,54 M 16,60 L 27,60 M 18,68 L 29,65" stroke="#44240c" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 82,52 L 72,54 M 84,60 L 73,60 M 82,68 L 71,65" stroke="#44240c" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="44" cy="68" rx="8" ry="6" class="tabby-muzzle"/>
+        <ellipse cx="56" cy="68" rx="8" ry="6" class="tabby-muzzle"/>
+        <polygon points="47,63 53,63 50,67" class="tabby-nose"/>
+        <ellipse cx="34" cy="48" rx="7.5" ry="9" class="tabby-eyes"/>
+        <ellipse cx="66" cy="48" rx="7.5" ry="9" class="tabby-eyes"/>
+        <ellipse cx="34" cy="48" rx="2.5" ry="7" class="tabby-pupil"/>
+        <ellipse cx="66" cy="48" rx="2.5" ry="7" class="tabby-pupil"/>
+        <circle cx="32" cy="45" r="2.2" fill="#fff"/>
+        <circle cx="64" cy="45" r="2.2" fill="#fff"/>
+        <line x1="26" y1="67" x2="6" y2="64" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="26" y1="70" x2="8" y2="73" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="74" y1="67" x2="94" y2="64" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="74" y1="70" x2="92" y2="73" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        <ellipse cx="32" cy="90" rx="9" ry="7" class="tabby-muzzle" stroke="#44240c" stroke-width="1.5"/>
+        <ellipse cx="68" cy="90" rx="9" ry="7" class="tabby-muzzle" stroke="#44240c" stroke-width="1.5"/>
+        <g id="outfit-layer"></g>
+    </svg>
+</template>
+
+<script>
+    /* Audio Engine */
+    const Sound = {
+        ctx: null,
+        init() {
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        },
+        playMeow(pitch = 500) {
+            this.init();
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(pitch, t);
+            osc.frequency.exponentialRampToValueAtTime(pitch * 1.6, t + 0.12);
+            osc.frequency.exponentialRampToValueAtTime(pitch * 1.1, t + 0.35);
+            gain.gain.setValueAtTime(0.01, t);
+            gain.gain.linearRampToValueAtTime(0.25, t + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(t); osc.stop(t + 0.4);
+        },
+        playBell() {
+            this.init();
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(1480, t);
+            gain.gain.setValueAtTime(0.15, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(t); osc.stop(t + 0.3);
+        },
+        playRustle() {
+            this.init();
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(140, t);
+            osc.frequency.linearRampToValueAtTime(50, t + 0.1);
+            gain.gain.setValueAtTime(0.12, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(t); osc.stop(t + 0.12);
+        },
+        playShaker() {
+            this.init();
+            for(let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    const t = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = "square";
+                    osc.frequency.setValueAtTime(800 + Math.random()*400, t);
+                    gain.gain.setValueAtTime(0.06, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(t); osc.stop(t + 0.06);
+                }, i * 70);
+            }
+        },
+        playVictory() {
+            this.init();
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    const t = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(t); osc.stop(t + 0.38);
+                }, idx * 100);
+            });
+        },
+        triggerPurrPulse() {
+            this.init();
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(28, t);
+            osc.frequency.linearRampToValueAtTime(32, t + 0.08);
+            osc.frequency.linearRampToValueAtTime(26, t + 0.16);
+
+            gain.gain.setValueAtTime(0.02, t);
+            gain.gain.linearRampToValueAtTime(0.18, t + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(110, t);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.2);
+        }
+    };
+
+    /* 21 OUTFITS WITH ACTIVE PERKS */
+    const OUTFITS = {
+        classic: {
+            id: "classic", name: "Classic Belle", cost: 0, category: "cozy",
+            perk: "Pure & simple cozy play", svg: ""
+        },
+        bow: {
+            id: "bow", name: "Fancy Bow", cost: 2, category: "cozy",
+            perk: "Purr-o-meter fills 2x faster",
+            svg: `<path d="M50,75 L38,68 L38,82 Z M50,75 L62,68 L62,82 Z" fill="#f78fb3"/><circle cx="50" cy="75" r="4" fill="#ff4757"/>`
+        },
+        bell_collar: {
+            id: "bell_collar", name: "Gold Bell", cost: 3, category: "cozy",
+            perk: "Jingles when in Belle's room",
+            svg: `<path d="M28,74 Q50,86 72,74" fill="none" stroke="#e74c3c" stroke-width="4"/><circle cx="50" cy="80" r="5" fill="#f1c40f"/><circle cx="50" cy="81" r="1.5" fill="#784e2d"/>`
+        },
+        flower: {
+            id: "flower", name: "Daisy Crown", cost: 4, category: "cozy",
+            perk: "Free pass on 1st miss",
+            svg: `<circle cx="50" cy="22" r="5" fill="#f1c40f"/><circle cx="42" cy="20" r="4" fill="#fff"/><circle cx="58" cy="20" r="4" fill="#fff"/><circle cx="34" cy="24" r="4" fill="#fff"/><circle cx="66" cy="24" r="4" fill="#fff"/>`
+        },
+        bread: {
+            id: "bread", name: "Toast Slice", cost: 5, category: "cozy",
+            perk: "Loaf warmth: 1st clue 100% warm",
+            svg: `<rect x="20" y="24" width="60" height="56" rx="14" fill="#e67e22" stroke="#a0522d" stroke-width="3"/><rect x="28" y="32" width="44" height="40" rx="8" fill="#ffeaa7"/>`
+        },
+        beanie: {
+            id: "beanie", name: "Warm Beanie", cost: 6, category: "cozy",
+            perk: "Zoomies starts with +5s",
+            svg: `<path d="M26,26 C26,8 74,8 74,26 Z" fill="#e74c3c"/><rect x="22" y="22" width="56" height="8" rx="4" fill="#c0392b"/><circle cx="50" cy="6" r="6" fill="#ecf0f1"/>`
+        },
+
+        detective: {
+            id: "detective", name: "Detective", cost: 3, category: "adventurer",
+            perk: "Reveals 1 empty spot at start",
+            svg: `<ellipse cx="50" cy="24" rx="28" ry="10" fill="#784e2d"/><path d="M28,24 C30,8 70,8 72,24 Z" fill="#93643b"/><circle cx="68" cy="52" r="10" stroke="#f5cd79" stroke-width="3" fill="none"/>`
+        },
+        pirate: {
+            id: "pirate", name: "Pirate Mate", cost: 7, category: "adventurer",
+            perk: "2x Stash hoard discovery rate",
+            svg: `<path d="M18,22 Q50,0 82,22 Q50,14 18,22 Z" fill="#2c3e50"/><circle cx="50" cy="15" r="3" fill="#f1c40f"/><circle cx="34" cy="48" r="8" fill="#111"/><line x1="16" y1="40" x2="52" y2="56" stroke="#111" stroke-width="1.5"/>`
+        },
+        cowboy: {
+            id: "cowboy", name: "Cowboy Belle", cost: 8, category: "adventurer",
+            perk: "Instant treat response time",
+            svg: `<ellipse cx="50" cy="22" rx="34" ry="8" fill="#8d562f"/><path d="M30,22 C30,8 70,8 70,22 Z" fill="#a0522d"/><path d="M30,22 Q50,16 70,22" stroke="#d35400" stroke-width="3"/>`
+        },
+        viking: {
+            id: "viking", name: "Viking Helm", cost: 10, category: "adventurer",
+            perk: "+1 🏆 on stubborn searches (≥6)",
+            svg: `<ellipse cx="50" cy="24" rx="26" ry="10" fill="#7f8c8d"/><path d="M30,24 C30,12 70,12 70,24 Z" fill="#95a5a6"/><polygon points="26,24 16,6 24,18" fill="#ecf0f1"/><polygon points="74,24 84,6 76,18" fill="#ecf0f1"/>`
+        },
+        ninja: {
+            id: "ninja", name: "Stealth Ninja", cost: 12, category: "adventurer",
+            perk: "Silent searches add +2s in Zoomies",
+            svg: `<rect x="22" y="24" width="56" height="8" rx="2" fill="#e74c3c"/><circle cx="50" cy="28" r="4" fill="#ffffff"/><path d="M20,62 Q50,86 80,62 L78,74 Q50,94 22,74 Z" fill="#2c3e50"/>`
+        },
+
+        chef: {
+            id: "chef", name: "Chef Toque", cost: 5, category: "jobs",
+            perk: "Starts with +1 Extra Treat (3 total)",
+            svg: `<path d="M30,24 C20,10 40,-4 50,8 C60,-4 80,10 70,24 Z" fill="#ffffff" stroke="#ddd" stroke-width="1.5"/><rect x="32" y="22" width="36" height="8" fill="#ffffff" stroke="#ccc" stroke-width="1"/>`
+        },
+        baker: {
+            id: "baker", name: "Baker Beret", cost: 6, category: "jobs",
+            perk: "Kneads dough: +3 hearts per stroke",
+            svg: `<ellipse cx="50" cy="20" rx="28" ry="12" fill="#d35400" transform="rotate(-8 50 20)"/><circle cx="50" cy="10" r="3" fill="#ba4a00"/>`
+        },
+        business: {
+            id: "business", name: "Corporate Tie", cost: 7, category: "jobs",
+            perk: "Overtime pay: +1 flat 🏆 in Cozy",
+            svg: `<polygon points="50,72 44,78 46,96 50,100 54,96 56,78" fill="#2980b9"/><polygon points="46,72 54,72 52,76 48,76" fill="#1f618d"/>`
+        },
+        doctor: {
+            id: "doctor", name: "Head Mirror", cost: 9, category: "jobs",
+            perk: "Laser Radar stays permanently active",
+            svg: `<circle cx="34" cy="22" r="9" fill="#bdc3c7" stroke="#7f8c8d" stroke-width="2"/><circle cx="34" cy="22" r="3" fill="#2c3e50"/><line x1="22" y1="24" x2="78" y2="24" stroke="#ecf0f1" stroke-width="3"/>`
+        },
+        artist: {
+            id: "artist", name: "Artist Palette", cost: 11, category: "jobs",
+            perk: "Flashlight radius is 60% wider",
+            svg: `<ellipse cx="50" cy="18" rx="26" ry="10" fill="#2c3e50" transform="rotate(-12 50 18)"/><ellipse cx="78" cy="74" rx="12" ry="8" fill="#d2b48c" stroke="#8d562f"/><circle cx="74" cy="72" r="2" fill="#e74c3c"/><circle cx="79" cy="70" r="2" fill="#3498db"/><circle cx="83" cy="74" r="2" fill="#f1c40f"/>`
+        },
+
+        shades: {
+            id: "shades", name: "Cool Shades", cost: 4, category: "mythic",
+            perk: "Golden VIP confidence: radar stays lit",
+            svg: `<rect x="24" y="44" width="22" height="12" rx="3" fill="#111"/><rect x="54" y="44" width="22" height="12" rx="3" fill="#111"/><line x1="44" y1="48" x2="56" y2="48" stroke="#111" stroke-width="3"/>`
+        },
+        wizard: {
+            id: "wizard", name: "Wizard Hat", cost: 8, category: "mythic",
+            perk: "Sparkles highlight target room tab",
+            svg: `<polygon points="50,-4 22,24 78,24" fill="#574b90"/><ellipse cx="50" cy="24" rx="32" ry="8" fill="#303952"/><polygon points="46,10 50,4 54,10 46,10" fill="#f5cd79"/>`
+        },
+        crown: {
+            id: "crown", name: "Royal Crown", cost: 14, category: "mythic",
+            perk: "Royal tribute: +1 🏆 per new stash item",
+            svg: `<polygon points="26,26 30,10 40,20 50,6 60,20 70,10 74,26" fill="#f1c40f" stroke="#d4ac0d" stroke-width="2"/><circle cx="50" cy="8" r="3" fill="#e74c3c"/><circle cx="30" cy="12" r="2.5" fill="#3498db"/><circle cx="70" cy="12" r="2.5" fill="#2ecc71"/>`
+        },
+        astronaut: {
+            id: "astronaut", name: "Astro Helmet", cost: 16, category: "mythic",
+            perk: "Cosmic Radar: always detects distance",
+            svg: `<circle cx="50" cy="50" r="42" fill="rgba(129, 236, 236, 0.3)" stroke="#dfe6e9" stroke-width="4"/><path d="M26,38 Q50,26 74,38" stroke="#fff" stroke-width="3" fill="none" opacity="0.8"/>`
+        },
+        unicorn: {
+            id: "unicorn", name: "Golden Horn", cost: 20, category: "mythic",
+            perk: "Rainbow Magic: DOUBLE TROPHIES (2x)!",
+            svg: `<polygon points="50,-10 44,24 56,24" fill="#f5cd79" stroke="#e67e22" stroke-width="1.5"/><line x1="47" y1="14" x2="53" y2="16" stroke="#e67e22" stroke-width="1.5"/><line x1="48" y1="2" x2="52" y2="4" stroke="#e67e22" stroke-width="1.5"/><circle cx="50" cy="-10" r="2" fill="#fff"/>`
+        }
+    };
+
+    /* Stash Items Catalog */
+    const STASH_CATALOG = [
+        { id: "sock", icon: "🧦", name: "Single Striped Sock", desc: "Smells like warm laundry. Prime napping cushion." },
+        { id: "remote", icon: "📺", name: "TV Remote", desc: "Belle likes sitting on the volume button at 2 AM." },
+        { id: "yarn", icon: "🧶", name: "Tangled Pink Yarn", desc: "Formerly a sweater. Now a glorious obstacle course." },
+        { id: "hairtie", icon: "🎀", name: "Elastic Hair Tie", desc: "Flies across the wooden floor at Mach 3 speed." },
+        { id: "treat", icon: "🐟", name: "Dried Tuna Snack", desc: "A crunchy fish bite she was saving for emergency hunger." },
+        { id: "mouse", icon: "🐭", name: "Catnip Squeaker", desc: "Drowned in her water bowl at least 4 times." },
+        { id: "receipt", icon: "🧾", name: "Crinkled Receipt", desc: "10/10 crunch sound when chewed with front teeth." },
+        { id: "feather", icon: "🪶", name: "Fluffy Feather Toy", desc: "The bell fell off, making it a stealth predator weapon." },
+        { id: "bag", icon: "📦", name: "Brown Paper Bag", desc: "100x superior to the expensive plush bed you bought." },
+        { id: "pen", icon: "🖊️", name: "Bitten Ballpoint Pen", desc: "Rolled systematically off the desk 14 times today." }
+    ];
+
+    const ROOMS = {
+        "Living Room": [
+            { id: "lr_couch", name: "Velvet Couch", icon: getIcon('couch') },
+            { id: "lr_cushions", name: "Sofa Cushions", icon: getIcon('cushions') },
+            { id: "lr_blanket", name: "Blanket Pile", icon: getIcon('blanket') },
+            { id: "lr_cattree", name: "Cat Tree Condo", icon: getIcon('cattree') },
+            { id: "lr_tv", name: "TV Console", icon: getIcon('tv') },
+            { id: "lr_plant", name: "Monstera Plant", icon: getIcon('plant') },
+            { id: "lr_box", name: "Amazon Box", icon: getIcon('box') },
+            { id: "lr_curtain", name: "Long Curtains", icon: getIcon('curtain') }
+        ],
+        "Master Bedroom": [
+            { id: "br_bed", name: "King Bed", icon: getIcon('bed') },
+            { id: "br_duvet", name: "Ruffled Duvet", icon: getIcon('duvet') },
+            { id: "br_closet", name: "Wardrobe Closet", icon: getIcon('closet') },
+            { id: "br_drawer", name: "Sock Drawer", icon: getIcon('drawer') },
+            { id: "br_hamper", name: "Laundry Hamper", icon: getIcon('hamper') },
+            { id: "br_nightstand", name: "Nightstand", icon: getIcon('nightstand') },
+            { id: "br_pillows", name: "Pillow Fort", icon: getIcon('pillows') },
+            { id: "br_slippers", name: "Slipper Nest", icon: getIcon('slippers') }
+        ],
+        "Attic Sanctuary": [
+            { id: "cat_tunnel", name: "Crinkly Tunnel", icon: getIcon('tunnel') },
+            { id: "cat_tower", name: "Tower Perch", icon: getIcon('cattree') },
+            { id: "cat_scratch", name: "Scratch Post", icon: getIcon('post') },
+            { id: "cat_trunk", name: "Vintage Trunk", icon: getIcon('trunk') },
+            { id: "cat_suitcase", name: "Open Suitcase", icon: getIcon('suitcase') },
+            { id: "cat_hammock", name: "Sun Hammock", icon: getIcon('hammock') },
+            { id: "cat_bookshelf", name: "Bookshelf Gap", icon: getIcon('books') },
+            { id: "cat_basket", name: "Yarn Basket", icon: getIcon('basket') }
+        ],
+        "Office & Kitchen": [
+            { id: "of_chair", name: "Office Chair", icon: getIcon('chair') },
+            { id: "of_desk", name: "Under Desk", icon: getIcon('desk') },
+            { id: "of_bag", name: "Laptop Bag", icon: getIcon('bag') },
+            { id: "of_fridge", name: "Top of Fridge", icon: getIcon('shelf') },
+            { id: "of_towel", name: "Fresh Towels", icon: getIcon('towels') },
+            { id: "of_cabinet", name: "Snack Cabinet", icon: getIcon('shelf') },
+            { id: "of_rug", name: "Kitchen Rug", icon: getIcon('blanket') },
+            { id: "of_paperbox", name: "Paper Box", icon: getIcon('box') }
+        ]
+    };
+
+    function getIcon(type) {
+        const d = {
+            couch: `<rect x="8" y="24" width="48" height="24" rx="4" fill="#34495e"/><rect x="4" y="28" width="10" height="18" rx="3" fill="#2c3e50"/><rect x="50" y="28" width="10" height="18" rx="3" fill="#2c3e50"/><rect x="12" y="52" width="6" height="6" fill="#111"/><rect x="46" y="52" width="6" height="6" fill="#111"/>`,
+            cushions: `<rect x="10" y="16" width="20" height="32" rx="4" fill="#e67e22"/><rect x="34" y="16" width="20" height="32" rx="4" fill="#d35400"/>`,
+            blanket: `<path d="M12,48 C20,30 44,30 52,48 Z" fill="#9b59b6"/><path d="M16,42 C24,28 40,28 48,42 Z" fill="#8e44ad"/>`,
+            cattree: `<rect x="28" y="14" width="8" height="42" fill="#d2b48c"/><rect x="14" y="10" width="36" height="8" rx="3" fill="#c39b6f"/><rect x="10" y="26" width="26" height="20" rx="4" fill="#8c5836"/><circle cx="23" cy="36" r="6" fill="#4a2e1b"/><rect x="6" y="54" width="52" height="6" rx="2" fill="#c39b6f"/>`,
+            tv: `<rect x="10" y="12" width="44" height="28" rx="2" fill="#2c3e50"/><rect x="14" y="16" width="36" height="20" fill="#7f8c8d"/><rect x="6" y="42" width="52" height="14" fill="#795548"/>`,
+            plant: `<path d="M22,42 L42,42 L38,58 L26,58 Z" fill="#d35400"/><path d="M32,42 Q20,15 12,24 Q24,34 32,42 Z" fill="#27ae60"/><path d="M32,42 Q44,12 52,22 Q40,32 32,42 Z" fill="#2ecc71"/>`,
+            box: `<rect x="10" y="22" width="44" height="32" rx="2" fill="#c39b6f"/><path d="M6,22 L32,12 L58,22" fill="none" stroke="#a07246" stroke-width="2"/><rect x="26" y="24" width="12" height="14" fill="#8c5836"/>`,
+            curtain: `<rect x="8" y="8" width="48" height="4" fill="#d4ac0d"/><path d="M12,12 Q20,34 14,58 L24,58 Q28,34 22,12 Z" fill="#e74c3c"/><path d="M52,12 Q44,34 50,58 L40,58 Q36,34 42,12 Z" fill="#e74c3c"/>`,
+            bed: `<rect x="8" y="20" width="10" height="34" fill="#795548"/><rect x="18" y="32" width="40" height="20" fill="#bdc3c7"/><rect x="14" y="38" width="44" height="16" fill="#3498db"/><rect x="54" y="36" width="6" height="18" fill="#795548"/>`,
+            duvet: `<path d="M8,44 Q32,20 56,44 Q32,38 8,44 Z" fill="#2980b9"/><circle cx="32" cy="38" r="4" fill="#1abc9c"/>`,
+            closet: `<rect x="10" y="8" width="44" height="50" rx="3" fill="#5d4037"/><line x1="32" y1="8" x2="32" y2="58" stroke="#3e2723" stroke-width="2"/><circle cx="28" cy="34" r="2" fill="#f1c40f"/><circle cx="36" cy="34" r="2" fill="#f1c40f"/>`,
+            drawer: `<rect x="12" y="14" width="40" height="42" fill="#8d6e63"/><rect x="16" y="20" width="32" height="10" fill="#a1887f"/><rect x="16" y="34" width="32" height="10" fill="#a1887f"/>`,
+            hamper: `<path d="M14,18 L50,18 L44,56 L20,56 Z" fill="#d7ccc8" stroke="#a1887f" stroke-width="2"/><ellipse cx="32" cy="18" rx="18" ry="4" fill="#bcaaa4"/>`,
+            nightstand: `<rect x="16" y="24" width="32" height="30" fill="#6d4c41"/><circle cx="32" cy="36" r="2" fill="#d7ccc8"/><path d="M26,10 L38,10 L42,24 L22,24 Z" fill="#f39c12"/>`,
+            pillows: `<rect x="10" y="26" width="24" height="16" rx="4" transform="rotate(-10 22 34)" fill="#e0e0e0"/><rect x="30" y="26" width="24" height="16" rx="4" transform="rotate(10 42 34)" fill="#b0bec5"/>`,
+            slippers: `<ellipse cx="24" cy="36" rx="8" ry="14" fill="#f06292"/><ellipse cx="40" cy="36" rx="8" ry="14" fill="#f06292"/>`,
+            tunnel: `<path d="M10,40 C10,20 54,20 54,40 L46,46 C46,30 18,30 18,46 Z" fill="#00cec9"/><circle cx="14" cy="43" r="4" fill="#0984e3"/>`,
+            post: `<rect x="14" y="52" width="36" height="6" fill="#795548"/><rect x="28" y="14" width="8" height="38" fill="#e1b12c"/>`,
+            trunk: `<rect x="10" y="24" width="44" height="28" rx="4" fill="#543824"/><path d="M10,32 L54,32" stroke="#d4ac0d" stroke-width="2"/>`,
+            suitcase: `<rect x="12" y="20" width="40" height="32" rx="4" fill="#e17055"/><path d="M26,20 L26,14 L38,14 L38,20" fill="none" stroke="#2d3436" stroke-width="3"/>`,
+            hammock: `<path d="M8,26 Q32,48 56,26" fill="none" stroke="#fdcb6e" stroke-width="4"/><circle cx="8" cy="26" r="3" fill="#e17055"/><circle cx="56" cy="26" r="3" fill="#e17055"/>`,
+            books: `<rect x="10" y="50" width="44" height="6" fill="#795548"/><rect x="14" y="22" width="8" height="28" fill="#e74c3c"/><rect x="24" y="18" width="10" height="32" fill="#3498db"/>`,
+            basket: `<ellipse cx="32" cy="46" rx="20" ry="10" fill="#a07246"/><circle cx="26" cy="36" r="8" fill="#e84393"/><circle cx="38" cy="34" r="9" fill="#00cec9"/>`,
+            chair: `<rect x="22" y="14" width="20" height="22" rx="3" fill="#2d3436"/><line x1="32" y1="42" x2="32" y2="52" stroke="#2d3436" stroke-width="4"/>`,
+            desk: `<rect x="8" y="22" width="48" height="6" fill="#8c5836"/><rect x="12" y="28" width="6" height="26" fill="#543824"/><rect x="46" y="28" width="6" height="26" fill="#543824"/>`,
+            bag: `<path d="M20,20 L44,20 L48,52 L16,52 Z" fill="#0984e3"/>`,
+            towels: `<rect x="16" y="42" width="32" height="10" rx="3" fill="#81ecec"/><rect x="18" y="32" width="28" height="10" rx="3" fill="#ffeaa7"/>`,
+            shelf: `<rect x="10" y="14" width="44" height="40" fill="#6d4c41"/><line x1="10" y1="28" x2="54" y2="28" stroke="#3e2723" stroke-width="3"/>`
+        };
+        return `<svg viewBox="0 0 64 64">${d[type] || '<circle cx="32" cy="32" r="16" fill="#f5cd79"/>'}</svg>`;
+    }
+
+    /* Save Slots & Game State */
+    let currentSlot = parseInt(localStorage.getItem('belle_active_slot') || "1");
+    let currentOutfit = "classic";
+    let unlockedOutfits = ["classic"];
+    let trophies = 0;
+    let collectedStash = [];
+
+    let activeWardrobeCategory = "all";
+    let activeRoom = "Living Room";
+    let targetRoom = "";
+    let targetSpotId = "";
+    let gameMode = "cozy";
+    let timeLeft = 30;
+    let timerInterval = null;
+    let searches = 0;
+    let isGameOver = false;
+    let radarEnabled = false;
+    let flashlightEnabled = false;
+    let treatsRemaining = 2;
+    let treatsUsed = 0;
+    let freePassUsed = false;
+
+    const DAILY_CHALLENGES = [
+        { id: 'speed', label: 'Quick paws', goal: 'Find Belle in 3 searches or less', reward: 3, test: (state) => state.searches <= 3 },
+        { id: 'quiet', label: 'Silent paws', goal: 'Finish without using treats', reward: 3, test: (state) => state.treatsUsed === 0 },
+        { id: 'zoom', label: 'Zoomies sprint', goal: 'Beat the timer with 15s left', reward: 4, test: (state) => state.gameMode === 'rush' && state.timeLeft >= 15 }
+    ];
+
+    /* Petting Engine State */
+    let purrProgress = 0;
+    let purrBonusClaimed = false;
+    let lastPetTime = 0;
+    let activeTourTarget = null;
+    let tourStepIndex = 0;
+
+    const UI_TOUR_STEPS = [
+        {
+            selector: '#mode-cozy',
+            title: 'Choose your pace',
+            description: 'Cozy is a relaxed hunt. Zoomies adds a countdown and rewards quick finds.'
+        },
+        {
+            selector: '#room-tabs .tab-btn',
+            title: 'Search room by room',
+            description: 'Belle is hiding in one room. Switch rooms here, then search the spots inside.'
+        },
+        {
+            selector: '#objects-grid .spot',
+            title: 'Check a hiding spot',
+            description: 'Choose a spot to search. Clues tell you whether Belle is in this room.'
+        },
+        {
+            selector: '#toolbelt',
+            title: 'Use your detective tools',
+            description: 'Treats give an audio clue, Radar shows room warmth, and Light helps you peek around. New Round starts over.'
+        },
+        {
+            selector: '#guide-button',
+            title: 'Need the rules later?',
+            description: 'Open the Guide any time for how to play, mode details, outfit perks, and more.'
+        }
+    ];
+
+    function getSlotKey(key) {
+        return `belle_s${currentSlot}_${key}`;
+    }
+
+    function loadSlotData(slotNum) {
+        currentSlot = slotNum;
+        localStorage.setItem('belle_active_slot', currentSlot);
+        document.getElementById("current-slot-label").innerText = currentSlot;
+
+        trophies = parseInt(localStorage.getItem(getSlotKey('trophies')) || "0");
+        currentOutfit = localStorage.getItem(getSlotKey('outfit')) || "classic";
+        unlockedOutfits = JSON.parse(localStorage.getItem(getSlotKey('unlocked')) || '["classic"]');
+        collectedStash = JSON.parse(localStorage.getItem(getSlotKey('stash')) || '[]');
+
+        if (!OUTFITS[currentOutfit]) currentOutfit = "classic";
+        document.getElementById("equipped-name").innerText = OUTFITS[currentOutfit].name;
+
+        updateTrophyUI();
+        updateStashBadge();
+        renderTabs();
+        startNewRound();
+    }
+
+    function saveState() {
+        localStorage.setItem(getSlotKey('trophies'), trophies);
+        localStorage.setItem(getSlotKey('outfit'), currentOutfit);
+        localStorage.setItem(getSlotKey('unlocked'), JSON.stringify(unlockedOutfits));
+        localStorage.setItem(getSlotKey('stash'), JSON.stringify(collectedStash));
+        updateTrophyUI();
+        updateStashBadge();
+    }
+
+    function init() {
+        // Migrate legacy single-save data into Slot 1 if available
+        if (localStorage.getItem('belle_trophies') && !localStorage.getItem('belle_s1_trophies')) {
+            localStorage.setItem('belle_s1_trophies', localStorage.getItem('belle_trophies') || "0");
+            localStorage.setItem('belle_s1_outfit', localStorage.getItem('belle_outfit') || "classic");
+            localStorage.setItem('belle_s1_unlocked', localStorage.getItem('belle_unlocked') || '["classic"]');
+            localStorage.setItem('belle_s1_stash', localStorage.getItem('belle_stash') || '[]');
+        }
+
+        loadSlotData(currentSlot);
+
+        // First Time User Check
+        const hasSeenGuide = localStorage.getItem('belle_has_seen_guide');
+        if (!hasSeenGuide) {
+            openHelpModal(true);
+            localStorage.setItem('belle_has_seen_guide', 'true');
+        } else if (!localStorage.getItem('belle_has_seen_tour')) {
+            startUITour();
+        }
+    }
+
+    function beginFreshStartForCurrentSlot() {
+        localStorage.removeItem('belle_has_seen_guide');
+        loadSlotData(currentSlot);
+        openHelpModal(true);
+        localStorage.setItem('belle_has_seen_guide', 'true');
+    }
+
+    function getTodayKey() {
+        const d = new Date();
+        return d.toISOString().slice(0, 10);
+    }
+
+    function getDailyChallenge() {
+        const today = new Date();
+        const index = today.getDate() % DAILY_CHALLENGES.length;
+        return DAILY_CHALLENGES[index];
+    }
+
+    function renderDailyChallenge() {
+        const chip = document.getElementById('daily-challenge-chip');
+        if (!chip) return;
+        const challenge = getDailyChallenge();
+        chip.title = challenge.goal;
+        chip.innerText = `Daily: ${challenge.label} (+${challenge.reward})`;
+    }
+
+    function awardDailyChallengeIfComplete() {
+        const challenge = getDailyChallenge();
+        const storageKey = `belle_daily_${currentSlot}_${getTodayKey()}`;
+        if (localStorage.getItem(storageKey)) return;
+
+        const state = {
+            searches,
+            treatsUsed,
+            gameMode,
+            timeLeft
+        };
+
+        if (challenge.test(state)) {
+            trophies += challenge.reward;
+            localStorage.setItem(storageKey, 'complete');
+            saveState();
+            triggerCuteComment(`Daily challenge cleared! +${challenge.reward} 🏆`, 2400);
+            launchConfetti();
+        }
+    }
+
+    function updateTrophyUI() {
+        document.getElementById("trophy-count").innerText = trophies;
+    }
+
+    function updateStashBadge() {
+        const badge = document.getElementById("stash-stat-badge");
+        badge.innerText = `${collectedStash.length}/${STASH_CATALOG.length}`;
+        const miniTray = document.getElementById("loot-collection");
+        miniTray.innerHTML = "";
+        if (collectedStash.length === 0) {
+            miniTray.innerHTML = "<span>🐾</span>";
+        } else {
+            collectedStash.forEach(id => {
+                const item = STASH_CATALOG.find(x => x.id === id);
+                if (item) {
+                    const span = document.createElement("span");
+                    span.innerText = item.icon;
+                    span.title = item.name;
+                    miniTray.appendChild(span);
+                }
+            });
+        }
+    }
+
+    /* Save Slots Modal */
+    function openSaveSlotsModal() {
+        renderSlotsGrid();
+        document.getElementById('slots-modal').style.display = 'flex';
+    }
+    function closeSaveSlotsModal() {
+        document.getElementById('slots-modal').style.display = 'none';
+    }
+    function renderSlotsGrid() {
+        const container = document.getElementById('save-slots-container');
+        container.innerHTML = "";
+        
+        [1, 2, 3].forEach(slot => {
+            const isCurrent = slot === currentSlot;
+            const slotTrophies = localStorage.getItem(`belle_s${slot}_trophies`) || "0";
+            const slotOutfit = localStorage.getItem(`belle_s${slot}_outfit`) || "classic";
+            const slotStash = JSON.parse(localStorage.getItem(`belle_s${slot}_stash`) || "[]");
+            const slotUnlocked = JSON.parse(localStorage.getItem(`belle_s${slot}_unlocked`) || '["classic"]');
+
+            const card = document.createElement('div');
+            card.className = `save-slot-card ${isCurrent ? 'active-slot' : ''}`;
+            card.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; font-size:13px; color:#3b200c;">
+                        Slot ${slot} ${isCurrent ? '<span style="color:#27ae60; font-size:11px;">(ACTIVE)</span>' : ''}
+                    </div>
+                    <div class="slot-meta">
+                        🏆 ${slotTrophies} Trophies | 👗 ${slotUnlocked.length}/21 Outfits | 🧦 ${slotStash.length}/10 Stash
+                        <br>Equipped: <b>${(OUTFITS[slotOutfit] && OUTFITS[slotOutfit].name) || 'Classic'}</b>
+                    </div>
+                </div>
+                <div class="slot-actions">
+                    ${!isCurrent ? `<button class="pill-btn active" onclick="loadSlot(${slot})">Load</button>` : ''}
+                    <button class="btn-danger" onclick="resetSlot(${slot})">Reset</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function loadSlot(slotNum) {
+        loadSlotData(slotNum);
+        renderSlotsGrid();
+        Sound.playMeow(600);
+    }
+
+    function resetSlot(slotNum) {
+        if (confirm(`Are you sure you want to permanently reset Slot ${slotNum}? All trophies, outfits, and stash on this slot will be erased.`)) {
+            localStorage.removeItem(`belle_s${slotNum}_trophies`);
+            localStorage.removeItem(`belle_s${slotNum}_outfit`);
+            localStorage.removeItem(`belle_s${slotNum}_unlocked`);
+            localStorage.removeItem(`belle_s${slotNum}_stash`);
+            if (slotNum === currentSlot) {
+                beginFreshStartForCurrentSlot();
+            }
+            renderSlotsGrid();
+            Sound.playRustle();
+        }
+    }
+
+    /* Secret Stash Gallery */
+    function openStashModal() {
+        renderStashGrid();
+        document.getElementById('stash-modal').style.display = 'flex';
+    }
+    function closeStashModal() {
+        document.getElementById('stash-modal').style.display = 'none';
+    }
+    function renderStashGrid() {
+        const grid = document.getElementById("stash-grid");
+        grid.innerHTML = "";
+        document.getElementById("stash-completion-text").innerText = `Collected: ${collectedStash.length} / ${STASH_CATALOG.length}`;
+
+        STASH_CATALOG.forEach(item => {
+            const unlocked = collectedStash.includes(item.id);
+            const card = document.createElement("div");
+            card.className = `stash-card ${unlocked ? '' : 'locked'}`;
+            card.innerHTML = `
+                <div class="stash-card-icon">${unlocked ? item.icon : "❓"}</div>
+                <div>
+                    <div class="stash-card-title">${unlocked ? item.name : "Unknown Curiosity"}</div>
+                    <div class="stash-card-desc">${unlocked ? item.desc : "Search more empty spots to uncover this swiped item!"}</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    /* Wardrobe Shop */
+    function openWardrobeModal() {
+        renderWardrobe();
+        document.getElementById('wardrobe-modal').style.display = 'flex';
+    }
+    function closeWardrobeModal() {
+        document.getElementById('wardrobe-modal').style.display = 'none';
+    }
+
+    function filterWardrobe(category, btn) {
+        activeWardrobeCategory = category;
+        document.querySelectorAll('.wardrobe-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderWardrobe();
+    }
+
+    function renderWardrobe() {
+        const grid = document.getElementById('wardrobe-grid');
+        grid.innerHTML = "";
+
+        const filtered = Object.values(OUTFITS).filter(outfit => {
+            if (activeWardrobeCategory === 'all') return true;
+            return outfit.category === activeWardrobeCategory;
+        });
+
+        filtered.forEach(outfit => {
+            const isUnlocked = unlockedOutfits.includes(outfit.id);
+            const isEquipped = currentOutfit === outfit.id;
+            const card = document.createElement('div');
+            card.className = `outfit-card ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
+            
+            card.innerHTML = `
+                <div class="outfit-preview">${getCustomBelleSVG(outfit.id)}</div>
+                <div class="outfit-name">${outfit.name}</div>
+                <div class="outfit-perk">✨ ${outfit.perk}</div>
+                <div class="outfit-cost">${isEquipped ? 'EQUIPPED' : (isUnlocked ? 'SELECT' : `🔒 ${outfit.cost} 🏆`)}</div>
+            `;
+
+            card.onclick = () => {
+                if (isUnlocked) {
+                    currentOutfit = outfit.id;
+                    document.getElementById("equipped-name").innerText = outfit.name;
+                    saveState();
+                    applyOutfitPerksOnEquip();
+                    renderWardrobe();
+                    renderSpots();
+                    renderTabs();
+                } else if (trophies >= outfit.cost) {
+                    trophies -= outfit.cost;
+                    unlockedOutfits.push(outfit.id);
+                    currentOutfit = outfit.id;
+                    document.getElementById("equipped-name").innerText = outfit.name;
+                    saveState();
+                    applyOutfitPerksOnEquip();
+                    renderWardrobe();
+                    renderSpots();
+                    renderTabs();
+                    Sound.playVictory();
+                } else {
+                    Sound.playRustle();
+                    alert(`You need ${outfit.cost - trophies} more 🏆 Trophies for ${outfit.name}!`);
+                }
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    function applyOutfitPerksOnEquip() {
+        // Flashlight perk (Artist)
+        const radius = (currentOutfit === 'artist') ? '190px' : '120px';
+        document.getElementById('flashlight-overlay').style.setProperty('--flash-radius', radius);
+
+        // Doctor mirror perk
+        if (currentOutfit === 'doctor' && !radarEnabled) {
+            toggleLaserRadar();
+        }
+    }
+
+    function openHelpModal(isFirstTime = false) {
+        document.getElementById('first-time-welcome').style.display = isFirstTime ? 'block' : 'none';
+        document.getElementById('help-title').innerText = isFirstTime ? "👋 Welcome Detective!" : "📖 Detective's Field Guide";
+        document.getElementById('help-modal').style.display = 'flex'; 
+    }
+    function closeHelpModal() {
+        const startTour = document.getElementById('first-time-welcome').style.display === 'block';
+        document.getElementById('help-modal').style.display = 'none';
+        if (startTour) startUITour();
+    }
+
+    function startUITour() {
+        if (localStorage.getItem('belle_has_seen_tour')) return;
+        tourStepIndex = 0;
+        document.getElementById('tour-backdrop').style.display = 'block';
+        document.getElementById('tour-card').style.display = 'block';
+        renderUITourStep();
+        window.addEventListener('resize', positionUITourCard);
+        window.addEventListener('keydown', handleUITourKeydown);
+    }
+
+    function renderUITourStep() {
+        if (activeTourTarget) activeTourTarget.classList.remove('tour-highlight');
+
+        const step = UI_TOUR_STEPS[tourStepIndex];
+        activeTourTarget = document.querySelector(step.selector);
+        if (!activeTourTarget) {
+            finishUITour();
+            return;
+        }
+
+        activeTourTarget.classList.add('tour-highlight');
+        document.getElementById('tour-title').innerText = step.title;
+        document.getElementById('tour-description').innerText = step.description;
+        document.getElementById('tour-step-count').innerText = `${tourStepIndex + 1} of ${UI_TOUR_STEPS.length}`;
+        document.getElementById('tour-next').innerText = tourStepIndex === UI_TOUR_STEPS.length - 1 ? 'Finish' : 'Next';
+        positionUITourCard();
+        document.getElementById('tour-next').focus();
+    }
+
+    function positionUITourCard() {
+        if (!activeTourTarget) return;
+        const card = document.getElementById('tour-card');
+        const targetRect = activeTourTarget.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const margin = 12;
+        const left = Math.min(
+            Math.max(margin, targetRect.left + targetRect.width / 2 - cardRect.width / 2),
+            window.innerWidth - cardRect.width - margin
+        );
+        const top = targetRect.bottom + cardRect.height + margin <= window.innerHeight
+            ? targetRect.bottom + margin
+            : Math.max(margin, targetRect.top - cardRect.height - margin);
+        card.style.left = `${left}px`;
+        card.style.top = `${top}px`;
+    }
+
+    function advanceUITour() {
+        tourStepIndex++;
+        if (tourStepIndex >= UI_TOUR_STEPS.length) {
+            finishUITour();
+            return;
+        }
+        renderUITourStep();
+    }
+
+    function finishUITour() {
+        if (activeTourTarget) activeTourTarget.classList.remove('tour-highlight');
+        activeTourTarget = null;
+        document.getElementById('tour-backdrop').style.display = 'none';
+        document.getElementById('tour-card').style.display = 'none';
+        window.removeEventListener('resize', positionUITourCard);
+        window.removeEventListener('keydown', handleUITourKeydown);
+        localStorage.setItem('belle_has_seen_tour', 'true');
+        document.getElementById('guide-button').focus();
+    }
+
+    function handleUITourKeydown(event) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            finishUITour();
+        } else if (event.key === 'Tab') {
+            event.preventDefault();
+            const skipButton = document.getElementById('tour-skip');
+            const nextButton = document.getElementById('tour-next');
+            const focusNext = event.shiftKey
+                ? document.activeElement === nextButton
+                : document.activeElement === skipButton;
+            (focusNext ? skipButton : nextButton).focus();
+        }
+    }
+
+    function switchMode(mode) {
+        gameMode = mode;
+        document.getElementById('mode-cozy').classList.toggle('active', mode === 'cozy');
+        document.getElementById('mode-rush').classList.toggle('active', mode === 'rush');
+        document.getElementById('timer-box').style.display = mode === 'rush' ? 'inline-block' : 'none';
+        startNewRound();
+    }
+
+    function triggerCuteComment(message, duration = 2800) {
+        const bubble = document.getElementById('cat-comment');
+        if (!bubble) return;
+        bubble.innerText = message;
+        bubble.classList.add('show');
+        clearTimeout(triggerCuteComment.timerId);
+        triggerCuteComment.timerId = setTimeout(() => bubble.classList.remove('show'), duration);
+    }
+
+    function spawnStageSparkles() {
+        const field = document.getElementById('stage-sparkles');
+        if (!field) return;
+        field.innerHTML = '';
+        const sparkleSymbols = ['✨', '💫', '🌟', '🐾'];
+        for (let i = 0; i < 12; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.textContent = sparkleSymbols[Math.floor(Math.random() * sparkleSymbols.length)];
+            sparkle.style.left = `${Math.random() * 92 + 2}%`;
+            sparkle.style.top = `${Math.random() * 78 + 12}%`;
+            sparkle.style.animationDelay = `${Math.random() * 0.4}s`;
+            field.appendChild(sparkle);
+        }
+        const paws = ['🐾', '🐾'];
+        for (let i = 0; i < 6; i++) {
+            const paw = document.createElement('div');
+            paw.className = 'pawprint-mini';
+            paw.textContent = paws[i % paws.length];
+            paw.style.left = `${Math.random() * 92 + 2}%`;
+            paw.style.top = `${Math.random() * 70 + 16}%`;
+            paw.style.animationDelay = `${Math.random() * 2.5}s`;
+            field.appendChild(paw);
+        }
+    }
+
+    function describeRoomMood(roomName) {
+        const moods = [
+            "Belle is feeling extra sneaky and cozy...",
+            "Belle is hiding somewhere soft and secret...",
+            "Belle is making a tiny escape plan...",
+            "Belle is somewhere warm and wonderfully mysterious..."
+        ];
+        if (!roomName) return moods[Math.floor(Math.random() * moods.length)];
+        return moods[Math.floor(Math.random() * moods.length)];
+    }
+
+    function renderTabs() {
+        const tabs = document.getElementById("room-tabs");
+        tabs.innerHTML = "";
+        const cuteRoomNames = {
+            "Living Room": "Sunbeam Room",
+            "Master Bedroom": "Nap Nook",
+            "Attic Sanctuary": "Mischief Loft",
+            "Office & Kitchen": "Tiny Adventure Corner"
+        };
+        Object.keys(ROOMS).forEach(r => {
+            const btn = document.createElement("button");
+            btn.className = `tab-btn ${r === activeRoom ? 'active' : ''}`;
+            
+            // Wizard Hat Perk: sparkles over the target room
+            if (currentOutfit === 'wizard' && r === targetRoom) {
+                btn.classList.add('tab-sparkle');
+            }
+
+            btn.innerText = cuteRoomNames[r] || r;
+            btn.onclick = () => {
+                activeRoom = r;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText === (cuteRoomNames[r] || r)));
+                document.getElementById('stage-badge').innerText = cuteRoomNames[r] || r;
+                
+                // Gold Bell perk: bell chimes when entering Belle's room
+                if (currentOutfit === 'bell_collar' && activeRoom === targetRoom) {
+                    Sound.playBell();
+                }
+
+                renderSpots();
+                updateRadar();
+            };
+            tabs.appendChild(btn);
+        });
+    }
+
+    function startNewRound() {
+        isGameOver = false;
+        searches = 0;
+        treatsUsed = 0;
+        freePassUsed = false;
+        spawnStageSparkles();
+        renderDailyChallenge();
+        
+        // Chef Perk: +1 Extra Treat
+        treatsRemaining = (currentOutfit === 'chef') ? 3 : 2;
+        updateTreatUI();
+
+        applyOutfitPerksOnEquip();
+
+        document.getElementById("search-count").innerText = searches;
+        document.getElementById("status-banner").innerText = "Belle is hiding! Search around the house and find her cutest little secret spot.";
+
+        const roomKeys = Object.keys(ROOMS);
+        targetRoom = roomKeys[Math.floor(Math.random() * roomKeys.length)];
+        const spots = ROOMS[targetRoom];
+        targetSpotId = spots[Math.floor(Math.random() * spots.length)].id;
+
+        // Zoomies Mode with Beanie perk
+        if (gameMode === 'rush') {
+            clearInterval(timerInterval);
+            timeLeft = (currentOutfit === 'beanie') ? 35 : 30;
+            document.getElementById('time-left').innerText = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time-left').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    triggerGameOver();
+                }
+            }, 1000);
+        }
+
+        renderTabs();
+        renderSpots();
+        updateRadar();
+        triggerCuteComment(describeRoomMood(targetRoom), 3200);
+
+        // Detective Perk: Reveal 1 empty spot automatically
+        if (currentOutfit === 'detective') {
+            setTimeout(revealDetectiveClue, 250);
+        }
+    }
+
+    function revealDetectiveClue() {
+        const spots = ROOMS[activeRoom];
+        const emptySpots = spots.filter(s => !(activeRoom === targetRoom && s.id === targetSpotId));
+        if (emptySpots.length > 0) {
+            const chosen = emptySpots[0];
+            const el = document.getElementById(`spot-${chosen.id}`);
+            if (el && !el.classList.contains("searched-empty")) {
+                el.classList.add("searched-empty");
+                document.getElementById("status-banner").innerHTML = `🕵️ Detective Belle ruled out <b>${chosen.name}</b> beforehand!`;
+            }
+        }
+    }
+
+    function renderSpots() {
+        const grid = document.getElementById("objects-grid");
+        grid.innerHTML = "";
+        const spots = ROOMS[activeRoom];
+
+        spots.forEach((spot, idx) => {
+            const card = document.createElement("div");
+            card.className = "spot";
+            card.id = `spot-${spot.id}`;
+            const stashItem = STASH_CATALOG[idx % STASH_CATALOG.length];
+            const isNearTarget = (activeRoom === targetRoom);
+
+            card.innerHTML = `
+                <div class="spot-icon">${spot.icon}</div>
+                <div class="spot-name">${spot.name}</div>
+                <span class="clue-hint">${isNearTarget ? '🔥 Warm Scent!' : '❄️ Dusty & Cold'}</span>
+                <div class="loot-item" title="${stashItem.name}">${stashItem.icon}</div>
+                <div class="belle-peeker">${getCustomBelleSVG(currentOutfit)}</div>
+            `;
+            card.onmouseenter = () => {
+                if (!isGameOver && !card.classList.contains('searched-empty')) {
+                    const roomFlavor = (activeRoom === targetRoom) ? 'There’s a little warm pawprint here...' : 'This spot looks dusty and sleepy...';
+                    card.title = roomFlavor;
+                }
+            };
+            card.onclick = () => search(spot, card, stashItem);
+            grid.appendChild(card);
+        });
+    }
+
+    function getCustomBelleSVG(outfitId) {
+        let svg = document.getElementById("belle-template").innerHTML;
+        let outfitSvg = (OUTFITS[outfitId] && OUTFITS[outfitId].svg) || "";
+        return svg.replace('<g id="outfit-layer"></g>', `<g id="outfit-layer">${outfitSvg}</g>`);
+    }
+
+    function search(spot, card, stashItem) {
+        if (isGameOver || card.classList.contains("searched-empty")) return;
+        
+        // Daisy Crown Perk: Free pass on 1st miss (does not increment searches)
+        if (currentOutfit === 'flower' && !freePassUsed && !(activeRoom === targetRoom && spot.id === targetSpotId)) {
+            freePassUsed = true;
+            document.getElementById("status-banner").innerHTML = "🌼 Daisy Crown protected your search count!";
+        } else {
+            searches++;
+            document.getElementById("search-count").innerText = searches;
+        }
+
+        // Ninja Perk: Adds +2s in Zoomies on miss
+        if (currentOutfit === 'ninja' && gameMode === 'rush') {
+            timeLeft = Math.min(timeLeft + 2, 45);
+            document.getElementById('time-left').innerText = timeLeft;
+        }
+
+        if (activeRoom === targetRoom && spot.id === targetSpotId) {
+            // Victory! Found Belle
+            Sound.playMeow(620);
+            Sound.playVictory();
+            card.classList.add("found");
+            isGameOver = true;
+            triggerCuteComment(`Boo! I was in ${spot.name}!`, 2200);
+
+            let earnedTrophies = 1;
+            let bonusText = "";
+
+            if (gameMode === 'rush') {
+                earnedTrophies = timeLeft >= 15 ? 3 : 2;
+                bonusText = `⚡ Zoomies Speed Bonus: <b>+${earnedTrophies} 🏆</b>`;
+            } else if (searches <= 3) {
+                earnedTrophies = 2;
+                bonusText = `⭐ Cat Whisperer Bonus: <b>+${earnedTrophies} 🏆</b>`;
+            } else {
+                bonusText = `Round Cleared: <b>+1 🏆</b>`;
+            }
+
+            // Corporate Tie Perk: +1 flat 🏆 in Cozy
+            if (currentOutfit === 'business' && gameMode === 'cozy') {
+                earnedTrophies += 1;
+                bonusText += ` | 💼 Overtime: <b>+1 🏆</b>`;
+            }
+
+            // Viking Perk: +1 🏆 on stubborn searches (≥6)
+            if (currentOutfit === 'viking' && searches >= 6) {
+                earnedTrophies += 1;
+                bonusText += ` | 🪓 Viking Grit: <b>+1 🏆</b>`;
+            }
+
+            // Unicorn Perk: Double trophies
+            if (currentOutfit === 'unicorn') {
+                earnedTrophies *= 2;
+                bonusText += ` | 🦄 Rainbow 2x Bonus!`;
+            }
+
+            trophies += earnedTrophies;
+            saveState();
+            launchConfetti();
+            awardDailyChallengeIfComplete();
+
+            if (gameMode === 'rush') clearInterval(timerInterval);
+
+            purrProgress = 0;
+            purrBonusClaimed = false;
+            updatePurrUI();
+
+            setTimeout(() => {
+                document.getElementById("modal-title").innerText = searches <= 3 ? "⭐ Master Detective!" : "🎉 Found Belle!";
+                document.getElementById("modal-desc").innerHTML = `
+                    Belle was snuggled inside <b>${spot.name}</b> (${activeRoom})!<br>
+                    Searches: <b>${searches}</b> | ${bonusText}
+                `;
+                document.getElementById("modal-cat-art").innerHTML = getCustomBelleSVG(currentOutfit);
+                document.getElementById("end-modal").style.display = "flex";
+            }, 600);
+
+        } else {
+            // Miss
+            Sound.playRustle();
+            card.classList.add("shake", "searched-empty");
+            setTimeout(() => card.classList.remove("shake"), 350);
+
+            // Stash Loot discovery logic (Pirate Perk doubles chance)
+            let newLootNotice = "";
+            let discoveryChance = (currentOutfit === 'pirate') ? 1.0 : 0.6;
+            
+            if (Math.random() <= discoveryChance && !collectedStash.includes(stashItem.id)) {
+                collectedStash.push(stashItem.id);
+                
+                // Crown Perk: +1 trophy per new stash item found
+                if (currentOutfit === 'crown') {
+                    trophies += 1;
+                    newLootNotice = ` 🧦 <b>Hoard Item: ${stashItem.name}! (👑 Royal Decree: +1 🏆)</b>`;
+                } else {
+                    newLootNotice = ` 🧦 <b>New Hoard Item: ${stashItem.name}!</b>`;
+                }
+                saveState();
+            }
+
+            // Toast bread perk: 1st thermal clue is always 100% warm
+            let thermalText = (activeRoom === targetRoom) ? "The spot feels warm! She's in this room!" : "Cold and dusty. Not in this room.";
+            if (currentOutfit === 'bread' && searches === 1) {
+                thermalText = `🍞 Fresh Toast Sense: ${activeRoom === targetRoom ? "BURNING TOAST HOT!" : "Ice cold breadbox."}`;
+            }
+
+            document.getElementById("status-banner").innerHTML = `Checked <b>${spot.name}</b>: ${thermalText}${newLootNotice}`;
+            triggerCuteComment(`Belle is hiding somewhere cozy nearby...`, 1700);
+        }
+    }
+
+    /* Pet & Purr Engine */
+    function handlePetMove(e) { doPet(e.clientX, e.clientY); }
+    function handlePetTouch(e) {
+        if (e.touches && e.touches[0]) doPet(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    function doPet(x, y) {
+        const now = Date.now();
+        if (now - lastPetTime < 80) return;
+        lastPetTime = now;
+
+        if (purrProgress < 100) {
+            // Fancy Bow Perk: purrs 2x faster (7% per stroke instead of 3.5%)
+            // Baker Perk: +3 extra hearts per stroke
+            let boost = (currentOutfit === 'bow') ? 7.0 : 3.5;
+            purrProgress += boost;
+            if (purrProgress > 100) purrProgress = 100;
+
+            Sound.triggerPurrPulse();
+            spawnFloatingHeart(x, y);
+            if (currentOutfit === 'baker') {
+                setTimeout(() => spawnFloatingHeart(x + 15, y - 10), 40);
+                setTimeout(() => spawnFloatingHeart(x - 15, y - 5), 80);
+            }
+            updatePurrUI();
+
+            if (purrProgress >= 100 && !purrBonusClaimed) {
+                purrBonusClaimed = true;
+                let bonus = (currentOutfit === 'unicorn') ? 2 : 1;
+                trophies += bonus;
+                saveState();
+                Sound.playMeow(750);
+                launchConfetti();
+                triggerCuteComment(`Prrr! Belle is absolutely delighted 💖`, 2200);
+                document.getElementById("purr-label").innerHTML = `💖 MAXIMUM PURR! +${bonus} BONUS 🏆 EARNED!`;
+            }
+        }
+    }
+    function updatePurrUI() {
+        const bar = document.getElementById("purr-bar");
+        const label = document.getElementById("purr-label");
+        bar.style.width = `${purrProgress}%`;
+        if (purrProgress < 100) {
+            label.innerText = `Rub Belle to Purr! ${Math.floor(purrProgress)}%`;
+        }
+    }
+    function spawnFloatingHeart(clientX, clientY) {
+        const zone = document.getElementById("petting-zone");
+        const rect = zone.getBoundingClientRect();
+        const heart = document.createElement("div");
+        heart.className = "floating-heart";
+        heart.innerText = ["💖", "💕", "✨", "🐾"][Math.floor(Math.random() * 4)];
+        heart.style.left = `${clientX - rect.left - 10}px`;
+        heart.style.top = `${clientY - rect.top - 15}px`;
+        zone.appendChild(heart);
+        setTimeout(() => heart.remove(), 800);
+    }
+
+    function shakeTreats() {
+        if (treatsRemaining <= 0) return;
+        treatsRemaining--;
+        treatsUsed++;
+        updateTreatUI();
+
+        Sound.playShaker();
+        document.getElementById("status-banner").innerHTML = "<i>*Crinkling treat bag...*</i>";
+
+        // Cowboy Perk: Instant treat response (0ms instead of 450ms)
+        const delay = (currentOutfit === 'cowboy') ? 50 : 450;
+
+        setTimeout(() => {
+            // Astro Helmet Perk: Always detects distance accurately
+            if (currentOutfit === 'astronaut') {
+                Sound.playMeow(680);
+                document.getElementById("status-banner").innerHTML = `🚀 <b>Cosmic Sensor:</b> Belle is close by and very playful!`;
+                triggerCuteComment(`Meow! Belle is nearby and very smug.`, 2400);
+            } else if (activeRoom === targetRoom) {
+                Sound.playMeow(650);
+                document.getElementById("status-banner").innerHTML = `🐾 <b>*LOUD MEOW!*</b> Belle is responding right inside this room!`;
+                triggerCuteComment(`Aha! She’s nearby and very smug.`, 2400);
+            } else {
+                Sound.playMeow(320);
+                document.getElementById("status-banner").innerHTML = `🐾 <i>*Muffled rustle...*</i> You hear faint movement somewhere far away.`;
+                triggerCuteComment(`Belle is somewhere soft and sneaky...`, 2200);
+            }
+        }, delay);
+    }
+
+    function updateTreatUI() {
+        const countSpan = document.getElementById("treat-count");
+        const treatBtn = document.getElementById("treat-btn");
+        countSpan.innerText = treatsRemaining;
+        treatBtn.disabled = treatsRemaining <= 0;
+    }
+
+    function toggleLaserRadar() {
+        radarEnabled = !radarEnabled;
+        document.getElementById('radar-tool').classList.toggle('active-tool', radarEnabled);
+        document.getElementById('radar-gauge').style.display = radarEnabled ? 'flex' : 'none';
+        updateRadar();
+    }
+
+    function updateRadar() {
+        if (!radarEnabled) return;
+        const gauge = document.getElementById("radar-gauge");
+        const text = document.getElementById("radar-text");
+        if (activeRoom !== targetRoom) {
+            text.innerText = "Cozy Cold";
+            gauge.style.borderColor = "#3498db";
+        } else {
+            text.innerText = "🔥 Purr-ty Warm!";
+            gauge.style.borderColor = "#2ecc71";
+            Sound.playMeow(750);
+        }
+    }
+
+    function toggleFlashlight() {
+        flashlightEnabled = !flashlightEnabled;
+        document.getElementById('flashlight-tool').classList.toggle('active-tool', flashlightEnabled);
+        document.getElementById('flashlight-overlay').style.display = flashlightEnabled ? 'block' : 'none';
+    }
+
+    function updateFlashlight(e) {
+        if (!flashlightEnabled) return;
+        const stage = document.getElementById('stage');
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        document.getElementById('flashlight-overlay').style.setProperty('--mouse-x', `${x}px`);
+        document.getElementById('flashlight-overlay').style.setProperty('--mouse-y', `${y}px`);
+    }
+
+    function triggerGameOver() {
+        isGameOver = true;
+        document.getElementById("modal-title").innerText = "⏰ Time's Up!";
+        document.getElementById("modal-desc").innerHTML = `Belle outsmarted you! She was in the <b>${targetRoom}</b>.`;
+        document.getElementById("modal-cat-art").innerHTML = getCustomBelleSVG(currentOutfit);
+        document.getElementById("end-modal").style.display = "flex";
+    }
+
+    function closeModalAndRestart() {
+        document.getElementById("end-modal").style.display = "none";
+        startNewRound();
+    }
+
+    function launchConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = Array.from({length: 60}, () => ({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.8) * 14,
+            color: ['#f5cd79', '#10ac84', '#f78fb3', '#ffffff', '#e67e22'][Math.floor(Math.random()*5)],
+            size: Math.random() * 6 + 4
+        }));
+
+        let frame = 0;
+        function render() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.35;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+            frame++;
+            if (frame < 70) requestAnimationFrame(render);
+            else ctx.clearRect(0,0, canvas.width, canvas.height);
+        }
+        render();
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
