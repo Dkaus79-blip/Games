@@ -32,6 +32,10 @@
     "type": "file"
   },
   {
+    "name": "cat vet .html",
+    "type": "file"
+  },
+  {
     "name": "cat war.html",
     "type": "file"
   },
