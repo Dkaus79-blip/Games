@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Skeeter & Lily's Arcade Tycoon: Mega Franchise Edition</title>
+<style>
+  :root {
+    --bg-dark: #0e0c1a;
+    --panel-bg: #19162e;
+    --panel-border: #383161;
+    --panel-hover: #262145;
+    --neon-pink: #ff3388;
+    --neon-blue: #00e5ff;
+    --neon-yellow: #ffe600;
+    --neon-green: #00ff88;
+    --neon-purple: #a855f7;
+    --cozy-amber: #f89b29;
+    --text-light: #f3f0ff;
+    --text-muted: #9f96c8;
+    --danger: #ef4444;
+  }
+
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CRT Scanline Overlay */
+  .scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(rgba(18, 16, 30, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.7;
+  }
+  .scanlines.off { display: none; }
+
+  /* Top HUD */
+  #hud {
+    background: linear-gradient(180deg, #221d42 0%, #151329 100%);
+    border-bottom: 2px solid var(--panel-border);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    z-index: 10;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stat-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-badge {
+    background: rgba(8, 6, 18, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .stat-badge span.val { color: #fff; }
+  .stat-badge.coins span.val { color: var(--neon-yellow); text-shadow: 0 0 6px rgba(255,230,0,0.4); }
+  .stat-badge.tickets span.val { color: var(--neon-pink); text-shadow: 0 0 6px rgba(255,51,136,0.4); }
+  .stat-badge.gems span.val { color: var(--neon-green); text-shadow: 0 0 6px rgba(0,255,136,0.4); }
+  .stat-badge.power span.val { color: var(--neon-blue); }
+
+  /* Dynamic Event Banner */
+  #event-banner {
+    background: linear-gradient(90deg, #ff3388, #f89b29);
+    color: #fff;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.5px;
+    display: none;
+    animation: bannerPulse 1.5s infinite alternate;
+    z-index: 9;
+  }
+  @keyframes bannerPulse {
+    from { opacity: 0.85; filter: brightness(1); }
+    to { opacity: 1; filter: brightness(1.25); }
+  }
+
+  /* Main Stage & Canvas */
+  #main-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #090714;
+  }
+
+  canvas#arcadeCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: default;
+  }
+
+  /* Bottom Controls Bar */
+  #action-bar {
+    background: #141126;
+    border-top: 2px solid var(--panel-border);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .btn {
+    background: linear-gradient(180deg, #322b59 0%, #1e1938 100%);
+    border: 1px solid #4a417e;
+    color: var(--text-light);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  }
+
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: linear-gradient(180deg, #ff3388 0%, #a81050 100%); border-color: #ff6ca5; }
+  .btn-amber { background: linear-gradient(180deg, #f89b29 0%, #aa6105 100%); border-color: #ffbb66; }
+  .btn-green { background: linear-gradient(180deg, #00ff88 0%, #008f4c 100%); border-color: #70ffbe; color: #000; }
+  .btn-purple { background: linear-gradient(180deg, #a855f7 0%, #6823ab 100%); border-color: #ca92ff; }
+
+  /* Toast Notification */
+  #cat-toast {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(19, 16, 38, 0.95);
+    border: 2px solid var(--neon-yellow);
+    border-radius: 14px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 25px rgba(255, 230, 0, 0.35);
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+  }
+  #cat-toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #cat-toast-avatar { font-size: 24px; }
+  #cat-toast-text { font-size: 13px; font-weight: bold; }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(5, 4, 12, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .modal-card {
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+    border-radius: 14px;
+    width: 92%;
+    max-width: 620px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.8), 0 0 25px rgba(114, 98, 192, 0.2);
+    overflow: hidden;
+    animation: modalIn 0.25s ease-out;
+  }
+  @keyframes modalIn { from { transform: scale(0.94); } to { transform: scale(1); } }
+
+  .modal-header {
+    background: #231f44;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .modal-header h3 { font-size: 16px; color: var(--neon-yellow); display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: none; border: none; font-size: 20px; color: #fff; cursor: pointer; }
+
+  .modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .item-card {
+    background: #221d42;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .item-card:hover { border-color: var(--neon-blue); background: var(--panel-hover); }
+  .item-card-header { display: flex; justify-content: space-between; align-items: center; }
+  .item-card-title { font-weight: bold; font-size: 14px; color: #fff; }
+  .item-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+  .item-card-stats { font-size: 11px; color: var(--neon-green); display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Wire Mini-Game */
+  .wire-puzzle {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    height: 180px;
+    background: #0f0d1e;
+    border: 2px solid #3c3468;
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+  }
+  .wire-col { display: flex; flex-direction: column; justify-content: space-between; }
+  .wire-node {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid #fff;
+    transition: transform 0.15s;
+  }
+  .wire-node:hover { transform: scale(1.15); }
+  .wire-node.red { background: #ef4444; }
+  .wire-node.blue { background: #3b82f6; }
+  .wire-node.yellow { background: #eab308; }
+  .wire-node.green { background: #10b981; }
+  .wire-node.selected { box-shadow: 0 0 14px #fff; transform: scale(1.2); }
+  .wire-node.connected { opacity: 0.4; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="scanlines" id="scanline-overlay"></div>
+
+<!-- TOP HUD -->
+<div id="hud">
+  <div class="stat-group">
+    <div class="stat-badge coins">🐟 <span id="coin-val" class="val">250</span></div>
+    <div class="stat-badge tickets">🎟️ <span id="ticket-val" class="val">0</span></div>
+    <div class="stat-badge gems">💎 <span id="gem-val" class="val">10</span></div>
+    <div class="stat-badge power">⚡ <span id="power-val" class="val">0/40 A</span></div>
+  </div>
+  <div class="stat-group">
+    <div class="stat-badge">⭐ Rating: <span id="rating-val" class="val">3.0</span>/5.0</div>
+    <div class="stat-badge">🔥 Hype: <span id="hype-val" class="val">100%</span></div>
+    <div class="stat-badge">📍 <span id="location-val" class="val">Downtown Catcade</span></div>
+    <button class="btn" style="padding: 3px 8px; font-size:11px;" onclick="SoundManager.toggleBGM()">🎵 BGM: <span id="bgm-status">OFF</span></button>
+    <button class="btn" style="padding: 3px 8px; font-size:11px;" onclick="SoundManager.toggleSound()">🔊 SFX: <span id="sfx-status">ON</span></button>
+  </div>
+</div>
+
+<!-- DYNAMIC EVENT BANNER -->
+<div id="event-banner">🚨 HEALTH INSPECTOR DOG VISITING! CLEAN SPILLS AND FIX JAMS! 🚨</div>
+
+<!-- MAIN VIEWPORT -->
+<div id="main-viewport">
+  <canvas id="arcadeCanvas"></canvas>
+  
+  <!-- Cat Toast Speech Bubble -->
+  <div id="cat-toast">
+    <div id="cat-toast-avatar">(=^-ω-^=)</div>
+    <div id="cat-toast-text">Skeeter is ready for chaos!</div>
+  </div>
+</div>
+
+<!-- ACTION BAR -->
+<div id="action-bar">
+  <button class="btn btn-primary" onclick="UI.openShop()">📦 Buy Cabinets</button>
+  <button class="btn btn-amber" onclick="UI.openAmenities()">🍕 Amenities</button>
+  <button class="btn btn-purple" onclick="UI.openPrizes()">🎁 Prize Counter</button>
+  <button class="btn" onclick="UI.openBreaker()">⚡ Breaker</button>
+  <button class="btn" onclick="UI.openStaff()">🐾 Cat Crew</button>
+  <button class="btn btn-green" onclick="UI.openSkills()">💎 Catnip Lab</button>
+  <button class="btn" onclick="UI.openFranchise()">🚀 Franchise</button>
+  <button class="btn" onclick="UI.openLedger()">📋 Ledger</button>
+  <button class="btn" onclick="UI.openArcadeHub()">🕹️ Play Hub</button>
+</div>
+
+<!-- BUY MACHINES MODAL -->
+<div id="shop-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>📦 Buy Arcade Cabinets</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="item-grid" id="machine-catalog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AMENITIES & DECOR MODAL -->
+<div id="amenities-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🍕 Arcade Amenities & Snack Bars</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:var(--text-muted);">Amenities increase customer happiness, reset patience timers, and generate steady food revenue!</p>
+      <div class="item-grid" id="amenities-catalog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIZE COUNTER MODAL -->
+<div id="prize-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🎁 Lily's Ticket Exchange</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:var(--text-muted);">Trade guest tickets for permanent arcade multipliers and perks!</p>
+      <div class="item-grid" id="prize-catalog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BREAKER / POWER MODAL -->
+<div id="breaker-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>⚡ Electrical Grid & Fuses</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="breaker-status-text">Your electrical grid is operating within safety bounds.</p>
+      <div style="background:#110e24; padding:14px; border-radius:8px; border:1px solid #3c3468;">
+        <div><strong>Current Load:</strong> <span id="breaker-amps">0</span> / <span id="breaker-max">40</span> Amps</div>
+        <div style="margin-top:8px; background:#241e47; height:14px; border-radius:7px; overflow:hidden;">
+          <div id="breaker-bar" style="width:0%; height:100%; background:var(--neon-green); transition:width 0.3s;"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="Game.upgradeBreaker()">⚡ Heavy-Duty Copper Fuse Upgrade (+25A) — <span id="breaker-cost">200</span> 🐟</button>
+      <button id="reset-fuse-btn" class="btn btn-amber" style="display:none;" onclick="Game.resetFuse()">🔧 Reset Tripped Fuse</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAT STAFF CREW MODAL -->
+<div id="staff-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🐾 Feline Staff & Management Crew</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="item-grid" id="staff-roster"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CATNIP LAB / GEM SKILL TREE MODAL -->
+<div id="skills-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>💎 Catnip Lab Perk Tree</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:var(--text-muted);">Spend rare Catnip Gems to unlock powerful permanent feline mutations!</p>
+      <div class="item-grid" id="skill-tree-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FRANCHISE / PRESTIGE MODAL -->
+<div id="franchise-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🚀 Franchise Expansion (Prestige)</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;">Sell your current arcade business to relocate to a bigger, flashier venue! You will retain your <strong>Catnip Gems, Skill Perks, and Lifetime Trophies</strong> while gaining a permanent global revenue multiplier.</p>
+      <div class="item-grid" id="franchise-locations"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER & STATISTICS MODAL -->
+<div id="ledger-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>📋 Lily's Master Financial Ledger</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+        <div style="background:#1e1a38; padding:12px; border-radius:8px;">
+          <div><strong>Lifetime Fish-Coin Revenue:</strong> <span id="ledg-lifetime">0</span> 🐟</div>
+          <div><strong>Active Arcade Cabinets:</strong> <span id="ledg-machines">0</span></div>
+          <div><strong>Amenities Built:</strong> <span id="ledg-amenities">0</span></div>
+          <div><strong>Customers Entertained:</strong> <span id="ledg-customers">0</span></div>
+          <div><strong>Spills Cleaned:</strong> <span id="ledg-spills">0</span></div>
+          <div><strong>Skeeter Cat-Naps:</strong> <span id="ledg-naps">0</span></div>
+          <div><strong>Prestige Level:</strong> <span id="ledg-prestige">0</span></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn" style="flex:1;" onclick="SaveSystem.exportSave()">💾 Export Save Data</button>
+          <button class="btn" style="flex:1;" onclick="SaveSystem.importSave()">📥 Import Save Data</button>
+        </div>
+        <button class="btn" style="background:#991b1b; border-color:#ef4444; margin-top:6px;" onclick="SaveSystem.wipeData()">🗑️ Hard Reset Game Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAY HUB (Mini-Games Launcher) -->
+<div id="playhub-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🕹️ Skeeter's Play-Zone Mini-Games</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="item-grid">
+        <div class="item-card">
+          <div class="item-card-title">🧸 Claw-Some Grabber</div>
+          <div class="item-card-desc">Drop the crane to snatch plushies, gems, and tickets!</div>
+          <button class="btn btn-primary" onclick="MiniGames.launchClaw()">Play Claw Crane</button>
+        </div>
+        <div class="item-card">
+          <div class="item-card-title">🔨 Whack-A-Bug Frenzy</div>
+          <div class="item-card-desc">Smash invading roaches & bugs before timer expires!</div>
+          <button class="btn btn-amber" onclick="MiniGames.launchWhack()">Play Whack-A-Bug</button>
+        </div>
+        <div class="item-card">
+          <div class="item-card-title">💃 Dance Furvolution</div>
+          <div class="item-card-desc">Hit falling neon arrow beats in rhythm with the music!</div>
+          <button class="btn btn-purple" onclick="MiniGames.launchDance()">Play Dance Pad</button>
+        </div>
+        <div class="item-card">
+          <div class="item-card-title">🏎️ Cyber-Chase 2088</div>
+          <div class="item-card-desc">8-bit high speed highway racer! Dodge hazards!</div>
+          <button class="btn btn-green" onclick="MiniGames.launchRacer()">Play Cyber Racer</button>
+        </div>
+        <div class="item-card">
+          <div class="item-card-title">🚀 Space Fish Pinball</div>
+          <div class="item-card-desc">2D physics flipper table! Hit bumpers for ticket multi!</div>
+          <button class="btn btn-primary" onclick="MiniGames.launchPinball()">Play Pinball</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MACHINE INSPECTION MODAL -->
+<div id="inspect-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="inspect-name">Cabinet Name</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="inspect-details" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="inspect-upgrade-btn" class="btn btn-primary" style="flex:1;">⭐ Level Up</button>
+        <button id="inspect-play-btn" class="btn btn-amber" style="flex:1;">🕹️ Play Cabinet</button>
+      </div>
+      <button id="inspect-repair-btn" class="btn btn-green" onclick="Game.repairSelected()">🔧 Quick Polish & Repair</button>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: CLAW CRANE -->
+<div id="claw-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 380px;">
+    <div class="modal-header">
+      <h3>🧸 Claw-Some Grabber</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <canvas id="clawCanvas" width="320" height="260" style="background:#0a0818; border:2px solid var(--neon-pink); border-radius:8px;"></canvas>
+      <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
+        <button class="btn" style="flex:1;" onmousedown="ClawGame.move(-1)" onmouseup="ClawGame.stopMove()" ontouchstart="ClawGame.move(-1)" ontouchend="ClawGame.stopMove()">⬅️ Left</button>
+        <button class="btn" style="flex:1;" onmousedown="ClawGame.move(1)" onmouseup="ClawGame.stopMove()" ontouchstart="ClawGame.move(1)" ontouchend="ClawGame.stopMove()">Right ➡️</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="ClawGame.drop()">⬇️ DROP</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: REPAIR WIRE QTE -->
+<div id="repair-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 360px;">
+    <div class="modal-header">
+      <h3>🔧 Fix Chewed Power Grid!</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <p style="font-size:12px; color:var(--text-muted); text-align:center;">Connect matching colored wires from Left to Right!</p>
+      <div class="wire-puzzle" id="wirePuzzle">
+        <div class="wire-col" id="wires-left"></div>
+        <div class="wire-col" id="wires-right"></div>
+      </div>
+      <p id="repair-status" style="font-weight:bold; color:var(--neon-yellow); margin-top:8px;">0/4 Connected</p>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: WHACK-A-BUG -->
+<div id="whack-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 360px;">
+    <div class="modal-header">
+      <h3>🔨 Whack-A-Bug Frenzy!</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; font-size:14px;">
+        <div>Time: <span id="whack-timer" style="color:var(--neon-pink);">15</span>s</div>
+        <div>Score: <span id="whack-score" style="color:var(--neon-green);">0</span></div>
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; width:270px; height:270px; margin-top:10px;" id="whack-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: DANCE FURVOLUTION (Rhythm) -->
+<div id="dance-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 380px;">
+    <div class="modal-header">
+      <h3>💃 Dance Furvolution!</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; font-size:13px;">
+        <div>Score: <span id="dance-score" style="color:var(--neon-yellow);">0</span></div>
+        <div>Combo: <span id="dance-combo" style="color:var(--neon-pink);">0x</span></div>
+      </div>
+      <canvas id="danceCanvas" width="300" height="260" style="background:#070512; border:2px solid var(--neon-purple); border-radius:8px;"></canvas>
+      <div style="display:flex; gap:6px; width:100%; margin-top:8px;">
+        <button class="btn btn-purple" style="flex:1;" onclick="DanceGame.hit(0)">⬅️</button>
+        <button class="btn btn-purple" style="flex:1;" onclick="DanceGame.hit(1)">⬇️</button>
+        <button class="btn btn-purple" style="flex:1;" onclick="DanceGame.hit(2)">⬆️</button>
+        <button class="btn btn-purple" style="flex:1;" onclick="DanceGame.hit(3)">➡️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: CYBER-CHASE 2088 -->
+<div id="racer-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 380px;">
+    <div class="modal-header">
+      <h3>🏎️ Cyber-Chase 2088</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; font-size:13px;">
+        <div>Distance: <span id="racer-dist" style="color:var(--neon-green);">0</span>m</div>
+        <div>Coins: <span id="racer-coins" style="color:var(--neon-yellow);">0</span></div>
+      </div>
+      <canvas id="racerCanvas" width="300" height="260" style="background:#05030f; border:2px solid var(--neon-blue); border-radius:8px;"></canvas>
+      <div style="display:flex; gap:10px; width:100%; margin-top:8px;">
+        <button class="btn" style="flex:1;" onmousedown="RacerGame.steer(-1)" onmouseup="RacerGame.steer(0)" ontouchstart="RacerGame.steer(-1)" ontouchend="RacerGame.steer(0)">⬅️ Steer Left</button>
+        <button class="btn" style="flex:1;" onmousedown="RacerGame.steer(1)" onmouseup="RacerGame.steer(0)" ontouchstart="RacerGame.steer(1)" ontouchend="RacerGame.steer(0)">Steer Right ➡️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MINI-GAME MODAL: SPACE FISH PINBALL -->
+<div id="pinball-modal" class="modal-backdrop">
+  <div class="modal-card" style="max-width: 360px;">
+    <div class="modal-header">
+      <h3>🚀 Space Fish Pinball</h3>
+      <button class="modal-close" onclick="UI.closeModals()">✕</button>
+    </div>
+    <div class="modal-body" style="align-items:center;">
+      <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; font-size:13px;">
+        <div>Score: <span id="pinball-score" style="color:var(--neon-pink);">0</span></div>
+        <div>Balls: <span id="pinball-balls" style="color:var(--neon-green);">3</span></div>
+      </div>
+      <canvas id="pinballCanvas" width="280" height="300" style="background:#080614; border:2px solid #584e8c; border-radius:8px;"></canvas>
+      <div style="display:flex; gap:10px; width:100%; margin-top:8px;">
+        <button class="btn" style="flex:1;" onmousedown="PinballGame.flipLeft(true)" onmouseup="PinballGame.flipLeft(false)" ontouchstart="PinballGame.flipLeft(true)" ontouchend="PinballGame.flipLeft(false)">🛡️ Left Flipper (A)</button>
+        <button class="btn" style="flex:1;" onmousedown="PinballGame.flipRight(true)" onmouseup="PinballGame.flipRight(false)" ontouchstart="PinballGame.flipRight(true)" ontouchend="PinballGame.flipRight(false)">Flipper Right (D) 🛡️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   AUDIO SYNTHESIZER & PROCEDURAL BGM ENGINE (Web Audio API)
+   ========================================================================== */
+const SoundManager = {
+  sfxEnabled: true,
+  bgmEnabled: false,
+  ctx: null,
+  bgmInterval: null,
+  step: 0,
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+  },
+
+  toggleSound() {
+    this.sfxEnabled = !this.sfxEnabled;
+    document.getElementById('sfx-status').innerText = this.sfxEnabled ? 'ON' : 'OFF';
+  },
+
+  toggleBGM() {
+    this.bgmEnabled = !this.bgmEnabled;
+    document.getElementById('bgm-status').innerText = this.bgmEnabled ? 'ON' : 'OFF';
+    if (this.bgmEnabled) {
+      this.startBGM();
+    } else {
+      clearInterval(this.bgmInterval);
+    }
+  },
+
+  playTone(freq, type, duration, gainVal = 0.08) {
+    if (!this.sfxEnabled) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  },
+
+  coin() {
+    this.playTone(987.77, 'sine', 0.06, 0.12);
+    setTimeout(() => this.playTone(1318.51, 'sine', 0.12, 0.12), 50);
+  },
+
+  ticket() { this.playTone(587.33, 'triangle', 0.04, 0.08); },
+  meow() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(780, this.ctx.currentTime + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.32);
+      gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.32);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.32);
+    } catch(e) {}
+  },
+
+  buzz() { this.playTone(110, 'sawtooth', 0.25, 0.15); },
+  win() {
+    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+      setTimeout(() => this.playTone(f, 'sine', 0.12, 0.1), i * 80);
+    });
+  },
+
+  startBGM() {
+    this.init();
+    clearInterval(this.bgmInterval);
+    const bassScale = [110, 110, 130.81, 146.83, 110, 98, 110, 164.81];
+    const leadScale = [440, 523.25, 659.25, 587.33, 659.25, 783.99, 880, 659.25];
+
+    this.bgmInterval = setInterval(() => {
+      if (!this.bgmEnabled) return;
+      try {
+        const bassFreq = bassScale[this.step % bassScale.length];
+        const leadFreq = leadScale[(this.step * 2) % leadScale.length];
+
+        // Bass Pulse
+        const osc1 = this.ctx.createOscillator();
+        const gain1 = this.ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(bassFreq, this.ctx.currentTime);
+        gain1.gain.setValueAtTime(0.03, this.ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+        osc1.connect(gain1);
+        gain1.connect(this.ctx.destination);
+        osc1.start();
+        osc1.stop(this.ctx.currentTime + 0.18);
+
+        // Arp Lead
+        if (this.step % 2 === 0) {
+          const osc2 = this.ctx.createOscillator();
+          const gain2 = this.ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(leadFreq, this.ctx.currentTime);
+          gain2.gain.setValueAtTime(0.015, this.ctx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+          osc2.connect(gain2);
+          gain2.connect(this.ctx.destination);
+          osc2.start();
+          osc2.stop(this.ctx.currentTime + 0.12);
+        }
+
+        this.step++;
+      } catch(e) {}
+    }, 200);
+  }
+};
+
+/* ==========================================================================
+   DATA CATALOGS & PRESTIGE LOCATIONS
+   ========================================================================== */
+const MACHINE_CATALOG = [
+  { id: 'whack', name: 'Whack-a-Roach', type: 'REDEMPTION', cost: 120, amps: 2, rev: 8, tix: 10, color: '#ff3388', icon: '🔨', desc: 'Toddlers love smashing digital roaches!' },
+  { id: 'claw', name: 'Claw-Some 3000', type: 'CLAW', cost: 250, amps: 3, rev: 18, tix: 18, color: '#00e5ff', icon: '🧸', desc: 'High ticket grabber crane packed with plushies.' },
+  { id: 'dance', name: 'Dance Furvolution', type: 'RHYTHM', cost: 520, amps: 7, rev: 35, tix: 25, color: '#ffe600', icon: '💃', desc: 'Pumping neon arrows and strobe light stage.' },
+  { id: 'racer', name: 'Cyber-Chase 2088', type: 'VIDEO', cost: 980, amps: 10, rev: 68, tix: 15, color: '#00ff88', icon: '🏎️', desc: 'Twin sitdown CRT racer. Nerd magnet!' },
+  { id: 'pinball', name: 'Space Fish Pinball', type: 'PINBALL', cost: 1450, amps: 6, rev: 92, tix: 45, color: '#a855f7', icon: '🚀', desc: 'Bumping steel balls & flashing neon bumpers.' },
+  { id: 'vr_cat', name: 'Virtual Catnip Matrix', type: 'VR', cost: 2400, amps: 14, rev: 175, tix: 60, color: '#f89b29', icon: '🥽', desc: 'Next-gen holographic headset terminal!' }
+];
+
+const AMENITIES_CATALOG = [
+  { id: 'pizza_bar', name: 'Slice & Dice Pizza', cost: 300, amps: 4, revBonus: 15, icon: '🍕', desc: 'Fresh pepperoni slices! Restores customer patience by 40%.' },
+  { id: 'soda_machine', name: 'Fizzy Fish Pop', cost: 180, amps: 2, revBonus: 8, icon: '🥤', desc: 'Cold soda dispenser. Boosts guest speed.' },
+  { id: 'atm_kiosk', name: 'Fish-Coin ATM', cost: 500, amps: 2, revBonus: 25, icon: '🏧', desc: 'Allows broke guests to withdraw fresh coins immediately.' },
+  { id: 'photo_booth', name: 'Purr-fect Photo Booth', cost: 420, amps: 3, revBonus: 20, icon: '📸', desc: 'High profit margin snapshot booth.' }
+];
+
+const PRIZE_CATALOG = [
+  { id: 'plush_pile', name: 'Catnip Plush Mountain', cost: 150, desc: 'Increases ticket payout value across all machines by +30%.', bought: false },
+  { id: 'neon_sign', name: 'Skeeter Ultra-Neon Sign', cost: 350, desc: 'Attracts 35% more high-spending teen guests.', bought: false },
+  { id: 'cushion_seats', name: 'Velvet Arcade Stools', cost: 600, desc: 'Guests stay 50% longer before leaving.', bought: false },
+  { id: 'golden_treat', name: 'Lily’s Golden Pen', cost: 1200, desc: 'All cabinets earn permanent +25% Fish-Coins.', bought: false },
+  { id: 'master_fuse', name: 'Quantum Circuit Breaker', cost: 2500, desc: 'Halves electrical consumption of all machines.', bought: false }
+];
+
+const SKILL_TREE = [
+  { id: 'speedy_paws', name: 'Speedy Paws', cost: 3, desc: 'All staff and cats move 40% faster.', unlocked: false },
+  { id: 'overclock', name: 'CRT Overclocking', cost: 5, desc: 'Cabinets earn +30% revenue base.', unlocked: false },
+  { id: 'magnet_claws', name: 'Magnetic Crane', cost: 6, desc: 'Claw crane win rate increased by 2x.', unlocked: false },
+  { id: 'clean_aura', name: 'Self-Cleaning Floors', cost: 8, desc: 'Spills and trash decay automatically after 8 seconds.', unlocked: false },
+  { id: 'hype_surge', name: 'Infinite Hype Fuel', cost: 12, desc: 'Skeeter Meow Sale multiplier boosted to 3x!', unlocked: false }
+];
+
+const STAFF_ROSTER = [
+  { id: 'skeeter', name: 'Skeeter', role: 'Mascot & Chaos', cost: 0, hired: true, desc: 'Naps on warm cabinets for massive 2x revenue boosts!' },
+  { id: 'lily', name: 'Lily', role: 'Master Accountant', cost: 0, hired: true, desc: 'Patrols broken machines and balances accounting.' },
+  { id: 'luna', name: 'Luna', role: 'Speedy Scout', cost: 0, hired: true, desc: 'Zoomies around the floor dropping shiny loose tokens!' },
+  { id: 'buster', name: 'Buster the Dog', role: 'Arcade Bouncer', cost: 400, hired: false, desc: 'Prevents customer vandalism and reduces machine wear.' },
+  { id: 'gizmo', name: 'Gizmo', role: 'Tech Kitty', cost: 750, hired: false, desc: 'Automatically repairs jammed machines over time!' },
+  { id: 'mochi', name: 'Chef Mochi', role: 'Snack Master', cost: 1100, hired: false, desc: 'Doubles amenity snack income.' }
+];
+
+const FRANCHISE_LOCATIONS = [
+  { id: 'loc_downtown', name: 'Downtown Catcade', reqCoins: 0, multiplier: 1.0, icon: '🏙️', desc: 'The cozy original arcade where it all began.' },
+  { id: 'loc_boardwalk', name: 'Neon Boardwalk Pier', reqCoins: 2500, multiplier: 1.75, icon: '🏖️', desc: 'Seaside breezes and massive tourist crowds (+75% Rev).' },
+  { id: 'loc_tokyo', name: 'Cyber-Tokyo Arcade Alley', reqCoins: 8000, multiplier: 3.2, icon: '🗼', desc: 'Multi-story neon powerhouse arcade (+220% Rev).' },
+  { id: 'loc_space', name: 'Orbital Space Station Catcade', reqCoins: 25000, multiplier: 6.5, icon: '🚀', desc: 'Zero-gravity futuristic gaming palace (+550% Rev).' }
+];
+
+/* ==========================================================================
+   GAME ENGINE & STATE
+   ========================================================================== */
+const Game = {
+  fishCoins: 250,
+  tickets: 0,
+  catnipGems: 10,
+  breakerAmps: 0,
+  maxBreakerAmps: 40,
+  breakerTripped: false,
+  rating: 3.2,
+  hypeMultiplier: 1.0,
+  lifetimeCoins: 250,
+  customersServed: 0,
+  spillsCleaned: 0,
+  skeeterNaps: 0,
+  prestigeLevel: 0,
+  currentLocation: FRANCHISE_LOCATIONS[0],
+
+  machines: [],
+  amenities: [],
+  customers: [],
+  spills: [],
+  particles: [],
+  looseTokens: [],
+  
+  cats: {
+    skeeter: { name: 'Skeeter', x: 180, y: 160, targetX: 180, targetY: 160, color: '#f89b29', sleepingOn: null },
+    lily: { name: 'Lily', x: 100, y: 120, targetX: 100, targetY: 120, color: '#ffffff' },
+    luna: { name: 'Luna', x: 260, y: 220, targetX: 260, targetY: 220, color: '#a855f7' },
+    buster: { name: 'Buster', x: 40, y: 280, targetX: 40, targetY: 280, color: '#8d6e63' },
+    gizmo: { name: 'Gizmo', x: 300, y: 140, targetX: 300, targetY: 140, color: '#00e5ff' }
+  },
+
+  selectedMachine: null,
+  lastTick: 0,
+  healthEventActive: false,
+  healthEventTimer: 0,
+
+  init() {
+    CanvasRenderer.init();
+    SaveSystem.load();
+
+    if (this.machines.length === 0) {
+      this.buyMachine('whack', 120, 160);
+      this.buyMachine('claw', 240, 160);
+    }
+    this.spawnCustomers(5);
+
+    // Main Engine Loops
+    requestAnimationFrame(ts => this.loop(ts));
+    setInterval(() => this.economyTick(), 2000);
+    setInterval(() => this.chaosTick(), 14000);
+    setInterval(() => this.spillTick(), 10000);
+    setInterval(() => SaveSystem.save(), 6000);
+
+    UI.renderAll();
+    UI.updateHUD();
+    UI.showCatToast('(=^-ω-^=)', 'Welcome back! Skeeter is ready to make noise!');
+  },
+
+  buyMachine(typeId, x = null, y = null) {
+    const proto = MACHINE_CATALOG.find(m => m.id === typeId);
+    if (!proto) return;
+
+    if (x === null || y === null) {
+      const idx = this.machines.length;
+      const col = idx % 4;
+      const row = Math.floor(idx / 4);
+      x = 100 + col * 120;
+      y = 150 + row * 110;
+    }
+
+    const machine = {
+      instanceId: 'm_' + Math.random().toString(36).substr(2, 9),
+      ...proto,
+      x: x,
+      y: y,
+      level: 1,
+      wear: 0,
+      isJammed: false,
+      hasCatNap: false
+    };
+
+    this.machines.push(machine);
+    this.calculateBreakerLoad();
+    UI.updateHUD();
+  },
+
+  buyAmenity(amenityId) {
+    const proto = AMENITIES_CATALOG.find(a => a.id === amenityId);
+    if (!proto || this.fishCoins < proto.cost) {
+      SoundManager.buzz();
+      return;
+    }
+    this.fishCoins -= proto.cost;
+    const count = this.amenities.length;
+    this.amenities.push({
+      ...proto,
+      instanceId: 'a_' + Math.random().toString(36).substr(2, 9),
+      x: 60 + (count * 90),
+      y: 60
+    });
+    SoundManager.win();
+    this.calculateBreakerLoad();
+    UI.updateHUD();
+    UI.renderAmenities();
+    UI.showCatToast('(=`ω´=)', `Lily installed the ${proto.name}!`);
+  },
+
+  calculateBreakerLoad() {
+    let machineAmps = this.machines.reduce((acc, m) => acc + m.amps, 0);
+    let amenityAmps = this.amenities.reduce((acc, a) => acc + a.amps, 0);
+    let totalAmps = machineAmps + amenityAmps;
+
+    if (PRIZE_CATALOG.find(p => p.id === 'master_fuse').bought) totalAmps = Math.floor(totalAmps * 0.5);
+    this.breakerAmps = totalAmps;
+
+    if (this.breakerAmps > this.maxBreakerAmps && !this.breakerTripped) {
+      this.tripBreaker();
+    }
+  },
+
+  tripBreaker() {
+    this.breakerTripped = true;
+    SoundManager.buzz();
+    UI.showCatToast('(=`ω´=)', '⚠️ OVERLOAD! Fuses blown! Reset in Breaker box!');
+  },
+
+  resetFuse() {
+    this.breakerTripped = false;
+    SoundManager.win();
+    UI.showCatToast('(=`ω´=)', 'Fuses replaced. Power restored!');
+    UI.closeModals();
+    UI.updateHUD();
+  },
+
+  upgradeBreaker() {
+    const cost = Math.floor(this.maxBreakerAmps * 5);
+    if (this.fishCoins >= cost) {
+      this.fishCoins -= cost;
+      this.maxBreakerAmps += 25;
+      this.breakerTripped = false;
+      SoundManager.win();
+      UI.updateHUD();
+      UI.openBreaker();
+      UI.showCatToast('(=`ω´=)', 'Lily reinforced the electrical grid (+25A)!');
+    } else {
+      SoundManager.buzz();
+    }
+  },
+
+  spawnCustomers(count) {
+    const types = [
+      { name: 'Toddler', color: '#ff88a3', speed: 40, spendMod: 0.8 },
+      { name: 'Nerd', color: '#88e5ff', speed: 50, spendMod: 1.4 },
+      { name: 'Influencer', color: '#ffdd88', speed: 65, spendMod: 2.0 },
+      { name: 'Litterbug', color: '#d488ff', speed: 45, spendMod: 1.0 }
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const arche = types[Math.floor(Math.random() * types.length)];
+      this.customers.push({
+        id: Math.random(),
+        type: arche.name,
+        x: CanvasRenderer.canvas.width / 2 + (Math.random() * 60 - 30),
+        y: CanvasRenderer.canvas.height + 20,
+        targetX: 60 + Math.random() * (CanvasRenderer.canvas.width - 120),
+        targetY: 100 + Math.random() * (CanvasRenderer.canvas.height - 180),
+        color: arche.color,
+        speed: arche.speed,
+        spendMod: arche.spendMod,
+        patience: 100
+      });
+    }
+  },
+
+  economyTick() {
+    if (this.breakerTripped) return;
+
+    let totalCoins = 0;
+    let totalTix = 0;
+
+    // Cabinets Earn
+    this.machines.forEach(m => {
+      if (m.isJammed) return;
+
+      if (Math.random() < 0.7) {
+        let rev = m.rev * (1 + (m.level - 1) * 0.4) * this.hypeMultiplier * this.currentLocation.multiplier;
+        if (PRIZE_CATALOG.find(p => p.id === 'golden_treat').bought) rev *= 1.25;
+        if (SKILL_TREE.find(s => s.id === 'overclock').unlocked) rev *= 1.3;
+        if (m.hasCatNap) rev *= 2.0;
+
+        let tix = m.tix * (1 + (m.level - 1) * 0.25);
+        if (PRIZE_CATALOG.find(p => p.id === 'plush_pile').bought) tix *= 1.3;
+
+        rev = Math.round(rev);
+        tix = Math.round(tix);
+
+        this.fishCoins += rev;
+        this.lifetimeCoins += rev;
+        this.tickets += tix;
+        totalCoins += rev;
+        totalTix += tix;
+
+        // Buster Staff wear reduction
+        const wearRate = STAFF_ROSTER.find(s => s.id === 'buster').hired ? 1.5 : 3.0;
+        m.wear += Math.random() * wearRate;
+
+        if (m.wear >= 95 && Math.random() < 0.35) {
+          m.isJammed = true;
+          SoundManager.buzz();
+          UI.showCatToast('(=`ω´=)', `${m.name} jammed! Click to repair!`);
+        }
+
+        CanvasRenderer.addFloater(m.x + 30, m.y - 8, `+${rev}🐟`, '#ffe600');
+        if (tix > 0) {
+          setTimeout(() => CanvasRenderer.addFloater(m.x + 40, m.y - 20, `+${tix}🎟️`, '#ff3388'), 120);
+        }
+      }
+    });
+
+    // Amenities Earn
+    this.amenities.forEach(a => {
+      let foodRev = a.revBonus * this.currentLocation.multiplier;
+      if (STAFF_ROSTER.find(s => s.id === 'mochi').hired) foodRev *= 2;
+      foodRev = Math.round(foodRev);
+      this.fishCoins += foodRev;
+      this.lifetimeCoins += foodRev;
+      totalCoins += foodRev;
+      CanvasRenderer.addFloater(a.x + 20, a.y - 5, `+${foodRev}🐟`, '#ff9900');
+    });
+
+    // Gizmo Staff Auto-Repair
+    if (STAFF_ROSTER.find(s => s.id === 'gizmo').hired) {
+      const broken = this.machines.find(m => m.isJammed || m.wear > 60);
+      if (broken) {
+        broken.wear = Math.max(0, broken.wear - 15);
+        if (broken.wear < 80) broken.isJammed = false;
+      }
+    }
+
+    if (totalCoins > 0) SoundManager.coin();
+    this.customersServed += Math.floor(Math.random() * 2) + 1;
+    UI.updateHUD();
+  },
+
+  chaosTick() {
+    const roll = Math.random();
+    if (roll < 0.35) {
+      // SKEETER MEOW SALE
+      const boost = SKILL_TREE.find(s => s.id === 'hype_surge').unlocked ? 3.0 : 2.0;
+      this.hypeMultiplier = boost;
+      SoundManager.win();
+      UI.showCatToast('(=^-ω-^=)', `SKEETER: "MEOW SALE! ${boost}x HYPE ACTIVE!" 🚀`);
+      setTimeout(() => {
+        this.hypeMultiplier = 1.0;
+        UI.updateHUD();
+      }, 8000);
+    } else if (roll < 0.65) {
+      // Luna token bat
+      const rx = 60 + Math.random() * (CanvasRenderer.canvas.width - 120);
+      const ry = 80 + Math.random() * (CanvasRenderer.canvas.height - 160);
+      this.looseTokens.push({ x: rx, y: ry, val: Math.floor(Math.random() * 20) + 15 });
+      UI.showCatToast('(ﾐචᆽචﾐ)', 'Luna batted a shiny gold token onto the floor! Tap it!');
+      SoundManager.ticket();
+    } else {
+      // Skeeter Nap
+      if (this.machines.length > 0) {
+        const m = this.machines[Math.floor(Math.random() * this.machines.length)];
+        this.machines.forEach(x => x.hasCatNap = false);
+        m.hasCatNap = true;
+        this.cats.skeeter.sleepingOn = m;
+        this.skeeterNaps++;
+        SoundManager.meow();
+        UI.showCatToast('(=^-ω-^=)', `Skeeter is napping on ${m.name}! 2x Machine Cash! 💤`);
+      }
+    }
+    UI.updateHUD();
+  },
+
+  spillTick() {
+    // Spawn floor spills
+    if (Math.random() < 0.6 && this.spills.length < 8) {
+      const rx = 60 + Math.random() * (CanvasRenderer.canvas.width - 120);
+      const ry = 100 + Math.random() * (CanvasRenderer.canvas.height - 180);
+      this.spills.push({ x: rx, y: ry, type: Math.random() < 0.5 ? '🥤 Soda' : '🍕 Trash' });
+    }
+
+    // Auto cleaning perk
+    if (SKILL_TREE.find(s => s.id === 'clean_aura').unlocked && this.spills.length > 0) {
+      this.spills.shift();
+      this.spillsCleaned++;
+    }
+
+    // Health Inspector Random Event Trigger
+    if (!this.healthEventActive && Math.random() < 0.08) {
+      this.startHealthEvent();
+    }
+  },
+
+  startHealthEvent() {
+    this.healthEventActive = true;
+    this.healthEventTimer = 30;
+    document.getElementById('event-banner').style.display = 'block';
+    SoundManager.buzz();
+
+    const bannerInterval = setInterval(() => {
+      this.healthEventTimer--;
+      document.getElementById('event-banner').innerText = `🚨 HEALTH INSPECTOR DOG VISITING! (${this.healthEventTimer}s) CLEAN ALL SPILLS & FIX JAMS! 🚨`;
+
+      if (this.healthEventTimer <= 0 || !this.healthEventActive) {
+        clearInterval(bannerInterval);
+        this.healthEventActive = false;
+        document.getElementById('event-banner').style.display = 'none';
+
+        const brokenCount = this.machines.filter(m => m.isJammed).length;
+        const totalHazards = this.spills.length + brokenCount;
+
+        if (totalHazards === 0) {
+          SoundManager.win();
+          this.catnipGems += 5;
+          this.tickets += 100;
+          UI.showCatToast('(=`ω´=)', '🌟 PERFECT INSPECTION! +5 Catnip Gems & +100 Tickets! 💎');
+        } else {
+          SoundManager.buzz();
+          const fine = Math.min(this.fishCoins, 100);
+          this.fishCoins -= fine;
+          UI.showCatToast('(=`ω´=)', `Inspection Failed (${totalHazards} issues)! Fined ${fine} 🐟!`);
+        }
+        UI.updateHUD();
+      }
+    }, 1000);
+  },
+
+  repairSelected() {
+    if (this.selectedMachine) {
+      this.selectedMachine.wear = 0;
+      this.selectedMachine.isJammed = false;
+      SoundManager.win();
+      UI.showCatToast('(=`ω´=)', `Fixed and polished ${this.selectedMachine.name}!`);
+      UI.openInspect(this.selectedMachine);
+      UI.updateHUD();
+    }
+  },
+
+  prestige(locId) {
+    const loc = FRANCHISE_LOCATIONS.find(l => l.id === locId);
+    if (!loc || this.fishCoins < loc.reqCoins) return;
+
+    this.prestigeLevel++;
+    this.currentLocation = loc;
+    this.fishCoins = 300;
+    this.machines = [];
+    this.amenities = [];
+    this.breakerAmps = 0;
+    this.maxBreakerAmps = 40;
+    this.catnipGems += 8;
+
+    this.addInitialMachines();
+    SoundManager.win();
+    UI.closeModals();
+    UI.updateHUD();
+    UI.showCatToast('(=^-ω-^=)', `GRAND OPENING AT ${loc.name}! Multiplier is now ${loc.multiplier}x! 🚀`);
+  },
+
+  addInitialMachines() {
+    this.buyMachine('whack', 120, 160);
+    this.buyMachine('claw', 240, 160);
+  },
+
+  loop(ts) {
+    const dt = (ts - (this.lastTick || ts)) / 1000;
+    this.lastTick = ts;
+
+    this.updateEntities(dt);
+    CanvasRenderer.render();
+
+    requestAnimationFrame(t => this.loop(t));
+  },
+
+  updateEntities(dt) {
+    const speedMult = SKILL_TREE.find(s => s.id === 'speedy_paws').unlocked ? 1.4 : 1.0;
+
+    // Skeeter
+    if (this.cats.skeeter.sleepingOn) {
+      this.cats.skeeter.x = this.cats.skeeter.sleepingOn.x + 25;
+      this.cats.skeeter.y = this.cats.skeeter.sleepingOn.y - 12;
+    } else {
+      this.moveEntity(this.cats.skeeter, 40 * speedMult * dt);
+      if (Math.hypot(this.cats.skeeter.x - this.cats.skeeter.targetX, this.cats.skeeter.y - this.cats.skeeter.targetY) < 10) {
+        this.cats.skeeter.targetX = 60 + Math.random() * (CanvasRenderer.canvas.width - 120);
+        this.cats.skeeter.targetY = 100 + Math.random() * (CanvasRenderer.canvas.height - 180);
+      }
+    }
+
+    // Lily
+    const broken = this.machines.find(m => m.isJammed || m.wear > 75);
+    if (broken) {
+      this.cats.lily.targetX = broken.x - 15;
+      this.cats.lily.targetY = broken.y + 10;
+    }
+    this.moveEntity(this.cats.lily, 50 * speedMult * dt);
+    if (Math.hypot(this.cats.lily.x - this.cats.lily.targetX, this.cats.lily.y - this.cats.lily.targetY) < 10 && !broken) {
+      this.cats.lily.targetX = 60 + Math.random() * (CanvasRenderer.canvas.width - 120);
+      this.cats.lily.targetY = 100 + Math.random() * (CanvasRenderer.canvas.height - 180);
+    }
+
+    // Luna Zoomies
+    this.moveEntity(this.cats.luna, 120 * speedMult * dt);
+    if (Math.hypot(this.cats.luna.x - this.cats.luna.targetX, this.cats.luna.y - this.cats.luna.targetY) < 12) {
+      this.cats.luna.targetX = 40 + Math.random() * (CanvasRenderer.canvas.width - 80);
+      this.cats.luna.targetY = 80 + Math.random() * (CanvasRenderer.canvas.height - 140);
+    }
+
+    // Customers
+    this.customers.forEach(c => {
+      this.moveEntity(c, c.speed * dt);
+      if (Math.hypot(c.x - c.targetX, c.y - c.targetY) < 10) {
+        c.targetX = 60 + Math.random() * (CanvasRenderer.canvas.width - 120);
+        c.targetY = 100 + Math.random() * (CanvasRenderer.canvas.height - 180);
+      }
+    });
+
+    if (this.customers.length < 9 && Math.random() < 0.02) {
+      this.spawnCustomers(1);
+    }
+  },
+
+  moveEntity(ent, step) {
+    const dx = ent.targetX - ent.x;
+    const dy = ent.targetY - ent.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 1) {
+      ent.x += (dx / dist) * step;
+      ent.y += (dy / dist) * step;
+    }
+  }
+};
+
+/* ==========================================================================
+   CANVAS RENDERING ENGINE (Day/Night & Neon Glows)
+   ========================================================================== */
+const CanvasRenderer = {
+  canvas: null,
+  ctx: null,
+  floaters: [],
+
+  init() {
+    this.canvas = document.getElementById('arcadeCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.canvas.addEventListener('mousedown', e => this.handleClick(e));
+  },
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+  },
+
+  addFloater(x, y, text, color) {
+    this.floaters.push({ x, y, text, color, alpha: 1.0, dy: 0 });
+  },
+
+  handleClick(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    // 1. Spills cleaning
+    for (let i = Game.spills.length - 1; i >= 0; i--) {
+      const s = Game.spills[i];
+      if (Math.hypot(mx - s.x, my - s.y) < 22) {
+        Game.spills.splice(i, 1);
+        Game.spillsCleaned++;
+        Game.fishCoins += 5;
+        this.addFloater(s.x, s.y, '+5🐟 Clean!', '#00ff88');
+        SoundManager.ticket();
+        UI.updateHUD();
+        return;
+      }
+    }
+
+    // 2. Loose Tokens
+    for (let i = Game.looseTokens.length - 1; i >= 0; i--) {
+      const tok = Game.looseTokens[i];
+      if (Math.hypot(mx - tok.x, my - tok.y) < 22) {
+        Game.fishCoins += tok.val;
+        Game.tickets += 6;
+        this.addFloater(tok.x, tok.y, `+${tok.val}🐟 Found!`, '#ffe600');
+        SoundManager.coin();
+        Game.looseTokens.splice(i, 1);
+        UI.updateHUD();
+        return;
+      }
+    }
+
+    // 3. Cat Petting
+    const cats = Object.values(Game.cats);
+    for (let cat of cats) {
+      if (Math.hypot(mx - cat.x, my - cat.y) < 24) {
+        SoundManager.meow();
+        this.addFloater(cat.x, cat.y - 15, '❤️ PURR!', '#ff3388');
+        Game.fishCoins += 2;
+        UI.updateHUD();
+        return;
+      }
+    }
+
+    // 4. Arcade Cabinets
+    for (let m of Game.machines) {
+      if (mx >= m.x && mx <= m.x + 65 && my >= m.y && my <= m.y + 85) {
+        SoundManager.coin();
+        UI.openInspect(m);
+        return;
+      }
+    }
+  },
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Floor Pattern
+    this.drawFloor(ctx, w, h);
+
+    // Spills & Litter
+    Game.spills.forEach(s => {
+      ctx.fillStyle = s.type.includes('Soda') ? '#aa2244' : '#665533';
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y, 14, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(s.type, s.x - 12, s.y + 3);
+    });
+
+    // Loose Tokens
+    Game.looseTokens.forEach(tok => {
+      ctx.fillStyle = '#ffe600';
+      ctx.beginPath();
+      ctx.arc(tok.x, tok.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // Amenities
+    Game.amenities.forEach(a => {
+      ctx.fillStyle = '#221938';
+      ctx.fillRect(a.x, a.y, 60, 50);
+      ctx.strokeStyle = '#ff9900';
+      ctx.strokeRect(a.x, a.y, 60, 50);
+      ctx.font = '20px sans-serif';
+      ctx.fillText(a.icon, a.x + 18, a.y + 32);
+    });
+
+    // Machines
+    Game.machines.forEach(m => this.drawMachine(ctx, m));
+
+    // Customers
+    Game.customers.forEach(c => this.drawHuman(ctx, c));
+
+    // Cats
+    this.drawCat(ctx, Game.cats.skeeter, '#f89b29', 'Skeeter');
+    this.drawCat(ctx, Game.cats.lily, '#ffffff', 'Lily');
+    this.drawCat(ctx, Game.cats.luna, '#a855f7', 'Luna');
+
+    // Ambient Day/Night Lighting Shader
+    this.renderLighting(ctx, w, h);
+
+    // Floating Numbers
+    for (let i = this.floaters.length - 1; i >= 0; i--) {
+      const f = this.floaters[i];
+      f.dy += 0.4;
+      f.alpha -= 0.018;
+      ctx.globalAlpha = Math.max(0, f.alpha);
+      ctx.fillStyle = f.color;
+      ctx.font = 'bold 12px sans-serif';
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 4;
+      ctx.fillText(f.text, f.x, f.y - f.dy);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1.0;
+
+      if (f.alpha <= 0) this.floaters.splice(i, 1);
+    }
+  },
+
+  drawFloor(ctx, w, h) {
+    const sz = 44;
+    ctx.strokeStyle = 'rgba(56, 49, 97, 0.4)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += sz) {
+      for (let y = 0; y < h; y += sz) {
+        ctx.strokeRect(x, y, sz, sz);
+        if ((x / sz + y / sz) % 2 === 0) {
+          ctx.fillStyle = 'rgba(23, 19, 44, 0.4)';
+          ctx.fillRect(x, y, sz, sz);
+        }
+      }
+    }
+  },
+
+  drawMachine(ctx, m) {
+    ctx.save();
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(m.x + 32, m.y + 80, 32, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cabinet Body
+    ctx.fillStyle = m.color;
+    ctx.fillRect(m.x, m.y, 65, 80);
+    ctx.fillStyle = '#141124';
+    ctx.fillRect(m.x + 4, m.y + 4, 57, 72);
+
+    // Screen
+    ctx.fillStyle = Game.breakerTripped ? '#080612' : (m.isJammed ? '#5e1022' : '#221b47');
+    ctx.fillRect(m.x + 7, m.y + 16, 51, 36);
+
+    ctx.font = '18px sans-serif';
+    ctx.fillText(m.icon, m.x + 22, m.y + 40);
+
+    // Marquee Header
+    ctx.fillStyle = m.color;
+    ctx.fillRect(m.x + 6, m.y + 4, 53, 9);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText(m.name.substring(0, 9), m.x + 8, m.y + 11);
+
+    if (m.isJammed) {
+      ctx.fillStyle = '#ff3388';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('⚠️ JAM', m.x + 10, m.y + 40);
+    }
+    if (m.hasCatNap) {
+      ctx.fillStyle = '#ffe600';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('💤 2x HYPE', m.x + 6, m.y - 4);
+    }
+    ctx.restore();
+  },
+
+  drawHuman(ctx, c) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y + 8, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = c.color;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffe0bd';
+    ctx.beginPath();
+    ctx.arc(c.x, c.y - 6, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  },
+
+  drawCat(ctx, cat, color, name) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cat.x, cat.y + 5, 10, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cat.x, cat.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears
+    ctx.beginPath();
+    ctx.moveTo(cat.x - 7, cat.y - 5);
+    ctx.lineTo(cat.x - 10, cat.y - 14);
+    ctx.lineTo(cat.x - 2, cat.y - 8);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cat.x + 7, cat.y - 5);
+    ctx.lineTo(cat.x + 10, cat.y - 14);
+    ctx.lineTo(cat.x + 2, cat.y - 8);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText(name, cat.x - 10, cat.y - 15);
+    ctx.restore();
+  },
+
+  renderLighting(ctx, w, h) {
+    const time = (Date.now() / 8000) % (Math.PI * 2);
+    const darkness = (Math.sin(time) + 1) / 2 * 0.38; // Smooth night cycle
+
+    ctx.fillStyle = `rgba(3, 2, 10, ${darkness})`;
+    ctx.fillRect(0, 0, w, h);
+
+    if (!Game.breakerTripped) {
+      Game.machines.forEach(m => {
+        const rad = ctx.createRadialGradient(m.x + 32, m.y + 35, 4, m.x + 32, m.y + 35, 55);
+        rad.addColorStop(0, m.color + '44');
+        rad.addColorStop(1, 'transparent');
+        ctx.fillStyle = rad;
+        ctx.beginPath();
+        ctx.arc(m.x + 32, m.y + 35, 55, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+  }
+};
+
+/* ==========================================================================
+   MINI-GAMES ENGINE (6 Distinct Playable Modules)
+   ========================================================================== */
+const MiniGames = {
+  launchClaw() { UI.closeModals(); ClawGame.init(); UI.openModal('claw-modal'); },
+  launchWhack() { UI.closeModals(); UI.openModal('whack-modal'); WhackGame.start(); },
+  launchDance() { UI.closeModals(); UI.openModal('dance-modal'); DanceGame.start(); },
+  launchRacer() { UI.closeModals(); UI.openModal('racer-modal'); RacerGame.start(); },
+  launchPinball() { UI.closeModals(); UI.openModal('pinball-modal'); PinballGame.start(); }
+};
+
+/* 1. CLAW CRANE */
+const ClawGame = {
+  clawX: 160, clawY: 30, moveDir: 0, state: 'IDLE', targetItem: null, items: [],
+  init() {
+    this.clawX = 160; this.clawY = 30; this.state = 'IDLE';
+    this.items = [
+      { x: 50, y: 220, icon: '🧸', val: 35, type: 'TIX' },
+      { x: 110, y: 225, icon: '💎', val: 2, type: 'GEM' },
+      { x: 170, y: 220, icon: '🐱', val: 90, type: 'LUNA' },
+      { x: 240, y: 225, icon: '⭐', val: 50, type: 'TIX' }
+    ];
+    const loop = () => {
+      if (document.getElementById('claw-modal').classList.contains('open')) {
+        this.update();
+        requestAnimationFrame(loop);
+      }
+    };
+    requestAnimationFrame(loop);
+  },
+  move(d) { if (this.state === 'IDLE') this.moveDir = d; },
+  stopMove() { this.moveDir = 0; },
+  drop() { if (this.state === 'IDLE') this.state = 'DROPPING'; },
+  update() {
+    if (this.state === 'IDLE') {
+      this.clawX = Math.max(25, Math.min(295, this.clawX + this.moveDir * 3));
+    } else if (this.state === 'DROPPING') {
+      this.clawY += 3.5;
+      if (this.clawY >= 195) {
+        this.targetItem = this.items.find(it => Math.hypot(it.x - this.clawX, it.y - this.clawY) < 26);
+        this.state = 'RETRACT';
+      }
+    } else if (this.state === 'RETRACT') {
+      this.clawY -= 2.5;
+      if (this.targetItem) {
+        this.targetItem.x = this.clawX;
+        this.targetItem.y = this.clawY + 15;
+      }
+      if (this.clawY <= 30) {
+        this.state = 'IDLE';
+        if (this.targetItem) {
+          SoundManager.win();
+          if (this.targetItem.type === 'TIX') {
+            Game.tickets += this.targetItem.val;
+            UI.showCatToast('(=^-ω-^=)', `Claw won +${this.targetItem.val} Tickets!`);
+          } else if (this.targetItem.type === 'GEM') {
+            Game.catnipGems += this.targetItem.val;
+            UI.showCatToast('(=^-ω-^=)', `Rare gem grab! +${this.targetItem.val} Catnip Gems! 💎`);
+          } else if (this.targetItem.type === 'LUNA') {
+            Game.tickets += 100;
+            UI.showCatToast('(ﾐචᆽචﾐ)', 'Luna rescued from the claw machine! +100 Tickets!');
+          }
+          this.items = this.items.filter(i => i !== this.targetItem);
+          this.targetItem = null;
+          UI.updateHUD();
+        }
+      }
+    }
+    this.render();
+  },
+  render() {
+    const ctx = document.getElementById('clawCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 320, 260);
+
+    ctx.strokeStyle = '#554a88'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(10, 25); ctx.lineTo(310, 25); ctx.stroke();
+
+    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(this.clawX, 25); ctx.lineTo(this.clawX, this.clawY); ctx.stroke();
+
+    ctx.fillStyle = '#ff3388';
+    ctx.beginPath(); ctx.arc(this.clawX, this.clawY, 8, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(this.clawX - 10, this.clawY + 12); ctx.lineTo(this.clawX, this.clawY); ctx.lineTo(this.clawX + 10, this.clawY + 12);
+    ctx.stroke();
+
+    this.items.forEach(it => {
+      ctx.font = '22px sans-serif';
+      ctx.fillText(it.icon, it.x - 11, it.y + 6);
+    });
+  }
+};
+
+/* 2. REPAIR QTE */
+const RepairGame = {
+  selectedLeft: null, connections: 0, colors: ['red', 'blue', 'yellow', 'green'],
+  init() {
+    this.connections = 0; this.selectedLeft = null;
+    document.getElementById('repair-status').innerText = '0/4 Connected';
+    const leftCol = document.getElementById('wires-left');
+    const rightCol = document.getElementById('wires-right');
+    leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
+    const shuffled = [...this.colors].sort(() => Math.random() - 0.5);
+    this.colors.forEach(col => {
+      const node = document.createElement('div');
+      node.className = `wire-node ${col}`;
+      node.onclick = () => this.selectLeft(node, col);
+      leftCol.appendChild(node);
+    });
+    shuffled.forEach(col => {
+      const node = document.createElement('div');
+      node.className = `wire-node ${col}`;
+      node.onclick = () => this.selectRight(node, col);
+      rightCol.appendChild(node);
+    });
+  },
+  selectLeft(node, col) {
+    document.querySelectorAll('#wires-left .wire-node').forEach(n => n.classList.remove('selected'));
+    node.classList.add('selected');
+    this.selectedLeft = { node, col };
+    SoundManager.playTone(400, 'sine', 0.05);
+  },
+  selectRight(node, col) {
+    if (!this.selectedLeft) return;
+    if (this.selectedLeft.col === col) {
+      SoundManager.coin();
+      this.selectedLeft.node.classList.add('connected');
+      node.classList.add('connected');
+      this.selectedLeft = null;
+      this.connections++;
+      document.getElementById('repair-status').innerText = `${this.connections}/4 Connected`;
+      if (this.connections >= 4) {
+        SoundManager.win();
+        Game.repairSelected();
+        setTimeout(() => UI.closeModals(), 500);
+      }
+    } else {
+      SoundManager.buzz();
+      this.selectedLeft.node.classList.remove('selected');
+      this.selectedLeft = null;
+    }
+  }
+};
+
+/* 3. WHACK-A-BUG */
+const WhackGame = {
+  score: 0, timeLeft: 15, activeHole: -1, timer: null, moleTimer: null,
+  start() {
+    this.score = 0; this.timeLeft = 15;
+    document.getElementById('whack-score').innerText = '0';
+    document.getElementById('whack-timer').innerText = '15';
+    const grid = document.getElementById('whack-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const h = document.createElement('div');
+      h.style.background = '#1b1735'; h.style.border = '2px solid #4a417a'; h.style.borderRadius = '8px';
+      h.style.display = 'flex'; h.style.justifyContent = 'center'; h.style.alignItems = 'center';
+      h.style.fontSize = '30px'; h.style.cursor = 'pointer';
+      h.onclick = () => this.hit(i);
+      grid.appendChild(h);
+    }
+    clearInterval(this.timer); clearInterval(this.moleTimer);
+    this.moleTimer = setInterval(() => this.pop(), 600);
+    this.timer = setInterval(() => {
+      this.timeLeft--;
+      document.getElementById('whack-timer').innerText = this.timeLeft;
+      if (this.timeLeft <= 0) this.end();
+    }, 1000);
+  },
+  pop() {
+    const grid = document.getElementById('whack-grid');
+    for (let i = 0; i < 9; i++) grid.children[i].innerText = '';
+    this.activeHole = Math.floor(Math.random() * 9);
+    grid.children[this.activeHole].innerText = Math.random() < 0.3 ? '🐭' : '🪳';
+  },
+  hit(i) {
+    if (i === this.activeHole && this.timeLeft > 0) {
+      SoundManager.coin();
+      this.score += 15;
+      document.getElementById('whack-score').innerText = this.score;
+      document.getElementById('whack-grid').children[i].innerText = '💥';
+      this.activeHole = -1;
+    }
+  },
+  end() {
+    clearInterval(this.timer); clearInterval(this.moleTimer);
+    SoundManager.win();
+    const tix = Math.floor(this.score * 1.2);
+    Game.tickets += tix;
+    UI.showCatToast('(=^-ω-^=)', `Whack-a-Bug finished! +${tix} Tickets!`);
+    UI.updateHUD();
+    setTimeout(() => UI.closeModals(), 1000);
+  }
+};
+
+/* 4. DANCE FURVOLUTION */
+const DanceGame = {
+  score: 0, combo: 0, arrows: [], loopReq: null,
+  start() {
+    this.score = 0; this.combo = 0; this.arrows = [];
+    document.getElementById('dance-score').innerText = '0';
+    document.getElementById('dance-combo').innerText = '0x';
+    const loop = () => {
+      if (document.getElementById('dance-modal').classList.contains('open')) {
+        this.update();
+        this.loopReq = requestAnimationFrame(loop);
+      }
+    };
+    requestAnimationFrame(loop);
+  },
+  hit(col) {
+    const target = this.arrows.find(a => a.col === col && Math.abs(a.y - 210) < 30);
+    if (target) {
+      SoundManager.playTone(600 + col * 100, 'sine', 0.08);
+      this.score += 20 * (1 + Math.floor(this.combo / 5));
+      this.combo++;
+      this.arrows = this.arrows.filter(a => a !== target);
+    } else {
+      SoundManager.buzz();
+      this.combo = 0;
+    }
+    document.getElementById('dance-score').innerText = this.score;
+    document.getElementById('dance-combo').innerText = `${this.combo}x`;
+  },
+  update() {
+    if (Math.random() < 0.04) {
+      this.arrows.push({ col: Math.floor(Math.random() * 4), y: 0 });
+    }
+    this.arrows.forEach(a => a.y += 3.5);
+    this.arrows = this.arrows.filter(a => a.y < 270);
+    this.render();
+  },
+  render() {
+    const ctx = document.getElementById('danceCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 300, 260);
+
+    const icons = ['⬅️', '⬇️', '⬆️', '➡️'];
+    const cols = [40, 110, 180, 250];
+
+    // Target Pad
+    ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 2;
+    cols.forEach((x, i) => {
+      ctx.strokeRect(x - 22, 195, 44, 44);
+      ctx.font = '20px sans-serif';
+      ctx.fillText(icons[i], x - 12, 225);
+    });
+
+    // Falling Arrows
+    this.arrows.forEach(a => {
+      ctx.font = '24px sans-serif';
+      ctx.fillText(icons[a.col], cols[a.col] - 12, a.y);
+    });
+  }
+};
+
+/* 5. CYBER-CHASE 2088 */
+const RacerGame = {
+  carX: 135, dist: 0, coins: 0, steerDir: 0, enemies: [], loopReq: null,
+  start() {
+    this.carX = 135; this.dist = 0; this.coins = 0; this.steerDir = 0; this.enemies = [];
+    const loop = () => {
+      if (document.getElementById('racer-modal').classList.contains('open')) {
+        this.update();
+        this.loopReq = requestAnimationFrame(loop);
+      }
+    };
+    requestAnimationFrame(loop);
+  },
+  steer(d) { this.steerDir = d; },
+  update() {
+    this.carX = Math.max(30, Math.min(240, this.carX + this.steerDir * 4));
+    this.dist += 2;
+    document.getElementById('racer-dist').innerText = this.dist;
+    document.getElementById('racer-coins').innerText = this.coins;
+
+    if (Math.random() < 0.035) {
+      this.enemies.push({ x: 40 + Math.random() * 200, y: -20, type: Math.random() < 0.3 ? 'COIN' : 'CAR' });
+    }
+
+    this.enemies.forEach(e => e.y += 4.5);
+
+    // Collision Check
+    this.enemies.forEach((e, idx) => {
+      if (Math.hypot(e.x - this.carX, e.y - 210) < 24) {
+        if (e.type === 'COIN') {
+          SoundManager.coin();
+          this.coins += 10;
+          Game.fishCoins += 10;
+          this.enemies.splice(idx, 1);
+        } else {
+          SoundManager.buzz();
+          UI.showCatToast('(=^-ω-^=)', `Crash! Racer ended with ${this.coins} Coins!`);
+          UI.closeModals();
+        }
+      }
+    });
+
+    this.enemies = this.enemies.filter(e => e.y < 280);
+    this.render();
+  },
+  render() {
+    const ctx = document.getElementById('racerCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 300, 260);
+
+    // Road lines
+    ctx.strokeStyle = '#282154'; ctx.lineWidth = 4;
+    ctx.strokeRect(20, 0, 260, 260);
+
+    // Player Car
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(this.carX, 205, 26, 40);
+
+    // Enemies / Items
+    this.enemies.forEach(e => {
+      if (e.type === 'COIN') {
+        ctx.fillStyle = '#ffe600';
+        ctx.beginPath(); ctx.arc(e.x + 10, e.y + 10, 8, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#ff3388';
+        ctx.fillRect(e.x, e.y, 24, 38);
+      }
+    });
+  }
+};
+
+/* 6. SPACE FISH PINBALL */
+const PinballGame = {
+  bx: 140, by: 120, vx: 2.5, vy: 3.5, score: 0, balls: 3, flipL: false, flipR: false,
+  start() {
+    this.bx = 140; this.by = 120; this.vx = 2.5; this.vy = 3.5; this.score = 0; this.balls = 3;
+    document.getElementById('pinball-score').innerText = '0';
+    document.getElementById('pinball-balls').innerText = '3';
+    const loop = () => {
+      if (document.getElementById('pinball-modal').classList.contains('open')) {
+        this.update();
+        requestAnimationFrame(loop);
+      }
+    };
+    requestAnimationFrame(loop);
+  },
+  flipLeft(b) { this.flipL = b; if(b) SoundManager.playTone(320, 'triangle', 0.05); },
+  flipRight(b) { this.flipR = b; if(b) SoundManager.playTone(320, 'triangle', 0.05); },
+  update() {
+    this.bx += this.vx;
+    this.by += this.vy;
+
+    // Walls
+    if (this.bx <= 15 || this.bx >= 265) this.vx *= -1;
+    if (this.by <= 15) this.vy *= -1;
+
+    // Bumpers
+    const bumpers = [{ x: 90, y: 80 }, { x: 190, y: 80 }, { x: 140, y: 140 }];
+    bumpers.forEach(bm => {
+      if (Math.hypot(this.bx - bm.x, this.by - bm.y) < 22) {
+        this.vx *= -1.1; this.vy *= -1.1;
+        this.score += 50;
+        SoundManager.playTone(700, 'sine', 0.06);
+        document.getElementById('pinball-score').innerText = this.score;
+      }
+    });
+
+    // Flippers
+    if (this.by >= 250 && this.by <= 265) {
+      if (this.flipL && this.bx >= 40 && this.bx <= 130) {
+        this.vy = -5.5; this.vx += 1.5;
+        this.score += 20;
+      }
+      if (this.flipR && this.bx >= 150 && this.bx <= 240) {
+        this.vy = -5.5; this.vx -= 1.5;
+        this.score += 20;
+      }
+    }
+
+    // Drain
+    if (this.by > 300) {
+      this.balls--;
+      document.getElementById('pinball-balls').innerText = this.balls;
+      if (this.balls <= 0) {
+        SoundManager.win();
+        const tix = Math.floor(this.score / 8);
+        Game.tickets += tix;
+        UI.showCatToast('(=^-ω-^=)', `Pinball Game Over! Won +${tix} Tickets!`);
+        UI.closeModals();
+      } else {
+        this.bx = 140; this.by = 100; this.vy = 3.5;
+      }
+    }
+    this.render();
+  },
+  render() {
+    const ctx = document.getElementById('pinballCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 280, 300);
+
+    // Bumpers
+    ctx.fillStyle = '#ff3388';
+    [{ x: 90, y: 80 }, { x: 190, y: 80 }, { x: 140, y: 140 }].forEach(bm => {
+      ctx.beginPath(); ctx.arc(bm.x, bm.y, 14, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Flippers
+    ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(50, this.flipL ? 245 : 260); ctx.lineTo(120, this.flipL ? 235 : 255);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(230, this.flipR ? 245 : 260); ctx.lineTo(160, this.flipR ? 235 : 255);
+    ctx.stroke();
+
+    // Steel Ball
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(this.bx, this.by, 6, 0, Math.PI * 2); ctx.fill();
+  }
+};
+
+/* ==========================================================================
+   SAVE, LOAD & OFFLINE SYSTEM
+   ========================================================================== */
+const SaveSystem = {
+  SAVE_KEY: 'skeeter_lily_arcade_mega_v2',
+
+  save() {
+    const data = {
+      fishCoins: Game.fishCoins,
+      tickets: Game.tickets,
+      catnipGems: Game.catnipGems,
+      maxBreakerAmps: Game.maxBreakerAmps,
+      lifetimeCoins: Game.lifetimeCoins,
+      customersServed: Game.customersServed,
+      spillsCleaned: Game.spillsCleaned,
+      skeeterNaps: Game.skeeterNaps,
+      prestigeLevel: Game.prestigeLevel,
+      currentLocId: Game.currentLocation.id,
+      machines: Game.machines,
+      amenities: Game.amenities,
+      prizes: PRIZE_CATALOG,
+      skills: SKILL_TREE,
+      staff: STAFF_ROSTER,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(this.SAVE_KEY, JSON.stringify(data));
+  },
+
+  load() {
+    const raw = localStorage.getItem(this.SAVE_KEY);
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      Game.fishCoins = d.fishCoins || 0;
+      Game.tickets = d.tickets || 0;
+      Game.catnipGems = d.catnipGems ?? 10;
+      Game.maxBreakerAmps = d.maxBreakerAmps || 40;
+      Game.lifetimeCoins = d.lifetimeCoins || 0;
+      Game.customersServed = d.customersServed || 0;
+      Game.spillsCleaned = d.spillsCleaned || 0;
+      Game.skeeterNaps = d.skeeterNaps || 0;
+      Game.prestigeLevel = d.prestigeLevel || 0;
+      if (d.currentLocId) {
+        Game.currentLocation = FRANCHISE_LOCATIONS.find(l => l.id === d.currentLocId) || FRANCHISE_LOCATIONS[0];
+      }
+      if (d.machines) Game.machines = d.machines;
+      if (d.amenities) Game.amenities = d.amenities;
+      if (d.prizes) d.prizes.forEach(p => { const match = PRIZE_CATALOG.find(x => x.id === p.id); if (match) match.bought = p.bought; });
+      if (d.skills) d.skills.forEach(s => { const match = SKILL_TREE.find(x => x.id === s.id); if (match) match.unlocked = s.unlocked; });
+      if (d.staff) d.staff.forEach(st => { const match = STAFF_ROSTER.find(x => x.id === st.id); if (match) match.hired = st.hired; });
+
+      // Offline Idle calculation
+      const elapsed = Math.min(28800, (Date.now() - (d.timestamp || Date.now())) / 1000);
+      if (elapsed > 10) {
+        const earnings = Math.floor((Game.machines.length * 6) * (elapsed / 3) * Game.currentLocation.multiplier);
+        Game.fishCoins += earnings;
+        Game.lifetimeCoins += earnings;
+        setTimeout(() => {
+          UI.showCatToast('(=^-ω-^=)', `Welcome back! The cats earned +${earnings} 🐟 while you slept!`);
+        }, 800);
+      }
+    } catch(e) {}
+  },
+
+  exportSave() {
+    const raw = localStorage.getItem(this.SAVE_KEY);
+    prompt('Copy your complete save code:', btoa(raw || ''));
+  },
+
+  importSave() {
+    const code = prompt('Paste your save code:');
+    if (code) {
+      try {
+        localStorage.setItem(this.SAVE_KEY, atob(code));
+        location.reload();
+      } catch(e) { alert('Invalid save code!'); }
+    }
+  },
+
+  wipeData() {
+    if (confirm('Are you sure you want to reset all arcade data?')) {
+      localStorage.removeItem(this.SAVE_KEY);
+      location.reload();
+    }
+  }
+};
+
+/* ==========================================================================
+   USER INTERFACE (Modals & Catalog Views)
+   ========================================================================== */
+const UI = {
+  toastTimer: null,
+
+  showCatToast(avatar, text) {
+    const toast = document.getElementById('cat-toast');
+    document.getElementById('cat-toast-avatar').innerText = avatar;
+    document.getElementById('cat-toast-text').innerText = text;
+    toast.classList.add('active');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => toast.classList.remove('active'), 4000);
+  },
+
+  updateHUD() {
+    document.getElementById('coin-val').innerText = Game.fishCoins;
+    document.getElementById('ticket-val').innerText = Game.tickets;
+    document.getElementById('gem-val').innerText = Game.catnipGems;
+    document.getElementById('power-val').innerText = `${Game.breakerAmps}/${Game.maxBreakerAmps} A`;
+    document.getElementById('rating-val').innerText = (3.0 + Game.machines.length * 0.25).toFixed(1);
+    document.getElementById('hype-val').innerText = `${Math.round(Game.hypeMultiplier * 100)}%`;
+    document.getElementById('location-val').innerText = Game.currentLocation.name;
+    document.getElementById('power-val').style.color = Game.breakerTripped ? 'var(--neon-pink)' : 'var(--neon-blue)';
+  },
+
+  renderAll() {
+    this.renderShop();
+    this.renderAmenities();
+    this.renderPrizes();
+    this.renderStaff();
+    this.renderSkills();
+    this.renderFranchise();
+  },
+
+  renderShop() {
+    const el = document.getElementById('machine-catalog');
+    el.innerHTML = '';
+    MACHINE_CATALOG.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${m.icon} ${m.name}</div>
+          <div style="font-weight:bold; color:var(--neon-yellow);">${m.cost} 🐟</div>
+        </div>
+        <div class="item-card-desc">${m.desc}</div>
+        <div class="item-card-stats">
+          <span>⚡ ${m.amps}A</span>
+          <span>💰 ~${m.rev} FC</span>
+          <span>🎟️ ~${m.tix} Tix</span>
+        </div>
+        <button class="btn btn-primary" style="margin-top:6px;" onclick="UI.buyMachineClick('${m.id}')">Purchase Cabinet</button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  renderAmenities() {
+    const el = document.getElementById('amenities-catalog');
+    el.innerHTML = '';
+    AMENITIES_CATALOG.forEach(a => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${a.icon} ${a.name}</div>
+          <div style="font-weight:bold; color:var(--neon-yellow);">${a.cost} 🐟</div>
+        </div>
+        <div class="item-card-desc">${a.desc}</div>
+        <div class="item-card-stats">
+          <span>⚡ ${a.amps}A</span>
+          <span>💰 +${a.revBonus} Snack Rev</span>
+        </div>
+        <button class="btn btn-amber" style="margin-top:6px;" onclick="Game.buyAmenity('${a.id}')">Build Amenity</button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  renderPrizes() {
+    const el = document.getElementById('prize-catalog');
+    el.innerHTML = '';
+    PRIZE_CATALOG.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${p.name}</div>
+          <div style="font-weight:bold; color:var(--neon-pink);">${p.cost} 🎟️</div>
+        </div>
+        <div class="item-card-desc">${p.desc}</div>
+        <button class="btn btn-purple" style="margin-top:6px;" onclick="UI.buyPrizeClick('${p.id}')">
+          ${p.bought ? 'Redeemed ✔️' : 'Exchange Tickets'}
+        </button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  renderStaff() {
+    const el = document.getElementById('staff-roster');
+    el.innerHTML = '';
+    STAFF_ROSTER.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${s.name} (${s.role})</div>
+          <div style="font-weight:bold; color:var(--neon-yellow);">${s.cost > 0 ? s.cost + ' 🐟' : 'Founding Crew'}</div>
+        </div>
+        <div class="item-card-desc">${s.desc}</div>
+        <button class="btn btn-green" style="margin-top:6px;" onclick="UI.hireStaffClick('${s.id}')">
+          ${s.hired ? 'Active On Floor ✔️' : 'Hire Staff Cat'}
+        </button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  renderSkills() {
+    const el = document.getElementById('skill-tree-grid');
+    el.innerHTML = '';
+    SKILL_TREE.forEach(sk => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${sk.name}</div>
+          <div style="font-weight:bold; color:var(--neon-green);">${sk.cost} 💎</div>
+        </div>
+        <div class="item-card-desc">${sk.desc}</div>
+        <button class="btn btn-green" style="margin-top:6px;" onclick="UI.unlockSkillClick('${sk.id}')">
+          ${sk.unlocked ? 'Unlocked ✔️' : 'Synthesize Mutation'}
+        </button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  renderFranchise() {
+    const el = document.getElementById('franchise-locations');
+    el.innerHTML = '';
+    FRANCHISE_LOCATIONS.forEach(loc => {
+      const isCurrent = Game.currentLocation.id === loc.id;
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div class="item-card-title">${loc.icon} ${loc.name}</div>
+          <div style="font-weight:bold; color:var(--neon-yellow);">${loc.reqCoins} 🐟</div>
+        </div>
+        <div class="item-card-desc">${loc.desc}</div>
+        <button class="btn btn-primary" style="margin-top:6px;" onclick="Game.prestige('${loc.id}')">
+          ${isCurrent ? 'Current Headquarters' : 'Relocate Franchise (Prestige)'}
+        </button>
+      `;
+      el.appendChild(card);
+    });
+  },
+
+  buyMachineClick(typeId) {
+    const proto = MACHINE_CATALOG.find(m => m.id === typeId);
+    if (Game.fishCoins >= proto.cost) {
+      Game.fishCoins -= proto.cost;
+      Game.buyMachine(typeId);
+      SoundManager.win();
+      this.closeModals();
+      this.showCatToast('(=^-ω-^=)', `Skeeter unboxed a brand new ${proto.name}!`);
+    } else {
+      SoundManager.buzz();
+    }
+  },
+
+  buyPrizeClick(prizeId) {
+    const prize = PRIZE_CATALOG.find(p => p.id === prizeId);
+    if (prize.bought) return;
+    if (Game.tickets >= prize.cost) {
+      Game.tickets -= prize.cost;
+      prize.bought = true;
+      SoundManager.win();
+      this.renderPrizes();
+      this.updateHUD();
+      this.showCatToast('(=`ω´=)', `Lily unlocked reward: ${prize.name}!`);
+    } else {
+      SoundManager.buzz();
+    }
+  },
+
+  hireStaffClick(staffId) {
+    const staff = STAFF_ROSTER.find(s => s.id === staffId);
+    if (staff.hired) return;
+    if (Game.fishCoins >= staff.cost) {
+      Game.fishCoins -= staff.cost;
+      staff.hired = true;
+      SoundManager.win();
+      this.renderStaff();
+      this.updateHUD();
+      this.showCatToast('(=`ω´=)', `Hired ${staff.name} to the team!`);
+    } else {
+      SoundManager.buzz();
+    }
+  },
+
+  unlockSkillClick(skillId) {
+    const sk = SKILL_TREE.find(s => s.id === skillId);
+    if (sk.unlocked) return;
+    if (Game.catnipGems >= sk.cost) {
+      Game.catnipGems -= sk.cost;
+      sk.unlocked = true;
+      SoundManager.win();
+      this.renderSkills();
+      this.updateHUD();
+      this.showCatToast('(=^-ω-^=)', `Mutation synthesized: ${sk.name}!`);
+    } else {
+      SoundManager.buzz();
+    }
+  },
+
+  openInspect(machine) {
+    Game.selectedMachine = machine;
+    document.getElementById('inspect-name').innerText = `${machine.icon} ${machine.name} (Lv. ${machine.level})`;
+    document.getElementById('inspect-details').innerHTML = `
+      <div><strong>Condition / Wear:</strong> ${Math.round(machine.wear)}% ${machine.isJammed ? '<span style="color:red;">(JAMMED!)</span>' : ''}</div>
+      <div><strong>Power Draw:</strong> ${machine.amps} Amps</div>
+      <div><strong>Revenue Yield:</strong> ${machine.rev} Fish-Coins / play</div>
+      <div><strong>Ticket Yield:</strong> ${machine.tix} Tickets / play</div>
+      <div><strong>Cat Nap Status:</strong> ${machine.hasCatNap ? '💤 Skeeter Napping (2x Rev!)' : 'None'}</div>
+    `;
+
+    const cost = machine.level * 120;
+    const upBtn = document.getElementById('inspect-upgrade-btn');
+    upBtn.innerText = `⭐ Upgrade Lv. ${machine.level + 1} (${cost} 🐟)`;
+    upBtn.onclick = () => {
+      if (Game.fishCoins >= cost) {
+        Game.fishCoins -= cost;
+        machine.level++;
+        SoundManager.win();
+        UI.openInspect(machine);
+        UI.updateHUD();
+      } else { SoundManager.buzz(); }
+    };
+
+    document.getElementById('inspect-play-btn').onclick = () => {
+      UI.closeModals();
+      if (machine.type === 'CLAW') MiniGames.launchClaw();
+      else if (machine.type === 'RHYTHM') MiniGames.launchDance();
+      else if (machine.type === 'VIDEO') MiniGames.launchRacer();
+      else if (machine.type === 'PINBALL') MiniGames.launchPinball();
+      else {
+        RepairGame.init();
+        UI.openModal('repair-modal');
+      }
+    };
+
+    document.getElementById('inspect-repair-btn').style.display = (machine.wear > 15 || machine.isJammed) ? 'block' : 'none';
+    this.openModal('inspect-modal');
+  },
+
+  openShop() { this.openModal('shop-modal'); },
+  openAmenities() { this.openModal('amenities-modal'); },
+  openPrizes() { this.openModal('prize-modal'); },
+  openBreaker() {
+    document.getElementById('breaker-amps').innerText = Game.breakerAmps;
+    document.getElementById('breaker-max').innerText = Game.maxBreakerAmps;
+    document.getElementById('breaker-cost').innerText = Math.floor(Game.maxBreakerAmps * 5);
+    const pct = Math.min(100, (Game.breakerAmps / Game.maxBreakerAmps) * 100);
+    document.getElementById('breaker-bar').style.width = `${pct}%`;
+    document.getElementById('breaker-bar').style.background = pct > 90 ? 'var(--neon-pink)' : 'var(--neon-green)';
+    document.getElementById('reset-fuse-btn').style.display = Game.breakerTripped ? 'block' : 'none';
+    this.openModal('breaker-modal');
+  },
+  openStaff() { this.openModal('staff-modal'); },
+  openSkills() { this.openModal('skills-modal'); },
+  openFranchise() { this.renderFranchise(); this.openModal('franchise-modal'); },
+  openLedger() {
+    document.getElementById('ledg-lifetime').innerText = Game.lifetimeCoins;
+    document.getElementById('ledg-machines').innerText = Game.machines.length;
+    document.getElementById('ledg-amenities').innerText = Game.amenities.length;
+    document.getElementById('ledg-customers').innerText = Game.customersServed;
+    document.getElementById('ledg-spills').innerText = Game.spillsCleaned;
+    document.getElementById('ledg-naps').innerText = Game.skeeterNaps;
+    document.getElementById('ledg-prestige').innerText = `${Game.prestigeLevel} (${Game.currentLocation.name})`;
+    this.openModal('ledger-modal');
+  },
+  openArcadeHub() { this.openModal('playhub-modal'); },
+
+  openModal(id) {
+    this.closeModals();
+    document.getElementById(id).classList.add('open');
+  },
+
+  closeModals() {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
+  }
+};
+
+// Keyboard bindings for pinball & rhythm games
+window.addEventListener('keydown', e => {
+  if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') { PinballGame.flipLeft(true); DanceGame.hit(0); }
+  if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') { PinballGame.flipRight(true); DanceGame.hit(3); }
+  if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') DanceGame.hit(1);
+  if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') DanceGame.hit(2);
+});
+window.addEventListener('keyup', e => {
+  if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') PinballGame.flipLeft(false);
+  if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') PinballGame.flipRight(false);
+});
+
+// Launch on Window Load
+window.addEventListener('DOMContentLoaded', () => Game.init());
+</script>
+</body>
+</html>

@@ -1,0 +1,2585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Endless RPG</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: #070a12;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: auto;
+    padding: 10px;
+  }
+  #game-wrapper {
+    display: flex;
+    gap: 12px;
+    background: #111726;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 12px 45px rgba(0,0,0,0.9);
+  }
+
+  /* Left Main Column (Top Bar + Canvas) */
+  #main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 920px;
+  }
+
+  /* Dedicated Top Bar Above Canvas */
+  #top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  #zone-banner {
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid #475569;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #38bdf8;
+  }
+  #time-weather-wrap {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .info-pill {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid #64748b;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #facc15;
+  }
+  #fast-travel-bar {
+    display: flex;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid #334155;
+    padding: 3px 6px;
+    border-radius: 20px;
+    overflow-x: auto;
+  }
+  .btn-travel {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10.5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-travel:hover { background: #2563eb; color: white; border-color: #60a5fa; }
+  .btn-travel.active-zone { background: #0284c7; color: #ffffff; border-color: #38bdf8; }
+  .btn-travel.abyss-btn { background: #581c87; border-color: #a855f7; color: #f3e8ff; }
+  .btn-travel.abyss-btn:hover { background: #7e22ce; }
+
+  #canvas-container {
+    position: relative;
+    border: 2px solid #2d3748;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 590px;
+    width: 920px;
+    background: #0b0f19;
+  }
+  canvas { display: block; }
+
+  /* Abilities HUD Bar */
+  #ability-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.92);
+    border: 2px solid #334155;
+    padding: 6px 12px;
+    border-radius: 10px;
+    z-index: 5;
+    pointer-events: auto;
+  }
+  .ability-slot {
+    width: 46px;
+    height: 46px;
+    background: #1e293b;
+    border: 1.5px solid #475569;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    font-size: 17px;
+    transition: transform 0.1s, border-color 0.15s;
+  }
+  .ability-slot:hover { border-color: #38bdf8; transform: translateY(-2px); }
+  .ability-slot .hotkey {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 8px;
+    font-weight: bold;
+    color: #94a3b8;
+  }
+  .ability-cooldown {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.78);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #f87171;
+  }
+
+  /* Minimap */
+  #minimap-canvas {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    border: 2px solid #475569;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.85);
+    z-index: 5;
+  }
+
+  /* UI Sidebar */
+  #sidebar {
+    width: 340px;
+    height: 642px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .panel {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 7px 9px;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-title {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    margin-bottom: 5px;
+    font-weight: 700;
+    border-bottom: 1px solid #2d3748;
+    padding-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .stat-badge {
+    background: #1f2937;
+    padding: 2px 5px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .gold-badge { color: #f59e0b; font-weight: bold; }
+  .hp-bar-bg, .xp-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: #374151;
+    border-radius: 3px;
+    margin-top: 3px;
+    overflow: hidden;
+  }
+  .hp-bar-fill { height: 100%; background: #ef4444; width: 100%; transition: width 0.15s; }
+  .xp-bar-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.15s; }
+
+  /* Equipment Slots Row */
+  .equip-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 5px;
+    padding-top: 4px;
+    border-top: 1px solid #283548;
+  }
+  .equip-slot {
+    background: #182232;
+    border: 1px dashed #475569;
+    border-radius: 4px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #94a3b8;
+    text-align: center;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .equip-slot:hover { border-color: #38bdf8; }
+
+  /* Masteries */
+  .skills-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    font-size: 9.5px;
+    margin-top: 4px;
+  }
+  .skill-pill {
+    background: #1e293b;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border: 1px solid #334155;
+    text-align: center;
+  }
+
+  /* Inventory */
+  .inv-panel { flex: 1; min-height: 0; }
+  .inv-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 2px;
+  }
+  .inv-slot {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 5px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    position: relative;
+    text-align: center;
+    padding: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .inv-slot:hover { border-color: #60a5fa; background: #283548; }
+  .inv-slot.selected-seed {
+    border-color: #38bdf8;
+    background: #0c4a6e;
+    box-shadow: 0 0 5px rgba(56, 189, 248, 0.6);
+  }
+  .inv-slot.selected-seed::before {
+    content: "SEED";
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 6.5px;
+    font-weight: bold;
+    color: #38bdf8;
+  }
+  .inv-slot .count {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-size: 8.5px;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+  .inv-slot .icon { font-size: 15px; margin-bottom: 1px; }
+
+  /* Quests */
+  .quest-panel { flex: 0.9; min-height: 0; }
+  #quest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .quest-card {
+    background: #1e293b;
+    border-left: 3px solid #3b82f6;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    position: relative;
+  }
+  .quest-card.ready {
+    border-left-color: #10b981;
+    background: #064e3b;
+  }
+  .quest-title { font-weight: bold; margin-bottom: 1px; font-size: 10.5px; }
+  .quest-desc { font-size: 9px; color: #94a3b8; }
+  .quest-reward { color: #f59e0b; font-size: 9.5px; margin-top: 1px; font-weight: bold; }
+  .btn-complete {
+    margin-top: 3px;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 9.5px;
+    font-weight: bold;
+    width: 100%;
+  }
+  .btn-complete:hover { background: #059669; }
+
+  /* Modals */
+  .modal-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 25;
+  }
+  .modal-box {
+    background: #1f2937;
+    border: 2px solid #4b5563;
+    border-radius: 8px;
+    padding: 12px;
+    width: 460px;
+    max-height: 85%;
+    overflow-y: auto;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 4px;
+  }
+  .btn-close {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .craft-item, .shop-item, .save-slot-card, .talent-card, .pet-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111827;
+    padding: 6px 8px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    font-size: 11.5px;
+  }
+  .req-list { font-size: 9.5px; color: #94a3b8; margin-top: 2px; }
+  .btn-action {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10.5px;
+    font-weight: bold;
+  }
+  .btn-action:hover { background: #1d4ed8; }
+  .btn-action:disabled { background: #475569; cursor: not-allowed; }
+  .btn-sell { background: #d97706; }
+  .btn-sell:hover { background: #b45309; }
+  .btn-danger { background: #dc2626; }
+  .btn-danger:hover { background: #b91c1c; }
+
+  /* Top HUD Buttons */
+  .save-hud-btns { display: flex; gap: 4px; }
+  .btn-hud {
+    background: #334155;
+    border: 1px solid #64748b;
+    color: #f1f5f9;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .btn-hud:hover { background: #475569; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <!-- Left Main Area (Top Bar + Game Canvas) -->
+  <div id="main-column">
+    
+    <!-- External Top Header Bar -->
+    <div id="top-bar">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <div id="zone-banner">
+          <span id="zone-icon">🏰</span>
+          <span id="zone-name">Village Square</span>
+        </div>
+        <div id="time-weather-wrap">
+          <div id="time-pill" class="info-pill">☀️ Day</div>
+          <div id="weather-pill" class="info-pill">☀️ Clear</div>
+        </div>
+      </div>
+      
+      <div id="fast-travel-bar">
+        <button class="btn-travel active-zone" onclick="travelToZone('town')">🏰 Town</button>
+        <button class="btn-travel" onclick="travelToZone('port')">⚓ Port</button>
+        <button class="btn-travel" onclick="travelToZone('cave')">⛏️ Mines</button>
+        <button class="btn-travel" onclick="travelToZone('forest')">🌲 Woods</button>
+        <button class="btn-travel" onclick="travelToZone('frost')">❄️ Frostpeak</button>
+        <button class="btn-travel" onclick="travelToZone('volcano')">🌋 Volcano</button>
+        <button class="btn-travel" onclick="travelToZone('farm')">🌾 Farm</button>
+        <button class="btn-travel abyss-btn" onclick="travelToZone('abyss')">🌀 Abyss (Delve)</button>
+      </div>
+
+      <div class="save-hud-btns">
+        <button class="btn-hud" id="btn-sfx" onclick="toggleSFX()">🔊 SFX</button>
+        <button class="btn-hud" id="btn-bgm" onclick="toggleBGM()">🎵 BGM: OFF</button>
+        <button class="btn-hud" style="background:#7c3aed; border-color:#a78bfa;" onclick="openTalentsModal()">🌟 Talents (<span id="hud-talent-pts">0</span>)</button>
+        <button class="btn-hud" onclick="openSaveModal()">💾 Saves</button>
+      </div>
+    </div>
+
+    <!-- Game Canvas Container -->
+    <div id="canvas-container">
+      <canvas id="gameCanvas" width="920" height="590"></canvas>
+      <canvas id="minimap-canvas" width="100" height="70"></canvas>
+
+      <!-- Active Ability Bar -->
+      <div id="ability-bar">
+        <div class="ability-slot" title="Dash & Invulnerability [SPACE]" onclick="castAbility('dash')">
+          <span class="hotkey">SPACE</span>
+          <span>⚡</span>
+          <div id="cd-dash" class="ability-cooldown" style="display:none;"></div>
+        </div>
+        <div class="ability-slot" title="Whirlwind Slash [1]" onclick="castAbility('cleave')">
+          <span class="hotkey">1</span>
+          <span>🌀</span>
+          <div id="cd-cleave" class="ability-cooldown" style="display:none;"></div>
+        </div>
+        <div class="ability-slot" title="Homing Fireball [2]" onclick="castAbility('fireball')">
+          <span class="hotkey">2</span>
+          <span>🔥</span>
+          <div id="cd-fireball" class="ability-cooldown" style="display:none;"></div>
+        </div>
+        <div class="ability-slot" title="Nature's Heal [3]" onclick="castAbility('heal')">
+          <span class="hotkey">3</span>
+          <span>💖</span>
+          <div id="cd-heal" class="ability-cooldown" style="display:none;"></div>
+        </div>
+        <div class="ability-slot" title="Ultimate Thunderstorm [4 / R]" onclick="castAbility('thunder')">
+          <span class="hotkey">4</span>
+          <span>🌩️</span>
+          <div id="cd-thunder" class="ability-cooldown" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Modals -->
+      <div id="dialogueModal" class="modal-overlay">
+        <div class="modal-box" style="width:480px;">
+          <div class="modal-header">
+            <span id="diag-speaker">NPC</span>
+            <button class="btn-close" onclick="closeModal('dialogueModal')">✕</button>
+          </div>
+          <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+            <div id="diag-avatar" style="font-size: 34px; background:#111827; padding:6px; border-radius:8px; border:1px solid #374151;">👤</div>
+            <div style="flex:1;">
+              <div id="diag-hearts" style="font-size:12px; color:#f43f5e; margin-bottom:3px;">❤️❤️🤍🤍🤍 (Affection Level 2)</div>
+              <div id="diag-text" style="font-size: 12px; line-height: 1.4; color: #cbd5e1;">...</div>
+            </div>
+          </div>
+          <div class="panel-title">Conversation Options</div>
+          <div id="diag-choices" style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;"></div>
+          <div class="panel-title">Give a Gift (+Affection)</div>
+          <div id="diag-gift-list" style="display:grid; grid-template-columns:1fr 1fr; gap:4px;"></div>
+        </div>
+      </div>
+
+      <div id="shopModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>🛒 Village Merchant Otto <span id="shop-discount-label" style="font-size:10px; color:#10b981;"></span></span>
+            <button class="btn-close" onclick="closeModal('shopModal')">✕</button>
+          </div>
+          <div class="panel-title">Provisions, Treats & Seeds</div>
+          <div id="shop-buy-list"></div>
+          <div class="panel-title" style="margin-top:8px;">Sell Backpack Items</div>
+          <div id="shop-sell-list"></div>
+        </div>
+      </div>
+
+      <div id="questModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>📜 Guild Quest Board</span>
+            <button class="btn-close" onclick="closeModal('questModal')">✕</button>
+          </div>
+          <div id="board-quest-list"></div>
+        </div>
+      </div>
+
+      <div id="craftModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>⚒️ Blacksmith Forge & Alchemy</span>
+            <button class="btn-close" onclick="closeModal('craftModal')">✕</button>
+          </div>
+          <div class="panel-title">Smelting Ingots</div>
+          <div id="craft-smelt-list"></div>
+          <div class="panel-title" style="margin-top:8px;">Equipment, Weapons & Rings</div>
+          <div id="craft-gear-list"></div>
+          <div class="panel-title" style="margin-top:8px;">Cooking & Buff Potions</div>
+          <div id="craft-food-list"></div>
+        </div>
+      </div>
+
+      <div id="talentsModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>🌟 Hero Talent Tree (<span id="modal-talent-pts">0</span> Points Available)</span>
+            <button class="btn-close" onclick="closeModal('talentsModal')">✕</button>
+          </div>
+          <div style="font-size:10.5px; color:#94a3b8; margin-bottom:8px;">
+            You earn 1 Talent Point every time your Hero levels up!
+          </div>
+          <div id="talents-list"></div>
+        </div>
+      </div>
+
+      <div id="petModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span>🐾 Companion Stable</span>
+            <button class="btn-close" onclick="closeModal('petModal')">✕</button>
+          </div>
+          <div id="pet-selection-list"></div>
+        </div>
+      </div>
+
+      <div id="saveModal" class="modal-overlay">
+        <div class="modal-box" style="width: 440px;">
+          <div class="modal-header">
+            <span>💾 Game Save Manager</span>
+            <button class="btn-close" onclick="closeModal('saveModal')">✕</button>
+          </div>
+          <div style="font-size:10.5px; color:#94a3b8; margin-bottom:8px;">
+            Auto-saves silently in background. Switch or backup profiles here.
+          </div>
+          <div id="save-slots-container"></div>
+          <div class="panel-title" style="margin-top:10px;">Export / Import File</div>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button class="btn-action" style="flex:1;" onclick="exportSaveFile()">⬇️ Export JSON</button>
+            <button class="btn-action" style="flex:1; background:#059669;" onclick="document.getElementById('importFileInput').click()">⬆️ Import JSON</button>
+            <input type="file" id="importFileInput" style="display:none;" onchange="importSaveFile(event)">
+          </div>
+          <button class="btn-action btn-danger" style="width:100%; margin-top:4px;" onclick="wipeAllData()">⚠️ Hard Reset All Game Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="panel">
+      <div class="panel-title">
+        <span>Hero Profile</span>
+        <span style="font-size:9px; color:#60a5fa;">[WASD / Space / 1-4]</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-badge"><span>Lvl</span><b id="ui-level">1</b></div>
+        <div class="stat-badge gold-badge"><span>🪙</span><span id="ui-gold">75</span></div>
+        <div class="stat-badge"><span>⚔️ ATK</span><b id="ui-atk">6</b></div>
+        <div class="stat-badge"><span>🛡️ DEF</span><b id="ui-def">0</b></div>
+        <div class="stat-badge"><span>⚡ SPD</span><b id="ui-speed">3.4</b></div>
+        <div class="stat-badge"><span>⛏️ Tools</span><b id="ui-tool">T1</b></div>
+      </div>
+
+      <div style="font-size: 9.5px; margin-top: 4px; display:flex; justify-content:space-between;">
+        <span>Health</span><span id="ui-hp-text">100 / 100</span>
+      </div>
+      <div class="hp-bar-bg"><div id="ui-hp-fill" class="hp-bar-fill"></div></div>
+
+      <div style="font-size: 9.5px; margin-top: 3px; display:flex; justify-content:space-between;">
+        <span>XP</span><span id="ui-xp-text">0 / 100</span>
+      </div>
+      <div class="xp-bar-bg"><div id="ui-xp-fill" class="xp-bar-fill"></div></div>
+
+      <div class="equip-row">
+        <div class="equip-slot" id="eq-weapon" title="Equipped Weapon">🗡️ Blade</div>
+        <div class="equip-slot" id="eq-armor" title="Equipped Armor">🛡️ None</div>
+        <div class="equip-slot" id="eq-ring" title="Equipped Trinket Ring">💍 None</div>
+        <div class="equip-slot" id="eq-pet" title="Click to Manage Pet Companions" onclick="openPetModal()">🐾 Wolf</div>
+      </div>
+
+      <div class="skills-mini">
+        <div class="skill-pill">⛏️ Mine <b id="sk-mine">L1</b></div>
+        <div class="skill-pill">🪓 Chop <b id="sk-chop">L1</b></div>
+        <div class="skill-pill">🎣 Fish <b id="sk-fish">L1</b></div>
+        <div class="skill-pill">🌾 Farm <b id="sk-farm">L1</b></div>
+        <div class="skill-pill">🍲 Cook <b id="sk-cook">L1</b></div>
+        <div class="skill-pill">⚔️ Hunt <b id="sk-hunt">L1</b></div>
+      </div>
+    </div>
+
+    <div class="panel quest-panel">
+      <div class="panel-title">Active Bounties (<span id="ui-quest-count">0</span>/4)</div>
+      <div id="quest-list"></div>
+    </div>
+
+    <div class="panel inv-panel">
+      <div class="panel-title">Backpack <span style="font-size:8.5px; color:#38bdf8;">[Click to Eat/Plant/Use]</span></div>
+      <div class="inv-grid" id="inv-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= SYNTHESIZER SFX & PROCEDURAL BGM ENGINE ================= */
+let audioCtx = null;
+let soundEnabled = true;
+let bgmEnabled = false;
+let bgmInterval = null;
+
+const ZONE_SCALES = {
+  town: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25],
+  port: [293.66, 329.63, 349.23, 392.00, 440.00, 523.25],
+  cave: [130.81, 155.56, 174.61, 196.00, 233.08],
+  forest: [220.00, 261.63, 293.66, 329.63, 392.00, 440.00],
+  frost: [261.63, 311.13, 349.23, 392.00, 466.16],
+  volcano: [110.00, 116.54, 138.59, 164.81, 220.00],
+  farm: [261.63, 329.63, 392.00, 523.25, 659.25],
+  abyss: [98.00, 103.83, 123.47, 130.81, 164.81, 196.00]
+};
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function toggleSFX() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btn-sfx').textContent = soundEnabled ? '🔊 SFX' : '🔇 SFX: OFF';
+}
+
+function toggleBGM() {
+  initAudio();
+  bgmEnabled = !bgmEnabled;
+  document.getElementById('btn-bgm').textContent = bgmEnabled ? '🎵 BGM: ON' : '🎵 BGM: OFF';
+  if (bgmEnabled) startBGM();
+  else if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+}
+
+function startBGM() {
+  if (bgmInterval) clearInterval(bgmInterval);
+  bgmInterval = setInterval(() => {
+    if (!bgmEnabled || !soundEnabled || !audioCtx) return;
+    try {
+      const scale = ZONE_SCALES[currentZone] || ZONE_SCALES.town;
+      const freq = scale[Math.floor(Math.random() * scale.length)];
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = currentZone === 'abyss' ? 'sawtooth' : 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.035, audioCtx.currentTime + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 2.4);
+    } catch(e) {}
+  }, 1100);
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+
+    if (type === 'hit') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
+    } else if (type === 'crit') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.2);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+    } else if (type === 'chop' || type === 'mine') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(type === 'chop' ? 180 : 320, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now); osc.stop(now + 0.08);
+    } else if (type === 'coin' || type === 'pickup') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(750, now);
+      osc.frequency.setValueAtTime(1100, now + 0.05);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
+    } else if (type === 'level') {
+      osc.type = 'triangle';
+      [300, 420, 540, 780].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.08));
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
+    } else if (type === 'spell') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(450, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+    } else if (type === 'thunder') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now); osc.stop(now + 0.35);
+    } else if (type === 'dash') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+    }
+  } catch (e) {}
+}
+
+/* ================= GAME STATE & CORE DATA ================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const minimapCanvas = document.getElementById('minimap-canvas');
+const mctx = minimapCanvas.getContext('2d');
+
+let currentZone = 'town';
+const keysDown = {};
+let weather = 'Clear';
+let weatherTimer = 1800;
+let worldTime = 0;
+let screenShake = 0;
+let hoveredEntity = null;
+let currentSaveSlot = 1;
+let abyssFloor = 1;
+
+// Hero Definition
+const player = {
+  x: 460,
+  y: 300,
+  radius: 14,
+  speed: 3.4,
+  level: 1,
+  xp: 0,
+  nextXp: 100,
+  gold: 75,
+  hp: 100,
+  maxHp: 100,
+  attack: 6,
+  defense: 0,
+  critChance: 0.12,
+  axePower: 1,
+  pickPower: 1,
+  rodPower: 1,
+  talentPoints: 0,
+  targetX: 460,
+  targetY: 300,
+  targetEntity: null,
+  state: 'idle',
+  actionTimer: 0,
+  actionMax: 0,
+  swingAngle: 0,
+  selectedSeed: 'Wheat Seed',
+  equipped: {
+    weapon: 'Basic Blade',
+    armor: 'None',
+    ring: 'None',
+    pet: 'Wolf Pup'
+  },
+  talents: {
+    vampirism: false,
+    fireTrail: false,
+    greenThumb: false,
+    magnet: false,
+    berserk: false,
+    smithing: false
+  },
+  skills: {
+    mine: { lvl: 1, xp: 0, next: 40 },
+    chop: { lvl: 1, xp: 0, next: 40 },
+    fish: { lvl: 1, xp: 0, next: 40 },
+    farm: { lvl: 1, xp: 0, next: 40 },
+    cook: { lvl: 1, xp: 0, next: 40 },
+    hunt: { lvl: 1, xp: 0, next: 40 }
+  },
+  cooldowns: { dash: 0, cleave: 0, fireball: 0, heal: 0, thunder: 0 },
+  dashTrail: [],
+  fireGrounds: [],
+  invincibleTimer: 0,
+  inventory: {
+    'Oak Log': 4,
+    'Wheat Seed': 4,
+    'Carrot Seed': 2,
+    'Cooked Meat': 2
+  }
+};
+
+const PET_DB = {
+  wolf: { name: 'Wolf Pup', icon: '🐺', desc: 'Attacks nearby monsters with bite strikes.', atkBonus: 4, lvl: 1, xp: 0, nextXp: 50 },
+  cat: { name: 'Lucky Tabby', icon: '🐱', desc: '+50% Magnet Range and +25% Gold Loot drop bonus.', atkBonus: 0, lvl: 1, xp: 0, nextXp: 50 },
+  owl: { name: 'Mystic Owl', icon: '🦉', desc: 'Increases all Hero XP gained by +25%.', atkBonus: 2, lvl: 1, xp: 0, nextXp: 50 },
+  golem: { name: 'Stone Golem', icon: '🗿', desc: 'Grants +5 Bonus Hero DEF Armor Shield.', atkBonus: 6, lvl: 1, xp: 0, nextXp: 50 }
+};
+let activePetType = 'wolf';
+const pet = { x: 430, y: 310, attackTimer: 0, targetMob: null };
+
+const NPC_AFFECTION = {
+  elder: { hearts: 1, maxHearts: 5, favorite: 'Magic Log', reward: 'Elder Spellbook (+3 ATK)' },
+  merchant: { hearts: 1, maxHearts: 5, favorite: 'Gold Ingot', reward: 'Merchant Guild Token (15% Shop Discount)' },
+  captain: { hearts: 1, maxHearts: 5, favorite: 'Golden Bass', reward: 'Poseidon Compass (+2 Fishing Rod)' }
+};
+
+let projectiles = [];
+let droppedItems = [];
+let clickParticles = [];
+let lightningStrikes = [];
+let floatingTexts = [];
+let activeQuests = [];
+let boardQuests = [];
+let portalPulse = 0;
+let autoSaveTimer = 1800;
+
+/* ================= COMPREHENSIVE ZONES DEFINITIONS ================= */
+const ZONES = {
+  town: {
+    name: 'Village Square',
+    icon: '🏰',
+    bg: '#325730',
+    portals: [
+      { targetZone: 'cave', x: 460, y: 35, spawnX: 460, spawnY: 520, label: '▲ NORTH: Crystal Caverns', icon: '⛏️' },
+      { targetZone: 'farm', x: 460, y: 555, spawnX: 460, spawnY: 80, label: '▼ SOUTH: Farmstead & Pasture', icon: '🌾' },
+      { targetZone: 'forest', x: 885, y: 295, spawnX: 95, spawnY: 295, label: 'EAST: Wild Woods ▶', icon: '🌲' },
+      { targetZone: 'port', x: 35, y: 295, spawnX: 830, spawnY: 295, label: '◀ WEST: Port Seagrove', icon: '⚓' }
+    ],
+    npcs: [
+      { id: 'elder', type: 'npc_diag', name: 'Elder Martha', x: 460, y: 220, color: '#a855f7', icon: '🧙‍♀️', dialogKey: 'elder' },
+      { id: 'merchant', type: 'npc_shop', name: 'Merchant Otto', x: 260, y: 200, color: '#f59e0b', icon: '🛒' },
+      { id: 'board', type: 'npc_quest', name: 'Quest Board', x: 660, y: 200, color: '#3b82f6', icon: '📜' },
+      { id: 'anvil', type: 'npc_craft', name: 'Blacksmith Goran', x: 460, y: 130, color: '#ec4899', icon: '⚒️' },
+      { id: 'inn', type: 'inn_rest', name: 'Traveler Inn', x: 460, y: 440, color: '#10b981', icon: '🛏️' }
+    ],
+    trees: [], rocks: [], ponds: [], farmPlots: [], livestock: [], mobs: []
+  },
+  port: {
+    name: 'Port Seagrove & Docks',
+    icon: '⚓',
+    bg: '#1b3354',
+    portals: [{ targetZone: 'town', x: 885, y: 295, spawnX: 95, spawnY: 295, label: 'EAST: Return to Town ▶', icon: '🏰' }],
+    npcs: [{ id: 'captain', type: 'npc_diag', name: 'Captain Barnaby', x: 380, y: 160, color: '#0284c7', icon: '🦜', dialogKey: 'captain' }],
+    trees: [], rocks: [],
+    ponds: [{ id: 'p_ocean', type: 'pond', name: 'Deep Ocean Trench', x: 670, y: 295, radius: 110 }],
+    farmPlots: [], livestock: [],
+    mobs: [
+      { id: 901, type: 'mob', name: 'Giant Armored Crab', x: 260, y: 420, hp: 55, maxHp: 55, atk: 7, drop: 'Crab Meat', dropChance: 1.0, xp: 45, speed: 0.6, targetX: 260, targetY: 420, roamTimer: 0 },
+      { id: 902, type: 'mob', name: 'Coral Siren', x: 460, y: 460, hp: 85, maxHp: 85, atk: 12, drop: 'Ocean Pearl', dropChance: 0.85, xp: 90, speed: 0.7, targetX: 460, targetY: 460, roamTimer: 0 }
+    ]
+  },
+  cave: {
+    name: 'Crystal & Ore Caverns',
+    icon: '⛏️',
+    bg: '#12131c',
+    portals: [
+      { targetZone: 'town', x: 460, y: 555, spawnX: 460, spawnY: 80, label: '▼ SOUTH: Return to Village', icon: '🏰' },
+      { targetZone: 'volcano', x: 885, y: 295, spawnX: 95, spawnY: 295, label: 'EAST: Molten Volcano ▶', icon: '🌋' }
+    ],
+    npcs: [], trees: [],
+    rocks: [
+      { id: 101, type: 'rock', name: 'Copper Vein', x: 180, y: 160, hp: 4, maxHp: 4, drop: 'Copper Ore', respawn: 0 },
+      { id: 102, type: 'rock', name: 'Copper Vein', x: 270, y: 190, hp: 4, maxHp: 4, drop: 'Copper Ore', respawn: 0 },
+      { id: 103, type: 'rock', name: 'Iron Vein', x: 690, y: 170, hp: 7, maxHp: 7, drop: 'Iron Ore', respawn: 0 },
+      { id: 104, type: 'rock', name: 'Iron Vein', x: 760, y: 230, hp: 7, maxHp: 7, drop: 'Iron Ore', respawn: 0 },
+      { id: 105, type: 'rock', name: 'Gold Vein', x: 460, y: 130, hp: 10, maxHp: 10, drop: 'Gold Ore', respawn: 0 },
+      { id: 106, type: 'rock', name: 'Mithril Node', x: 460, y: 230, hp: 14, maxHp: 14, drop: 'Mithril Ore', respawn: 0 }
+    ],
+    ponds: [], farmPlots: [], livestock: [],
+    mobs: [
+      { id: 201, type: 'mob', name: 'Cave Bat', x: 260, y: 340, hp: 30, maxHp: 30, atk: 5, drop: 'Bat Wing', dropChance: 0.9, xp: 25, speed: 0.8, targetX: 260, targetY: 340, roamTimer: 0 },
+      { id: 202, type: 'mob', name: 'Cavern Slime', x: 650, y: 360, hp: 45, maxHp: 45, atk: 7, drop: 'Slime Gel', dropChance: 0.9, xp: 35, speed: 0.5, targetX: 650, targetY: 360, roamTimer: 0 },
+      { id: 203, type: 'mob', name: 'Goblin Sentry', x: 460, y: 410, hp: 70, maxHp: 70, atk: 10, drop: 'Goblin Dagger', dropChance: 0.85, xp: 60, speed: 0.6, targetX: 460, targetY: 410, roamTimer: 0 }
+    ]
+  },
+  forest: {
+    name: 'Wild Woods & Grove',
+    icon: '🌲',
+    bg: '#1c391a',
+    portals: [
+      { targetZone: 'town', x: 35, y: 295, spawnX: 820, spawnY: 295, label: '◀ WEST: Return to Village', icon: '🏰' },
+      { targetZone: 'frost', x: 460, y: 35, spawnX: 460, spawnY: 520, label: '▲ NORTH: Frostpeak Enclave', icon: '❄️' }
+    ],
+    npcs: [],
+    trees: [
+      { id: 301, type: 'tree', name: 'Oak Tree', x: 190, y: 150, hp: 4, maxHp: 4, drop: 'Oak Log', respawn: 0 },
+      { id: 302, type: 'tree', name: 'Oak Tree', x: 300, y: 200, hp: 4, maxHp: 4, drop: 'Oak Log', respawn: 0 },
+      { id: 303, type: 'tree', name: 'Pine Tree', x: 670, y: 140, hp: 6, maxHp: 6, drop: 'Pine Log', respawn: 0 },
+      { id: 304, type: 'tree', name: 'Pine Tree', x: 740, y: 240, hp: 6, maxHp: 6, drop: 'Pine Log', respawn: 0 },
+      { id: 305, type: 'tree', name: 'Magic Willow', x: 460, y: 130, hp: 9, maxHp: 9, drop: 'Magic Log', respawn: 0 }
+    ],
+    rocks: [], ponds: [], farmPlots: [], livestock: [],
+    mobs: [
+      { id: 401, type: 'mob', name: 'Wild Hare', x: 220, y: 380, hp: 15, maxHp: 15, atk: 0, drop: 'Raw Meat', dropChance: 1.0, xp: 20, speed: 0.9, targetX: 220, targetY: 380, roamTimer: 0 },
+      { id: 402, type: 'mob', name: 'Forest Boar', x: 460, y: 420, hp: 55, maxHp: 55, atk: 8, drop: 'Boar Leather', dropChance: 0.9, xp: 50, speed: 0.6, targetX: 460, targetY: 420, roamTimer: 0 },
+      { id: 403, type: 'mob', name: 'Dire Wolf', x: 690, y: 380, hp: 80, maxHp: 80, atk: 13, drop: 'Wolf Fang', dropChance: 0.85, xp: 85, speed: 0.7, targetX: 690, targetY: 380, roamTimer: 0 },
+      { id: 404, type: 'mob', name: 'Alpha Bear', isBoss: true, x: 460, y: 260, hp: 180, maxHp: 180, atk: 18, drop: 'Bear Claw', dropChance: 1.0, xp: 220, speed: 0.45, targetX: 460, targetY: 260, roamTimer: 0, bossAttackTimer: 180, telegraphRadius: 0 }
+    ]
+  },
+  frost: {
+    name: 'Frostpeak Enclave',
+    icon: '❄️',
+    bg: '#2b394e',
+    portals: [{ targetZone: 'forest', x: 460, y: 555, spawnX: 460, spawnY: 80, label: '▼ SOUTH: Wild Woods', icon: '🌲' }],
+    npcs: [],
+    trees: [
+      { id: 701, type: 'tree', name: 'Frost Pine', x: 220, y: 160, hp: 8, maxHp: 8, drop: 'Frost Wood', respawn: 0 },
+      { id: 702, type: 'tree', name: 'Frost Pine', x: 700, y: 160, hp: 8, maxHp: 8, drop: 'Frost Wood', respawn: 0 }
+    ],
+    rocks: [{ id: 703, type: 'rock', name: 'Starlight Crystal', x: 460, y: 130, hp: 12, maxHp: 12, drop: 'Starlight Shard', respawn: 0 }],
+    ponds: [], farmPlots: [], livestock: [],
+    mobs: [
+      { id: 704, type: 'mob', name: 'Ice Wolf', x: 260, y: 370, hp: 95, maxHp: 95, atk: 15, drop: 'Frost Fur', dropChance: 0.9, xp: 110, speed: 0.75, targetX: 260, targetY: 370, roamTimer: 0 },
+      { id: 705, type: 'mob', name: 'Frost Yeti', isBoss: true, x: 460, y: 300, hp: 270, maxHp: 270, atk: 24, drop: 'Yeti Horn', dropChance: 1.0, xp: 340, speed: 0.4, targetX: 460, targetY: 300, roamTimer: 0, bossAttackTimer: 150, telegraphRadius: 0 }
+    ]
+  },
+  volcano: {
+    name: 'Ashridge Volcano',
+    icon: '🌋',
+    bg: '#240f0f',
+    portals: [{ targetZone: 'cave', x: 35, y: 295, spawnX: 820, spawnY: 295, label: '◀ WEST: Return to Caverns', icon: '⛏️' }],
+    npcs: [], trees: [],
+    rocks: [
+      { id: 801, type: 'rock', name: 'Obsidian Node', x: 240, y: 160, hp: 16, maxHp: 16, drop: 'Obsidian Ore', respawn: 0 },
+      { id: 802, type: 'rock', name: 'Titanium Vein', x: 680, y: 160, hp: 18, maxHp: 18, drop: 'Titanium Ore', respawn: 0 }
+    ],
+    ponds: [{ id: 'p_lava', type: 'pond', name: 'Lava Pool', isLava: true, x: 460, y: 150, radius: 60 }],
+    farmPlots: [], livestock: [],
+    mobs: [
+      { id: 803, type: 'mob', name: 'Magma Slime', x: 260, y: 380, hp: 120, maxHp: 120, atk: 18, drop: 'Fire Core', dropChance: 0.9, xp: 130, speed: 0.5, targetX: 260, targetY: 380, roamTimer: 0 },
+      { id: 804, type: 'mob', name: 'Molten Wyrm', isBoss: true, x: 460, y: 340, hp: 380, maxHp: 380, atk: 30, drop: 'Dragon Scale', dropChance: 1.0, xp: 480, speed: 0.5, targetX: 460, targetY: 340, roamTimer: 0, bossAttackTimer: 140, telegraphRadius: 0 }
+    ]
+  },
+  farm: {
+    name: 'Sunlit Farmstead & Pasture',
+    icon: '🌾',
+    bg: '#386331',
+    portals: [{ targetZone: 'town', x: 460, y: 35, spawnX: 460, spawnY: 520, label: '▲ NORTH: Return to Village', icon: '🏰' }],
+    npcs: [], trees: [], rocks: [],
+    ponds: [{ id: 501, type: 'pond', name: 'Whispering Lake', x: 720, y: 295, radius: 95 }],
+    farmPlots: [
+      { id: 601, type: 'farm', x: 180, y: 180, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 602, type: 'farm', x: 250, y: 180, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 603, type: 'farm', x: 320, y: 180, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 604, type: 'farm', x: 180, y: 260, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 605, type: 'farm', x: 250, y: 260, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 606, type: 'farm', x: 320, y: 260, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 607, type: 'farm', x: 180, y: 340, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 608, type: 'farm', x: 250, y: 340, state: 'empty', crop: null, timer: 0, maxTimer: 0 },
+      { id: 609, type: 'farm', x: 320, y: 340, state: 'empty', crop: null, timer: 0, maxTimer: 0 }
+    ],
+    livestock: [
+      { id: 'cow1', type: 'cow', name: 'Daisy the Cow', x: 470, y: 210, ready: true, timer: 0 },
+      { id: 'chk1', type: 'chicken', name: 'Hen Pippa', x: 450, y: 340, ready: true, timer: 0 },
+      { id: 'chk2', type: 'chicken', name: 'Hen Penny', x: 500, y: 370, ready: true, timer: 0 }
+    ],
+    mobs: []
+  },
+  abyss: {
+    name: 'Infinite Abyss (Floor 1)',
+    icon: '🌀',
+    bg: '#0c0714',
+    portals: [
+      { targetZone: 'town', x: 885, y: 295, spawnX: 95, spawnY: 295, label: 'EAST: Escape Abyss ▶', icon: '🏰' },
+      { targetZone: 'abyss_next', x: 460, y: 60, spawnX: 460, spawnY: 500, label: '▲ DESCEND TO NEXT FLOOR', icon: '🪜' }
+    ],
+    npcs: [], trees: [], rocks: [], ponds: [], farmPlots: [], livestock: [], mobs: []
+  }
+};
+
+const ITEM_DB = {
+  'Oak Log': { icon: '🪵', price: 4 },
+  'Pine Log': { icon: '🌲', price: 8 },
+  'Magic Log': { icon: '✨', price: 22 },
+  'Frost Wood': { icon: '🪵', price: 30 },
+  'Copper Ore': { icon: '🪨', price: 5 },
+  'Iron Ore': { icon: '⛓️', price: 10 },
+  'Gold Ore': { icon: '🪙', price: 20 },
+  'Mithril Ore': { icon: '💠', price: 40 },
+  'Obsidian Ore': { icon: '🖤', price: 60 },
+  'Titanium Ore': { icon: '🔩', price: 80 },
+  'Starlight Shard': { icon: '⭐', price: 100 },
+  'Abyss Gem': { icon: '🔮', price: 150 },
+  'Copper Ingot': { icon: '🧱', price: 14 },
+  'Iron Ingot': { icon: '🔩', price: 28 },
+  'Gold Ingot': { icon: '👑', price: 55 },
+  'Mithril Bar': { icon: '🔷', price: 110 },
+  'Titanium Plate': { icon: '🛡️', price: 180 },
+  'Raw Trout': { icon: '🐟', price: 7 },
+  'Golden Bass': { icon: '🐠', price: 30 },
+  'Void Eel': { icon: '🐍', price: 65 },
+  'Magma Ray': { icon: '🐡', price: 90 },
+  'Wheat': { icon: '🌾', price: 8 },
+  'Carrot': { icon: '🥕', price: 16, heal: 20 },
+  'Pumpkin': { icon: '🎃', price: 35, heal: 35 },
+  'Fresh Milk': { icon: '🥛', price: 20, heal: 30 },
+  'Fresh Egg': { icon: '🥚', price: 12 },
+  'Wheat Seed': { icon: '🌱', price: 3, isSeed: true, crop: 'Wheat', growTime: 180 },
+  'Carrot Seed': { icon: '🌱', price: 6, isSeed: true, crop: 'Carrot', growTime: 300 },
+  'Pumpkin Seed': { icon: '🌱', price: 14, isSeed: true, crop: 'Pumpkin', growTime: 480 },
+  'Raw Meat': { icon: '🥩', price: 10 },
+  'Crab Meat': { icon: '🦀', price: 22 },
+  'Cooked Meat': { icon: '🍖', price: 25, heal: 50 },
+  'Wolf Treat': { icon: '🦴', price: 30, isPetFood: true },
+  'Hearty Feast': { icon: '🍱', price: 90, heal: 100, buff: { atk: 5, speed: 0.8, dur: 900 } },
+  'Boar Leather': { icon: '🛡️', price: 20 },
+  'Wolf Fang': { icon: '🦷', price: 35 },
+  'Bat Wing': { icon: '🦇', price: 15 },
+  'Slime Gel': { icon: '🧪', price: 18 },
+  'Goblin Dagger': { icon: '🗡️', price: 40 },
+  'Ocean Pearl': { icon: '🦪', price: 75 },
+  'Frost Fur': { icon: '🥋', price: 90 },
+  'Fire Core': { icon: '🔥', price: 110 },
+  'Bear Claw': { icon: '🐾', price: 80 },
+  'Yeti Horn': { icon: '📯', price: 180 },
+  'Dragon Scale': { icon: '🐉', price: 250 },
+  'Abyss Essence': { icon: '🌌', price: 200 }
+};
+
+const DIALOGUES = {
+  elder: {
+    name: 'Elder Martha',
+    avatar: '🧙‍♀️',
+    npcKey: 'elder',
+    text: 'Greetings, brave hero! The realm flows with magic. What knowledge do you seek today?',
+    choices: [
+      { label: 'Teach me about combat combos & skills.', action: () => {
+        showDialogueText('Use SPACE to dash with invulnerability! Whirlwind (1) strikes in an AoE, Fireball (2) seeks foes, and Thunderstorm (4/R) smites the entire battlefield!');
+      }},
+      { label: 'How does the Infinite Abyss work?', action: () => {
+        showDialogueText('The Abyss is an endless gauntlet of descending floors. Each level scales stronger monsters, but guards rare Abyss Gems and ancient chest treasures!');
+      }}
+    ]
+  },
+  captain: {
+    name: 'Captain Barnaby',
+    avatar: '🦜',
+    npcKey: 'captain',
+    text: 'Ahoy, matey! Keep your rod steady and your blade sharp.',
+    choices: [
+      { label: 'Any tips on ocean fishing?', action: () => {
+        showDialogueText('Just click upon any body of water and your lines will haul in fish automatically!');
+      }},
+      { label: 'Buy Fisherman Luck Charm (20🪙).', action: () => {
+        if (player.gold >= 20) {
+          addGold(-20);
+          player.rodPower += 1;
+          showDialogueText('Arr! Your fishing power has surged! (+1 Fishing Power)');
+        } else {
+          showDialogueText('Ye do not have enough coins in your purse, matey!');
+        }
+      }}
+    ]
+  }
+};
+
+function startDialogue(key) {
+  const diag = DIALOGUES[key];
+  if (!diag) return;
+  document.getElementById('dialogueModal').style.display = 'flex';
+  document.getElementById('diag-speaker').textContent = diag.name;
+  document.getElementById('diag-avatar').textContent = diag.avatar;
+  document.getElementById('diag-text').textContent = diag.text;
+
+  const aff = NPC_AFFECTION[diag.npcKey];
+  let heartsStr = '';
+  for (let i = 0; i < aff.maxHearts; i++) heartsStr += i < aff.hearts ? '❤️' : '🤍';
+  document.getElementById('diag-hearts').textContent = `${heartsStr} (Affection Level ${aff.hearts}/5)`;
+
+  const choicesContainer = document.getElementById('diag-choices');
+  choicesContainer.innerHTML = '';
+  diag.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-action';
+    btn.style.textAlign = 'left';
+    btn.textContent = '➤ ' + c.label;
+    btn.onclick = c.action;
+    choicesContainer.appendChild(btn);
+  });
+
+  const giftList = document.getElementById('diag-gift-list');
+  giftList.innerHTML = '';
+  const giftables = ['Magic Log', 'Gold Ingot', 'Golden Bass', 'Cooked Meat', 'Ocean Pearl', 'Pumpkin'];
+  giftables.forEach(item => {
+    const count = player.inventory[item] || 0;
+    const btn = document.createElement('button');
+    btn.className = 'btn-action';
+    btn.style.fontSize = '9.5px';
+    btn.disabled = count <= 0;
+    btn.textContent = `🎁 Give ${item} (${count})`;
+    btn.onclick = () => giveNPCGift(diag.npcKey, item);
+    giftList.appendChild(btn);
+  });
+}
+
+function giveNPCGift(npcKey, item) {
+  if (removeItem(item, 1)) {
+    const aff = NPC_AFFECTION[npcKey];
+    const isFav = aff.favorite === item;
+    if (aff.hearts < aff.maxHearts) {
+      aff.hearts++;
+      playSound('level');
+      addFloatingText(`Heart Level Up with ${npcKey.toUpperCase()}! ❤️`, player.x, player.y - 40, '#f43f5e');
+      if (aff.hearts === aff.maxHearts) {
+        addFloatingText(`Earned: ${aff.reward}! 🌟`, player.x, player.y - 60, '#facc15');
+      }
+    }
+    showDialogueText(isFav ? `Oh! My absolute favorite! I cannot thank you enough! ❤️ (+Affection)` : `Thank you kindly, hero! This is lovely.`);
+    startDialogue(npcKey);
+  }
+}
+
+function showDialogueText(txt) {
+  document.getElementById('diag-text').textContent = txt;
+}
+
+const TALENT_DB = [
+  { id: 'vampirism', title: '🩸 Vampiric Strikes', desc: 'Attacks and skills leech 10% of damage dealt back as Health.' },
+  { id: 'fireTrail', title: '🔥 Flaming Dash', desc: 'Dash leaves behind a trail of burning embers that burns all enemies.' },
+  { id: 'greenThumb', title: '🌾 Green Thumb', desc: 'Grants a 35% chance to double crop & gathering harvest yields.' },
+  { id: 'magnet', title: '🧲 Treasure Seeker', desc: 'Increases ground loot magnet pull range by +60% and gold drops by +25%.' },
+  { id: 'berserk', title: '💢 Berserker Blood', desc: 'Gain +40% Bonus ATK whenever your HP falls below 45%.' },
+  { id: 'smithing', title: '⚒️ Master Craftsman', desc: 'Forged weapons & armor provide +20% higher combat bonuses.' }
+];
+
+function openTalentsModal() {
+  document.getElementById('talentsModal').style.display = 'flex';
+  document.getElementById('modal-talent-pts').textContent = player.talentPoints;
+  document.getElementById('hud-talent-pts').textContent = player.talentPoints;
+
+  const container = document.getElementById('talents-list');
+  container.innerHTML = TALENT_DB.map(t => {
+    const unlocked = player.talents[t.id];
+    return `
+      <div class="talent-card" style="${unlocked ? 'border:1px solid #10b981;' : ''}">
+        <div>
+          <b>${t.title} ${unlocked ? '<span style="color:#10b981; font-size:9.5px;">[UNLOCKED]</span>' : ''}</b>
+          <div style="font-size:9.5px; color:#94a3b8;">${t.desc}</div>
+        </div>
+        <button class="btn-action" style="${unlocked ? 'background:#059669;' : ''}" ${unlocked || player.talentPoints <= 0 ? 'disabled' : ''} onclick="unlockTalent('${t.id}')">
+          ${unlocked ? 'Active' : 'Learn (1 Pt)'}
+        </button>
+      </div>`;
+  }).join('');
+}
+
+function unlockTalent(id) {
+  if (player.talentPoints > 0 && !player.talents[id]) {
+    player.talentPoints--;
+    player.talents[id] = true;
+    playSound('level');
+    addFloatingText("Talent Mastered! 🌟", player.x, player.y - 35, '#38bdf8');
+    openTalentsModal();
+  }
+}
+
+function openPetModal() {
+  document.getElementById('petModal').style.display = 'flex';
+  const container = document.getElementById('pet-selection-list');
+  container.innerHTML = Object.entries(PET_DB).map(([key, p]) => {
+    const isActive = activePetType === key;
+    return `
+      <div class="pet-card" style="${isActive ? 'border:1px solid #38bdf8;' : ''}">
+        <div style="font-size:22px; margin-right:8px;">${p.icon}</div>
+        <div style="flex:1;">
+          <b>${p.name} (Lvl ${p.lvl}) ${isActive ? '<span style="color:#38bdf8; font-size:9.5px;">(Active)</span>' : ''}</b>
+          <div style="font-size:9.5px; color:#94a3b8;">${p.desc}</div>
+        </div>
+        <button class="btn-action" ${isActive ? 'disabled' : ''} onclick="switchPet('${key}')">${isActive ? 'Active' : 'Summon'}</button>
+      </div>`;
+  }).join('');
+}
+
+function switchPet(key) {
+  activePetType = key;
+  document.getElementById('eq-pet').textContent = `${PET_DB[key].icon} ${PET_DB[key].name}`;
+  addFloatingText(`Summoned ${PET_DB[key].name}! 🐾`, player.x, player.y - 30, '#38bdf8');
+  playSound('coin');
+  openPetModal();
+}
+
+function generateAbyssFloor(floor) {
+  abyssFloor = floor;
+  const z = ZONES.abyss;
+  z.name = `Infinite Abyss (Floor ${floor})`;
+  z.mobs = [];
+  
+  const mobCount = 3 + Math.floor(floor * 0.8);
+  const hpMult = 1 + (floor - 1) * 0.28;
+  const atkMult = 1 + (floor - 1) * 0.22;
+
+  for (let i = 0; i < mobCount; i++) {
+    z.mobs.push({
+      id: 2000 + i,
+      type: 'mob',
+      name: `Abyss Stalker F${floor}`,
+      x: 180 + Math.random() * 560,
+      y: 180 + Math.random() * 260,
+      hp: Math.floor(65 * hpMult),
+      maxHp: Math.floor(65 * hpMult),
+      atk: Math.floor(9 * atkMult),
+      drop: floor % 2 === 0 ? 'Abyss Gem' : 'Abyss Essence',
+      dropChance: 0.9,
+      xp: Math.floor(75 * hpMult),
+      speed: 0.65,
+      targetX: 460, targetY: 300,
+      roamTimer: 0
+    });
+  }
+
+  if (floor % 3 === 0) {
+    z.mobs.push({
+      id: 2999,
+      type: 'mob',
+      name: `Abyss Overlord (Floor ${floor})`,
+      isBoss: true,
+      x: 460,
+      y: 260,
+      hp: Math.floor(300 * hpMult),
+      maxHp: Math.floor(300 * hpMult),
+      atk: Math.floor(22 * atkMult),
+      drop: 'Abyss Gem',
+      dropChance: 1.0,
+      xp: Math.floor(400 * hpMult),
+      speed: 0.45,
+      targetX: 460, targetY: 260,
+      roamTimer: 0,
+      bossAttackTimer: 140,
+      telegraphRadius: 0
+    });
+  }
+}
+
+const QUEST_TEMPLATES = [
+  { type: 'GATHER', target: 'Oak Log', verb: 'Chop', min: 3, max: 6, xp: 40, gold: 30 },
+  { type: 'GATHER', target: 'Frost Wood', verb: 'Harvest', min: 2, max: 4, xp: 80, gold: 65 },
+  { type: 'MINE', target: 'Copper Ore', verb: 'Mine', min: 3, max: 5, xp: 50, gold: 40 },
+  { type: 'MINE', target: 'Titanium Ore', verb: 'Excavate', min: 1, max: 2, xp: 140, gold: 120 },
+  { type: 'SMELT', target: 'Iron Ingot', verb: 'Smelt', min: 2, max: 3, xp: 90, gold: 75 },
+  { type: 'FISH', target: 'Raw Trout', verb: 'Catch', min: 2, max: 4, xp: 50, gold: 40 },
+  { type: 'FISH', target: 'Golden Bass', verb: 'Fish', min: 1, max: 2, xp: 110, gold: 95 },
+  { type: 'FARM', target: 'Wheat', verb: 'Harvest', min: 3, max: 6, xp: 55, gold: 45 },
+  { type: 'HUNT', target: 'Forest Boar', verb: 'Hunt', min: 2, max: 3, xp: 80, gold: 70 },
+  { type: 'HUNT', target: 'Ice Wolf', verb: 'Slay', min: 2, max: 3, xp: 130, gold: 115 },
+  { type: 'HUNT', target: 'Alpha Bear', verb: 'Defeat Boss', min: 1, max: 1, xp: 200, gold: 180 }
+];
+
+function generateQuest() {
+  const tpl = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
+  const mult = 1 + (player.level - 1) * 0.15;
+  const count = Math.max(1, Math.floor((Math.random() * (tpl.max - tpl.min + 1) + tpl.min)));
+  return {
+    id: 'Q_' + Math.random().toString(36).substr(2, 9),
+    title: `${tpl.verb} ${count}x ${tpl.target}`,
+    type: tpl.type,
+    target: tpl.target,
+    required: count,
+    current: 0,
+    gold: Math.floor(tpl.gold * mult),
+    xp: Math.floor(tpl.xp * mult),
+    completed: false
+  };
+}
+
+function refreshBoardQuests() {
+  while (boardQuests.length < 3) boardQuests.push(generateQuest());
+}
+
+function checkQuestProgress(actionType, targetName, amount = 1) {
+  let updated = false;
+  activeQuests.forEach(q => {
+    if (!q.completed && q.target === targetName) {
+      q.current = Math.min(q.required, q.current + amount);
+      if (q.current >= q.required) {
+        q.completed = true;
+        addFloatingText("Quest Contract Ready! 📜", player.x, player.y - 30, '#10b981');
+        playSound('coin');
+      }
+      updated = true;
+    }
+  });
+  if (updated) renderQuests();
+}
+
+function completeQuest(questId) {
+  const idx = activeQuests.findIndex(q => q.id === questId);
+  if (idx !== -1) {
+    const q = activeQuests[idx];
+    addGold(q.gold);
+    addXp(q.xp);
+    playSound('coin');
+    activeQuests.splice(idx, 1);
+    renderQuests();
+  }
+}
+
+function spawnLootDrop(name, x, y) {
+  const bonus = player.talents.greenThumb && Math.random() < 0.35 ? 2 : 1;
+  droppedItems.push({
+    name,
+    amount: bonus,
+    x: x + (Math.random() * 24 - 12),
+    y: y + (Math.random() * 24 - 12),
+    icon: ITEM_DB[name]?.icon || '📦',
+    bounce: Math.random() * Math.PI * 2,
+    life: 1200
+  });
+}
+
+function spawnGoldDrop(amount, x, y) {
+  const goldBonus = (activePetType === 'cat' ? 1.25 : 1.0) * (player.talents.magnet ? 1.25 : 1.0);
+  droppedItems.push({
+    isGold: true,
+    amount: Math.floor(amount * goldBonus),
+    x: x + (Math.random() * 20 - 10),
+    y: y + (Math.random() * 20 - 10),
+    icon: '🪙',
+    bounce: Math.random() * Math.PI * 2,
+    life: 1200
+  });
+}
+
+function addItem(name, qty = 1) {
+  player.inventory[name] = (player.inventory[name] || 0) + qty;
+  if (ITEM_DB[name]?.isSeed && (!player.selectedSeed || !player.inventory[player.selectedSeed])) {
+    player.selectedSeed = name;
+  }
+  addFloatingText(`+${qty} ${name}`, player.x, player.y - 15, '#6ee7b7');
+  renderInventory();
+}
+
+function removeItem(name, qty = 1) {
+  if (!player.inventory[name] || player.inventory[name] < qty) return false;
+  player.inventory[name] -= qty;
+  if (player.inventory[name] <= 0) {
+    delete player.inventory[name];
+    if (player.selectedSeed === name) {
+      const nextSeed = Object.keys(player.inventory).find(k => ITEM_DB[k]?.isSeed);
+      player.selectedSeed = nextSeed || null;
+    }
+  }
+  renderInventory();
+  return true;
+}
+
+function hasItems(reqs) {
+  for (let [item, amt] of Object.entries(reqs)) {
+    if ((player.inventory[item] || 0) < amt) return false;
+  }
+  return true;
+}
+
+function consumeItems(reqs) {
+  if (!hasItems(reqs)) return false;
+  for (let [item, amt] of Object.entries(reqs)) removeItem(item, amt);
+  return true;
+}
+
+function addGold(amt) {
+  player.gold += amt;
+  document.getElementById('ui-gold').textContent = player.gold;
+}
+
+function addHp(amt) {
+  player.hp = Math.min(player.maxHp, Math.max(0, player.hp + amt));
+  updateHpUI();
+}
+
+function updateHpUI() {
+  document.getElementById('ui-hp-text').textContent = `${player.hp} / ${player.maxHp}`;
+  document.getElementById('ui-hp-fill').style.width = `${(player.hp / player.maxHp) * 100}%`;
+}
+
+function addSkillXp(skillKey, amt) {
+  const sk = player.skills[skillKey];
+  if (!sk) return;
+  sk.xp += amt;
+  if (sk.xp >= sk.next) {
+    sk.xp -= sk.next;
+    sk.lvl++;
+    sk.next = Math.floor(sk.next * 1.5);
+    addFloatingText(`${skillKey.toUpperCase()} LEVEL ${sk.lvl}! ⭐`, player.x, player.y - 45, '#38bdf8');
+    playSound('level');
+  }
+  document.getElementById(`sk-${skillKey}`).textContent = `L${sk.lvl}`;
+}
+
+function addXp(amt) {
+  const xpBoost = activePetType === 'owl' ? 1.25 : 1.0;
+  player.xp += Math.floor(amt * xpBoost);
+  while (player.xp >= player.nextXp) {
+    player.xp -= player.nextXp;
+    player.level++;
+    player.talentPoints++;
+    player.nextXp = Math.floor(player.nextXp * 1.45);
+    player.maxHp += 18;
+    player.hp = player.maxHp;
+    player.attack += 2;
+    player.speed += 0.04;
+    addFloatingText("LEVEL UP! +1 TALENT POINT 🌟", player.x, player.y - 50, '#f43f5e');
+    playSound('level');
+    document.getElementById('hud-talent-pts').textContent = player.talentPoints;
+  }
+  document.getElementById('ui-level').textContent = player.level;
+  document.getElementById('ui-atk').textContent = getEffectiveAttack();
+  document.getElementById('ui-def').textContent = getEffectiveDefense();
+  document.getElementById('ui-speed').textContent = player.speed.toFixed(1);
+  document.getElementById('ui-xp-text').textContent = `${player.xp} / ${player.nextXp}`;
+  document.getElementById('ui-xp-fill').style.width = `${(player.xp / player.nextXp) * 100}%`;
+  updateHpUI();
+}
+
+function getEffectiveAttack() {
+  let atk = player.attack;
+  if (player.talents.berserk && player.hp <= player.maxHp * 0.45) atk = Math.floor(atk * 1.4);
+  if (NPC_AFFECTION.elder.hearts >= 5) atk += 3;
+  return atk;
+}
+
+function getEffectiveDefense() {
+  let def = player.defense;
+  if (activePetType === 'golem') def += 5;
+  return def;
+}
+
+function castAbility(ability) {
+  if (player.cooldowns[ability] > 0) return;
+
+  if (ability === 'dash') {
+    player.cooldowns.dash = 90;
+    player.invincibleTimer = 22;
+    playSound('dash');
+    const angle = Math.atan2(player.targetY - player.y, player.targetX - player.x) || 0;
+    player.x += Math.cos(angle) * 80;
+    player.y += Math.sin(angle) * 80;
+    player.dashTrail.push({ x: player.x, y: player.y, alpha: 1 });
+    if (player.talents.fireTrail) {
+      player.fireGrounds.push({ x: player.x, y: player.y, life: 180 });
+    }
+    addFloatingText("DASH! ⚡", player.x, player.y - 20, '#38bdf8');
+  } else if (ability === 'cleave') {
+    player.cooldowns.cleave = 180;
+    playSound('spell');
+    screenShake = 6;
+    player.swingAngle = Math.PI * 2;
+    addFloatingText("WHIRLWIND! 🌀", player.x, player.y - 25, '#fbbf24');
+    const z = ZONES[currentZone];
+    z.mobs.forEach(m => {
+      if (m.hp > 0 && Math.hypot(m.x - player.x, m.y - player.y) < 120) {
+        const isCrit = Math.random() < player.critChance;
+        const dmg = Math.floor(getEffectiveAttack() * 2.2 * (isCrit ? 1.6 : 1.0));
+        m.hp -= dmg;
+        if (player.talents.vampirism) addHp(Math.max(1, Math.floor(dmg * 0.1)));
+        addFloatingText(isCrit ? `CRIT! -${dmg}` : `-${dmg}`, m.x, m.y - 20, isCrit ? '#fbbf24' : '#f43f5e');
+        if (m.hp <= 0) handleMobDeath(m);
+      }
+    });
+  } else if (ability === 'fireball') {
+    player.cooldowns.fireball = 150;
+    playSound('spell');
+    const angle = Math.atan2(player.targetY - player.y, player.targetX - player.x);
+    projectiles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(angle) * 7.5, vy: Math.sin(angle) * 7.5,
+      dmg: getEffectiveAttack() * 2.8, life: 95
+    });
+    addFloatingText("FIREBALL! 🔥", player.x, player.y - 20, '#f97316');
+  } else if (ability === 'heal') {
+    player.cooldowns.heal = 360;
+    playSound('level');
+    const healAmt = Math.floor(player.maxHp * 0.45);
+    addHp(healAmt);
+    addFloatingText(`+${healAmt} HP! 💖`, player.x, player.y - 30, '#10b981');
+  } else if (ability === 'thunder') {
+    player.cooldowns.thunder = 480;
+    playSound('thunder');
+    screenShake = 12;
+    addFloatingText("THUNDERSTORM! 🌩️", player.x, player.y - 30, '#a855f7');
+    const z = ZONES[currentZone];
+    z.mobs.forEach(m => {
+      if (m.hp > 0) {
+        lightningStrikes.push({ x: m.x, y: m.y, life: 18 });
+        const dmg = Math.floor(getEffectiveAttack() * 3.5);
+        m.hp -= dmg;
+        if (player.talents.vampirism) addHp(Math.max(1, Math.floor(dmg * 0.08)));
+        addFloatingText(`-${dmg} ⚡`, m.x, m.y - 20, '#c084fc');
+        if (m.hp <= 0) handleMobDeath(m);
+      }
+    });
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  keysDown[e.key.toLowerCase()] = true;
+  if (e.code === 'Space') {
+    castAbility('dash'); e.preventDefault();
+  }
+  if (e.key === '1') castAbility('cleave');
+  if (e.key === '2') castAbility('fireball');
+  if (e.key === '3') castAbility('heal');
+  if (e.key === '4' || e.key.toLowerCase() === 'r') castAbility('thunder');
+});
+window.addEventListener('keyup', (e) => {
+  keysDown[e.key.toLowerCase()] = false;
+});
+
+function switchZone(newZone, spawnX, spawnY) {
+  if (newZone === 'abyss_next') {
+    generateAbyssFloor(abyssFloor + 1);
+    currentZone = 'abyss';
+    player.x = 460; player.y = 480;
+    addFloatingText(`Entered Abyss Floor ${abyssFloor}! 🌀`, player.x, player.y - 30, '#a855f7');
+    return;
+  }
+
+  currentZone = newZone;
+  if (newZone === 'abyss') generateAbyssFloor(1);
+
+  player.x = spawnX; player.y = spawnY;
+  player.targetX = spawnX; player.targetY = spawnY;
+  player.targetEntity = null;
+  player.state = 'idle';
+  projectiles = [];
+  droppedItems = [];
+
+  document.getElementById('zone-name').textContent = ZONES[newZone].name;
+  document.getElementById('zone-icon').textContent = ZONES[newZone].icon;
+  
+  document.querySelectorAll('.btn-travel').forEach(btn => {
+    btn.classList.toggle('active-zone', btn.textContent.toLowerCase().includes(newZone.substring(0,4)));
+  });
+
+  addFloatingText(`Entered ${ZONES[newZone].name}`, player.x, player.y - 30, '#38bdf8');
+}
+
+function travelToZone(targetZone) {
+  if (currentZone === targetZone) return;
+  closeModal('shopModal'); closeModal('questModal'); closeModal('craftModal'); closeModal('dialogueModal'); closeModal('saveModal'); closeModal('talentsModal'); closeModal('petModal');
+  const spawns = { town: [460, 300], port: [460, 300], cave: [460, 480], forest: [120, 300], frost: [460, 480], volcano: [120, 300], farm: [460, 120], abyss: [460, 480] };
+  const s = spawns[targetZone] || [460, 300];
+  switchZone(targetZone, s[0], s[1]);
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  hoveredEntity = findClickedEntity(mx, my);
+  canvas.style.cursor = hoveredEntity ? 'pointer' : 'crosshair';
+});
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  clickParticles.push({ x: mx, y: my, radius: 2, maxRadius: 18, alpha: 1 });
+  closeModal('shopModal'); closeModal('questModal'); closeModal('craftModal'); closeModal('dialogueModal'); closeModal('saveModal'); closeModal('talentsModal'); closeModal('petModal');
+
+  let clicked = findClickedEntity(mx, my);
+  if (clicked) {
+    if (clicked.type === 'portal') {
+      switchZone(clicked.targetZone, clicked.spawnX, clicked.spawnY);
+      return;
+    }
+    player.targetEntity = clicked;
+    player.targetX = clicked.x;
+    player.targetY = clicked.y;
+  } else {
+    player.targetEntity = null;
+    player.targetX = mx;
+    player.targetY = my;
+  }
+  player.state = 'moving';
+});
+
+function findClickedEntity(x, y) {
+  const z = ZONES[currentZone];
+  if (z.portals) {
+    for (let p of z.portals) {
+      if (Math.hypot(p.x - x, p.y - y) < 45) return { type: 'portal', ...p };
+    }
+  }
+  for (let n of z.npcs) if (Math.hypot(n.x - x, n.y - y) < 30) return n;
+  for (let t of z.trees) if (t.hp > 0 && Math.hypot(t.x - x, t.y - y) < 28) return t;
+  for (let r of z.rocks) if (r.hp > 0 && Math.hypot(r.x - x, r.y - y) < 24) return r;
+  for (let f of z.farmPlots) if (x >= f.x - 22 && x <= f.x + 22 && y >= f.y - 22 && y <= f.y + 22) return f;
+  for (let l of z.livestock) if (Math.hypot(l.x - x, l.y - y) < 24) return l;
+  for (let m of z.mobs) if (m.hp > 0 && Math.hypot(m.x - x, m.y - y) < 26) return m;
+  for (let p of z.ponds) if (Math.hypot(p.x - x, p.y - y) < p.radius) return p;
+  return null;
+}
+
+function startInteraction(e) {
+  player.state = 'acting';
+  if (e.type === 'tree') { player.actionMax = Math.max(12, 50 / player.axePower); player.actionTimer = player.actionMax; }
+  else if (e.type === 'rock') { player.actionMax = Math.max(12, 55 / player.pickPower); player.actionTimer = player.actionMax; }
+  else if (e.type === 'pond') startFishingMinigame(e);
+  else if (e.type === 'farm') { handleFarmClick(e); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'cow' || e.type === 'chicken') { handleLivestockClick(e); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'mob') { player.actionMax = 30; player.actionTimer = player.actionMax; }
+  else if (e.type === 'npc_diag') { startDialogue(e.dialogKey); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'npc_shop') { openShop(); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'npc_quest') { openQuestBoard(); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'npc_craft') { openCrafting(); player.state = 'idle'; player.targetEntity = null; }
+  else if (e.type === 'inn_rest') {
+    player.hp = player.maxHp; updateHpUI();
+    addFloatingText("Fully Rested & Healed! 💖", player.x, player.y - 30, '#10b981');
+    playSound('level');
+    player.state = 'idle'; player.targetEntity = null;
+  }
+}
+
+/* Automatic Catch Fishing */
+function startFishingMinigame(pond) {
+  let fish = 'Raw Trout';
+  if (pond.isLava) {
+    fish = 'Magma Ray';
+  } else {
+    const r = Math.random();
+    fish = r > 0.85 ? 'Void Eel' : (r > 0.5 ? 'Golden Bass' : 'Raw Trout');
+  }
+  spawnLootDrop(fish, player.x, player.y - 10);
+  addXp(35);
+  addSkillXp('fish', 30);
+  checkQuestProgress('FISH', fish, 1);
+  playSound('coin');
+  addFloatingText(`Caught ${fish}! 🐟`, player.x, player.y - 30, '#38bdf8');
+  player.state = 'idle';
+  player.targetEntity = null;
+}
+
+function processAction() {
+  const e = player.targetEntity;
+  if (!e) { player.state = 'idle'; return; }
+  player.actionTimer--;
+  player.swingAngle = Math.sin(Date.now() * 0.015) * 0.8;
+
+  if (player.actionTimer <= 0) {
+    if (e.type === 'tree') {
+      e.hp -= player.axePower;
+      playSound('chop');
+      addFloatingText(`-${player.axePower}`, e.x, e.y - 20, '#f87171');
+      if (e.hp <= 0) {
+        spawnLootDrop(e.drop, e.x, e.y);
+        addXp(20); addSkillXp('chop', 15);
+        checkQuestProgress('GATHER', e.drop, 1);
+        e.respawn = 360;
+        player.state = 'idle'; player.targetEntity = null;
+      } else { player.actionTimer = player.actionMax; }
+    } else if (e.type === 'rock') {
+      e.hp -= player.pickPower;
+      playSound('mine');
+      addFloatingText(`-${player.pickPower}`, e.x, e.y - 20, '#f87171');
+      if (e.hp <= 0) {
+        spawnLootDrop(e.drop, e.x, e.y);
+        addXp(25); addSkillXp('mine', 18);
+        checkQuestProgress('MINE', e.drop, 1);
+        e.respawn = 420;
+        player.state = 'idle'; player.targetEntity = null;
+      } else { player.actionTimer = player.actionMax; }
+    } else if (e.type === 'mob') {
+      const isCrit = Math.random() < player.critChance;
+      const dmg = Math.floor(getEffectiveAttack() * (isCrit ? 1.75 : 1.0));
+      e.hp -= dmg;
+      if (player.talents.vampirism) addHp(Math.max(1, Math.floor(dmg * 0.1)));
+      if (isCrit) { playSound('crit'); screenShake = 4; } else { playSound('hit'); }
+      addFloatingText(isCrit ? `CRIT! -${dmg}` : `-${dmg}`, e.x, e.y - 20, isCrit ? '#fbbf24' : '#f43f5e');
+
+      if (e.hp > 0 && e.atk > 0 && player.invincibleTimer <= 0) {
+        const incomingDmg = Math.max(1, e.atk - getEffectiveDefense());
+        addHp(-incomingDmg);
+        addFloatingText(`-${incomingDmg} HP`, player.x, player.y - 20, '#ef4444');
+        if (player.hp <= 0) { playerDied(); return; }
+      }
+      if (e.hp <= 0) {
+        handleMobDeath(e);
+        player.state = 'idle'; player.targetEntity = null;
+      } else { player.actionTimer = player.actionMax; }
+    }
+  }
+}
+
+function handleMobDeath(m) {
+  if (Math.random() <= m.dropChance) spawnLootDrop(m.drop, m.x, m.y);
+  spawnGoldDrop(Math.floor(m.xp * 0.4) + 3, m.x, m.y);
+  addXp(m.xp); addSkillXp('hunt', 25);
+  checkQuestProgress('HUNT', m.name, 1);
+
+  if (currentZone === 'abyss') {
+    const idx = ZONES.abyss.mobs.indexOf(m);
+    if (idx !== -1) ZONES.abyss.mobs.splice(idx, 1);
+  } else {
+    m.hp = m.maxHp;
+    m.x = 200 + Math.random() * 500;
+    m.y = 180 + Math.random() * 260;
+  }
+}
+
+function handleFarmClick(plot) {
+  if (plot.state === 'empty') {
+    let seed = player.selectedSeed;
+    if (!seed || !player.inventory[seed]) seed = Object.keys(player.inventory).find(k => ITEM_DB[k]?.isSeed);
+    if (seed && player.inventory[seed] > 0) {
+      const data = ITEM_DB[seed];
+      removeItem(seed, 1);
+      plot.state = 'growing'; plot.crop = data.crop; plot.timer = data.growTime; plot.maxTimer = data.growTime;
+      addFloatingText(`Planted ${data.crop}! 🌱`, plot.x, plot.y - 20, '#a7f3d0');
+    } else {
+      addFloatingText("No Seeds in Backpack! 🛒", plot.x, plot.y - 20, '#f87171');
+    }
+  } else if (plot.state === 'ready') {
+    spawnLootDrop(plot.crop, plot.x, plot.y);
+    addXp(25); addSkillXp('farm', 20);
+    checkQuestProgress('FARM', plot.crop, 1);
+    plot.state = 'empty'; plot.crop = null;
+  }
+}
+
+function handleLivestockClick(animal) {
+  if (!animal.ready) {
+    addFloatingText("Resting...", animal.x, animal.y - 20, '#94a3b8');
+    return;
+  }
+  if (animal.type === 'cow') {
+    spawnLootDrop('Fresh Milk', animal.x, animal.y);
+    addFloatingText("Milked Cow! 🥛", animal.x, animal.y - 20, '#f1f5f9');
+  } else {
+    spawnLootDrop('Fresh Egg', animal.x, animal.y);
+    addFloatingText("Collected Egg! 🥚", animal.x, animal.y - 20, '#fef08a');
+  }
+  animal.ready = false;
+  animal.timer = 500;
+}
+
+function playerDied() {
+  addFloatingText("YOU FAINTED!", player.x, player.y - 40, '#ef4444');
+  switchZone('town', 460, 440);
+  player.hp = Math.floor(player.maxHp * 0.7);
+  updateHpUI();
+}
+
+const RECIPES = {
+  smelt: [
+    { name: 'Copper Ingot', req: { 'Copper Ore': 2 }, xp: 15 },
+    { name: 'Iron Ingot', req: { 'Iron Ore': 2 }, xp: 25 },
+    { name: 'Gold Ingot', req: { 'Gold Ore': 2 }, xp: 45 },
+    { name: 'Mithril Bar', req: { 'Mithril Ore': 2 }, xp: 80 },
+    { name: 'Titanium Plate', req: { 'Titanium Ore': 2, 'Obsidian Ore': 1 }, xp: 140 }
+  ],
+  gear: [
+    { name: 'Iron Broadsword', slot: 'weapon', bonus: { atk: 6 }, req: { 'Iron Ingot': 3, 'Oak Log': 2 }, xp: 50 },
+    { name: 'Mithril Greatsword', slot: 'weapon', bonus: { atk: 15 }, req: { 'Mithril Bar': 3, 'Magic Log': 2 }, xp: 120 },
+    { name: 'Titanium Edge', slot: 'weapon', bonus: { atk: 26 }, req: { 'Titanium Plate': 3, 'Starlight Shard': 1 }, xp: 220 },
+    { name: 'Boar Hide Armor', slot: 'armor', bonus: { maxHp: 35, def: 3 }, req: { 'Boar Leather': 3, 'Copper Ingot': 2 }, xp: 60 },
+    { name: 'Yeti Frost Cloak', slot: 'armor', bonus: { maxHp: 75, def: 8 }, req: { 'Frost Fur': 3, 'Yeti Horn': 1 }, xp: 180 },
+    { name: 'Ring of the Abyss (+10 ATK, +5 DEF)', slot: 'ring', bonus: { atk: 10, def: 5 }, req: { 'Abyss Gem': 2, 'Gold Ingot': 2 }, xp: 240 },
+    { name: 'Forged Pickaxe (+1 Mining)', bonus: { pick: 1 }, req: { 'Iron Ingot': 2, 'Pine Log': 2 }, xp: 40 },
+    { name: 'Forged Lumber Axe (+1 Chop)', bonus: { axe: 1 }, req: { 'Copper Ingot': 3, 'Oak Log': 2 }, xp: 40 }
+  ],
+  food: [
+    { name: 'Cooked Meat', req: { 'Raw Meat': 1, 'Oak Log': 1 }, xp: 15, produces: 'Cooked Meat' },
+    { name: 'Hearty Feast', req: { 'Cooked Meat': 1, 'Fresh Egg': 2, 'Fresh Milk': 1 }, xp: 45, produces: 'Hearty Feast' }
+  ]
+};
+
+function openCrafting() {
+  document.getElementById('craftModal').style.display = 'flex';
+  document.getElementById('craft-smelt-list').innerHTML = RECIPES.smelt.map((r, i) => `
+    <div class="craft-item">
+      <div><b>${ITEM_DB[r.name]?.icon || ''} ${r.name}</b><div class="req-list">${formatReqs(r.req)}</div></div>
+      <button class="btn-action" onclick="craftSmelt(${i})">Smelt</button>
+    </div>`).join('');
+
+  document.getElementById('craft-gear-list').innerHTML = RECIPES.gear.map((r, i) => `
+    <div class="craft-item">
+      <div><b>🛡️ ${r.name}</b><div class="req-list">${formatReqs(r.req)}</div></div>
+      <button class="btn-action" onclick="craftGear(${i})">Forge</button>
+    </div>`).join('');
+
+  document.getElementById('craft-food-list').innerHTML = RECIPES.food.map((r, i) => `
+    <div class="craft-item">
+      <div><b>🍲 ${r.name}</b><div class="req-list">${formatReqs(r.req)}</div></div>
+      <button class="btn-action" onclick="craftFood(${i})">Cook</button>
+    </div>`).join('');
+}
+
+function formatReqs(req) {
+  return Object.entries(req).map(([k, v]) => `${v}x ${k} (${player.inventory[k] || 0}/${v})`).join(', ');
+}
+
+function craftSmelt(idx) {
+  const r = RECIPES.smelt[idx];
+  if (consumeItems(r.req)) {
+    addItem(r.name, 1); addXp(r.xp);
+    checkQuestProgress('SMELT', r.name, 1);
+    playSound('mine'); openCrafting();
+  } else addFloatingText("Missing materials!", player.x, player.y - 20, '#f87171');
+}
+
+function craftGear(idx) {
+  const r = RECIPES.gear[idx];
+  if (consumeItems(r.req)) {
+    const smithBonus = player.talents.smithing ? 1.2 : 1.0;
+    if (r.bonus.atk) player.attack += Math.floor(r.bonus.atk * smithBonus);
+    if (r.bonus.def) player.defense += Math.floor(r.bonus.def * smithBonus);
+    if (r.bonus.axe) player.axePower += r.bonus.axe;
+    if (r.bonus.pick) player.pickPower += r.bonus.pick;
+    if (r.bonus.maxHp) { player.maxHp += Math.floor(r.bonus.maxHp * smithBonus); player.hp += Math.floor(r.bonus.maxHp * smithBonus); updateHpUI(); }
+    if (r.slot) {
+      player.equipped[r.slot] = r.name;
+      document.getElementById(`eq-${r.slot}`).textContent = (r.slot === 'weapon' ? '🗡️ ' : (r.slot === 'armor' ? '🛡️ ' : '💍 ')) + r.name;
+    }
+    document.getElementById('ui-atk').textContent = getEffectiveAttack();
+    document.getElementById('ui-def').textContent = getEffectiveDefense();
+    document.getElementById('ui-tool').textContent = `T${Math.max(player.axePower, player.pickPower)}`;
+    addXp(r.xp); playSound('level');
+    addFloatingText(`Forged ${r.name}!`, player.x, player.y - 30, '#38bdf8');
+    openCrafting();
+  } else addFloatingText("Missing materials!", player.x, player.y - 20, '#f87171');
+}
+
+function craftFood(idx) {
+  const r = RECIPES.food[idx];
+  if (consumeItems(r.req)) {
+    addItem(r.produces, 1); addXp(r.xp); addSkillXp('cook', 25);
+    playSound('coin'); openCrafting();
+  } else addFloatingText("Missing ingredients!", player.x, player.y - 20, '#f87171');
+}
+
+function openShop() {
+  document.getElementById('shopModal').style.display = 'flex';
+  const discount = NPC_AFFECTION.merchant.hearts >= 5 ? 0.85 : 1.0;
+  document.getElementById('shop-discount-label').textContent = discount < 1 ? '(15% Affection Discount Active)' : '';
+
+  const buyList = document.getElementById('shop-buy-list');
+  const sellList = document.getElementById('shop-sell-list');
+  const itemsForSale = [
+    { name: 'Wheat Seed', price: Math.max(1, Math.floor(3 * discount)) },
+    { name: 'Carrot Seed', price: Math.max(1, Math.floor(6 * discount)) },
+    { name: 'Pumpkin Seed', price: Math.max(1, Math.floor(14 * discount)) },
+    { name: 'Cooked Meat', price: Math.max(1, Math.floor(25 * discount)) },
+    { name: 'Wolf Treat', price: Math.max(1, Math.floor(30 * discount)) }
+  ];
+  buyList.innerHTML = itemsForSale.map(item => `
+    <div class="shop-item">
+      <span>${ITEM_DB[item.name]?.icon || ''} ${item.name}</span>
+      <div>
+        <span style="color:#f59e0b; margin-right:8px;">${item.price}🪙</span>
+        <button class="btn-action" onclick="buyShopItem('${item.name}', ${item.price})">Buy</button>
+      </div>
+    </div>`).join('');
+
+  const invEntries = Object.entries(player.inventory).filter(([k]) => !k.includes('Seed'));
+  sellList.innerHTML = invEntries.length === 0 ? `<div style="font-size:10px; color:#9ca3af;">No sellable goods.</div>` :
+    invEntries.map(([item, qty]) => `
+      <div class="shop-item">
+        <span>${ITEM_DB[item]?.icon || ''} ${item} (x${qty})</span>
+        <div>
+          <span style="color:#f59e0b; margin-right:8px;">${ITEM_DB[item]?.price || 2}🪙/ea</span>
+          <button class="btn-action btn-sell" onclick="sellItem('${item}', ${ITEM_DB[item]?.price || 2})">Sell 1</button>
+        </div>
+      </div>`).join('');
+}
+
+function buyShopItem(name, price) {
+  if (player.gold < price) { addFloatingText("Not enough gold!", player.x, player.y - 20, '#f87171'); return; }
+  addGold(-price); addItem(name, 1); playSound('coin'); openShop();
+}
+
+function sellItem(name, price) {
+  if (removeItem(name, 1)) { addGold(price); playSound('coin'); openShop(); }
+}
+
+function openQuestBoard() {
+  refreshBoardQuests();
+  document.getElementById('questModal').style.display = 'flex';
+  document.getElementById('board-quest-list').innerHTML = boardQuests.map((q, idx) => `
+    <div class="quest-card" style="margin-bottom:6px;">
+      <div class="quest-title">${q.title}</div>
+      <div class="quest-desc">Type: ${q.type}</div>
+      <div class="quest-reward">+${q.gold}🪙, +${q.xp} XP</div>
+      <button class="btn-complete" style="background:#2563eb;" onclick="acceptQuest(${idx})">Accept Contract</button>
+    </div>`).join('');
+}
+
+function acceptQuest(idx) {
+  if (activeQuests.length >= 4) { alert("Quest log full!"); return; }
+  activeQuests.push(boardQuests.splice(idx, 1)[0]);
+  closeModal('questModal'); renderQuests();
+}
+
+function renderQuests() {
+  const container = document.getElementById('quest-list');
+  document.getElementById('ui-quest-count').textContent = activeQuests.length;
+  container.innerHTML = activeQuests.length === 0 ? `<div style="color:#64748b; font-size:10px;">Visit the Quest Board in town!</div>` :
+    activeQuests.map(q => `
+      <div class="quest-card ${q.completed ? 'ready' : ''}">
+        <div class="quest-title">${q.title}</div>
+        <div class="quest-desc">Progress: ${q.current} / ${q.required}</div>
+        <div class="quest-reward">+${q.gold}🪙 +${q.xp}XP</div>
+        ${q.completed ? `<button class="btn-complete" onclick="completeQuest('${q.id}')">Claim Reward</button>` : ''}
+      </div>`).join('');
+}
+
+function renderInventory() {
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  for (let [item, count] of Object.entries(player.inventory)) {
+    const data = ITEM_DB[item] || { icon: '📦' };
+    const slot = document.createElement('div');
+    slot.className = 'inv-slot' + (data.isSeed && player.selectedSeed === item ? ' selected-seed' : '');
+    slot.onclick = () => {
+      if (data.isPetFood) {
+        removeItem(item, 1);
+        const curPet = PET_DB[activePetType];
+        curPet.xp += 25;
+        if (curPet.xp >= curPet.nextXp) {
+          curPet.xp -= curPet.nextXp;
+          curPet.lvl++;
+          curPet.atkBonus += 2;
+          curPet.nextXp = Math.floor(curPet.nextXp * 1.5);
+          document.getElementById('eq-pet').textContent = `${curPet.icon} ${curPet.name}`;
+          addFloatingText("PET LEVEL UP! ⭐", pet.x, pet.y - 30, '#38bdf8');
+          playSound('level');
+        } else {
+          addFloatingText("Fed Pet Treat! 🦴", pet.x, pet.y - 20, '#fde047');
+          playSound('coin');
+        }
+      } else if (data.heal) {
+        if (player.hp >= player.maxHp) return;
+        removeItem(item, 1); addHp(data.heal);
+        if (data.buff) {
+          player.attack += data.buff.atk;
+          player.speed += data.buff.speed;
+          setTimeout(() => { player.attack -= data.buff.atk; player.speed -= data.buff.speed; }, data.buff.dur * 1000);
+          addFloatingText("FEAST BUFF ACTIVE! 🍱", player.x, player.y - 40, '#f59e0b');
+        }
+        playSound('coin');
+      } else if (data.isSeed) {
+        player.selectedSeed = item; renderInventory();
+      }
+    };
+    slot.innerHTML = `<span class="icon">${data.icon}</span><span style="font-size:8px; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item}</span><span class="count">${count}</span>`;
+    grid.appendChild(slot);
+  }
+}
+
+function addFloatingText(text, x, y, color) {
+  floatingTexts.push({ text, x, y, color, life: 60 });
+}
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function openSaveModal() {
+  document.getElementById('saveModal').style.display = 'flex';
+  renderSaveSlots();
+}
+
+function renderSaveSlots() {
+  const container = document.getElementById('save-slots-container');
+  if (!container) return;
+  
+  container.innerHTML = [1, 2, 3].map(slot => {
+    const raw = localStorage.getItem('ROEQ_SAVE_' + slot);
+    const info = raw ? JSON.parse(raw) : null;
+    const isCurrent = slot === currentSaveSlot;
+    
+    return `
+      <div class="save-slot-card" style="${isCurrent ? 'border: 1px solid #38bdf8;' : ''}">
+        <div>
+          <b>Slot ${slot}: ${info ? `Lvl ${info.player.level} Hero` : '<span style="color:#94a3b8;">Empty Slot</span>'} ${isCurrent ? '<span style="color:#38bdf8; font-size:9px;">(Active)</span>' : ''}</b>
+          <div style="font-size:9.5px; color:#9ca3af;">${info ? `${info.player.gold}🪙 | Zone: ${info.currentZone}` : 'Ready to save'}</div>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button class="btn-action" style="background:#059669;" onclick="saveToSlot(${slot}, false)">Save</button>
+          ${info ? `<button class="btn-action" onclick="loadFromSlot(${slot})">Load</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function saveToSlot(slot = currentSaveSlot, isAutoSave = false) {
+  currentSaveSlot = slot;
+  const data = {
+    timestamp: Date.now(),
+    currentZone,
+    player,
+    activePetType,
+    NPC_AFFECTION,
+    abyssFloor,
+    activeQuests,
+    farmPlots: ZONES.farm.farmPlots
+  };
+  localStorage.setItem('ROEQ_SAVE_' + slot, JSON.stringify(data));
+  addFloatingText(isAutoSave ? `Auto-Saved (Slot ${slot}) 💾` : `Saved to Slot ${slot}! 💾`, player.x, player.y - 30, '#38bdf8');
+  if (document.getElementById('saveModal').style.display === 'flex') renderSaveSlots();
+}
+
+function loadFromSlot(slot) {
+  const raw = localStorage.getItem('ROEQ_SAVE_' + slot);
+  if (!raw) return;
+  currentSaveSlot = slot;
+  const data = JSON.parse(raw);
+  Object.assign(player, data.player);
+  if (data.activePetType) activePetType = data.activePetType;
+  if (data.NPC_AFFECTION) Object.assign(NPC_AFFECTION, data.NPC_AFFECTION);
+  if (data.abyssFloor) abyssFloor = data.abyssFloor;
+  activeQuests = data.activeQuests || [];
+  if (data.farmPlots) ZONES.farm.farmPlots = data.farmPlots;
+  switchZone(data.currentZone || 'town', player.x, player.y);
+  renderInventory(); renderQuests(); updateHpUI();
+  document.getElementById('eq-pet').textContent = `${PET_DB[activePetType].icon} ${PET_DB[activePetType].name}`;
+  closeModal('saveModal');
+  addFloatingText(`Slot ${slot} Loaded! 📂`, player.x, player.y - 30, '#10b981');
+}
+
+function exportSaveFile() {
+  const data = { player, activePetType, NPC_AFFECTION, abyssFloor, activeQuests, currentZone, farmPlots: ZONES.farm.farmPlots };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `endless_rpg_save_slot${currentSaveSlot}.json`;
+  a.click();
+}
+
+function importSaveFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      Object.assign(player, data.player);
+      if (data.activePetType) activePetType = data.activePetType;
+      if (data.NPC_AFFECTION) Object.assign(NPC_AFFECTION, data.NPC_AFFECTION);
+      if (data.abyssFloor) abyssFloor = data.abyssFloor;
+      activeQuests = data.activeQuests || [];
+      if (data.farmPlots) ZONES.farm.farmPlots = data.farmPlots;
+      switchZone(data.currentZone || 'town', player.x, player.y);
+      renderInventory(); renderQuests(); updateHpUI();
+      closeModal('saveModal');
+      alert("Game save successfully imported!");
+    } catch(err) { alert("Invalid save file!"); }
+  };
+  reader.readAsText(file);
+}
+
+function wipeAllData() {
+  if (confirm("Are you sure you want to completely erase all save files and reset?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function update() {
+  worldTime = (worldTime + 1) % 7200;
+  const isNight = worldTime > 3600 && worldTime < 6800;
+  document.getElementById('time-pill').textContent = isNight ? '🌙 Night' : '☀️ Day';
+
+  weatherTimer--;
+  if (weatherTimer <= 0) {
+    const list = ['Clear', 'Rain', 'Mystic Breeze'];
+    weather = list[Math.floor(Math.random() * list.length)];
+    document.getElementById('weather-pill').textContent = weather === 'Rain' ? '🌧️ Rain (+Fish/Crop)' : (weather === 'Clear' ? '☀️ Clear' : '🍃 Mystic Breeze');
+    weatherTimer = 1800;
+  }
+
+  autoSaveTimer--;
+  if (autoSaveTimer <= 0) {
+    saveToSlot(currentSaveSlot, true);
+    autoSaveTimer = 1800;
+  }
+
+  let dx = 0, dy = 0;
+  if (keysDown['w'] || keysDown['arrowup']) dy -= 1;
+  if (keysDown['s'] || keysDown['arrowdown']) dy += 1;
+  if (keysDown['a'] || keysDown['arrowleft']) dx -= 1;
+  if (keysDown['d'] || keysDown['arrowright']) dx += 1;
+
+  const spd = player.speed * (weather === 'Mystic Breeze' ? 1.15 : 1.0);
+  if (dx !== 0 || dy !== 0) {
+    const len = Math.hypot(dx, dy);
+    player.x += (dx / len) * spd;
+    player.y += (dy / len) * spd;
+    player.targetX = player.x; player.targetY = player.y;
+    player.targetEntity = null; player.state = 'moving';
+  } else if (player.state === 'moving') {
+    const ddx = player.targetX - player.x, ddy = player.targetY - player.y;
+    const dist = Math.hypot(ddx, ddy);
+    let stopDist = player.targetEntity ? 38 : 3;
+    if (player.targetEntity?.type === 'pond') stopDist = player.targetEntity.radius + 8;
+    if (dist > stopDist) {
+      player.x += (ddx / dist) * spd;
+      player.y += (ddy / dist) * spd;
+    } else {
+      if (player.targetEntity) startInteraction(player.targetEntity);
+      else player.state = 'idle';
+    }
+  }
+
+  player.x = Math.max(16, Math.min(canvas.width - 16, player.x));
+  player.y = Math.max(16, Math.min(canvas.height - 16, player.y));
+
+  if (player.invincibleTimer > 0) player.invincibleTimer--;
+
+  const z = ZONES[currentZone];
+  const curPet = PET_DB[activePetType];
+  let nearestMob = null;
+  let mobDist = 180;
+  z.mobs.forEach(m => {
+    if (m.hp > 0) {
+      const d = Math.hypot(m.x - pet.x, m.y - pet.y);
+      if (d < mobDist) { mobDist = d; nearestMob = m; }
+    }
+  });
+
+  if (nearestMob && curPet.atkBonus > 0) {
+    const pdx = nearestMob.x - pet.x, pdy = nearestMob.y - pet.y;
+    const d = Math.hypot(pdx, pdy);
+    if (d > 25) { pet.x += (pdx / d) * 3.5; pet.y += (pdy / d) * 3.5; }
+    pet.attackTimer--;
+    if (pet.attackTimer <= 0) {
+      nearestMob.hp -= curPet.atkBonus;
+      playSound('hit');
+      addFloatingText(`${curPet.icon} -${curPet.atkBonus}`, nearestMob.x, nearestMob.y - 22, '#38bdf8');
+      if (nearestMob.hp <= 0) handleMobDeath(nearestMob);
+      pet.attackTimer = 65;
+    }
+  } else {
+    const petDist = Math.hypot(player.x - pet.x, player.y - pet.y);
+    if (petDist > 45) {
+      pet.x += ((player.x - pet.x) / petDist) * 3.4;
+      pet.y += ((player.y - pet.y) / petDist) * 3.4;
+    }
+  }
+
+  const magnetReach = 120 * (player.talents.magnet ? 1.6 : 1.0) * (activePetType === 'cat' ? 1.5 : 1.0);
+  for (let i = droppedItems.length - 1; i >= 0; i--) {
+    const item = droppedItems[i];
+    item.life--;
+    const d = Math.hypot(player.x - item.x, player.y - item.y);
+    if (d < magnetReach) {
+      item.x += ((player.x - item.x) / d) * 5.5;
+      item.y += ((player.y - item.y) / d) * 5.5;
+    }
+    if (d < 22) {
+      if (item.isGold) {
+        addGold(item.amount);
+        playSound('pickup');
+        addFloatingText(`+${item.amount}🪙`, player.x, player.y - 20, '#fbbf24');
+      } else {
+        addItem(item.name, item.amount || 1);
+        playSound('pickup');
+      }
+      droppedItems.splice(i, 1);
+    } else if (item.life <= 0) {
+      droppedItems.splice(i, 1);
+    }
+  }
+
+  ['dash', 'cleave', 'fireball', 'heal', 'thunder'].forEach(k => {
+    if (player.cooldowns[k] > 0) {
+      player.cooldowns[k]--;
+      const el = document.getElementById('cd-' + k);
+      if (el) {
+        el.style.display = 'flex';
+        el.textContent = Math.ceil(player.cooldowns[k] / 60) + 's';
+      }
+    } else {
+      const el = document.getElementById('cd-' + k);
+      if (el) el.style.display = 'none';
+    }
+  });
+
+  projectiles.forEach((p, i) => {
+    p.x += p.vx; p.y += p.vy; p.life--;
+    z.mobs.forEach(m => {
+      if (m.hp > 0 && Math.hypot(m.x - p.x, m.y - p.y) < 24) {
+        m.hp -= p.dmg;
+        if (player.talents.vampirism) addHp(Math.max(1, Math.floor(p.dmg * 0.1)));
+        addFloatingText(`-${Math.floor(p.dmg)}`, m.x, m.y - 20, '#f97316');
+        p.life = 0;
+        if (m.hp <= 0) handleMobDeath(m);
+      }
+    });
+    if (p.life <= 0) projectiles.splice(i, 1);
+  });
+
+  for (let i = player.fireGrounds.length - 1; i >= 0; i--) {
+    const fg = player.fireGrounds[i];
+    fg.life--;
+    if (fg.life % 20 === 0) {
+      z.mobs.forEach(m => {
+        if (m.hp > 0 && Math.hypot(m.x - fg.x, m.y - fg.y) < 32) {
+          const dmg = Math.floor(getEffectiveAttack() * 0.4);
+          m.hp -= dmg;
+          addFloatingText(`-${dmg} 🔥`, m.x, m.y - 18, '#f97316');
+          if (m.hp <= 0) handleMobDeath(m);
+        }
+      });
+    }
+    if (fg.life <= 0) player.fireGrounds.splice(i, 1);
+  }
+
+  if (player.state === 'acting') processAction();
+
+  z.trees.forEach(t => { if (t.respawn > 0 && --t.respawn === 0) t.hp = t.maxHp; });
+  z.rocks.forEach(r => { if (r.respawn > 0 && --r.respawn === 0) r.hp = r.maxHp; });
+  z.farmPlots.forEach(f => {
+    if (f.state === 'growing') {
+      f.timer -= weather === 'Rain' ? 2 : 1;
+      if (f.timer <= 0) f.state = 'ready';
+    }
+  });
+  z.livestock.forEach(l => { if (!l.ready && --l.timer <= 0) l.ready = true; });
+
+  z.mobs.forEach(m => {
+    if (m.hp > 0) {
+      m.roamTimer--;
+      if (m.roamTimer <= 0) {
+        m.targetX = Math.max(70, Math.min(canvas.width - 70, m.x + (Math.random() * 140 - 70)));
+        m.targetY = Math.max(70, Math.min(canvas.height - 70, m.y + (Math.random() * 140 - 70)));
+        m.roamTimer = 120 + Math.random() * 120;
+      }
+      const dx = m.targetX - m.x, dy = m.targetY - m.y, dist = Math.hypot(dx, dy);
+      if (dist > 1) { m.x += (dx / dist) * m.speed; m.y += (dy / dist) * m.speed; }
+
+      if (m.isBoss) {
+        m.bossAttackTimer--;
+        if (m.bossAttackTimer <= 45) m.telegraphRadius = (1 - m.bossAttackTimer / 45) * 85;
+        if (m.bossAttackTimer <= 0) {
+          if (Math.hypot(player.x - m.x, player.y - m.y) < 85 && player.invincibleTimer <= 0) {
+            screenShake = 10;
+            addHp(-m.atk * 1.5);
+            addFloatingText(`BOSS SLAM! -${Math.floor(m.atk * 1.5)}`, player.x, player.y - 30, '#ef4444');
+          }
+          m.bossAttackTimer = 160;
+          m.telegraphRadius = 0;
+        }
+      }
+    }
+  });
+
+  portalPulse += 0.05;
+  clickParticles.forEach((p, i) => { p.radius += 0.8; p.alpha -= 0.05; if (p.alpha <= 0) clickParticles.splice(i, 1); });
+  floatingTexts.forEach((ft, i) => { ft.y -= 0.7; ft.life--; if (ft.life <= 0) floatingTexts.splice(i, 1); });
+  lightningStrikes.forEach((l, i) => { l.life--; if (l.life <= 0) lightningStrikes.splice(i, 1); });
+  player.dashTrail.forEach((t, i) => { t.alpha -= 0.08; if (t.alpha <= 0) player.dashTrail.splice(i, 1); });
+  if (screenShake > 0) screenShake--;
+}
+
+function draw() {
+  ctx.save();
+  if (screenShake > 0) {
+    ctx.translate((Math.random() - 0.5) * screenShake * 2, (Math.random() - 0.5) * screenShake * 2);
+  }
+
+  const z = ZONES[currentZone];
+  ctx.fillStyle = z.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (currentZone === 'town') {
+    ctx.fillStyle = '#475569';
+    ctx.beginPath(); ctx.ellipse(460, 295, 270, 150, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Portals
+  z.portals?.forEach(p => {
+    const pulse = Math.sin(portalPulse) * 4;
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 28 + pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 20 + pulse * 0.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.font = '16px sans-serif'; ctx.fillText(p.icon, p.x - 8, p.y + 6);
+    ctx.fillStyle = '#e0f2fe'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(p.label, p.x, p.y < 100 ? p.y + 36 : p.y - 26);
+    ctx.textAlign = 'start';
+  });
+
+  // Ponds
+  z.ponds.forEach(p => {
+    ctx.fillStyle = p.isLava ? '#b91c1c' : '#1d4ed8';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = p.isLava ? '#f97316' : '#60a5fa'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.font = '24px sans-serif'; ctx.fillText(p.isLava ? '🔥' : '🐟', p.x - 12, p.y + 8);
+  });
+
+  // Farm Plots
+  z.farmPlots.forEach(f => {
+    ctx.fillStyle = f.state === 'empty' ? '#3d2b1f' : (f.state === 'ready' ? '#14532d' : '#78350f');
+    ctx.fillRect(f.x - 20, f.y - 20, 40, 40);
+    ctx.strokeStyle = '#1e140d'; ctx.strokeRect(f.x - 20, f.y - 20, 40, 40);
+    if (f.state === 'growing') {
+      ctx.fillStyle = '#a3e635'; ctx.fillRect(f.x - 15, f.y + 12, (1 - f.timer / f.maxTimer) * 30, 3);
+      ctx.font = '14px sans-serif'; ctx.fillText('🌱', f.x - 7, f.y + 4);
+    } else if (f.state === 'ready') {
+      ctx.font = '16px sans-serif'; ctx.fillText(f.crop === 'Wheat' ? '🌾' : (f.crop === 'Carrot' ? '🥕' : '🎃'), f.x - 8, f.y + 6);
+    }
+  });
+
+  // Livestock
+  z.livestock.forEach(l => {
+    ctx.font = '22px sans-serif'; ctx.fillText(l.type === 'cow' ? '🐄' : '🐔', l.x - 11, l.y + 8);
+    if (l.ready) { ctx.font = '10px sans-serif'; ctx.fillStyle = '#fef08a'; ctx.fillText('✨', l.x + 8, l.y - 8); }
+  });
+
+  // Rocks
+  z.rocks.forEach(r => {
+    if (r.hp > 0) {
+      ctx.fillStyle = r.name.includes('Obsidian') ? '#1e1b4b' : (r.name.includes('Starlight') ? '#c084fc' : (r.name.includes('Mithril') ? '#38bdf8' : (r.name.includes('Gold') ? '#eab308' : '#64748b')));
+      ctx.beginPath(); ctx.arc(r.x, r.y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif'; ctx.fillText(r.name.split(' ')[0], r.x - 14, r.y - 18);
+    }
+  });
+
+  // Trees
+  z.trees.forEach(t => {
+    if (t.hp > 0) {
+      ctx.fillStyle = '#451a03'; ctx.fillRect(t.x - 4, t.y, 8, 16);
+      ctx.fillStyle = t.name.includes('Frost') ? '#93c5fd' : (t.name.includes('Magic') ? '#c084fc' : '#15803d');
+      ctx.beginPath(); ctx.arc(t.x, t.y - 8, 20, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif'; ctx.fillText(t.name.split(' ')[0], t.x - 14, t.y - 30);
+    }
+  });
+
+  // Flaming Ground Embers
+  player.fireGrounds.forEach(fg => {
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.45)';
+    ctx.beginPath(); ctx.arc(fg.x, fg.y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '12px sans-serif'; ctx.fillText('🔥', fg.x - 6, fg.y + 4);
+  });
+
+  // Mobs & Boss Telegraphs
+  z.mobs.forEach(m => {
+    if (m.hp > 0) {
+      if (m.isBoss && m.telegraphRadius > 0) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.35)'; ctx.beginPath(); ctx.arc(m.x, m.y, m.telegraphRadius, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
+      }
+      ctx.fillStyle = m.isBoss ? '#7f1d1d' : '#475569';
+      ctx.beginPath(); ctx.arc(m.x, m.y, m.isBoss ? 24 : 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#dc2626'; ctx.fillRect(m.x - 15, m.y - (m.isBoss ? 32 : 22), 30, 4);
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(m.x - 15, m.y - (m.isBoss ? 32 : 22), (m.hp / m.maxHp) * 30, 4);
+      ctx.font = m.isBoss ? 'bold 11px sans-serif' : '9.5px sans-serif'; ctx.fillStyle = '#fff';
+      ctx.fillText(m.name, m.x - (m.isBoss ? 30 : 20), m.y - (m.isBoss ? 36 : 26));
+    }
+  });
+
+  // Dynamic Boss Health Bar HUD
+  const activeBoss = z.mobs.find(m => m.isBoss && m.hp > 0);
+  if (activeBoss) {
+    const barW = 380;
+    const barH = 14;
+    const barX = (canvas.width - barW) / 2;
+    const barY = 22;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 2;
+    ctx.fillRect(barX - 6, barY - 16, barW + 12, barH + 20);
+    ctx.strokeRect(barX - 6, barY - 16, barW + 12, barH + 20);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(barX, barY, (activeBoss.hp / activeBoss.maxHp) * barW, barH);
+
+    ctx.fillStyle = '#fee2e2';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`👑 ${activeBoss.name.toUpperCase()} (${activeBoss.hp} / ${activeBoss.maxHp})`, canvas.width / 2, barY - 3);
+    ctx.textAlign = 'start';
+  }
+
+  // NPCs
+  z.npcs.forEach(n => {
+    ctx.fillStyle = n.color; ctx.beginPath(); ctx.arc(n.x, n.y, 17, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '15px sans-serif'; ctx.fillText(n.icon, n.x - 8, n.y + 6);
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(n.name, n.x - 26, n.y - 22);
+  });
+
+  // Dropped Loot Tokens
+  droppedItems.forEach(it => {
+    ctx.font = '16px sans-serif';
+    ctx.fillText(it.icon, it.x - 8, it.y + Math.sin(Date.now() * 0.006 + it.bounce) * 4);
+  });
+
+  // Lightning Strikes
+  lightningStrikes.forEach(l => {
+    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(l.x + (Math.random() * 20 - 10), 0);
+    ctx.lineTo(l.x, l.y); ctx.stroke();
+  });
+
+  // Dash Ghost Trails
+  player.dashTrail.forEach(t => {
+    ctx.fillStyle = `rgba(56, 189, 248, ${t.alpha * 0.4})`;
+    ctx.beginPath(); ctx.arc(t.x, t.y, player.radius, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // Companion Pet
+  ctx.font = '20px sans-serif'; ctx.fillText(PET_DB[activePetType].icon, pet.x - 10, pet.y + 6);
+
+  // Player Body
+  ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // Weapon Swing Trail
+  if (player.swingAngle !== 0) {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.swingAngle);
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 0.6); ctx.stroke();
+    ctx.restore();
+  }
+
+  // Action Ring
+  if (player.state === 'acting' && player.actionMax > 0) {
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 22, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * (1 - player.actionTimer / player.actionMax)));
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3.5; ctx.stroke();
+  }
+
+  // Projectiles
+  projectiles.forEach(p => {
+    ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // Particles & Floats
+  clickParticles.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(251, 191, 36, ${p.alpha})`; ctx.stroke();
+  });
+  floatingTexts.forEach(ft => {
+    ctx.fillStyle = ft.color; ctx.font = 'bold 12px sans-serif'; ctx.fillText(ft.text, ft.x - 10, ft.y);
+  });
+
+  // Night Overlay + Hero Glow
+  const isNight = worldTime > 3600 && worldTime < 6800;
+  if (isNight) {
+    const darkness = Math.min(0.72, Math.sin(((worldTime - 3600) / 3200) * Math.PI) * 0.72);
+    const grad = ctx.createRadialGradient(player.x, player.y, 40, player.x, player.y, 240);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, `rgba(5, 8, 18, ${darkness})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Rain Effect
+  if (weather === 'Rain') {
+    ctx.strokeStyle = 'rgba(147, 197, 253, 0.4)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 25; i++) {
+      const rx = (Date.now() * 2 + i * 40) % canvas.width;
+      const ry = (Date.now() * 3 + i * 60) % canvas.height;
+      ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + 3, ry + 12); ctx.stroke();
+    }
+  }
+
+  // Hover Inspect Box
+  if (hoveredEntity && hoveredEntity.name) {
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(hoveredEntity.x - 45, hoveredEntity.y - 48, 90, 20, [4]);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(hoveredEntity.name, hoveredEntity.x, hoveredEntity.y - 34);
+    ctx.textAlign = 'start';
+  }
+
+  ctx.restore();
+  drawMinimap();
+}
+
+function drawMinimap() {
+  mctx.fillStyle = '#0f172a';
+  mctx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+  const z = ZONES[currentZone];
+  const sx = minimapCanvas.width / canvas.width, sy = minimapCanvas.height / canvas.height;
+  
+  mctx.fillStyle = '#38bdf8';
+  z.npcs?.forEach(n => mctx.fillRect(n.x * sx - 1, n.y * sy - 1, 3, 3));
+  mctx.fillStyle = '#ef4444';
+  z.mobs?.forEach(m => { if (m.hp > 0) mctx.fillRect(m.x * sx - 1, m.y * sy - 1, 3, 3); });
+  mctx.fillStyle = '#22c55e';
+  mctx.fillRect(player.x * sx - 2, player.y * sy - 2, 4, 4);
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// Initial Launch
+refreshBoardQuests();
+renderQuests();
+renderInventory();
+updateHpUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

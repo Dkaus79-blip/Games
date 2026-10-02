@@ -1,0 +1,3278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Claw Carnival Pro - 2.5D Physics Arcade</title>
+<style>
+  :root {
+    --bg-dark: #070312;
+    --bg-card: #160a2c;
+    --bg-card-hover: #241145;
+    --accent-pink: #ff2a85;
+    --accent-cyan: #00f0ff;
+    --accent-yellow: #ffe600;
+    --accent-green: #00ff77;
+    --accent-purple: #9d4edd;
+    --accent-orange: #ff7700;
+    --text-main: #f5f4fc;
+    --text-muted: #9f96ba;
+    --rarity-common: #9e9e9e;
+    --rarity-uncommon: #00ff77;
+    --rarity-rare: #00f0ff;
+    --rarity-ultra: #ff2a85;
+    --rarity-pristine: #ffd700;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Retro CRT Shader Filter Overlay */
+  body.crt::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+    z-index: 1000;
+    background-size: 100% 3px, 4px 100%;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  header {
+    background: linear-gradient(180deg, #05020c 0%, #150928 100%);
+    border-bottom: 3px solid var(--accent-pink);
+    padding: 10px 18px;
+    box-shadow: 0 4px 25px rgba(255, 42, 133, 0.35);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--accent-yellow);
+    text-shadow: 0 0 14px rgba(255, 230, 0, 0.65);
+    cursor: pointer;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    background: rgba(0,0,0,0.55);
+    padding: 6px 14px;
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+  .stat-pill.coins { color: var(--accent-yellow); }
+  .stat-pill.tokens { color: var(--accent-cyan); }
+  .stat-pill.plays { color: var(--accent-green); }
+
+  .nav-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .nav-btn {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-pink);
+    transform: translateY(-2px);
+  }
+
+  .nav-btn.active {
+    background: var(--accent-pink);
+    border-color: var(--accent-pink);
+    box-shadow: 0 0 14px rgba(255, 42, 133, 0.7);
+  }
+
+  .quick-tools {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.18); }
+  .icon-btn.active { border-color: var(--accent-yellow); background: rgba(255,230,0,0.25); }
+
+  main {
+    flex: 1;
+    max-width: 1300px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .screen {
+    display: none;
+    animation: fadeIn 0.22s ease-out;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .title-section {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .title-section h1 {
+    font-size: 1.8rem;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .title-section p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  /* Buttons & Badges */
+  .btn {
+    cursor: pointer;
+    border: none;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-radius: 8px;
+    transition: all 0.2s;
+    padding: 9px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-pink), #cc0055);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(255, 42, 133, 0.4);
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 42, 133, 0.7);
+  }
+  .btn-yellow {
+    background: linear-gradient(135deg, var(--accent-yellow), #e69500);
+    color: #1a0b33;
+    box-shadow: 0 4px 15px rgba(255, 230, 0, 0.4);
+  }
+  .btn-yellow:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 230, 0, 0.7);
+  }
+  .btn-cyan {
+    background: linear-gradient(135deg, var(--accent-cyan), #009cb8);
+    color: #032128;
+    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .rarity-common { background: rgba(160,160,160,0.2); color: var(--rarity-common); border: 1px solid var(--rarity-common); }
+  .rarity-uncommon { background: rgba(0,255,119,0.2); color: var(--rarity-uncommon); border: 1px solid var(--rarity-uncommon); }
+  .rarity-rare { background: rgba(0,240,255,0.2); color: var(--rarity-rare); border: 1px solid var(--rarity-rare); }
+  .rarity-ultra { background: rgba(255,42,133,0.2); color: var(--rarity-ultra); border: 1px solid var(--rarity-ultra); box-shadow: 0 0 10px rgba(255,42,133,0.5); }
+  .rarity-pristine { background: rgba(255,215,0,0.2); color: var(--rarity-pristine); border: 1px solid var(--rarity-pristine); box-shadow: 0 0 12px rgba(255,215,0,0.7); }
+
+  /* ========================================================
+     SCREEN 1: MACHINES
+     ======================================================== */
+  .claw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+    margin-top: 15px;
+  }
+  .claw-card {
+    background: var(--bg-card);
+    border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: 0.25s ease;
+  }
+  .claw-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent-pink);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  }
+  .claw-card-banner {
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.2rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  }
+  .claw-card-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .claw-meta {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.35);
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    margin: 8px 0;
+  }
+
+  /* ========================================================
+     SCREEN 2: 2.5D ARCADE CABINET & GAMEPLAY
+     ======================================================== */
+  .arcade-stage {
+    display: grid;
+    grid-template-columns: 1fr 330px;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 990px) {
+    .arcade-stage { grid-template-columns: 1fr; }
+  }
+
+  .arcade-cabinet {
+    background: linear-gradient(180deg, #28114f 0%, #120524 100%);
+    border: 5px solid #492087;
+    border-radius: 20px;
+    box-shadow: 0 0 45px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,0.7);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.08s ease-out;
+  }
+
+  .arcade-cabinet.tilt-alarm {
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 50px rgba(255, 0, 51, 0.8), inset 0 0 30px rgba(255, 0, 51, 0.8) !important;
+    animation: tiltAlarmPulse 0.3s infinite alternate;
+  }
+  @keyframes tiltAlarmPulse {
+    from { filter: brightness(1.0); }
+    to { filter: brightness(1.4); }
+  }
+
+  .arcade-cabinet.fever-active {
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 50px rgba(255, 230, 0, 0.6), inset 0 0 30px rgba(255, 42, 133, 0.6);
+    animation: cabinetFeverPulse 0.5s infinite alternate;
+  }
+  @keyframes cabinetFeverPulse {
+    from { border-color: #ffe600; filter: brightness(1.0); }
+    to { border-color: #ff2a85; filter: brightness(1.15); }
+  }
+
+  .arcade-marquee {
+    background: #0f0421;
+    border: 3px solid var(--accent-yellow);
+    border-radius: 12px;
+    padding: 8px 12px;
+    text-align: center;
+    margin-bottom: 12px;
+    position: relative;
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.4);
+  }
+  .marquee-lights {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    padding: 0 6px;
+  }
+  .light-bulb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff2a85;
+    box-shadow: 0 0 6px #ff2a85;
+    animation: bulbFlash 0.9s infinite alternate;
+  }
+  .light-bulb:nth-child(even) {
+    background: #ffe600;
+    box-shadow: 0 0 6px #ffe600;
+    animation-delay: 0.45s;
+  }
+  @keyframes bulbFlash {
+    from { opacity: 0.3; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1.15); }
+  }
+  .marquee-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 10px var(--accent-pink);
+  }
+
+  .fever-gauge-box {
+    margin-top: 8px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    height: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fever-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff7700, #ff2a85, #ffe600);
+    transition: width 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
+    box-shadow: 0 0 12px var(--accent-pink);
+  }
+  .fever-label {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    font-size: 0.68rem;
+    font-weight: 900;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px #000;
+  }
+
+  .canvas-container {
+    position: relative;
+    width: 100%;
+    height: 460px;
+    background: #06020f;
+    border: 4px solid #3c196e;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.95);
+  }
+
+  #clawCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .glass-sheen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 60%);
+  }
+
+  .control-deck {
+    margin-top: 14px;
+    background: linear-gradient(180deg, #2d1357 0%, #17072e 100%);
+    border: 3px solid #52239c;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .joystick-housing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .joystick-base {
+    width: 82px;
+    height: 82px;
+    background: radial-gradient(circle, #180930 40%, #0a0314 100%);
+    border: 3px solid #582aa8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    touch-action: none;
+  }
+  .joystick-stick {
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(circle at 35% 35%, #ff4d99 0%, #d6005c 60%, #850039 100%);
+    border-radius: 50%;
+    cursor: grab;
+    transition: transform 0.05s ease-out;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.8), 0 0 10px rgba(255, 42, 133, 0.6);
+    position: relative;
+  }
+  .joystick-stick:active { cursor: grabbing; }
+
+  .arcade-drop-button {
+    width: 145px;
+    height: 54px;
+    background: radial-gradient(circle at 50% 30%, #00ff77 0%, #009944 80%, #00662d 100%);
+    border: 3px solid #66ffaa;
+    border-radius: 28px;
+    color: #062b14;
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #005a27, 0 10px 20px rgba(0,255,119,0.4);
+    transition: all 0.1s;
+  }
+  .arcade-drop-button.skill-stop-mode {
+    background: radial-gradient(circle at 50% 30%, #ff2a85 0%, #ba0050 80%, #70002f 100%);
+    border-color: #ff88ba;
+    box-shadow: 0 5px 0 #540024, 0 10px 20px rgba(255,42,133,0.5);
+    color: #fff;
+    animation: skillPulse 0.4s infinite alternate;
+  }
+  @keyframes skillPulse {
+    from { transform: scale(1.0); }
+    to { transform: scale(1.05); }
+  }
+  .arcade-drop-button:hover:not(:disabled) { filter: brightness(1.15); }
+  .arcade-drop-button:active:not(:disabled) {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #000, 0 4px 10px rgba(0,255,119,0.3);
+  }
+  .arcade-drop-button:disabled {
+    filter: grayscale(0.8);
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 3px 0 #333;
+  }
+
+  .nudge-button {
+    background: linear-gradient(135deg, #ff8c00, #b84500);
+    border: 2px solid #ffaa44;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 900;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
+    transition: 0.15s;
+  }
+  .nudge-button:hover:not(:disabled) { filter: brightness(1.2); }
+  .nudge-button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .chute-tray {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    background: #0f0421;
+    border: 2px solid #381666;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+  .prize-box-door {
+    padding: 6px 14px;
+    background: #200d40;
+    border: 2px dashed var(--accent-pink);
+    border-radius: 6px;
+    font-weight: 800;
+    color: var(--accent-yellow);
+    transition: background 0.3s;
+  }
+  .prize-box-door.flash {
+    background: var(--accent-pink);
+    color: #fff;
+    box-shadow: 0 0 20px var(--accent-pink);
+  }
+
+  .details-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .details-card h3 {
+    color: var(--accent-yellow);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .odds-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+
+  .inv-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-pill {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .filter-pill.active {
+    background: var(--accent-pink);
+    color: #fff;
+    border-color: var(--accent-pink);
+  }
+  .inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 14px;
+  }
+  .inv-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .inv-card:hover { transform: translateY(-4px); }
+  .inv-card.slab-card {
+    border: 2px solid var(--accent-cyan);
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+  }
+  .inv-count {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .set-container {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .set-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .set-items-preview {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .set-slot {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: #110526;
+    border: 2px solid rgba(255,255,255,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    position: relative;
+  }
+  .set-slot.unlocked {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 10px rgba(0,255,119,0.3);
+  }
+  .set-slot.locked {
+    filter: grayscale(1);
+    opacity: 0.35;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal-box {
+    background: #1c0b36;
+    border: 3px solid var(--accent-pink);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+  }
+  .scratch-box {
+    position: relative;
+    width: 280px;
+    height: 180px;
+    margin: 16px auto;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--accent-yellow);
+  }
+  .ticket-hidden-content {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, #150826, #321357);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #scratchCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .capsule-stage {
+    width: 140px;
+    height: 140px;
+    margin: 18px auto;
+    position: relative;
+    cursor: pointer;
+  }
+  .capsule-half-top {
+    width: 130px;
+    height: 65px;
+    background: radial-gradient(circle at 50% 20%, #ff5277, #d90036);
+    border-radius: 65px 65px 0 0;
+    border: 3px solid #fff;
+    border-bottom: 2px solid #550012;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .capsule-half-bot {
+    width: 130px;
+    height: 65px;
+    background: radial-gradient(circle at 50% 80%, #ffffff, #cfd3dc);
+    border-radius: 0 0 65px 65px;
+    border: 3px solid #fff;
+    border-top: 2px solid #550012;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .capsule-stage.cracked .capsule-half-top {
+    transform: translateY(-40px) rotate(-18deg);
+  }
+  .capsule-stage.cracked .capsule-half-bot {
+    transform: translateY(40px) rotate(18deg);
+  }
+  .capsule-prize-reveal {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 3.5rem;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s;
+    filter: drop-shadow(0 0 16px #ffe600);
+  }
+  .capsule-stage.cracked .capsule-prize-reveal {
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+
+  .appraisal-slab {
+    background: linear-gradient(135deg, #2b1754 0%, #110526 100%);
+    border: 3px solid var(--accent-cyan);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #17082e;
+    border: 2px solid var(--accent-green);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 999;
+    transform: translateY(150%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .toast.show { transform: translateY(0); }
+</style>
+
+<style>
+/* ===== CLAW CARNIVAL 2.0 EXPANSION ===== */
+.cc2-nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+.cc2-nav .nav-btn{border-color:rgba(0,229,255,.25)}
+.cc2-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.cc2-card{background:linear-gradient(145deg,rgba(20,13,45,.96),rgba(8,8,22,.96));border:1px solid rgba(0,229,255,.18);border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.cc2-card h3{margin:0 0 8px;color:#fff}.cc2-muted{color:var(--text-muted);font-size:.8rem}.cc2-big{font-size:1.8rem;font-weight:900}.cc2-bar{height:10px;background:#101020;border-radius:8px;overflow:hidden;margin:8px 0}.cc2-fill{height:100%;background:linear-gradient(90deg,#00e5ff,#a855f7,#ff4fd8);transition:width .3s}
+.cc2-item{padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;margin:6px 0;background:rgba(255,255,255,.025)}
+.cc2-silhouette{filter:grayscale(1);opacity:.28;font-size:2rem}.cc2-tag{display:inline-block;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.68rem;margin:2px}
+.cc2-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.cc2-tabs button.active{box-shadow:0 0 0 2px var(--accent-cyan) inset}
+@media(max-width:700px){.cc2-grid{grid-template-columns:1fr}.cc2-nav{justify-content:flex-start}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-container">
+    <div class="logo" onclick="game.switchScreen('claws')">
+      🕹️ CLAW<span>CARNIVAL</span>
+      <small style="font-size:0.6rem; color:var(--accent-pink); letter-spacing:1px; margin-left:6px;">PRO 2.5D</small>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-pill coins"><span>🪙</span> <span id="statCoins">0</span></div>
+      <div class="stat-pill tokens"><span>🎟️</span> <span id="statTokens">0</span></div>
+      <div class="stat-pill plays"><span>⭐</span> <span id="statPlays">0</span></div><div class="stat-pill"><span>LV</span> <span id="statLevel">1</span></div>
+    </div>
+    <div class="quick-tools">
+      <button class="btn btn-yellow" style="padding: 6px 12px; font-size: 0.8rem;" id="dailyBonusBtn" onclick="game.claimDailyBonus()">🎁 Daily Bonus</button>
+      <button class="btn btn-cyan" style="padding: 6px 10px; font-size: 0.8rem;" id="sweepFloorBtn" onclick="game.sweepFloorForCoins()" title="Search under cabinets for loose coins">🧹 Search Floor</button>
+      <button class="icon-btn" id="soundToggleBtn" onclick="game.toggleSound()" title="Sound On/Off">🔊</button>
+      <button class="icon-btn" id="crtToggleBtn" onclick="game.toggleCRT()" title="Retro CRT Mode">📺</button>
+      <button class="icon-btn" onclick="game.openSaveModal()" title="Export / Import Save">💾</button>
+    </div>
+    <nav class="nav-buttons">
+      <button class="nav-btn active" onclick="game.switchScreen('claws')">🎪 Claws</button>
+      <button class="nav-btn" onclick="game.switchScreen('inventory')">🎒 Bag (<span id="invCountBadge">0</span>)</button>
+      <button class="nav-btn" onclick="game.switchScreen('shop')">🏪 Workshop</button>
+      <button class="nav-btn" onclick="game.switchScreen('sets')">🏆 Sets & Perks</button>
+      <button class="nav-btn" onclick="game.switchScreen('achieve')">⭐ Trophies</button>
+      <button class="nav-btn" onclick="game.switchScreen('carnival')">🎡 Carnival HQ</button>
+      <button class="nav-btn" onclick="game.switchScreen('album')">📖 Album</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- SCREEN 1: CLAW SELECTOR -->
+  <section id="screen-claws" class="screen active">
+    <div class="title-section">
+      <h1>Select an Arcade Cabinet</h1>
+      <p>Features realistic pendulum cable sway, early skill-stop clamping, & top-down alignment radar!</p>
+    </div>
+    <div class="claw-grid" id="clawGrid"></div>
+  </section>
+
+  <!-- SCREEN 2: 2.5D PHYSICAL GAMEPLAY -->
+  <section id="screen-gameplay" class="screen">
+    <div class="arcade-stage">
+      <div class="arcade-cabinet" id="arcadeCabinet">
+        <div class="arcade-marquee">
+          <div class="marquee-lights">
+            <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+            <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+            <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+          </div>
+          <div class="marquee-title" id="marqueeTitle">PLUSHIE KINGDOM</div>
+          <!-- Fever Meter -->
+          <div class="fever-gauge-box">
+            <div class="fever-fill" id="feverFill"></div>
+            <div class="fever-label" id="feverLabel">CARNIVAL HEAT: 0%</div>
+          </div>
+        </div>
+
+        <!-- Glass Viewing Area (HTML5 2.5D Canvas) -->
+        <div class="canvas-container">
+          <canvas id="clawCanvas" width="620" height="460"></canvas>
+          <div class="glass-sheen"></div>
+        </div>
+
+        <!-- Control Deck with Joystick, Drop/Clamp, Nudge -->
+        <div class="control-deck">
+          <div class="joystick-housing">
+            <div class="joystick-base" id="joyBase">
+              <div class="joystick-stick" id="joyStick"></div>
+            </div>
+            <small style="color: var(--text-muted); font-size: 0.72rem; font-weight: bold; margin-top:3px;">
+              [W/A/S/D] or [ARROWS] (X & DEPTH)
+            </small>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+            <button class="arcade-drop-button" id="btnDropClaw" onclick="game.dropClawAction()">DROP!</button>
+            <button class="nudge-button" id="btnNudgeCabinet" onclick="game.nudgeMachine()">⚠️ NUDGE CABINET</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="game.switchScreen('claws')">Other Cabinets</button>
+            <button class="btn btn-cyan" style="padding: 6px 12px; font-size: 0.8rem;" onclick="game.restockCurrentPit()">🔄 Restock Pit</button>
+          </div>
+        </div>
+
+        <div class="chute-tray">
+          <span>COLLECTION CHUTE:</span>
+          <div class="prize-box-door" id="chuteDoor">RECEIVE PRIZE HERE</div>
+        </div>
+      </div>
+
+      <!-- Machine Details & Hardware Status -->
+      <div>
+        <div class="details-card" style="margin-bottom:14px;">
+          <h3 id="panelMachineTitle">Machine Info</h3>
+          <p id="panelMachineDesc" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;"></p>
+          <h3>Prizes in Pit</h3>
+          <div id="oddsListContainer"></div>
+        </div>
+
+        <div class="details-card">
+          <h3>Equipped Hardware Tuning</h3>
+          <div class="odds-row">
+            <span>Grip Spring Boost</span>
+            <strong id="dispGripMod" style="color:var(--accent-green);">+0%</strong>
+          </div>
+          <div class="odds-row">
+            <span>Gantry Rail Speed</span>
+            <strong id="dispSpeedMod" style="color:var(--accent-cyan);">1.0x</strong>
+          </div>
+          <div class="odds-row">
+            <span>Rubberized Prongs</span>
+            <strong id="dispRubberMod" style="color:var(--accent-yellow);">Locked</strong>
+          </div>
+          <div class="odds-row">
+            <span>Precision Skill-Stop</span>
+            <strong style="color:var(--accent-green);">Active</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: INVENTORY -->
+  <section id="screen-inventory" class="screen">
+    <div class="title-section">
+      <h1>Your Collection & Appraisal Bag</h1>
+      <p>Grade rare cards into authenticated mint slabs, pop open gachapon capsules, or scratch lottery tickets!</p>
+    </div>
+    <div class="inv-controls">
+      <div class="filter-btns">
+        <button class="filter-pill active" onclick="game.filterInventory('all', this)">All</button>
+        <button class="filter-pill" onclick="game.filterInventory('toy', this)">🧸 Toys</button>
+        <button class="filter-pill" onclick="game.filterInventory('capsule', this)">🔮 Capsules</button>
+        <button class="filter-pill" onclick="game.filterInventory('card', this)">🎴 Raw Cards</button>
+        <button class="filter-pill" onclick="game.filterInventory('slab', this)">💎 Slabs</button>
+        <button class="filter-pill" onclick="game.filterInventory('scratch', this)">🎫 Scratchers</button>
+        <button class="filter-pill" onclick="game.filterInventory('rare', this)">👑 Relics</button>
+      </div>
+      <button class="btn btn-yellow" style="padding: 6px 12px; font-size: 0.8rem;" onclick="game.switchScreen('shop')">Workshop & Trade ➜</button>
+    </div>
+    <div class="inv-grid" id="inventoryGrid"></div>
+  </section>
+
+  <!-- SCREEN 4: WORKSHOP & TRADE -->
+  <section id="screen-shop" class="screen">
+    <div class="title-section">
+      <h1>Carnival Workshop & Pawn Trade</h1>
+      <p>Upgrade claw gantry rails, convert duplicates, and trade for golden passes.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px;">
+      <div class="details-card">
+        <h3>🔧 Hardware Tuning</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="odds-row">
+            <div>
+              <strong>Tension Springs (+15% Grip)</strong><br>
+              <small style="color:var(--text-muted)">Prevents heavy prizes from slipping mid-air</small>
+            </div>
+            <button class="btn btn-yellow" style="padding:6px 10px; font-size:0.75rem;" id="btnUpGrip" onclick="game.buyHardwareUpgrade('grip')">80 🪙</button>
+          </div>
+          <div class="odds-row">
+            <div>
+              <strong>High-Torque Motor (+30% Speed)</strong><br>
+              <small style="color:var(--text-muted)">Faster crane response and swing positioning</small>
+            </div>
+            <button class="btn btn-yellow" style="padding:6px 10px; font-size:0.75rem;" id="btnUpSpeed" onclick="game.buyHardwareUpgrade('speed')">100 🪙</button>
+          </div>
+          <div class="odds-row">
+            <div>
+              <strong>Rubberized Tips (Slip Immunity)</strong><br>
+              <small style="color:var(--text-muted)">High-friction suction grab on light toys</small>
+            </div>
+            <button class="btn btn-cyan" style="padding:6px 10px; font-size:0.75rem;" id="btnUpRubber" onclick="game.buyHardwareUpgrade('rubber')">2 🎟️</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-card">
+        <h3>🪙 Sell Items to Pawn Dealer</h3>
+        <div id="tradeItemsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <div class="details-card">
+        <h3>🎟️ Arcade Passes & Exchange</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="odds-row">
+            <div><strong>1x Claw Token 🎟️</strong><br><small style="color:var(--text-muted)">Required for Mythic Void & Gachapon</small></div>
+            <button class="btn btn-yellow" style="padding: 6px 12px; font-size: 0.8rem;" onclick="game.buyToken(50)">50 🪙</button>
+          </div>
+          <div class="odds-row">
+            <div><strong>3x Bonus Plays ⭐</strong><br><small style="color:var(--text-muted)">Free claw drops on any machine</small></div>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="game.buyBonusPlays(60, 3)">60 🪙</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: SETS & PERKS -->
+  <section id="screen-sets" class="screen">
+    <div class="title-section">
+      <h1>Prize Sets & Permanent Perks</h1>
+      <p>Assemble themed sets in your bag to unlock permanent carnival blessings!</p>
+    </div>
+    <div id="setsListContainer" style="max-width: 800px; margin: 0 auto;"></div>
+  </section>
+
+  <!-- SCREEN 6: TROPHIES -->
+  <section id="screen-achieve" class="screen">
+    <div class="title-section">
+      <h1>Carnival Trophies & Milestones</h1>
+      <p>Master skill stops, sway drops, and appraise pristine gem mint cards!</p>
+    </div>
+    <div style="max-width: 680px; margin: 0 auto;" id="achievementsContainer"></div>
+  </section>
+
+  <!-- SCREEN 6: CARNIVAL HQ -->
+  <section id="screen-carnival" class="screen">
+    <div class="title-section"><h1>🎡 Carnival HQ</h1><p>Your long-term progression, challenges, mastery, events, rooms, jackpots and prestige.</p></div>
+    <div class="cc2-tabs">
+      <button class="btn btn-primary active" onclick="game.renderHQ('overview',this)">Overview</button>
+      <button class="btn btn-primary" onclick="game.renderHQ('challenges',this)">Challenges</button>
+      <button class="btn btn-primary" onclick="game.renderHQ('mastery',this)">Machine Mastery</button>
+      <button class="btn btn-primary" onclick="game.renderHQ('rooms',this)">Carnival Rooms</button>
+      <button class="btn btn-primary" onclick="game.renderHQ('events',this)">Events</button>
+      <button class="btn btn-primary" onclick="game.renderHQ('workshop',this)">2.0 Workshop</button>
+    </div>
+    <div id="hqContent"></div>
+  </section>
+
+  <!-- SCREEN 7: COLLECTOR ALBUM -->
+  <section id="screen-album" class="screen">
+    <div class="title-section"><h1>📖 Collector's Album</h1><p>Discover every prize, evolve duplicates and complete permanent collection milestones.</p></div>
+    <div id="albumContent"></div>
+  </section>
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="scratchModal">
+  <div class="modal-box">
+    <button style="position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;" onclick="game.closeModal('scratchModal')">&times;</button>
+    <h2 id="scratchTitle" style="color: var(--accent-yellow);">Scratch Ticket</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">Scratch away the foil to reveal your prize!</p>
+    <div class="scratch-box">
+      <div class="ticket-hidden-content">
+        <span style="font-size: 2.2rem;" id="scratchPrizeIcon">🎁</span>
+        <strong id="scratchPrizeText" style="font-size: 1.1rem; color: #fff; margin-top: 4px;">+50 COINS</strong>
+        <span id="scratchPrizeSub" style="font-size: 0.75rem; color: var(--accent-yellow);">Lucky Winner!</span>
+      </div>
+      <canvas id="scratchCanvas" width="280" height="180"></canvas>
+    </div>
+    <button class="btn btn-yellow" id="claimScratchBtn" style="display: none; width: 100%; margin-top: 10px;" onclick="game.finishScratchTicket()">Collect Reward!</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gachaModal">
+  <div class="modal-box">
+    <button style="position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;" onclick="game.closeModal('gachaModal')">&times;</button>
+    <h2 style="color: var(--accent-pink);">Gachapon Capsule Breaker</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">Click the capsule to crack open your surprise!</p>
+    
+    <div class="capsule-stage" id="capsuleStage" onclick="game.crackCapsule()">
+      <div class="capsule-half-top"></div>
+      <div class="capsule-half-bot"></div>
+      <div class="capsule-prize-reveal" id="capsulePrizeIcon">✨</div>
+    </div>
+
+    <h3 id="capsulePrizeName" style="color:var(--accent-yellow); margin-top:6px; min-height:24px;"></h3>
+    <button class="btn btn-yellow" id="claimCapsuleBtn" style="display: none; width: 100%; margin-top: 12px;" onclick="game.claimCapsulePrize()">Collect Capsule Loot!</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="appraisalModal">
+  <div class="modal-box">
+    <button style="position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;" onclick="game.closeModal('appraisalModal')">&times;</button>
+    <h2 style="color: var(--accent-cyan);">TCG Card Grading Center</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">Inspecting centering, corners, and surface shine...</p>
+    
+    <div class="appraisal-slab">
+      <div style="font-size: 3.5rem;" id="appraisalCardIcon">🧙‍♂️</div>
+      <h3 id="appraisalCardName" style="margin-top:6px; color:#fff;">Card Name</h3>
+      <div style="font-size: 1.35rem; font-weight: 900; margin: 10px 0; color: var(--accent-yellow);" id="appraisalGradeText">GRADING...</div>
+      <span class="badge rarity-ultra" id="appraisalMultText">Multiplier: --</span>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-cyan" id="btnKeepSlab" style="flex:1; display:none;" onclick="game.completeAppraisal(false)">Store Slab in Bag</button>
+      <button class="btn btn-yellow" id="btnSellSlab" style="flex:1; display:none;" onclick="game.completeAppraisal(true)">Instant Cash Out</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="saveModal">
+  <div class="modal-box">
+    <button style="position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;" onclick="game.closeModal('saveModal')">&times;</button>
+    <h2 style="color: var(--accent-yellow);">Arcade Save Manager</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Export or restore your collection string.</p>
+    <textarea id="saveStringArea" style="width:100%; height:110px; background:#0c041a; border:1px solid #5d2899; color:#fff; border-radius:8px; padding:8px; font-family:monospace; font-size:0.75rem; resize:none;"></textarea>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-cyan" style="flex:1;" onclick="game.exportSaveToClipboard()">Copy Save</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="game.importSaveFromString()">Load Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="gameToast">
+  <span style="font-size: 2rem;" id="toastIcon">🎉</span>
+  <div>
+    <strong id="toastTitle">Prize Won!</strong>
+    <div id="toastDesc" style="font-size: 0.8rem; color: var(--text-muted);">Added to bag.</div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   SYNTHESIZER
+   ========================================================================= */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+    this.motorOsc = null;
+    this.motorGain = null;
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  startMotor() {
+    if (this.muted || this.motorOsc) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      this.motorOsc = this.ctx.createOscillator();
+      this.motorGain = this.ctx.createGain();
+      this.motorOsc.type = 'triangle';
+      this.motorOsc.frequency.setValueAtTime(64, this.ctx.currentTime);
+      this.motorGain.gain.setValueAtTime(0.035, this.ctx.currentTime);
+
+      this.motorOsc.connect(this.motorGain);
+      this.motorGain.connect(this.ctx.destination);
+      this.motorOsc.start();
+    } catch(e) {}
+  }
+
+  stopMotor() {
+    if (this.motorOsc) {
+      try {
+        this.motorGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.05);
+        this.motorOsc.stop(this.ctx.currentTime + 0.05);
+      } catch(e) {}
+      this.motorOsc = null;
+      this.motorGain = null;
+    }
+  }
+
+  playSolenoid() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(25, t + 0.09);
+
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+
+    osc.connect(g);
+    g.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.09);
+
+    const snap = this.ctx.createOscillator();
+    const snapG = this.ctx.createGain();
+    snap.type = 'sawtooth';
+    snap.frequency.setValueAtTime(1200, t);
+    snap.frequency.exponentialRampToValueAtTime(200, t + 0.04);
+
+    snapG.gain.setValueAtTime(0.18, t);
+    snapG.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+
+    snap.connect(snapG);
+    snapG.connect(this.ctx.destination);
+    snap.start(t);
+    snap.stop(t + 0.04);
+  }
+
+  playCable() {
+    this.tone(280 + Math.random() * 40, 'sawtooth', 0.035, 0.015);
+  }
+
+  playThud() {
+    this.tone(55, 'triangle', 0.22, 0.3);
+  }
+
+  playAlarm() {
+    this.tone(880, 'square', 0.15, 0.25);
+    setTimeout(() => this.tone(660, 'square', 0.15, 0.25), 160);
+  }
+
+  playChuteDrop() {
+    [440, 587, 880].forEach((f, i) => {
+      setTimeout(() => this.tone(f, 'sine', 0.15, 0.12), i * 75);
+    });
+  }
+
+  playWinFanfare() {
+    const notes = [523, 659, 783, 1046, 1318, 1567];
+    notes.forEach((f, i) => {
+      setTimeout(() => this.tone(f, 'triangle', 0.25, 0.15), i * 85);
+    });
+  }
+
+  playFeverJingle() {
+    const notes = [440, 554, 659, 880, 1108, 1318, 1760];
+    notes.forEach((f, i) => {
+      setTimeout(() => this.tone(f, 'sawtooth', 0.3, 0.18), i * 70);
+    });
+  }
+
+  playCoin() {
+    this.tone(987, 'sine', 0.06, 0.09);
+    setTimeout(() => this.tone(1318, 'sine', 0.16, 0.12), 60);
+  }
+
+  playScratch() {
+    this.tone(600 + Math.random() * 800, 'square', 0.02, 0.02);
+  }
+
+  playGachaPop() {
+    this.tone(480, 'sine', 0.08, 0.25);
+    setTimeout(() => this.tone(960, 'triangle', 0.2, 0.2), 60);
+  }
+
+  tone(freq, type = 'sine', duration = 0.1, gainVal = 0.08) {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  }
+}
+
+/* =========================================================================
+   PRIZES & MACHINES SPECIFICATIONS
+   ========================================================================= */
+const PRIZES = {
+  toy_bear: { id: 'toy_bear', name: 'Teddy Bear', type: 'toy', rarity: 'common', icon: '🧸', value: 8, weight: 1.0, radius: 24 },
+  toy_bunny: { id: 'toy_bunny', name: 'Fluffy Bunny', type: 'toy', rarity: 'common', icon: '🐰', value: 8, weight: 0.9, radius: 22 },
+  toy_dog: { id: 'toy_dog', name: 'Cyber Pup', type: 'toy', rarity: 'uncommon', icon: '🐶', value: 16, weight: 1.1, radius: 24 },
+  toy_panda: { id: 'toy_panda', name: 'Ninja Panda', type: 'toy', rarity: 'uncommon', icon: '🐼', value: 18, weight: 1.15, radius: 25 },
+  toy_unicorn: { id: 'toy_unicorn', name: 'Star Unicorn', type: 'toy', rarity: 'rare', icon: '🦄', value: 42, weight: 1.3, radius: 26 },
+  toy_dragon: { id: 'toy_dragon', name: 'Dragon King', type: 'toy', rarity: 'ultra', icon: '🐲', value: 130, weight: 1.45, radius: 28 },
+
+  capsule_mystery: { id: 'capsule_mystery', name: 'Neo Gacha Capsule', type: 'capsule', rarity: 'rare', icon: '🔮', value: 25, weight: 0.85, radius: 23, isSphere: true },
+
+  card_rookie: { id: 'card_rookie', name: 'Rookie Card', type: 'card', rarity: 'common', icon: '⚾', value: 10, weight: 0.7, radius: 20 },
+  card_sorcerer: { id: 'card_sorcerer', name: 'Arcane Mage', type: 'card', rarity: 'uncommon', icon: '🧙‍♂️', value: 22, weight: 0.7, radius: 20 },
+  card_mech: { id: 'card_mech', name: 'Titan Mech', type: 'card', rarity: 'rare', icon: '🤖', value: 48, weight: 0.75, radius: 21 },
+  card_phoenix: { id: 'card_phoenix', name: 'Phoenix Holo', type: 'card', rarity: 'ultra', icon: '🦅', value: 160, weight: 0.8, radius: 22 },
+
+  scratch_bronze: { id: 'scratch_bronze', name: 'Bronze Scratch', type: 'scratch', rarity: 'common', icon: '🥉', value: 12, tier: 'bronze', weight: 0.6, radius: 20 },
+  scratch_silver: { id: 'scratch_silver', name: 'Silver Scratch', type: 'scratch', rarity: 'uncommon', icon: '🥈', value: 25, tier: 'silver', weight: 0.6, radius: 20 },
+  scratch_gold: { id: 'scratch_gold', name: 'Gold Vault Scratch', type: 'scratch', rarity: 'rare', icon: '🥇', value: 65, tier: 'gold', weight: 0.65, radius: 20 },
+
+  rare_gem: { id: 'rare_gem', name: 'Cosmic Gem', type: 'rare', rarity: 'rare', icon: '💎', value: 80, weight: 1.25, radius: 22 },
+  rare_crown: { id: 'rare_crown', name: 'Carnival Crown', type: 'rare', rarity: 'ultra', icon: '👑', value: 260, weight: 1.5, radius: 25 },
+  rare_kitty: { id: 'rare_kitty', name: 'Void Kitty', type: 'rare', rarity: 'ultra', icon: '🐈‍⬛', value: 230, weight: 1.1, radius: 23 }
+};
+
+const MACHINES = [
+  {
+    id: 'toy_claw',
+    name: 'Plushie Kingdom',
+    theme: 'Plushies & Anime Friends',
+    iconArt: '🧸',
+    currencyType: 'coins',
+    cost: 10,
+    baseSuccess: 0.78,
+    clawGripStrength: 0.82,
+    description: 'Soft cuddly plushes. Generous claw tension with high odds for casual carnies!',
+    prizes: ['toy_bear', 'toy_bunny', 'toy_dog', 'toy_panda', 'toy_dragon']
+  },
+  {
+    id: 'gacha_claw',
+    name: 'Neo-Tokyo Gachapon',
+    theme: 'Rolling Mystery Spheres',
+    iconArt: '🔮',
+    currencyType: 'coins',
+    cost: 12,
+    baseSuccess: 0.72,
+    clawGripStrength: 0.76,
+    description: 'Bouncing plastic capsules containing secret coins, gems, and ultra prizes. Pop them open in bag!',
+    prizes: ['capsule_mystery', 'toy_dog', 'toy_bunny', 'scratch_bronze']
+  },
+  {
+    id: 'card_claw',
+    name: 'TCG Booster Vault',
+    theme: 'Gradable Collector Slabs',
+    iconArt: '🎴',
+    currencyType: 'coins',
+    cost: 15,
+    baseSuccess: 0.65,
+    clawGripStrength: 0.70,
+    description: 'Slippery raw cards. Appraise mint grades in the lab to authenticate gem mint slabs!',
+    prizes: ['card_rookie', 'card_sorcerer', 'card_mech', 'card_phoenix']
+  },
+  {
+    id: 'scratch_claw',
+    name: 'Lucky Lotto Depot',
+    theme: 'Instant Cash Scratchers',
+    iconArt: '🎫',
+    currencyType: 'coins',
+    cost: 20,
+    baseSuccess: 0.68,
+    clawGripStrength: 0.72,
+    description: 'Envelopes stuffed with scratch-off cards. Scratch foil to win jackpots!',
+    prizes: ['scratch_bronze', 'scratch_silver', 'scratch_gold']
+  },
+  {
+    id: 'mystery_claw',
+    name: 'Cosmic Mythic Void',
+    theme: 'Ultra Relics & Crown',
+    iconArt: '🌌',
+    currencyType: 'tokens',
+    cost: 1,
+    baseSuccess: 0.50,
+    clawGripStrength: 0.55,
+    description: 'Heavy relics requiring Claw Tokens. Extreme weight challenges your prong tension!',
+    prizes: ['toy_unicorn', 'rare_gem', 'rare_kitty', 'rare_crown']
+  }
+];
+
+
+/* 2.0 SPECIALTY CABINETS */
+MACHINES.push(
+  {id:'twin_claw',name:'Twin Claw Coliseum',theme:'Two-prong precision grabs',iconArt:'🦾',currencyType:'coins',cost:18,baseSuccess:.66,clawGripStrength:.78,mode:'twin',description:'Two-prong grabs give extra stability but demand accurate alignment.',prizes:['toy_dog','toy_panda','toy_unicorn','capsule_mystery']},
+  {id:'heavy_claw',name:'Heavy Haul Foundry',theme:'Industrial heavyweight prizes',iconArt:'🏗️',currencyType:'coins',cost:22,baseSuccess:.58,clawGripStrength:.92,mode:'heavy',description:'A slow, powerful claw built for the heaviest prizes.',prizes:['toy_dragon','rare_gem','rare_crown','toy_unicorn']},
+  {id:'magnet_claw',name:'Magnet Mania',theme:'Magnetic collector challenge',iconArt:'🧲',currencyType:'tokens',cost:1,baseSuccess:.62,clawGripStrength:.74,mode:'magnet',description:'Magnetic-assisted grabs favor capsules, cards and relics.',prizes:['capsule_mystery','card_mech','rare_gem','rare_kitty']},
+  {id:'precision_claw',name:'Precision Lab',theme:'Tiny target skill machine',iconArt:'🎯',currencyType:'coins',cost:25,baseSuccess:.55,clawGripStrength:.86,mode:'precision',description:'Harder placement, higher mastery and jackpot gains.',prizes:['card_sorcerer','card_mech','card_phoenix','rare_gem']},
+  {id:'chaos_claw',name:'Chaos Carnival',theme:'Unpredictable physics',iconArt:'🌀',currencyType:'coins',cost:16,baseSuccess:.63,clawGripStrength:.75,mode:'chaos',description:'Every grab has a different risk profile. Big rewards for brave players.',prizes:['toy_bunny','scratch_gold','toy_unicorn','rare_kitty']}
+);
+
+const SETS_DEF = [
+  {
+    id: 'set_plush',
+    name: 'Fluffy Companions',
+    desc: 'Own all four basic stuffed toys.',
+    perk: 'Permanent +15% Sell Value on all Toys!',
+    items: ['toy_bear', 'toy_bunny', 'toy_dog', 'toy_panda']
+  },
+  {
+    id: 'set_cards',
+    name: 'Deck of Arcana',
+    desc: 'Gather the full roster of trading cards or authenticated slabs.',
+    perk: 'Guaranteed Mint 9 or Pristine 10 Card Appraisals!',
+    items: ['card_rookie', 'card_sorcerer', 'card_mech', 'card_phoenix']
+  },
+  {
+    id: 'set_relics',
+    name: 'Royal Void Treasures',
+    desc: 'Amass the crown, gem, and void entities.',
+    perk: 'Daily Bonus rewards +1 additional Claw Token 🎟️!',
+    items: ['rare_crown', 'rare_gem', 'rare_kitty', 'toy_dragon']
+  }
+];
+
+const ACHIEVEMENTS_DEF = [
+  { id: 'first_drop', name: 'First Carnival Drop', desc: 'Lower the crane for the first time', icon: '🕹️' },
+  { id: 'first_win', name: 'Chute Master', desc: 'Deliver a prize safely down the chute', icon: '🎉' },
+  { id: 'skill_stop_win', name: 'Precision Clawer', desc: 'Catch a prize using manual Double-Tap Skill-Stop', icon: '🎯' },
+  { id: 'heartbreak_slip', name: 'Heartbreak!', desc: 'Have a prize slip out of the claws mid-air', icon: '💔' },
+  { id: 'nudge_save', name: 'Tactical Nudge', desc: 'Successfully nudge the machine to slide a prize', icon: '⚠️' },
+  { id: 'fever_frenzy', name: 'Carnival on Fire!', desc: 'Trigger a 100% Carnival Fever rush', icon: '🔥' },
+  { id: 'pristine_grade', name: 'Pristine 10 Holo', desc: 'Appraise a pristine gem mint card in the lab', icon: '💎' },
+  { id: 'gacha_cracked', name: 'Gacha Addict', desc: 'Pop open your first mystery capsule', icon: '🔮' },
+  { id: 'fully_upgraded', name: 'Master Engineer', desc: 'Purchase all three hardware upgrades', icon: '🔧' }
+];
+
+/* =========================================================================
+   2.5D PSEUDO-ISOMETRIC PHYSICS SIMULATOR (CALIBRATED PHYSICS)
+   ========================================================================= */
+class ClawSimulator {
+  constructor(canvas, gameInstance) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.game = gameInstance;
+
+    this.width = canvas.width;
+    this.height = canvas.height;
+
+    // Chute Pit Area (Bottom-Left)
+    this.chuteBounds = { x: 75, z: 0.62, radius: 45 };
+
+    // 2.5D Physical Crane Properties with Tuned Pendulum
+    this.claw = {
+      x: 310,
+      z: 0.5,
+      y: 40,
+      speedX: 0,
+      speedZ: 0,
+      cableLength: 40,
+      tongsAngle: 36,
+      state: 'IDLE',
+      grabbedPrize: null,
+      slipPending: false,
+      slipHeight: 0,
+      swayAngle: 0,
+      swayVel: 0,
+      usedSkillStop: false
+    };
+
+    this.pitPrizes = [];
+    this.particles = [];
+  }
+
+  project(x, y, z) {
+    const horizonY = 110;
+    const groundRange = 310;
+    const floorY = horizonY + z * groundRange;
+    const scale = 0.75 + z * 0.45;
+
+    const screenX = x;
+    const screenY = floorY - y * scale;
+    return { screenX, screenY, floorY, scale };
+  }
+
+  setupPit(machine) {
+    this.pitPrizes = [];
+    this.claw.state = 'IDLE';
+    this.claw.x = 310;
+    this.claw.z = 0.5;
+    this.claw.cableLength = 40;
+    this.claw.tongsAngle = 36;
+    this.claw.swayAngle = 0;
+    this.claw.swayVel = 0;
+    this.claw.grabbedPrize = null;
+    this.claw.usedSkillStop = false;
+
+    const count = 18;
+    const minX = 145;
+    const maxX = this.width - 50;
+
+    for (let i = 0; i < count; i++) {
+      const pid = machine.prizes[i % machine.prizes.length];
+      const pData = PRIZES[pid];
+
+      this.pitPrizes.push({
+        id: pData.id,
+        data: pData,
+        x: minX + Math.random() * (maxX - minX),
+        z: 0.15 + Math.random() * 0.75,
+        y: Math.random() * 15,
+        vx: 0,
+        vz: 0,
+        vy: 0,
+        radius: pData.radius,
+        rotation: (Math.random() - 0.5) * 0.6,
+        inPit: true,
+        grabbed: false
+      });
+    }
+  }
+
+  startDrop(machine) {
+    if (this.claw.state !== 'IDLE') return;
+
+    this.claw.state = 'DROPPING';
+    this.claw.grabbedPrize = null;
+    this.claw.slipPending = false;
+    this.claw.usedSkillStop = false;
+
+    let candidate = null;
+    let minDistance = 999;
+
+    for (let p of this.pitPrizes) {
+      if (!p.inPit) continue;
+
+      // Exact 1:1 match with visual render offset
+      const swayOffset = Math.sin(this.claw.swayAngle) * (this.claw.cableLength + 20) * 0.22;
+      const effectiveClawX = this.claw.x + swayOffset;
+
+      const dx = p.x - effectiveClawX;
+      const dz = (p.z - this.claw.z) * 180;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+
+      if (dist < 40 && dist < minDistance) {
+        minDistance = dist;
+        candidate = p;
+      }
+    }
+
+    if (candidate) {
+      const gripMod = 1 + (this.game.state.upgrades.grip * 0.15);
+      const isRubber = this.game.state.upgrades.rubber;
+      const feverBonus = this.game.isFeverActive ? 0.35 : 0;
+
+      let effectiveGrip = (machine.clawGripStrength + feverBonus) * gripMod;
+      if (isRubber && candidate.data.weight <= 1.0) effectiveGrip = 1.0;
+      let modeBonus = 1.0;
+      if (machine.mode === 'twin') effectiveGrip *= 1.12;
+      if (machine.mode === 'heavy') effectiveGrip *= 1.25;
+      if (machine.mode === 'precision') modeBonus = 1.10;
+      if (machine.mode === 'magnet' && ['card','capsule','rare'].includes(candidate.data.type)) modeBonus = 1.22;
+      if (machine.mode === 'chaos') modeBonus = 0.78 + Math.random() * 0.52;
+
+      const weightPenalty = candidate.data.weight * (machine.mode === 'heavy' ? 0.72 : 0.85);
+      const successChance = ((machine.baseSuccess * effectiveGrip) / weightPenalty) * modeBonus;
+
+      this.claw.slipPending = Math.random() > successChance;
+      this.claw.slipHeight = 110 + Math.random() * 140;
+      this.targetCandidate = candidate;
+    } else {
+      this.targetCandidate = null;
+    }
+  }
+
+  manualSkillStopTrigger() {
+    if (this.claw.state === 'DROPPING') {
+      this.claw.state = 'GRABBING';
+      this.claw.usedSkillStop = true;
+      this.game.sound.playSolenoid();
+
+      if (this.targetCandidate) {
+        const targetFloorY = 320 - this.targetCandidate.y * 5;
+        const depthDifference = Math.abs(this.claw.cableLength - targetFloorY);
+
+        if (depthDifference > 36) {
+          this.targetCandidate = null;
+          this.game.showToast("Prongs Clamped Empty!", "Skill-stop was mistimed in vertical depth!", "💨");
+          return;
+        }
+      }
+
+      this.game.showToast("Skill Stop!", "Prongs clamped early with pinpoint timing!", "⚡");
+    }
+  }
+
+  update(dt) {
+    const claw = this.claw;
+    const speedMult = this.game.state.upgrades.speed;
+    const isLockedOut = this.game.isCabinetLockedOut;
+
+    // 1. Move Joystick & Stable Damped Pendulum Physics
+    if (claw.state === 'IDLE' && !isLockedOut) {
+      const isMoving = claw.speedX !== 0 || claw.speedZ !== 0;
+      if (isMoving) {
+        this.game.sound.startMotor();
+        // Framerate-independent, gentle acceleration lag
+        claw.swayVel -= claw.speedX * (dt * 1.8);
+      } else {
+        this.game.sound.stopMotor();
+      }
+
+      claw.x += claw.speedX * dt * 175 * speedMult;
+      claw.z += claw.speedZ * dt * 0.7 * speedMult;
+
+      // Realistic restorative gravity torque
+      const gravityTorque = -14.0 * Math.sin(claw.swayAngle) * dt;
+      claw.swayVel += gravityTorque;
+
+      // Exponential damping (smooth settling)
+      claw.swayVel *= Math.exp(-4.2 * dt);
+      claw.swayAngle += claw.swayVel * dt;
+
+      // Hard clamp so claw can NEVER swing into crazy angles (max ~14 degrees)
+      const MAX_SWING = 0.24;
+      if (claw.swayAngle > MAX_SWING) {
+        claw.swayAngle = MAX_SWING;
+        claw.swayVel = 0;
+      } else if (claw.swayAngle < -MAX_SWING) {
+        claw.swayAngle = -MAX_SWING;
+        claw.swayVel = 0;
+      }
+
+      // Boundaries
+      if (claw.x < 135) claw.x = 135;
+      if (claw.x > this.width - 50) claw.x = this.width - 50;
+      if (claw.z < 0.1) claw.z = 0.1;
+      if (claw.z > 0.9) claw.z = 0.9;
+    } else {
+      // Rapid stabilization when dropping or lifting
+      const damp = Math.exp(-6.0 * dt);
+      claw.swayAngle *= damp;
+      claw.swayVel *= damp;
+
+      if (isLockedOut && claw.state === 'IDLE') {
+        this.game.sound.stopMotor();
+      }
+    }
+
+    // 2. Physical Drop States
+    if (claw.state === 'DROPPING') {
+      this.game.sound.playCable();
+      claw.cableLength += 165 * dt;
+      claw.tongsAngle = Math.min(42, claw.tongsAngle + 25 * dt);
+
+      let targetY = 320;
+      if (this.targetCandidate) targetY = 320 - this.targetCandidate.y * 5;
+
+      if (claw.cableLength >= targetY) {
+        claw.cableLength = targetY;
+        claw.state = 'GRABBING';
+        this.game.sound.playSolenoid();
+      }
+    } else if (claw.state === 'GRABBING') {
+      claw.tongsAngle -= 85 * dt;
+
+      if (claw.tongsAngle <= 10) {
+        claw.tongsAngle = 10;
+        if (this.targetCandidate) {
+          claw.grabbedPrize = this.targetCandidate;
+          claw.grabbedPrize.grabbed = true;
+          if (claw.usedSkillStop) this.game.checkAchievement('skill_stop_win');
+        }
+        claw.state = 'LIFTING';
+      }
+    } else if (claw.state === 'LIFTING') {
+      claw.cableLength -= 115 * dt;
+      this.game.sound.playCable();
+
+      if (claw.grabbedPrize) {
+        claw.grabbedPrize.x = claw.x;
+        claw.grabbedPrize.z = claw.z;
+        claw.grabbedPrize.y = Math.max(0, (320 - claw.cableLength) / 5);
+
+        if (claw.slipPending && claw.cableLength <= claw.slipHeight) {
+          this.triggerMidairSlip();
+        }
+      }
+
+      if (claw.cableLength <= 40) {
+        claw.cableLength = 40;
+        claw.state = 'RETURNING';
+        this.game.sound.startMotor();
+      }
+    } else if (claw.state === 'RETURNING') {
+      claw.x -= 125 * dt * speedMult;
+      claw.z += (0.62 - claw.z) * 2 * dt;
+
+      if (claw.grabbedPrize) {
+        claw.grabbedPrize.x = claw.x;
+        claw.grabbedPrize.z = claw.z;
+
+        if (claw.slipPending && claw.x > 140 && Math.random() < 0.04) {
+          this.triggerMidairSlip();
+        }
+      }
+
+      if (claw.x <= this.chuteBounds.x) {
+        claw.x = this.chuteBounds.x;
+        this.game.sound.stopMotor();
+        claw.state = 'DROPPING_TO_CHUTE';
+      }
+    } else if (claw.state === 'DROPPING_TO_CHUTE') {
+      claw.tongsAngle += 75 * dt;
+
+      if (claw.grabbedPrize) {
+        const won = claw.grabbedPrize;
+        claw.grabbedPrize = null;
+        won.grabbed = false;
+        won.inPit = false;
+        won.vy = -18;
+        this.game.sound.playSolenoid();
+        this.game.sound.playChuteDrop();
+        this.game.handlePrizeWin(won.data);
+      }
+
+      if (claw.tongsAngle >= 36) {
+        claw.tongsAngle = 36;
+        claw.state = 'RESETTING';
+        this.game.sound.startMotor();
+      }
+    } else if (claw.state === 'RESETTING') {
+      claw.x += 135 * dt * speedMult;
+      claw.z += (0.5 - claw.z) * 2 * dt;
+
+      if (claw.x >= 310) {
+        claw.x = 310;
+        claw.z = 0.5;
+        this.game.sound.stopMotor();
+        claw.state = 'IDLE';
+        this.game.onDropComplete();
+
+        const activeCount = this.pitPrizes.filter(p => p.inPit).length;
+        if (activeCount <= 3) {
+          this.setupPit(this.game.currentMachine);
+          this.game.showToast("Pit Auto-Restocked!", "Fresh batch of prizes delivered!", "🔄");
+        }
+      }
+    }
+
+    // 3. Natural Prize Physics & Sphere Rolling
+    for (let p of this.pitPrizes) {
+      if (!p.grabbed && p.inPit) {
+        p.x += p.vx * dt;
+        p.z += p.vz * dt;
+        p.vx *= 0.94;
+        p.vz *= 0.94;
+
+        if (p.data.isSphere) {
+          p.rotation += (p.vx + p.vz) * dt * 0.2;
+        }
+
+        if (p.y > 0) {
+          p.vy -= 9.8 * dt * 8;
+          p.y += p.vy * dt;
+
+          if (p.y <= 0) {
+            p.y = 0;
+            p.vy = -p.vy * (p.data.isSphere ? 0.55 : 0.35);
+            if (Math.abs(p.vy) < 0.8) p.vy = 0;
+          }
+        }
+      } else if (!p.inPit) {
+        p.y += p.vy * dt;
+        p.vy -= 25 * dt;
+      }
+    }
+
+    this.resolveToyCollisions();
+
+    // 4. Update Confetti Particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const pt = this.particles[i];
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.vy += 0.15;
+      pt.life -= dt;
+      if (pt.life <= 0) this.particles.splice(i, 1);
+    }
+  }
+
+  resolveToyCollisions() {
+    const prizes = this.pitPrizes.filter(p => p.inPit && !p.grabbed);
+    for (let it = 0; it < 2; it++) {
+      for (let i = 0; i < prizes.length; i++) {
+        for (let j = i + 1; j < prizes.length; j++) {
+          const p1 = prizes[i];
+          const p2 = prizes[j];
+
+          const dx = p2.x - p1.x;
+          const dz = (p2.z - p1.z) * 160;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          const minDist = p1.radius + p2.radius;
+
+          if (dist < minDist && dist > 0.001) {
+            const overlap = (minDist - dist) * 0.5;
+            const nx = dx / dist;
+            const nz = (dz / dist) / 160;
+
+            p1.x -= nx * overlap;
+            p1.z -= nz * overlap;
+            p2.x += nx * overlap;
+            p2.z += nz * overlap;
+          }
+        }
+      }
+    }
+  }
+
+  triggerMidairSlip() {
+    const claw = this.claw;
+    const lostPrize = claw.grabbedPrize;
+    claw.grabbedPrize = null;
+    claw.slipPending = false;
+    claw.tongsAngle = 32;
+
+    if (lostPrize) {
+      lostPrize.grabbed = false;
+      lostPrize.vy = 1;
+      lostPrize.vx = (Math.random() - 0.5) * 20;
+      this.game.sound.playSolenoid();
+      this.game.sound.playThud();
+      this.game.checkAchievement('heartbreak_slip');
+      this.game.showToast("It Slipped!", "The claw grip slipped mid-air!", "💨");
+    }
+  }
+
+  spawnConfetti(x, y) {
+    const colors = ['#ff2a85', '#00f0ff', '#ffe600', '#00ff77', '#fff'];
+    for (let i = 0; i < 40; i++) {
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 9,
+        vy: -Math.random() * 8 - 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 4 + Math.random() * 4,
+        life: 1.6
+      });
+    }
+  }
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Perspective Background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#0d041e');
+    bgGrad.addColorStop(0.5, '#1e0b3d');
+    bgGrad.addColorStop(1, '#070212');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(255, 42, 133, 0.14)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i <= 6; i++) {
+      const zRatio = i / 6;
+      const pLeft = this.project(120, 0, zRatio);
+      const pRight = this.project(w - 30, 0, zRatio);
+      ctx.beginPath();
+      ctx.moveTo(pLeft.screenX, pLeft.floorY);
+      ctx.lineTo(pRight.screenX, pRight.floorY);
+      ctx.stroke();
+    }
+
+    // 2. Chute Structure (Bottom Left)
+    const chuteProj = this.project(this.chuteBounds.x, 0, this.chuteBounds.z);
+    ctx.fillStyle = '#05010d';
+    ctx.beginPath();
+    ctx.ellipse(chuteProj.screenX, chuteProj.floorY, 44, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ff2a85';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ff2a85';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WIN CHUTE', chuteProj.screenX, chuteProj.floorY + 4);
+
+    // 3. Depth Sorting
+    const renderList = [...this.pitPrizes];
+    renderList.push({ isClaw: true, z: this.claw.z });
+    renderList.sort((a, b) => a.z - b.z);
+
+    for (let item of renderList) {
+      if (item.isClaw) {
+        this.renderClaw(ctx);
+      } else {
+        this.renderPrize(ctx, item);
+      }
+    }
+
+    // 4. Confetti Particles
+    for (let pt of this.particles) {
+      ctx.fillStyle = pt.color;
+      ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+    }
+
+    // 5. Overhead Depth Radar (HUD)
+    this.renderAlignmentRadar(ctx);
+
+    // 6. Tilt Lockout Warning Banner
+    if (this.game.isCabinetLockedOut) {
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#ff0033';
+      ctx.font = '900 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🚨 TILT SENSOR TRIPPED 🚨', w / 2, h / 2 - 10);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('CABINET MOTORS LOCKOUT ACTIVE', w / 2, h / 2 + 18);
+    }
+  }
+
+  renderPrize(ctx, p) {
+    if (!p.inPit && p.y < -150) return;
+
+    const proj = this.project(p.x, p.y, p.z);
+
+    ctx.save();
+    ctx.translate(proj.screenX, proj.screenY);
+    ctx.scale(proj.scale, proj.scale);
+    ctx.rotate(p.rotation);
+
+    if (p.inPit && !p.grabbed) {
+      ctx.fillStyle = 'rgba(0,0,0,0.38)';
+      ctx.beginPath();
+      ctx.ellipse(0, p.y * 2 + 14, p.radius * 0.8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.data.isSphere) {
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff2a85';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI, false);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.font = '32px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.data.icon, 0, 0);
+    }
+
+    ctx.restore();
+  }
+
+  renderClaw(ctx) {
+    const claw = this.claw;
+    const projFloor = this.project(claw.x, 0, claw.z);
+
+    // Exact 1:1 match with physical startDrop calculation
+    const swayOffsetX = Math.sin(claw.swayAngle) * (claw.cableLength + 20) * 0.22;
+    const effectiveScreenX = projFloor.screenX + swayOffsetX;
+    const clawHeadScreenY = 40 + claw.cableLength * (projFloor.scale * 0.9);
+
+    // 1. Dynamic Floor Crosshair & Target Ring
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(projFloor.screenX, projFloor.floorY, 28 * projFloor.scale, 10 * projFloor.scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = this.game.isFeverActive ? 'rgba(255, 230, 0, 0.7)' : 'rgba(0, 240, 255, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.ellipse(projFloor.screenX, projFloor.floorY, 18 * projFloor.scale, 7 * projFloor.scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. Overhead Rail Carriage
+    ctx.fillStyle = '#301859';
+    ctx.fillRect(40, 10, this.width - 70, 8);
+    ctx.fillStyle = '#592cb3';
+    ctx.fillRect(projFloor.screenX - 22, 6, 44, 16);
+
+    // Cable bends smoothly with realistic pendulum swing
+    ctx.strokeStyle = '#e6e6e6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(projFloor.screenX, 20);
+    ctx.quadraticCurveTo(projFloor.screenX, (clawHeadScreenY + 20) / 2, effectiveScreenX, clawHeadScreenY);
+    ctx.stroke();
+
+    // 3. Articulated Claw Head
+    ctx.save();
+    ctx.translate(effectiveScreenX, clawHeadScreenY);
+    ctx.rotate(claw.swayAngle * 0.6);
+    ctx.scale(projFloor.scale, projFloor.scale);
+
+    ctx.fillStyle = this.game.isFeverActive ? '#ffe600' : '#ffde59';
+    ctx.strokeStyle = '#b89921';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    const rad = (claw.tongsAngle * Math.PI) / 180;
+    const isRubber = this.game.state.upgrades.rubber;
+
+    this.drawArticulatedProng(ctx, -10, 8, -rad, isRubber);
+    this.drawArticulatedProng(ctx, 10, 8, rad, isRubber);
+
+    ctx.restore();
+  }
+
+  drawArticulatedProng(ctx, rootX, rootY, angle, isRubber) {
+    ctx.save();
+    ctx.translate(rootX, rootY);
+    ctx.rotate(angle);
+
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ff2a85';
+    ctx.beginPath();
+    ctx.arc(0, 18, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.translate(0, 18);
+    ctx.rotate(angle * 0.4);
+    ctx.strokeStyle = isRubber ? '#ffe600' : '#00b8c4';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(angle > 0 ? -12 : 12, 16);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  renderAlignmentRadar(ctx) {
+    const rw = 100;
+    const rh = 70;
+    const rx = this.width - rw - 14;
+    const ry = 14;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(8, 3, 20, 0.78)';
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeRect(rx, ry, rw, rh);
+
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.beginPath();
+    ctx.moveTo(rx + rw / 2, ry); ctx.lineTo(rx + rw / 2, ry + rh);
+    ctx.moveTo(rx, ry + rh / 2); ctx.lineTo(rx + rw, ry + rh);
+    ctx.stroke();
+
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('TOP-DOWN RADAR', rx + 4, ry + 9);
+
+    for (let p of this.pitPrizes) {
+      if (!p.inPit) continue;
+      const px = rx + ((p.x - 120) / (this.width - 150)) * (rw - 12) + 6;
+      const pz = ry + p.z * (rh - 12) + 6;
+
+      ctx.fillStyle = p.grabbed ? '#ffe600' : 'rgba(255, 42, 133, 0.8)';
+      ctx.beginPath();
+      ctx.arc(px, pz, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const clawPx = rx + ((this.claw.x - 120) / (this.width - 150)) * (rw - 12) + 6;
+    const clawPz = ry + this.claw.z * (rh - 12) + 6;
+
+    ctx.strokeStyle = '#00ff77';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(clawPx, clawPz, 4.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+/* =========================================================================
+   MAIN GAME CONTROLLER
+   ========================================================================= */
+class ClawCarnivalGame {
+  constructor() {
+    this.sound = new SoundEngine();
+    this.state = {
+      coins: 100,
+      tokens: 2,
+      bonusPlays: 2,
+      inventory: {},
+      slabs: [],
+      stats: { drops: 0, wins: 0, scratched: 0, graded: 0, capsules: 0 },
+      upgrades: { grip: 0, speed: 1.0, rubber: false },
+      achievements: {},
+      completedSets: {},
+      lastDaily: 0,
+      lastSweep: 0,
+      soundMuted: false,
+      crtEnabled: false,
+      xp: 0, level: 1, renown: 0, prestigeCount: 0,
+      mastery: {}, jackpots: {}, fusion: {},
+      goldenTickets: 0, parts: 0, collectionStars: 0,
+      rooms: { main: true }, eventClaims: {},
+      challengeDay: 0, challengeWeek: 0, challengeProgress: {},
+      eventId: 'golden_carnival', eventUntil: 0,
+      permanentPerks: {}, cosmetics: { cabinet: 'classic', claw: 'standard' }
+    };
+
+    this.activeScreen = 'claws';
+    this.currentMachine = MACHINES[0];
+    this.currentInvFilter = 'all';
+    this.sim = null;
+    this.lastTime = 0;
+    this.keysDown = {};
+    this.dropKeyDebounce = false;
+
+    this.feverMeter = 0;
+    this.isFeverActive = false;
+    this.feverTimer = null;
+
+    this.tiltCount = 0;
+    this.lastTiltTime = 0;
+    this.isCabinetLockedOut = false;
+  }
+
+  init() {
+    this.load();
+    this.updateStatsUI();
+    this.renderMachineCards();
+    this.initCanvasAndControls();
+    this.initScratchSystem();
+    this.checkDaily();
+    const today = Math.floor(Date.now()/86400000);
+    this.challengeWeek = Math.floor(Date.now()/604800000);
+    if (this.state.challengeDay !== today) { this.state.challengeDay = today; this.state.challengeProgress = {}; }
+    this.challengeDay = today;
+    this.evalSetsCompletion();
+
+    if (this.state.soundMuted) {
+      this.sound.muted = true;
+      document.getElementById('soundToggleBtn').textContent = '🔇';
+    }
+    if (this.state.crtEnabled) {
+      document.body.classList.add('crt');
+      document.getElementById('crtToggleBtn').classList.add('active');
+    }
+
+    requestAnimationFrame((t) => this.gameLoop(t));
+  }
+
+  load() {
+    try {
+      const data = localStorage.getItem('claw_carnival_save_v7') || localStorage.getItem('claw_carnival_save_v6');
+      if (data) Object.assign(this.state, JSON.parse(data));
+      if (!this.state.slabs) this.state.slabs = [];
+      this.migrate2();
+    } catch(e) {}
+  }
+
+  save() {
+    try {
+      localStorage.setItem('claw_carnival_save_v7', JSON.stringify(this.state));
+    } catch(e) {}
+  }
+
+  updateStatsUI() {
+    document.getElementById('statCoins').textContent = this.state.coins;
+    document.getElementById('statTokens').textContent = this.state.tokens;
+    document.getElementById('statPlays').textContent = this.state.bonusPlays;
+    const lv=document.getElementById('statLevel'); if(lv) lv.textContent=this.state.level;
+
+    let totalInv = 0;
+    for (let k in this.state.inventory) totalInv += this.state.inventory[k];
+    totalInv += this.state.slabs.length;
+    document.getElementById('invCountBadge').textContent = totalInv;
+
+    document.getElementById('dispGripMod').textContent = `+${this.state.upgrades.grip * 15}%`;
+    document.getElementById('dispSpeedMod').textContent = `${this.state.upgrades.speed.toFixed(1)}x`;
+    document.getElementById('dispRubberMod').textContent = this.state.upgrades.rubber ? 'Installed' : 'Locked';
+
+    const btnGrip = document.getElementById('btnUpGrip');
+    if (btnGrip) {
+      if (this.state.upgrades.grip >= 3) {
+        btnGrip.disabled = true;
+        btnGrip.textContent = 'MAX';
+      } else {
+        btnGrip.textContent = `${80 + this.state.upgrades.grip * 40} 🪙`;
+      }
+    }
+
+    const btnSpeed = document.getElementById('btnUpSpeed');
+    if (btnSpeed) {
+      if (this.state.upgrades.speed >= 1.6) {
+        btnSpeed.disabled = true;
+        btnSpeed.textContent = 'MAX';
+      }
+    }
+
+    const btnRubber = document.getElementById('btnUpRubber');
+    if (btnRubber && this.state.upgrades.rubber) {
+      btnRubber.disabled = true;
+      btnRubber.textContent = 'INSTALLED';
+    }
+
+    document.getElementById('feverFill').style.width = `${this.feverMeter}%`;
+    document.getElementById('feverLabel').textContent = this.isFeverActive 
+      ? `🔥 FEVER RUSH: FREE DROPS! 🔥` 
+      : `CARNIVAL HEAT: ${Math.round(this.feverMeter)}%`;
+  }
+
+  toggleSound() {
+    this.sound.muted = !this.sound.muted;
+    this.state.soundMuted = this.sound.muted;
+    document.getElementById('soundToggleBtn').textContent = this.sound.muted ? '🔇' : '🔊';
+    this.save();
+    if (!this.sound.muted) this.sound.playCoin();
+  }
+
+  toggleCRT() {
+    this.state.crtEnabled = !this.state.crtEnabled;
+    document.body.classList.toggle('crt', this.state.crtEnabled);
+    document.getElementById('crtToggleBtn').classList.toggle('active', this.state.crtEnabled);
+    this.save();
+  }
+
+  switchScreen(screenId) {
+    this.activeScreen = screenId;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(`screen-${screenId}`);
+    if (target) target.classList.add('active');
+
+    const navMap = { claws: 0, inventory: 1, shop: 2, sets: 3, achieve: 4, carnival: 5, album: 6 };
+    const navButtons = document.querySelectorAll('.nav-btn');
+    if (navMap[screenId] !== undefined && navButtons[navMap[screenId]]) {
+      navButtons[navMap[screenId]].classList.add('active');
+    }
+
+    if (screenId === 'inventory') this.renderInventory();
+    if (screenId === 'shop') this.renderShop();
+    if (screenId === 'sets') this.renderSets();
+    if (screenId === 'achieve') this.renderAchievements();
+    if (screenId === 'carnival') this.renderHQ('overview');
+    if (screenId === 'album') this.renderAlbum();
+  }
+
+  renderMachineCards() {
+    const grid = document.getElementById('clawGrid');
+    grid.innerHTML = '';
+
+    MACHINES.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'claw-card';
+
+      const previewIcons = m.prizes.map(pid => PRIZES[pid]?.icon || '').join(' ');
+      const costLabel = m.currencyType === 'coins' ? `${m.cost} 🪙 Coins` : `${m.cost} 🎟️ Token`;
+
+      card.innerHTML = `
+        <div class="claw-card-banner" style="background: radial-gradient(circle, #351761, #120626);">${m.iconArt}</div>
+        <div class="claw-card-body">
+          <h3 style="color:#fff;">${m.name}</h3>
+          <div style="font-size:0.8rem; color:var(--accent-yellow);">${m.theme}</div>
+          <div class="claw-meta">
+            <span><strong>Cost:</strong> ${costLabel}</span>
+            <span><strong>Grip:</strong> ${(m.clawGripStrength * 100).toFixed(0)}%</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">${m.description}</p>
+          <div style="font-size:1.4rem; letter-spacing:4px; margin-bottom:14px;">${previewIcons}</div>
+          <button class="btn btn-primary" style="width:100%; margin-top:auto;" onclick="game.selectMachine('${m.id}')">PLAY CABINET ➜</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  selectMachine(id) {
+    const m = MACHINES.find(item => item.id === id);
+    if (!m) return;
+    this.currentMachine = m;
+    this.progressChallenge('machines',1);
+
+    document.getElementById('marqueeTitle').textContent = m.name.toUpperCase();
+    document.getElementById('panelMachineTitle').textContent = m.name;
+    document.getElementById('panelMachineDesc').textContent = m.description;
+
+    const oddsEl = document.getElementById('oddsListContainer');
+    oddsEl.innerHTML = '';
+    m.prizes.forEach(pid => {
+      const p = PRIZES[pid];
+      const row = document.createElement('div');
+      row.className = 'odds-row';
+      row.innerHTML = `
+        <span>${p.icon} <strong>${p.name}</strong></span>
+        <span class="badge rarity-${p.rarity}">${p.rarity}</span>
+      `;
+      oddsEl.appendChild(row);
+    });
+
+    this.sim.setupPit(m);
+    this.switchScreen('gameplay');
+  }
+
+  restockCurrentPit() {
+    if (this.sim.claw.state !== 'IDLE') return;
+    this.sim.setupPit(this.currentMachine);
+    this.sound.playCoin();
+    this.showToast("Pit Restocked!", "Prizes shuffled and repopulated!", "🔄");
+  }
+
+  initCanvasAndControls() {
+    const canvas = document.getElementById('clawCanvas');
+    this.sim = new ClawSimulator(canvas, this);
+    this.sim.setupPit(this.currentMachine);
+
+    const stick = document.getElementById('joyStick');
+    const base = document.getElementById('joyBase');
+    let isDragging = false;
+
+    const handleStick = (clientX, clientY) => {
+      if (!isDragging || this.sim.claw.state !== 'IDLE' || this.isCabinetLockedOut) return;
+      const rect = base.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxR = 26;
+
+      if (dist > maxR) {
+        dx = (dx / dist) * maxR;
+        dy = (dy / dist) * maxR;
+      }
+
+      stick.style.transform = `translate(${dx}px, ${dy}px)`;
+      this.sim.claw.speedX = dx / maxR;
+      this.sim.claw.speedZ = dy / maxR;
+    };
+
+    const stopStick = () => {
+      isDragging = false;
+      stick.style.transform = `translate(0px, 0px)`;
+      this.sim.claw.speedX = 0;
+      this.sim.claw.speedZ = 0;
+      this.sound.stopMotor();
+    };
+
+    base.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      base.setPointerCapture(e.pointerId);
+      handleStick(e.clientX, e.clientY);
+    });
+    base.addEventListener('pointermove', (e) => handleStick(e.clientX, e.clientY));
+    base.addEventListener('pointerup', (e) => {
+      try { base.releasePointerCapture(e.pointerId); } catch(err) {}
+      stopStick();
+    });
+    base.addEventListener('pointercancel', stopStick);
+
+    window.addEventListener('keydown', (e) => {
+      if (this.activeScreen !== 'gameplay') return;
+      this.keysDown[e.key.toLowerCase()] = true;
+      this.evalKeyboard();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      delete this.keysDown[key];
+      if (key === ' ' || key === 'enter') {
+        this.dropKeyDebounce = false;
+      }
+      this.evalKeyboard();
+    });
+  }
+
+  evalKeyboard() {
+    if (this.isCabinetLockedOut) return;
+    const k = this.keysDown;
+    let sx = 0, sz = 0;
+    if (k['arrowleft'] || k['a']) sx -= 1;
+    if (k['arrowright'] || k['d']) sx += 1;
+    if (k['arrowup'] || k['w']) sz -= 1;
+    if (k['arrowdown'] || k['s']) sz += 1;
+
+    this.sim.claw.speedX = sx;
+    this.sim.claw.speedZ = sz;
+
+    const stick = document.getElementById('joyStick');
+    stick.style.transform = `translate(${sx * 20}px, ${sz * 20}px)`;
+
+    if (k[' '] || k['enter']) {
+      if (!this.dropKeyDebounce) {
+        this.dropKeyDebounce = true;
+        this.dropClawAction();
+      }
+    }
+  }
+
+  dropClawAction() {
+    if (this.isCabinetLockedOut) return;
+    const btn = document.getElementById('btnDropClaw');
+
+    if (this.sim.claw.state === 'DROPPING') {
+      this.sim.manualSkillStopTrigger();
+      btn.textContent = 'CLAMPING!';
+      btn.disabled = true;
+      return;
+    }
+
+    if (this.sim.claw.state !== 'IDLE') return;
+
+    if (!this.isFeverActive && !this.canAffordDrop()) {
+      this.sound.playThud();
+      alert(`Need more ${this.currentMachine.currencyType === 'coins' ? 'Coins' : 'Tokens'}! Try searching the arcade floor 🧹.`);
+      return;
+    }
+
+    if (!this.isFeverActive) {
+      if (this.state.bonusPlays > 0) this.state.bonusPlays--;
+      else if (this.currentMachine.currencyType === 'coins') this.state.coins -= this.currentMachine.cost;
+      else this.state.tokens -= this.currentMachine.cost;
+    }
+
+    this.state.stats.drops++;
+    this.checkAchievement('first_drop');
+    this.save();
+    this.updateStatsUI();
+
+    btn.textContent = 'CLAMP NOW!';
+    btn.classList.add('skill-stop-mode');
+
+    this.sim.startDrop(this.currentMachine);
+  }
+
+  canAffordDrop() {
+    if (this.state.bonusPlays > 0) return true;
+    if (this.currentMachine.currencyType === 'coins') return this.state.coins >= this.currentMachine.cost;
+    return this.state.tokens >= this.currentMachine.cost;
+  }
+
+  onDropComplete() {
+    const btn = document.getElementById('btnDropClaw');
+    btn.disabled = false;
+    btn.textContent = 'DROP!';
+    btn.classList.remove('skill-stop-mode');
+  }
+
+  nudgeMachine() {
+    if (this.isCabinetLockedOut) return;
+
+    const now = Date.now();
+    if (now - this.lastTiltTime < 6000) {
+      this.tiltCount++;
+    } else {
+      this.tiltCount = 1;
+    }
+    this.lastTiltTime = now;
+
+    if (this.tiltCount >= 3) {
+      this.triggerTiltLockout();
+      return;
+    }
+
+    if (this.sim.claw.state !== 'LIFTING' && this.sim.claw.state !== 'RETURNING') {
+      this.showToast("Nudge Inactive", "Only nudge while claw is lifting or returning!", "⚠️");
+      return;
+    }
+
+    if (Math.random() < 0.15) {
+      this.sound.playThud();
+      this.sim.triggerMidairSlip();
+      this.showToast("SLIP PENALTY!", "Claw jiggled loose from the impact!", "🚨");
+      return;
+    }
+
+    const cab = document.getElementById('arcadeCabinet');
+    cab.style.transform = `translate(${(Math.random() - 0.5) * 16}px, ${(Math.random() - 0.5) * 10}px)`;
+    setTimeout(() => cab.style.transform = 'none', 120);
+
+    this.sound.playThud();
+    this.sim.pitPrizes.forEach(p => {
+      p.vx += (Math.random() - 0.5) * 22;
+      p.vy += Math.random() * 8;
+    });
+
+    this.checkAchievement('nudge_save');
+    this.showToast("Cabinet Nudged!", "Shifted the prize balance!", "⚠️");
+  }
+
+  triggerTiltLockout() {
+    this.isCabinetLockedOut = true;
+    this.sound.playAlarm();
+    this.sim.triggerMidairSlip();
+
+    const cab = document.getElementById('arcadeCabinet');
+    cab.classList.add('tilt-alarm');
+    document.getElementById('btnDropClaw').disabled = true;
+    document.getElementById('btnNudgeCabinet').disabled = true;
+
+    this.showToast("🚨 TILT LOCKOUT! 🚨", "Cabinet slammed too hard! Gantry offline for 5s.", "🚨");
+
+    setTimeout(() => {
+      this.isCabinetLockedOut = false;
+      this.tiltCount = 0;
+      cab.classList.remove('tilt-alarm');
+      document.getElementById('btnDropClaw').disabled = false;
+      document.getElementById('btnNudgeCabinet').disabled = false;
+      this.showToast("Cabinet Restored", "Motors back online.", "🕹️");
+    }, 5000);
+  }
+
+  sweepFloorForCoins() {
+    const now = Date.now();
+    const cooldown = 90 * 1000;
+    if (now - this.state.lastSweep < cooldown) {
+      const waitSec = Math.ceil((cooldown - (now - this.state.lastSweep)) / 1000);
+      this.showToast("Floor Clean", `Sweep again in ${waitSec}s for dropped coins.`, "🧹");
+      return;
+    }
+
+    this.state.lastSweep = now;
+    const found = 8 + Math.floor(Math.random() * 10);
+    this.state.coins += found;
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.showToast("Found Coins!", `Swept under the machine: +${found} 🪙!`, "🪙");
+  }
+
+  addFever(amt) {
+    if (this.isFeverActive) return;
+    this.feverMeter = Math.min(100, this.feverMeter + amt);
+    this.updateStatsUI();
+
+    if (this.feverMeter >= 100) {
+      this.activateFeverRush();
+    }
+  }
+
+  activateFeverRush() {
+    this.isFeverActive = true;
+    this.feverMeter = 100;
+    this.sound.playFeverJingle();
+    this.checkAchievement('fever_frenzy');
+
+    const cab = document.getElementById('arcadeCabinet');
+    cab.classList.add('fever-active');
+    this.showToast("⚡ CARNIVAL FEVER! ⚡", "15 SECONDS OF FREE DROPS & MAX GRIP!", "🔥");
+
+    let timeLeft = 15;
+    this.updateStatsUI();
+
+    clearInterval(this.feverTimer);
+    this.feverTimer = setInterval(() => {
+      timeLeft--;
+      this.feverMeter = (timeLeft / 15) * 100;
+      this.updateStatsUI();
+
+      if (timeLeft <= 0) {
+        clearInterval(this.feverTimer);
+        this.isFeverActive = false;
+        this.feverMeter = 0;
+        cab.classList.remove('fever-active');
+        this.updateStatsUI();
+        this.showToast("Fever Ended", "Standard crane power restored.", "🎪");
+      }
+    }, 1000);
+  }
+
+  handlePrizeWin(prizeData) {
+    this.state.stats.wins++;
+    this.addItem(prizeData.id, 1);
+    this.sound.playWinFanfare();
+    this.addFever(35);
+    this.awardXP(50);
+    this.progressChallenge('wins',1);
+    this.progressMastery(this.currentMachine.id,1);
+    this.advanceJackpot(this.currentMachine.id, 10);
+    this.checkPrizeAbility(prizeData.id);
+    if (['rare','ultra'].includes(prizeData.rarity)) this.progressChallenge('rare',1);
+
+    const door = document.getElementById('chuteDoor');
+    door.classList.add('flash');
+    door.textContent = `COLLECT: ${prizeData.icon} ${prizeData.name}!`;
+    setTimeout(() => {
+      door.classList.remove('flash');
+      door.textContent = 'RECEIVE PRIZE HERE';
+    }, 4000);
+
+    const chuteProj = this.sim.project(this.sim.chuteBounds.x, 0, this.sim.chuteBounds.z);
+    this.sim.spawnConfetti(chuteProj.screenX, chuteProj.floorY - 40);
+    this.showToast(`WON: ${prizeData.name}!`, `Sent to collection bag!`, prizeData.icon);
+
+    this.checkAchievement('first_win');
+    this.evalSetsCompletion();
+    this.save();
+    this.updateStatsUI();
+  }
+
+
+  migrate2() {
+    const d={xp:0,level:1,renown:0,prestigeCount:0,mastery:{},jackpots:{},fusion:{},goldenTickets:0,parts:0,collectionStars:0,rooms:{main:true},eventClaims:{},challengeDay:0,challengeWeek:0,challengeProgress:{},eventId:'golden_carnival',eventUntil:0,permanentPerks:{},cosmetics:{cabinet:'classic',claw:'standard'}};
+    Object.keys(d).forEach(k=>{if(this.state[k]===undefined)this.state[k]=d[k]});
+    MACHINES.forEach(m=>{if(!this.state.mastery[m.id])this.state.mastery[m.id]={xp:0,level:1};if(this.state.jackpots[m.id]===undefined)this.state.jackpots[m.id]=0});
+  }
+  xpForLevel(l){return 300+(l-1)*125}
+  awardXP(n){this.state.xp+=Math.max(0,n);let ups=0;while(this.state.xp>=this.xpForLevel(this.state.level)&&this.state.level<100){this.state.xp-=this.xpForLevel(this.state.level);this.state.level++;ups++;this.state.coins+=35+this.state.level*5;if(this.state.level%5===0)this.state.tokens++;if(this.state.level%10===0)this.state.goldenTickets++;this.showToast(`LEVEL ${this.state.level}!`,`Rewards added to your carnival.`,`⭐`)}if(ups)this.updateStatsUI();this.save()}
+  progressMastery(id,n){const m=this.state.mastery[id]||(this.state.mastery[id]={xp:0,level:1});m.xp+=n;while(m.xp>=100+(m.level-1)*25&&m.level<25){m.xp-=100+(m.level-1)*25;m.level++;this.state.coins+=20;m.xp=Math.max(0,m.xp)}this.save()}
+  advanceJackpot(id,n){this.state.jackpots[id]=Math.min(100,(this.state.jackpots[id]||0)+n);if(this.state.jackpots[id]>=100){this.state.jackpots[id]=0;this.addItem('rare_crown',1);this.state.collectionStars++;this.showToast('🎰 JACKPOT!','A Carnival Crown was delivered to your collection!','👑')}this.save()}
+  prizeAbility(id){return ({toy_bunny:['Lucky Bunny','+5% coins from wins'],toy_bear:['Golden Bear','+10% Fever from wins'],rare_crown:['Carnival Crown','+5% jackpot progress'],rare_gem:['Cosmic Gem','+1% rare discovery chance'],rare_kitty:['Void Kitty','chance to duplicate a prize']})[id]}
+  checkPrizeAbility(id){const a=this.prizeAbility(id);if(!a)return;this.showToast(a[0],a[1],PRIZES[id]?.icon||'✨');}
+  progressChallenge(type,n){this.state.challengeProgress[type]=(this.state.challengeProgress[type]||0)+n;this.save()}
+  challengeDefs(){return[{id:'wins',name:'Prize Hunter',desc:'Win 5 prizes',goal:5,reward:'100 Coins + 25 XP'},{id:'machines',name:'Arcade Hopper',desc:'Play 3 different machines',goal:3,reward:'1 Token'},{id:'cards',name:'Card Curator',desc:'Grade 3 cards',goal:3,reward:'1 Golden Ticket'},{id:'rare',name:'Treasure Hunter',desc:'Collect 2 rare relics',goal:2,reward:'150 Coins'},{id:'fusion',name:'Evolution Lab',desc:'Fuse 1 prize',goal:1,reward:'1 Golden Ticket'}]}
+  challengeClaim(def){const key='claim_'+def.id+'_'+this.challengeDay;if(this.state.eventClaims[key])return;const val=this.state.challengeProgress[def.id]||0;if(val<def.goal)return;this.state.eventClaims[key]=true;if(def.id==='machines')this.state.tokens++;else if(def.id==='cards')this.state.goldenTickets++;else if(def.id==='rare')this.state.coins+=150;else if(def.id==='fusion')this.state.goldenTickets++;else this.state.coins+=100;this.awardXP(25);this.showToast('Challenge Complete!',def.name,'🏆');this.save();this.renderHQ('challenges')}
+  renderHQ(tab='overview',btn){const c=document.getElementById('hqContent');if(!c)return;if(btn){document.querySelectorAll('.cc2-tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
+    if(tab==='overview'){const need=this.xpForLevel(this.state.level),pct=Math.round(this.state.xp/need*100);c.innerHTML=`<div class="cc2-grid"><div class="cc2-card"><h3>⭐ Carnival Level</h3><div class="cc2-big">${this.state.level}</div><div class="cc2-bar"><div class="cc2-fill" style="width:${pct}%"></div></div><div class="cc2-muted">${this.state.xp} / ${need} XP · Renown ${this.state.renown}</div></div><div class="cc2-card"><h3>🎰 Jackpot Status</h3>${MACHINES.map(m=>`<div class="cc2-item"><strong>${m.iconArt} ${m.name}</strong><div class="cc2-bar"><div class="cc2-fill" style="width:${this.state.jackpots[m.id]||0}%"></div></div>${this.state.jackpots[m.id]||0}%</div>`).join('')}</div><div class="cc2-card"><h3>🎟️ Golden Tickets</h3><div class="cc2-big">${this.state.goldenTickets}</div><p class="cc2-muted">Use tickets for rotating event machines and premium rewards.</p><button class="btn btn-yellow" onclick="game.claimEventReward()">CLAIM EVENT REWARD</button></div><div class="cc2-card"><h3>♻️ Prestige</h3><p class="cc2-muted">At Level 50, reset temporary progression for permanent Renown.</p><button class="btn btn-primary" ${this.state.level<50?'disabled':''} onclick="game.prestige()">REOPEN CARNIVAL</button></div></div>`}
+    else if(tab==='challenges'){c.innerHTML=`<div class="cc2-grid">${this.challengeDefs().map(d=>{let v=this.state.challengeProgress[d.id]||0,claimed=!!this.state.eventClaims['claim_'+d.id+'_'+this.challengeDay];return `<div class="cc2-card"><h3>🎯 ${d.name}</h3><p class="cc2-muted">${d.desc}</p><div class="cc2-bar"><div class="cc2-fill" style="width:${Math.min(100,v/d.goal*100)}%"></div></div><strong>${Math.min(v,d.goal)} / ${d.goal}</strong><p>Reward: ${d.reward}</p><button class="btn btn-yellow" ${v<d.goal||claimed?'disabled':''} onclick="game.challengeClaim(${JSON.stringify(d).replace(/"/g,'&quot;')})">${claimed?'CLAIMED':'CLAIM'}</button></div>`}).join('')}</div>`}
+    else if(tab==='mastery'){c.innerHTML=`<div class="cc2-grid">${MACHINES.map(m=>{let x=this.state.mastery[m.id];return `<div class="cc2-card"><h3>${m.iconArt} ${m.name}</h3><div class="cc2-big">Mastery ${x.level}</div><div class="cc2-bar"><div class="cc2-fill" style="width:${x.xp}%"></div></div><p class="cc2-muted">${x.xp}/100 mastery XP · exclusive rewards every 5 levels.</p></div>`}).join('')}</div>`}
+    else if(tab==='rooms'){const rooms=[['main','🎪 Main Carnival',1],['alley','🧸 Prize Alley',5],['neon','🌃 Neon District',10],['collector','🏛️ Collector Hall',20],['vip','💎 VIP Vault',30],['mythic','🌌 Mythic Carnival',50]];c.innerHTML=`<div class="cc2-grid">${rooms.map(r=>{let ok=this.state.level>=r[2];return `<div class="cc2-card"><h3>${r[1]}</h3><p class="cc2-muted">${ok?'Unlocked':'Requires Level '+r[2]}</p><button class="btn ${ok?'btn-cyan':'btn-primary'}" ${ok?'':'disabled'} onclick="game.unlockRoom('${r[0]}',${r[2]})">${this.state.rooms[r[0]]?'OPEN':'UNLOCK'}</button></div>`}).join('')}</div>`}
+    else if(tab==='events'){c.innerHTML=`<div class="cc2-grid"><div class="cc2-card"><h3>🎟️ ${this.state.eventId==='golden_carnival'?'Golden Carnival':'Carnival Event'}</h3><p>Event prizes rotate. Golden Tickets buy event pulls.</p><div class="cc2-big">${this.state.goldenTickets} 🎟️</div><button class="btn btn-yellow" onclick="game.eventPull()">EVENT PULL — 1 TICKET</button></div><div class="cc2-card"><h3>🎃 Coming Rotations</h3><span class="cc2-tag">Haunted</span><span class="cc2-tag">Winter</span><span class="cc2-tag">Robot</span><span class="cc2-tag">Pirate</span><span class="cc2-tag">Cosmic</span><p class="cc2-muted">Each rotation can award exclusive collection entries.</p></div></div>`}
+    else {c.innerHTML=`<div class="cc2-grid"><div class="cc2-card"><h3>🛠️ Evolution Lab</h3><p>Fuse 3 copies of the same prize into a Shiny version.</p><button class="btn btn-primary" onclick="game.fuseBestDuplicate()">FUSE A DUPLICATE SET</button></div><div class="cc2-card"><h3>🎨 Cosmetics</h3><p>Cabinet: ${this.state.cosmetics.cabinet}<br>Claw: ${this.state.cosmetics.claw}</p><button class="btn btn-cyan" onclick="game.buyCosmetic()">ROTATE COSMETIC — 2 Tickets</button></div><div class="cc2-card"><h3>⚙️ Carnival Parts</h3><div class="cc2-big">${this.state.parts}</div><p class="cc2-muted">Earn parts from mastery and events. Future machine construction uses them.</p></div></div>`}}
+  unlockRoom(id,lv){if(this.state.level<lv)return;this.state.rooms[id]=true;this.showToast('Room Unlocked!',id.toUpperCase()+' is now part of your carnival.','🎡');this.save();this.renderHQ('rooms')}
+  claimEventReward(){if(this.state.goldenTickets<1)return this.showToast('Need a Ticket','Win levels, challenges and events to earn Golden Tickets.','🎟️');this.state.goldenTickets--;this.addItem('rare_gem',1);this.awardXP(75);this.save();this.showToast('Event Reward!','Cosmic Gem added to your collection.','💎')}
+  eventPull(){if(this.state.goldenTickets<1)return this.showToast('No Golden Tickets','Complete challenges and level up to earn them.','🎟️');this.state.goldenTickets--;const pool=['toy_dragon','rare_gem','rare_kitty','rare_crown','card_phoenix'];const id=pool[Math.floor(Math.random()*pool.length)];this.addItem(id,1);this.awardXP(100);this.showToast('EVENT PRIZE!',PRIZES[id]?.name||id,PRIZES[id]?.icon||'🎁');this.save();this.renderHQ('events')}
+  fuseBestDuplicate(){const ids=Object.keys(this.state.inventory).filter(id=>(this.state.inventory[id]||0)>=3&&PRIZES[id]&&PRIZES[id].type!=='scratch');if(!ids.length)return this.showToast('No Fusion Set','You need 3 copies of the same prize.','♻️');const id=ids[0],item=PRIZES[id];this.state.inventory[id]-=3;if(this.state.inventory[id]<=0)delete this.state.inventory[id];this.state.fusion[id]=(this.state.fusion[id]||0)+1;this.state.collectionStars++;this.state.parts+=2;this.progressChallenge('fusion',1);this.awardXP(120);this.showToast('✨ SHINY FUSION!',`3 ${item.name} became a Shiny collection entry.`,'✨');this.save();this.renderHQ('workshop');this.renderInventory()}
+  buyCosmetic(){if(this.state.goldenTickets<2)return this.showToast('Need 2 Tickets','Golden Tickets are earned through progression.','🎟️');this.state.goldenTickets-=2;this.state.cosmetics.cabinet=this.state.cosmetics.cabinet==='classic'?'neon':'classic';this.state.parts+=1;this.save();this.showToast('Cosmetic Unlocked!','Your carnival cabinet style changed.','🎨');this.renderHQ('workshop')}
+  prestige(){if(this.state.level<50)return;this.state.renown++;this.state.prestigeCount++;this.state.level=1;this.state.xp=0;this.state.coins=Math.max(100,this.state.coins);this.state.parts+=10;this.state.permanentPerks.renown=(this.state.permanentPerks.renown||0)+1;this.showToast('🎡 CARNIVAL REOPENED!','You gained permanent Renown and kept your collection.','⭐');this.save();this.updateStatsUI();this.renderHQ('overview')}
+  renderAlbum(){const c=document.getElementById('albumContent');const ids=Object.keys(PRIZES);const owned=ids.filter(id=>(this.state.inventory[id]||0)>0).length;const total=ids.length;const milestones=[10,25,50,75,100].map(n=>`<span class="cc2-tag">${n} found → ${n<=owned?'✓':'locked'}</span>`).join('');c.innerHTML=`<div class="cc2-card" style="margin-bottom:14px"><h3>📖 Collection Progress</h3><div class="cc2-big">${owned} / ${total}</div><div class="cc2-bar"><div class="cc2-fill" style="width:${Math.min(100,owned/Math.max(1,total)*100)}%"></div></div>${milestones}</div><div class="cc2-grid">${ids.map(id=>{const p=PRIZES[id],n=this.state.inventory[id]||0,sh=this.state.fusion[id]||0;return `<div class="cc2-card" style="text-align:center"><div class="${n?'':'cc2-silhouette'}">${p.icon}</div><h3>${n?p.name:'???'}</h3><span class="cc2-tag">${p.rarity}</span><p class="cc2-muted">${n?'Owned x'+n:'Not discovered'} ${sh?'· ✨ Shiny x'+sh:''}</p></div>`}).join('')}</div>`}
+
+  gameLoop(timestamp) {
+    if (!this.lastTime) this.lastTime = timestamp;
+    const dt = Math.min(0.05, (timestamp - this.lastTime) / 1000);
+    this.lastTime = timestamp;
+
+    if (this.activeScreen === 'gameplay') {
+      this.sim.update(dt);
+      this.sim.render();
+    }
+
+    requestAnimationFrame((t) => this.gameLoop(t));
+  }
+
+  addItem(id, count = 1) {
+    this.state.inventory[id] = (this.state.inventory[id] || 0) + count;
+  }
+
+  filterInventory(type, btn) {
+    this.currentInvFilter = type;
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    this.renderInventory();
+  }
+
+  renderInventory() {
+    const grid = document.getElementById('inventoryGrid');
+    grid.innerHTML = '';
+
+    const inv = this.state.inventory;
+    const keys = Object.keys(inv).filter(k => inv[k] > 0);
+    let itemsRendered = 0;
+
+    if (this.currentInvFilter !== 'slab') {
+      keys.forEach(id => {
+        const item = PRIZES[id];
+        if (!item) return;
+        if (this.currentInvFilter !== 'all' && item.type !== this.currentInvFilter) return;
+
+        itemsRendered++;
+        const count = inv[id];
+        const card = document.createElement('div');
+        card.className = 'inv-card';
+
+        let action = '';
+        if (item.type === 'scratch') {
+          action = `<button class="btn btn-yellow" style="width:100%; padding:6px; font-size:0.75rem; margin-top:8px;" onclick="game.openScratchModal('${item.id}')">SCRATCH CARD 🎫</button>`;
+        } else if (item.type === 'capsule') {
+          action = `<button class="btn btn-primary" style="width:100%; padding:6px; font-size:0.75rem; margin-top:8px;" onclick="game.openGachaModal('${item.id}')">CRACK CAPSULE 🔮</button>`;
+        } else if (item.type === 'card') {
+          action = `
+            <button class="btn btn-cyan" style="width:100%; padding:6px; font-size:0.75rem; margin-top:6px;" onclick="game.openAppraisalModal('${item.id}')">GRADE CARD 🔬</button>
+            <button class="btn btn-primary" style="width:100%; padding:5px; font-size:0.72rem; margin-top:4px;" onclick="game.tradeItem('${item.id}', 1)">Sell: +${this.getItemSellPrice(item)} 🪙</button>
+          `;
+        } else {
+          action = `<button class="btn btn-primary" style="width:100%; padding:6px; font-size:0.75rem; margin-top:8px;" onclick="game.tradeItem('${item.id}', 1)">SELL: +${this.getItemSellPrice(item)} 🪙</button>`;
+        }
+
+        card.innerHTML = `
+          <div class="inv-count">x${count}</div>
+          <div style="font-size:2.8rem; margin:8px 0;">${item.icon}</div>
+          <strong style="font-size:0.9rem;">${item.name}</strong>
+          <div><span class="badge rarity-${item.rarity}">${item.rarity}</span></div>
+          ${action}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    if (this.currentInvFilter === 'all' || this.currentInvFilter === 'slab') {
+      this.state.slabs.forEach((slab, idx) => {
+        itemsRendered++;
+        const card = document.createElement('div');
+        card.className = 'inv-card slab-card';
+        card.innerHTML = `
+          <div style="font-size:2.8rem; margin:8px 0;">${slab.icon}</div>
+          <strong style="font-size:0.9rem;">${slab.name}</strong>
+          <div style="margin:4px 0;"><span class="badge ${slab.rarityCls}">${slab.grade}</span></div>
+          <small style="color:var(--accent-yellow); font-weight:bold;">Resale: +${slab.value} 🪙</small>
+          <button class="btn btn-primary" style="width:100%; padding:6px; font-size:0.75rem; margin-top:8px;" onclick="game.sellSlab(${idx})">SELL SLAB 🪙</button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    if (itemsRendered === 0) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-muted);">No items in this category yet! Play the claws to fill your bag. 🎪</div>`;
+    }
+  }
+
+  getItemSellPrice(item) {
+    let p = item.value;
+    if (item.type === 'toy' && this.state.completedSets['set_plush']) p = Math.round(p * 1.15);
+    return p;
+  }
+
+  openGachaModal(capsuleId) {
+    this.activeCapsuleId = capsuleId;
+    const modal = document.getElementById('gachaModal');
+    const stage = document.getElementById('capsuleStage');
+    stage.classList.remove('cracked');
+    document.getElementById('claimCapsuleBtn').style.display = 'none';
+    document.getElementById('capsulePrizeName').textContent = 'Tap to Crack!';
+    document.getElementById('capsulePrizeIcon').textContent = '✨';
+
+    modal.classList.add('open');
+  }
+
+  crackCapsule() {
+    const stage = document.getElementById('capsuleStage');
+    if (stage.classList.contains('cracked')) return;
+
+    stage.classList.add('cracked');
+    this.sound.playGachaPop();
+
+    const r = Math.random();
+    let outcome = { id: 'toy_panda', name: 'Ninja Panda', icon: '🐼', type: 'item' };
+
+    if (r < 0.25) outcome = { type: 'coins', amount: 45, name: '+45 COINS', icon: '🪙' };
+    else if (r < 0.5) outcome = { type: 'tokens', amount: 1, name: '+1 CLAW TOKEN', icon: '🎟️' };
+    else if (r < 0.8) outcome = { id: 'rare_gem', name: 'Cosmic Gem', icon: '💎', type: 'item' };
+    else outcome = { id: 'card_phoenix', name: 'Phoenix Holo Card', icon: '🦅', type: 'item' };
+
+    this.capsuleOutcome = outcome;
+    document.getElementById('capsulePrizeIcon').textContent = outcome.icon;
+    document.getElementById('capsulePrizeName').textContent = outcome.name;
+    document.getElementById('claimCapsuleBtn').style.display = 'block';
+
+    this.state.stats.capsules++;
+    this.checkAchievement('gacha_cracked');
+  }
+
+  claimCapsulePrize() {
+    if (!this.activeCapsuleId) return;
+    this.state.inventory[this.activeCapsuleId]--;
+    if (this.state.inventory[this.activeCapsuleId] <= 0) delete this.state.inventory[this.activeCapsuleId];
+
+    const out = this.capsuleOutcome;
+    if (out.type === 'coins') this.state.coins += out.amount;
+    else if (out.type === 'tokens') this.state.tokens += out.amount;
+    else if (out.type === 'item') this.addItem(out.id, 1);
+
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.closeModal('gachaModal');
+    this.renderInventory();
+    this.evalSetsCompletion();
+    this.showToast("Capsule Claimed!", out.name, out.icon);
+  }
+
+  openAppraisalModal(cardId) {
+    const item = PRIZES[cardId];
+    if (!item) return;
+    this.appraisalTarget = item;
+
+    document.getElementById('appraisalCardIcon').textContent = item.icon;
+    document.getElementById('appraisalCardName').textContent = item.name;
+    document.getElementById('appraisalGradeText').textContent = 'EXAMINING SURFACE...';
+    document.getElementById('appraisalMultText').textContent = 'Grading in progress...';
+    document.getElementById('btnKeepSlab').style.display = 'none';
+    document.getElementById('btnSellSlab').style.display = 'none';
+
+    document.getElementById('appraisalModal').classList.add('open');
+
+    setTimeout(() => {
+      const hasCardPerk = !!this.state.completedSets['set_cards'];
+      const roll = hasCardPerk ? 0.95 : Math.random();
+
+      let grade = 'PSA 8 (NM-MT)';
+      let mult = 1.5;
+      let rarityCls = 'rarity-uncommon';
+
+      if (roll > 0.88) {
+        grade = 'GEM MINT 10 (PERFECT)';
+        mult = 4.5;
+        rarityCls = 'rarity-pristine';
+        this.checkAchievement('pristine_grade');
+      } else if (roll > 0.5) {
+        grade = 'MINT 9 (MINT)';
+        mult = 2.2;
+        rarityCls = 'rarity-rare';
+      }
+
+      this.appraisalOutcome = { mult, grade, rarityCls };
+      document.getElementById('appraisalGradeText').textContent = grade;
+      document.getElementById('appraisalMultText').className = `badge ${rarityCls}`;
+      document.getElementById('appraisalMultText').textContent = `${mult}x Resale Multiplier!`;
+      document.getElementById('btnKeepSlab').style.display = 'block';
+      document.getElementById('btnSellSlab').style.display = 'block';
+      this.sound.playWinFanfare();
+    }, 1200);
+  }
+
+  completeAppraisal(sellImmediately) {
+    if (!this.appraisalTarget) return;
+    const tid = this.appraisalTarget.id;
+    this.state.inventory[tid]--;
+    if (this.state.inventory[tid] <= 0) delete this.state.inventory[tid];
+
+    const bonusVal = Math.round(this.appraisalTarget.value * this.appraisalOutcome.mult);
+    this.state.stats.graded++;
+    this.awardXP(40);
+    this.progressChallenge('cards',1);
+
+    if (sellImmediately) {
+      this.state.coins += bonusVal;
+      this.showToast("Card Slab Sold!", `Instant cash-out: +${bonusVal} Coins!`, "🪙");
+    } else {
+      this.state.slabs.push({
+        id: tid,
+        name: this.appraisalTarget.name,
+        icon: this.appraisalTarget.icon,
+        grade: this.appraisalOutcome.grade,
+        rarityCls: this.appraisalOutcome.rarityCls,
+        value: bonusVal
+      });
+      this.showToast("Slab Stored in Bag!", `${this.appraisalOutcome.grade} slab added to collection!`, "💎");
+    }
+
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.closeModal('appraisalModal');
+    this.renderInventory();
+    this.evalSetsCompletion();
+  }
+
+  sellSlab(index) {
+    const slab = this.state.slabs[index];
+    if (!slab) return;
+    this.state.coins += slab.value;
+    this.state.slabs.splice(index, 1);
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.renderInventory();
+    this.showToast("Slab Sold!", `Sold ${slab.name} for +${slab.value} Coins!`, "🪙");
+  }
+
+  renderShop() {
+    const list = document.getElementById('tradeItemsList');
+    list.innerHTML = '';
+
+    const inv = this.state.inventory;
+    const keys = Object.keys(inv).filter(k => inv[k] > 0);
+
+    if (keys.length === 0 && this.state.slabs.length === 0) {
+      list.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:15px;">Your bag is empty. Grab some prizes first!</p>`;
+      return;
+    }
+
+    keys.forEach(id => {
+      const item = PRIZES[id];
+      const count = inv[id];
+      const price = this.getItemSellPrice(item);
+
+      const row = document.createElement('div');
+      row.className = 'odds-row';
+      row.innerHTML = `
+        <div>
+          <span>${item.icon} <strong>${item.name}</strong> (x${count})</span>
+          <div style="font-size:0.75rem; color:var(--accent-yellow);">Sell: +${price} Coins each</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-yellow" style="padding:4px 8px; font-size:0.75rem;" onclick="game.tradeItem('${item.id}', 1)">Sell 1</button>
+          ${count > 1 ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="game.tradeItem('${item.id}', ${count})">Sell All</button>` : ''}
+        </div>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  buyHardwareUpgrade(type) {
+    if (type === 'grip') {
+      const cost = 80 + this.state.upgrades.grip * 40;
+      if (this.state.coins < cost) return alert(`Need ${cost} coins!`);
+      this.state.coins -= cost;
+      this.state.upgrades.grip++;
+      this.showToast("Grip Tension Boosted!", "+15% claw tension installed.", "🔧");
+    } else if (type === 'speed') {
+      if (this.state.coins < 100) return alert("Need 100 coins!");
+      this.state.coins -= 100;
+      this.state.upgrades.speed = parseFloat((this.state.upgrades.speed + 0.3).toFixed(1));
+      this.showToast("Gantry Motor Tuned!", "Crane moves +30% faster.", "⚡");
+    } else if (type === 'rubber') {
+      if (this.state.tokens < 2) return alert("Need 2 Claw Tokens!");
+      this.state.tokens -= 2;
+      this.state.upgrades.rubber = true;
+      this.showToast("Rubber Tips Installed!", "Plushies can no longer slip!", "🧤");
+    }
+
+    if (this.state.upgrades.grip >= 1 && this.state.upgrades.speed >= 1.3 && this.state.upgrades.rubber) {
+      this.checkAchievement('fully_upgraded');
+    }
+
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+  }
+
+  tradeItem(id, amt) {
+    if (!this.state.inventory[id] || this.state.inventory[id] < amt) return;
+    const item = PRIZES[id];
+    const coinGain = this.getItemSellPrice(item) * amt;
+
+    this.state.inventory[id] -= amt;
+    if (this.state.inventory[id] <= 0) delete this.state.inventory[id];
+
+    this.state.coins += coinGain;
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+
+    if (this.activeScreen === 'shop') this.renderShop();
+    if (this.activeScreen === 'inventory') this.renderInventory();
+
+    this.showToast(`Traded ${item.name}!`, `+${coinGain} Carnival Coins added!`, '🪙');
+  }
+
+  buyToken(cost) {
+    if (this.state.coins < cost) return alert("Not enough coins!");
+    this.state.coins -= cost;
+    this.state.tokens += 1;
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.showToast("Token Acquired!", "+1 Claw Token added.", "🎟️");
+  }
+
+  buyBonusPlays(cost, count) {
+    if (this.state.coins < cost) return alert("Not enough coins!");
+    this.state.coins -= cost;
+    this.state.bonusPlays += count;
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.showToast("Bonus Drops Ready!", `+${count} Free Plays added!`, "⭐");
+  }
+
+  evalSetsCompletion() {
+    SETS_DEF.forEach(set => {
+      const complete = set.items.every(id => {
+        const inInv = (this.state.inventory[id] || 0) > 0;
+        const inSlabs = this.state.slabs.some(s => s.id === id);
+        return inInv || inSlabs;
+      });
+      if (complete && !this.state.completedSets[set.id]) {
+        this.state.completedSets[set.id] = true;
+        this.sound.playWinFanfare();
+        this.showToast(`🏆 Set Completed: ${set.name}!`, set.perk, '✨');
+      }
+    });
+  }
+
+  renderSets() {
+    const container = document.getElementById('setsListContainer');
+    container.innerHTML = '';
+
+    SETS_DEF.forEach(set => {
+      const isComplete = !!this.state.completedSets[set.id];
+      const div = document.createElement('div');
+      div.className = 'set-container';
+      div.style.borderLeft = `5px solid ${isComplete ? 'var(--accent-green)' : 'rgba(255,255,255,0.2)'}`;
+
+      const itemsHtml = set.items.map(itemId => {
+        const p = PRIZES[itemId];
+        const owned = (this.state.inventory[itemId] || 0) > 0 || this.state.slabs.some(s => s.id === itemId);
+        return `
+          <div class="set-slot ${owned ? 'unlocked' : 'locked'}" title="${p.name}">
+            <span>${p.icon}</span>
+            <small style="font-size:0.6rem; color:#fff; position:absolute; bottom:2px;">${owned ? 'OWNED' : 'MISSING'}</small>
+          </div>
+        `;
+      }).join('');
+
+      div.innerHTML = `
+        <div class="set-header">
+          <div>
+            <strong style="font-size:1.1rem; color:#fff;">${set.name}</strong>
+            <p style="font-size:0.8rem; color:var(--text-muted);">${set.desc}</p>
+          </div>
+          <span class="badge ${isComplete ? 'rarity-uncommon' : 'rarity-common'}">${isComplete ? 'PERK ACTIVE' : 'INCOMPLETE'}</span>
+        </div>
+        <div class="set-items-preview">${itemsHtml}</div>
+        <div style="margin-top:10px; font-size:0.85rem; color:var(--accent-yellow);">
+          <strong>Perk:</strong> ${set.perk}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  openScratchModal(ticketId) {
+    const item = PRIZES[ticketId];
+    if (!item) return;
+
+    this.activeTicket = item;
+    const modal = document.getElementById('scratchModal');
+    modal.classList.add('open');
+    document.getElementById('claimScratchBtn').style.display = 'none';
+
+    this.scratchOutcome = this.rollScratchOutcome(item.tier);
+    document.getElementById('scratchPrizeIcon').textContent = this.scratchOutcome.icon;
+    document.getElementById('scratchPrizeText').textContent = this.scratchOutcome.text;
+    document.getElementById('scratchPrizeSub').textContent = this.scratchOutcome.sub;
+
+    this.prepareScratchCanvas(item.tier);
+  }
+
+  rollScratchOutcome(tier) {
+    const r = Math.random();
+    if (tier === 'bronze') {
+      if (r < 0.2) return { type: 'coins', amount: 18, text: '+18 COINS', sub: 'Pouch Win', icon: '🪙' };
+      if (r < 0.7) return { type: 'coins', amount: 35, text: '+35 COINS', sub: 'Winner!', icon: '🪙' };
+      return { type: 'play', amount: 1, text: '+1 BONUS PLAY', sub: 'Free Drop', icon: '⭐' };
+    } else if (tier === 'silver') {
+      if (r < 0.5) return { type: 'coins', amount: 75, text: '+75 COINS', sub: 'Silver Stash', icon: '🪙' };
+      if (r < 0.8) return { type: 'tokens', amount: 1, text: '+1 CLAW TOKEN', sub: 'Arcade Pass', icon: '🎟️' };
+      return { type: 'item', id: 'toy_unicorn', text: 'STAR UNICORN', sub: 'Rare Plushie!', icon: '🦄' };
+    } else {
+      if (r < 0.5) return { type: 'coins', amount: 180, text: '+180 COINS', sub: 'Gold Jackpot!', icon: '🪙' };
+      if (r < 0.85) return { type: 'tokens', amount: 2, text: '+2 CLAW TOKENS', sub: 'Double Pass', icon: '🎟️' };
+      return { type: 'item', id: 'rare_crown', text: 'ROYAL CROWN', sub: 'Ultra Rare Trophy!', icon: '👑' };
+    }
+  }
+
+  prepareScratchCanvas(tier) {
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    this.scratchComplete = false;
+
+    ctx.globalCompositeOperation = 'source-over';
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    if (tier === 'gold') {
+      g.addColorStop(0, '#e6b800'); g.addColorStop(0.5, '#fff280'); g.addColorStop(1, '#b38f00');
+    } else if (tier === 'silver') {
+      g.addColorStop(0, '#bdc3c7'); g.addColorStop(0.5, '#ecf0f1'); g.addColorStop(1, '#95a5a6');
+    } else {
+      g.addColorStop(0, '#cd7f32'); g.addColorStop(0.5, '#f5cba7'); g.addColorStop(1, '#873600');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#222';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('★ SCRATCH FOIL TO REVEAL ★', w / 2, h / 2 + 5);
+  }
+
+  initScratchSystem() {
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    let isScratching = false;
+
+    const rub = (clientX, clientY) => {
+      if (!isScratching || this.scratchComplete) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      this.sound.playScratch();
+
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let cleared = 0;
+      for (let i = 3; i < data.data.length; i += 64) {
+        if (data.data[i] < 128) cleared++;
+      }
+      if (cleared / (data.data.length / 64) > 0.45) {
+        this.scratchComplete = true;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('claimScratchBtn').style.display = 'block';
+        this.sound.playChuteDrop();
+      }
+    };
+
+    canvas.addEventListener('mousedown', (e) => { isScratching = true; rub(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', () => { isScratching = false; });
+    canvas.addEventListener('mousemove', (e) => rub(e.clientX, e.clientY));
+
+    canvas.addEventListener('touchstart', (e) => { isScratching = true; rub(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    window.addEventListener('touchend', () => { isScratching = false; });
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) rub(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+  }
+
+  finishScratchTicket() {
+    if (!this.activeTicket) return;
+    const tid = this.activeTicket.id;
+    this.state.inventory[tid]--;
+    if (this.state.inventory[tid] <= 0) delete this.state.inventory[tid];
+
+    const out = this.scratchOutcome;
+    if (out.type === 'coins') this.state.coins += out.amount;
+    if (out.type === 'tokens') this.state.tokens += out.amount;
+    if (out.type === 'play') this.state.bonusPlays += out.amount;
+    if (out.type === 'item') this.addItem(out.id, 1);
+
+    this.sound.playCoin();
+    this.save();
+    this.updateStatsUI();
+    this.closeModal('scratchModal');
+    this.renderInventory();
+    this.evalSetsCompletion();
+    this.showToast('Ticket Claimed!', out.text, out.icon);
+  }
+
+  closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  checkDaily() {
+    const day = 24 * 60 * 60 * 1000;
+    const btn = document.getElementById('dailyBonusBtn');
+    if (Date.now() - this.state.lastDaily >= day) {
+      btn.style.boxShadow = '0 0 15px #ffe600';
+      btn.textContent = '🎁 Daily Bonus (Ready!)';
+    } else {
+      btn.style.boxShadow = 'none';
+      btn.textContent = '🎁 Daily Bonus';
+    }
+  }
+
+  claimDailyBonus() {
+    const day = 24 * 60 * 60 * 1000;
+    if (Date.now() - this.state.lastDaily < day) {
+      const remainingHours = Math.ceil((day - (Date.now() - this.state.lastDaily)) / 3600000);
+      alert(`Daily Bonus claimed! Next ready in ~${remainingHours} hour(s).`);
+      return;
+    }
+    const tokenBonus = this.state.completedSets['set_relics'] ? 2 : 1;
+
+    this.state.coins += 50;
+    this.state.tokens += tokenBonus;
+    this.state.bonusPlays += 1;
+    this.state.lastDaily = Date.now();
+
+    this.sound.playWinFanfare();
+    this.save();
+    this.updateStatsUI();
+    this.checkDaily();
+    const today = Math.floor(Date.now()/86400000);
+    this.challengeWeek = Math.floor(Date.now()/604800000);
+    if (this.state.challengeDay !== today) { this.state.challengeDay = today; this.state.challengeProgress = {}; }
+    this.challengeDay = today;
+    this.showToast("Daily Bonus Claimed!", `+50 Coins, +${tokenBonus} Token(s), +1 Free Play!`, "🎁");
+  }
+
+  checkAchievement(id) {
+    if (this.state.achievements[id]) return;
+    this.state.achievements[id] = true;
+    const ach = ACHIEVEMENTS_DEF.find(a => a.id === id);
+    if (ach) {
+      this.sound.playWinFanfare();
+      this.showToast(`🏆 Trophy Unlocked: ${ach.name}!`, ach.desc, ach.icon);
+    }
+    this.save();
+  }
+
+  renderAchievements() {
+    const container = document.getElementById('achievementsContainer');
+    container.innerHTML = '';
+    ACHIEVEMENTS_DEF.forEach(ach => {
+      const done = !!this.state.achievements[ach.id];
+      const div = document.createElement('div');
+      div.className = 'odds-row';
+      div.style.borderLeft = `4px solid ${done ? 'var(--accent-green)' : 'var(--accent-pink)'}`;
+      div.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.6rem;">${ach.icon}</span>
+          <div>
+            <strong>${ach.name}</strong>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${ach.desc}</div>
+          </div>
+        </div>
+        <span class="badge ${done ? 'rarity-uncommon' : 'rarity-common'}">${done ? 'UNLOCKED' : 'LOCKED'}</span>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  openSaveModal() {
+    document.getElementById('saveStringArea').value = btoa(JSON.stringify(this.state));
+    document.getElementById('saveModal').classList.add('open');
+  }
+
+  exportSaveToClipboard() {
+    const txt = document.getElementById('saveStringArea');
+    txt.select();
+    navigator.clipboard.writeText(txt.value);
+    this.showToast("Save Copied!", "Base64 save string copied to clipboard.", "💾");
+  }
+
+  importSaveFromString() {
+    try {
+      const raw = document.getElementById('saveStringArea').value.trim();
+      const parsed = JSON.parse(atob(raw));
+      if (parsed && typeof parsed.coins === 'number') {
+        this.state = parsed;
+        if (!this.state.slabs) this.state.slabs = [];
+        this.save();
+        this.updateStatsUI();
+        this.evalSetsCompletion();
+        this.closeModal('saveModal');
+        this.showToast("Save Loaded!", "Your profile and items have been restored.", "✨");
+      } else {
+        alert("Invalid save code format!");
+      }
+    } catch(e) {
+      alert("Error parsing save string!");
+    }
+  }
+
+  showToast(title, desc, icon = '🎉') {
+    const t = document.getElementById('gameToast');
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastDesc').textContent = desc;
+    document.getElementById('toastIcon').textContent = icon;
+    t.classList.add('show');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+}
+
+let game;
+window.addEventListener('DOMContentLoaded', () => {
+  game = new ClawCarnivalGame();
+  game.init();
+});
+</script>
+</body>
+</html>

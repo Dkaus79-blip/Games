@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wandering Chef Caravan: Infinite Odyssey</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #12131a;
+      --panel-bg: #1a1c27;
+      --panel-border: #2e334a;
+      --accent-green: #38b066;
+      --accent-green-hover: #48cb79;
+      --accent-gold: #e5b039;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-red: #e11d48;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+      font-family: 'Press Start 2P', monospace, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      margin: 0; padding: 0;
+      height: 100vh; overflow: hidden;
+      display: flex; flex-direction: column;
+      image-rendering: pixelated;
+    }
+
+    /* Top Navigation / Bar */
+    header {
+      background: #101218;
+      border-bottom: 4px solid var(--panel-border);
+      padding: 6px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .logo-group { display: flex; align-items: center; gap: 10px; }
+    .logo-title { font-size: 0.85rem; color: var(--accent-gold); text-shadow: 2px 2px #000; margin: 0; }
+    .badge-bar { display: flex; gap: 8px; font-size: 0.55rem; align-items: center; }
+
+    .badge {
+      background: #232738;
+      border: 2px solid var(--panel-border);
+      padding: 4px 6px; border-radius: 4px;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .badge-gold { color: var(--accent-gold); }
+    .badge-prestige { color: #f472b6; }
+    .badge-level { color: #60a5fa; }
+
+    .meta-btns { display: flex; gap: 5px; }
+
+    /* Layout Split */
+    #appLayout { display: flex; flex: 1; height: calc(100vh - 44px); overflow: hidden; }
+
+    #leftSide {
+      width: 52%; display: flex; flex-direction: column;
+      padding: 6px; gap: 6px;
+      border-right: 4px solid var(--panel-border);
+      background: #141620;
+    }
+
+    #rightSide {
+      width: 48%; display: flex; flex-direction: column;
+      padding: 6px; background: #161824; gap: 6px;
+    }
+
+    /* Pixel Box UI Styling */
+    .pixel-box {
+      background: var(--panel-bg);
+      border: 3px solid var(--panel-border);
+      box-shadow: inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(255,255,255,0.05);
+      border-radius: 4px; padding: 6px; position: relative;
+    }
+
+    .panel-title {
+      font-size: 0.6rem; color: var(--accent-gold); margin-bottom: 6px;
+      display: flex; justify-content: space-between; align-items: center;
+      text-shadow: 1px 1px #000; border-bottom: 2px solid #282c3f; padding-bottom: 3px;
+    }
+
+    /* Canvas Viewport */
+    #viewportContainer {
+      position: relative; width: 100%; height: 185px;
+      background: #000; border: 4px solid #222636; border-radius: 4px;
+      overflow: hidden; flex: 0 0 auto; cursor: pointer;
+    }
+
+    #gameCanvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+    #viewportOverlay {
+      position: absolute; top: 4px; left: 6px; right: 6px;
+      display: flex; justify-content: space-between; pointer-events: none;
+      font-size: 0.52rem; text-shadow: 1px 1px 2px #000;
+    }
+
+    /* Action Dashboard Grid */
+    .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+
+    button.pixel-btn {
+      font-family: 'Press Start 2P', monospace; font-size: 0.5rem; padding: 7px 3px;
+      background: var(--accent-green); color: #fff; border: none;
+      border-bottom: 3px solid #237841; border-radius: 4px; cursor: pointer;
+      text-shadow: 1px 1px #000; transition: all 0.1s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; line-height: 1.1;
+    }
+
+    button.pixel-btn:hover { background: var(--accent-green-hover); transform: translateY(-1px); }
+    button.pixel-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+
+    button.pixel-btn.btn-secondary { background: #475569; border-bottom-color: #334155; }
+    button.pixel-btn.btn-secondary:hover { background: #64748b; }
+
+    button.pixel-btn.btn-cook { background: #d97706; border-bottom-color: #b45309; }
+    button.pixel-btn.btn-cook:hover { background: #f59e0b; }
+
+    button.pixel-btn.btn-special { background: var(--accent-purple); border-bottom-color: #6d28d9; }
+    button.pixel-btn.btn-special:hover { background: #9333ea; }
+
+    button.pixel-btn.btn-hunt { background: #0284c7; border-bottom-color: #0369a1; }
+    button.pixel-btn.btn-hunt:hover { background: #38bdf8; }
+
+    button.pixel-btn.btn-prestige { background: var(--accent-red); border-bottom-color: #9f1239; }
+
+    .bait-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 0.5rem; }
+
+    select.pixel-select {
+      font-family: 'Press Start 2P', monospace; font-size: 0.46rem;
+      background: #10121a; color: var(--accent-gold);
+      border: 2px solid var(--panel-border); padding: 2px 4px; border-radius: 3px;
+    }
+
+    /* Tabs Engine */
+    .tab-header { display: flex; gap: 2px; flex-wrap: wrap; flex: 0 0 auto; }
+
+    .tab-btn {
+      font-family: 'Press Start 2P', monospace; font-size: 0.42rem; padding: 5px 3px;
+      background: #232736; color: var(--text-muted);
+      border: 2px solid var(--panel-border); border-bottom: none;
+      border-radius: 4px 4px 0 0; cursor: pointer; flex: 1 1 auto;
+      text-align: center; white-space: nowrap;
+    }
+
+    .tab-btn.active { background: var(--panel-bg); color: var(--accent-gold); border-color: var(--accent-gold); }
+
+    .tab-content {
+      flex: 1 1 auto; background: var(--panel-bg);
+      border: 3px solid var(--panel-border); border-radius: 0 0 4px 4px;
+      padding: 8px; display: flex; flex-direction: column;
+      min-height: 0; overflow-y: auto; gap: 6px;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #12131a; }
+    ::-webkit-scrollbar-thumb { background: #2e334a; border-radius: 3px; }
+
+    /* Lists & Cards */
+    .card-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .item-card {
+      background: #222636; border: 2px solid #2e334a; border-radius: 4px;
+      padding: 5px 6px; display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.52rem;
+    }
+
+    .item-card.disabled { opacity: 0.5; }
+    .item-card .item-info { display: flex; flex-direction: column; gap: 2px; }
+
+    .item-tag {
+      display: inline-block; font-size: 0.44rem; padding: 1px 3px;
+      border-radius: 2px; background: #141620; color: var(--accent-gold); margin-right: 2px;
+    }
+
+    .tag-common { color: #cbd5e1; }
+    .tag-rare { color: #60a5fa; }
+    .tag-epic { color: #c084fc; }
+    .tag-legendary { color: #facc15; }
+    .tag-protein { background: #881337; color: #fecdd3; }
+
+    /* Custom Crafting Grid */
+    .crafting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 4px; }
+
+    .craft-slot {
+      background: #12141d; border: 2px dashed #3b425e; border-radius: 4px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.46rem; color: var(--text-muted); cursor: pointer; text-align: center; padding: 2px;
+    }
+
+    .craft-slot.filled { border-style: solid; border-color: var(--accent-gold); color: #fff; background: #1e2333; }
+
+    /* Roof Garden Display Grid */
+    .garden-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+    .garden-pot {
+      background: #181a26; border: 2px solid #2e334a; border-radius: 4px; padding: 6px;
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; font-size: 0.48rem;
+    }
+
+    /* Museum Progress Bar */
+    .progress-bar-bg {
+      background: #12131a; border: 2px solid var(--panel-border); border-radius: 4px;
+      height: 12px; width: 100%; overflow: hidden; margin: 4px 0;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6); height: 100%; width: 0%; transition: width 0.3s;
+    }
+
+    /* Travel Log & Guide Text */
+    #logBox {
+      background: #10121a; border: 2px solid #222636; border-radius: 4px;
+      padding: 6px; flex: 1; overflow-y: auto; font-size: 0.5rem; line-height: 1.4;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+
+    .guide-text { font-size: 0.5rem; line-height: 1.6; color: var(--text-main); }
+    .guide-section { background: #141622; border: 2px solid #282c3f; padding: 6px; border-radius: 4px; margin-bottom: 6px; }
+    .guide-title { color: var(--accent-gold); margin-bottom: 4px; font-size: 0.54rem; }
+    .log-entry { border-bottom: 1px solid #1c202e; padding-bottom: 2px; }
+    .log-entry span.time { color: var(--accent-gold); }
+    #visitorCard { font-size: 0.52rem; line-height: 1.4; }
+
+    /* Dynamic Popup Toast Notifications */
+    .toast-msg {
+      position: absolute; bottom: 12px; right: 12px;
+      background: var(--accent-purple); color: white; padding: 6px 10px; border-radius: 4px;
+      font-size: 0.54rem; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;
+      animation: popIn 0.3s ease-out; z-index: 100;
+    }
+
+    @keyframes popIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-group">
+      <h1 class="logo-title">Wandering Chef Caravan</h1>
+      <span style="font-size:0.46rem; background:#3b0764; color:#d8b4fe; padding:2px 5px; border-radius:3px;">Infinite Odyssey</span>
+    </div>
+
+    <div class="badge-bar">
+      <div class="badge badge-level">Chef Lv <span id="hdrLevel">1</span></div>
+      <div class="badge badge-gold">🪙 <span id="hdrGold">60</span></div>
+      <div class="badge badge-prestige">✨ <span id="hdrPrestige">0</span> Spices</div>
+      <button class="pixel-btn btn-secondary" id="btnAudioToggle" style="padding:3px 5px; font-size:0.46rem;">🔊 SFX: ON</button>
+      <button class="pixel-btn btn-secondary" id="btnAmbientToggle" style="padding:3px 5px; font-size:0.46rem;">🎶 Lo-Fi: OFF</button>
+    </div>
+
+    <div class="meta-btns">
+      <button class="pixel-btn btn-secondary" id="btnSave" style="padding:3px 5px;">Save</button>
+      <button class="pixel-btn btn-secondary" id="btnLoad" style="padding:3px 5px;">Load</button>
+      <button class="pixel-btn btn-prestige" id="btnReset" style="padding:3px 5px;">Reset</button>
+    </div>
+  </header>
+
+  <div id="appLayout">
+    <!-- Left Column: Scene, Dashboard & Environment -->
+    <div id="leftSide">
+
+      <!-- Dynamic Pixel Canvas Viewport -->
+      <div id="viewportContainer" title="Click fire for sparks, pet to cuddle, trees to shake, or night sky to make a wish!">
+        <canvas id="gameCanvas" width="380" height="185"></canvas>
+        <div id="viewportOverlay">
+          <div><span id="vpBiome">Whispering Forest</span> | Day <span id="vpDay">1</span> (<span id="vpTime">Morning</span>)</div>
+          <div>Weather: <span id="vpWeather" style="color:#60a5fa;">Clear</span></div>
+        </div>
+      </div>
+
+      <!-- Actions Dashboard -->
+      <div class="pixel-box">
+        <div class="bait-bar">
+          <span style="color:var(--accent-gold);">Caravan Dashboard</span>
+          <div>
+            <span>🎯 Bait: </span>
+            <select id="baitSelect" class="pixel-select">
+              <option value="none">None (Standard)</option>
+              <option value="surplus">Surplus Herbs (+Luck)</option>
+              <option value="salt">Aether Salt (+High Luck)</option>
+            </select>
+          </div>
+        </div>
+        <div class="action-grid">
+          <button class="pixel-btn" id="btnTravel">🗺️ Travel</button>
+          <button class="pixel-btn" id="btnForage">🌿 Forage</button>
+          <button class="pixel-btn btn-hunt" id="btnFish">🎣 Fish</button>
+          <button class="pixel-btn btn-hunt" id="btnHunt">🎯 Hunt</button>
+          <button class="pixel-btn btn-cook" id="btnOpenCrafting">🍳 Kitchen</button>
+          <button class="pixel-btn btn-cook" id="btnCookFeast">🍲 Feast</button>
+          <button class="pixel-btn btn-special" id="btnPetAnimal">🐾 Pet</button>
+          <button class="pixel-btn btn-secondary" id="btnRest">⛺ Rest</button>
+        </div>
+      </div>
+
+      <!-- Visitor & Campfire Panel -->
+      <div class="pixel-box" style="flex: 1; display:flex; flex-direction:column;">
+        <div class="panel-title">
+          <span>Campfire Encounters</span>
+          <span id="visitorTypeBadge" style="font-size:0.46rem; color:var(--accent-gold);"></span>
+        </div>
+        <div id="visitorCard">
+          No visitor currently at your campfire. Travel or rest to meet travelers!
+        </div>
+        <button class="pixel-btn btn-special" id="btnServeVisitor" style="margin-top:auto; width:100%; display:none;">👤 Serve Guest Dish</button>
+      </div>
+
+      <!-- Active World Mood -->
+      <div class="pixel-box">
+        <div class="panel-title">
+          <span>World Mood & Environment</span>
+        </div>
+        <div style="font-size:0.5rem; line-height:1.4;">
+          <div><strong>Biome:</strong> <span id="envBiome" style="color:#4ade80;">Whispering Forest</span></div>
+          <div><strong>Active Weather:</strong> <span id="envEvent" style="color:var(--accent-gold);">Clear Skies</span></div>
+          <div style="margin-top:2px; font-size:0.46rem; color:var(--text-muted);" id="envDesc">The roads are tranquil. Ideal for fishing and hunting wild game.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Tabbed Engine -->
+    <div id="rightSide">
+      <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab('pantry')">Pantry</button>
+        <button class="tab-btn" onclick="switchTab('craft')">Kitchen</button>
+        <button class="tab-btn" onclick="switchTab('cookbook')">Cookbook</button>
+        <button class="tab-btn" onclick="switchTab('garden')">Roof Garden</button>
+        <button class="tab-btn" onclick="switchTab('museum')">Museum</button>
+
+        <button class="tab-btn" onclick="switchTab('quests')">Quests</button>
+        <button class="tab-btn" onclick="switchTab('map')">Map</button>
+        <button class="tab-btn" onclick="switchTab('mailbox')">Mailbox</button>
+        <button class="tab-btn" onclick="switchTab('decor')">Caravan Decor</button>
+        <button class="tab-btn" onclick="switchTab('upgrades')">Upgrades</button>
+        <button class="tab-btn" onclick="switchTab('prestige')">Festival</button>
+        <button class="tab-btn" onclick="switchTab('guide')">Guide</button>
+        <button class="tab-btn" onclick="switchTab('log')">Log</button>
+      </div>
+
+      <!-- Tab 1: Pantry -->
+      <div class="tab-content" id="tabPantry">
+        <div class="panel-title">
+          <span>Pantry Inventory</span>
+          <span style="font-size:0.46rem;" id="pantryCapacity">0 Items</span>
+        </div>
+        <div id="pantryList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 2: Custom Crafting -->
+      <div class="tab-content" id="tabCraft" style="display:none;">
+        <div class="panel-title">
+          <span>Craft Custom Recipe</span>
+          <span style="font-size:0.46rem; color:var(--accent-gold);">Select 2-3 Ingredients</span>
+        </div>
+
+        <div class="crafting-grid">
+          <div class="craft-slot" id="slot0" onclick="clearCraftSlot(0)">+ Slot 1</div>
+          <div class="craft-slot" id="slot1" onclick="clearCraftSlot(1)">+ Slot 2</div>
+          <div class="craft-slot" id="slot2" onclick="clearCraftSlot(2)">+ Slot 3</div>
+        </div>
+
+        <button class="pixel-btn btn-cook" onclick="cookSelectedIngredients()" style="width:100%; margin-bottom:6px;">🔥 Cook Selected Ingredients</button>
+
+        <div class="panel-title" style="margin-top:2px;">
+          <span>Select Ingredients to Add</span>
+        </div>
+        <div id="kitchenPantryList" class="card-list" style="max-height: 120px; overflow-y: auto;"></div>
+      </div>
+
+      <!-- Tab 3: Cookbook -->
+      <div class="tab-content" id="tabCookbook" style="display:none;">
+        <div class="panel-title">
+          <span>Culinary Cookbook</span>
+          <span style="font-size:0.46rem; color:var(--accent-gold);">1-Click Recipe Auto-Fill</span>
+        </div>
+        <div id="cookbookList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 4: Roof Garden Pots -->
+      <div class="tab-content" id="tabGarden" style="display:none;">
+        <div class="panel-title">
+          <span>Caravan Roof Herb Garden</span>
+          <span style="font-size:0.46rem; color:var(--accent-green);">Grows by Taking Steps/Resting</span>
+        </div>
+        <div style="font-size:0.48rem; line-height:1.4; color:var(--text-muted); margin-bottom:4px;">
+          Plant seeds in your rooftop pots. Crops progress naturally as you Travel, Forage, or Rest!
+        </div>
+        <div id="gardenContainer" class="garden-grid"></div>
+      </div>
+
+      <!-- Tab 5: Encyclopedia & Museum -->
+      <div class="tab-content" id="tabMuseum" style="display:none;">
+        <div class="panel-title">
+          <span>Botanical Museum & Collection</span>
+          <span id="museumCompletionTxt" style="font-size:0.46rem; color:var(--accent-gold);">0% Complete</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="museumBar" class="progress-bar-fill"></div>
+        </div>
+        <div class="panel-title" style="margin-top:4px;">
+          <span>Ingredient Lore & Discovery</span>
+        </div>
+        <div id="museumList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 6: Quests & Milestones -->
+      <div class="tab-content" id="tabQuests" style="display:none;">
+        <div class="panel-title">
+          <span>Road Bounties (Procedural)</span>
+          <span style="font-size:0.46rem; color:var(--accent-green);">Infinite Rewards</span>
+        </div>
+        <div id="questsList" class="card-list"></div>
+
+        <div class="panel-title" style="margin-top:8px;">
+          <span>Chef Career Milestones</span>
+        </div>
+        <div id="milestonesList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 7: Map & Biome Navigation -->
+      <div class="tab-content" id="tabMap" style="display:none;">
+        <div class="panel-title">
+          <span>Biome Highways</span>
+        </div>
+        <div style="font-size:0.48rem; color:var(--text-muted); margin-bottom:4px;">
+          Travel to different biomes to change your canvas scenery & discover unique local ingredients!
+        </div>
+        <div id="biomeList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 8: Mailbox & Traveler Letters -->
+      <div class="tab-content" id="tabMailbox" style="display:none;">
+        <div class="panel-title">
+          <span>Caravan Mailbox</span>
+          <span style="font-size:0.46rem; color:var(--accent-gold);">Postcards & Gifts</span>
+        </div>
+        <div id="mailboxList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 9: Caravan Customization & Decor -->
+      <div class="tab-content" id="tabDecor" style="display:none;">
+        <div class="panel-title">
+          <span>Caravan Paints & Aesthetic Decor</span>
+        </div>
+        <div style="font-size:0.48rem; color:var(--text-muted); margin-bottom:4px;">
+          Customize your caravan's visuals on the pixel canvas!
+        </div>
+
+        <div class="panel-title">
+          <span>Caravan Body Paints</span>
+        </div>
+        <div id="decorPaintList" class="card-list"></div>
+
+        <div class="panel-title" style="margin-top:6px;">
+          <span>Rooftop Decor</span>
+        </div>
+        <div id="decorRoofList" class="card-list"></div>
+
+        <div class="panel-title" style="margin-top:6px;">
+          <span>Campfire Hearth Styles</span>
+        </div>
+        <div id="decorHearthList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 10: Upgrades -->
+      <div class="tab-content" id="tabUpgrades" style="display:none;">
+        <div class="panel-title">
+          <span>Caravan Equipment & Upgrades</span>
+        </div>
+        <div id="upgradesList" class="card-list"></div>
+      </div>
+
+      <!-- Tab 11: Festival / Prestige -->
+      <div class="tab-content" id="tabPrestige" style="display:none;">
+        <div class="panel-title">
+          <span style="color:var(--accent-red);">Grand Culinary Festival</span>
+        </div>
+        <div style="font-size:0.5rem; line-height:1.4; color:var(--text-main);">
+          <p>Host a <strong>Grand Culinary Festival</strong> to gain permanent <strong>✨ Golden Spices</strong>!</p>
+          <div style="background:#221526; border:2px solid #701a75; padding:6px; border-radius:4px; margin:6px 0;">
+            <div>Earnable Golden Spices: <strong id="prestigeGain" style="color:#f472b6;">0</strong></div>
+          </div>
+          <button class="pixel-btn btn-prestige" onclick="triggerPrestige()" style="width:100%; padding:8px;">🌟 Host Grand Festival (Prestige)</button>
+        </div>
+      </div>
+
+      <!-- Tab 12: Guide -->
+      <div class="tab-content" id="tabGuide" style="display:none;">
+        <div class="panel-title">
+          <span>How to Play - Cozy Chef Guide</span>
+        </div>
+        <div class="guide-text">
+          <div class="guide-section">
+            <div class="guide-title">1. Cozy Game Loop</div>
+            Travel, forage, fish, and hunt without any timers or stress. Cook delicious recipes to earn Gold, level up, decorate your wagon, and discover rare lore!
+          </div>
+          <div class="guide-section">
+            <div class="guide-title">2. Canvas Interactions & Weather</div>
+            Click directly on the canvas! Poké the campfire for sparks, pet your animal, or wish on night sky stars. Weather like Rainy or Starfall visually drops animated weather onto your canvas!
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 13: Travel Log -->
+      <div class="tab-content" id="tabLog" style="display:none;">
+        <div class="panel-title">
+          <span>Caravan Travel Log</span>
+        </div>
+        <div id="logBox"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================================
+       1. ENHANCED SOUND ENGINE
+       ======================================================================== */
+    class RetroAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.sfxEnabled = true;
+        this.ambientEnabled = false;
+        this.fireNoiseNode = null;
+        this.fireGain = null;
+        this.chordIndex = 0;
+        this.ambientTimer = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+
+      play(type) {
+        if (!this.sfxEnabled) return;
+        this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain); gain.connect(this.ctx.destination);
+
+        if (type === 'click') {
+          osc.type = 'square'; osc.frequency.setValueAtTime(400, now);
+          gain.gain.setValueAtTime(0.06, now); gain.gain.linearRampToValueAtTime(0, now + 0.04);
+          osc.start(now); osc.stop(now + 0.04);
+        } else if (type === 'forage') {
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(250, now); osc.frequency.setValueAtTime(400, now + 0.05);
+          gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'fish') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+          gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'hunt') {
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.12);
+          gain.gain.setValueAtTime(0.12, now); gain.gain.linearRampToValueAtTime(0, now + 0.12);
+          osc.start(now); osc.stop(now + 0.12);
+        } else if (type === 'cook') {
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(600, now + 0.15);
+          gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.18);
+          osc.start(now); osc.stop(now + 0.18);
+        } else if (type === 'coin') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(987.77, now); osc.frequency.setValueAtTime(1318.51, now + 0.06);
+          gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'pet') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+          gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.18);
+          osc.start(now); osc.stop(now + 0.18);
+        } else if (type === 'spark') {
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(800 + Math.random() * 400, now);
+          gain.gain.setValueAtTime(0.04, now); gain.gain.linearRampToValueAtTime(0, now + 0.05);
+          osc.start(now); osc.stop(now + 0.05);
+        } else if (type === 'levelup') {
+          [261.63, 329.63, 392.00, 523.25].forEach((freq, idx) => {
+            const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+            o.type = 'square'; o.connect(g); g.connect(this.ctx.destination);
+            o.frequency.setValueAtTime(freq, now + idx * 0.05);
+            g.gain.setValueAtTime(0.06, now + idx * 0.05); g.gain.linearRampToValueAtTime(0, now + idx * 0.05 + 0.07);
+            o.start(now + idx * 0.05); o.stop(now + idx * 0.05 + 0.07);
+          });
+        } else if (type === 'travel') {
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now); osc.frequency.linearRampToValueAtTime(120, now + 0.12);
+          gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0, now + 0.12);
+          osc.start(now); osc.stop(now + 0.12);
+        }
+      }
+
+      toggleAmbient() {
+        this.ambientEnabled = !this.ambientEnabled;
+        if (this.ambientEnabled) {
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          this.startAmbient();
+        } else {
+          this.stopAmbient();
+        }
+        return this.ambientEnabled;
+      }
+
+      startAmbient() {
+        if (!this.ctx) return;
+        this.stopAmbient();
+
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
+        for (let i = 0; i < bufferSize; i++) {
+          let white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.012;
+          b6 = white * 0.115926;
+        }
+
+        this.fireNoiseNode = this.ctx.createBufferSource();
+        this.fireNoiseNode.buffer = noiseBuffer;
+        this.fireNoiseNode.loop = true;
+        this.fireGain = this.ctx.createGain();
+        this.fireGain.gain.setValueAtTime(0.015, this.ctx.currentTime);
+        this.fireNoiseNode.connect(this.fireGain);
+        this.fireGain.connect(this.ctx.destination);
+        this.fireNoiseNode.start();
+
+        const chords = [
+          [261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00],
+          [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 349.23]
+        ];
+
+        const playChord = () => {
+          if (!this.ambientEnabled) return;
+          const currentChord = chords[this.chordIndex % chords.length];
+          this.chordIndex++;
+
+          currentChord.forEach(freq => {
+            const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+            o.type = 'triangle'; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.001, this.ctx.currentTime);
+            g.gain.linearRampToValueAtTime(0.018, this.ctx.currentTime + 1.5);
+            g.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 3.8);
+            o.connect(g); g.connect(this.ctx.destination);
+            o.start(this.ctx.currentTime); o.stop(this.ctx.currentTime + 4.0);
+          });
+        };
+
+        playChord();
+        this.ambientTimer = setInterval(playChord, 4200);
+      }
+
+      stopAmbient() {
+        if (this.ambientTimer) clearInterval(this.ambientTimer);
+        if (this.fireNoiseNode) {
+          try { this.fireNoiseNode.stop(); } catch(e){}
+          this.fireNoiseNode = null;
+        }
+      }
+    }
+
+    const audioEngine = new RetroAudioEngine();
+
+    /* ========================================================================
+       2. DATA CONFIGURATIONS
+       ======================================================================== */
+    const TIMES_OF_DAY = ["Morning", "Afternoon", "Dusk", "Night"];
+    const WEATHERS = ["Clear", "Rainy", "Spore Breeze", "Starfall", "Solar Flare"];
+
+    const BIOMES = [
+      { id: "loc_forest", name: "Whispering Forest", bgGround: "#166534", bgTree: "#15803d", bgRoad: "#78350f", desc: "Lush green woods rich in wild mushrooms and game." },
+      { id: "loc_peaks", name: "Celestial Peaks", bgGround: "#0e7490", bgTree: "#155e75", bgRoad: "#334155", desc: "Snowy high altitude mountains where rare salmon swim." },
+      { id: "loc_desert", name: "Sunscorched Desert", bgGround: "#b45309", bgTree: "#854d0e", bgRoad: "#d97706", desc: "Warm golden dunes glowing with spicy dragon peppers." }
+    ];
+
+    const BASE_INGREDIENTS = [
+      { id: "ing_mushroom", name: "Whisper Mushroom", flavor: "Umami", rarity: "common", icon: "🍄", lore: "Glowing mushrooms harvested from shadowy forest moss." },
+      { id: "ing_herb", name: "Rain-Touched Herb", flavor: "Herbal", rarity: "common", icon: "🌿", lore: "Fragrant leaves dripping with morning dew." },
+      { id: "ing_root", name: "Lantern Root", flavor: "Sweet", rarity: "common", icon: "🥕", lore: "Naturally sweet tubers that shine with mild amber light." },
+      { id: "ing_spice", name: "Fire Chili", flavor: "Spicy", rarity: "common", icon: "🌶️", lore: "Piquant peppers cultivated in warm volcanic soils." },
+      { id: "ing_berry", name: "Star Berry", flavor: "Sour", rarity: "common", icon: "🫐", lore: "Tart blue berries harvested under starlit clear skies." },
+      { id: "ing_crystal_salt", name: "Aether Salt", flavor: "Savory", rarity: "rare", icon: "🧂", lore: "Crystalline mineral salt mined from ancient dried seabeds." },
+      { id: "ing_dragon_pepper", name: "Dragon Pepper", flavor: "Spicy", rarity: "rare", icon: "🔥", lore: "Scorching red peppers that emit gentle wisps of warm smoke." },
+      { id: "ing_moon_bloom", name: "Moon Bloom", flavor: "Magical", rarity: "epic", icon: "🌸", lore: "Ethereal petals that bloom only under dusk or starlight." },
+      { id: "ing_golden_truffle", name: "Golden Truffle", flavor: "Umami", rarity: "legendary", icon: "🌟", lore: "An impossibly rare subterranean mushroom worth a small fortune." },
+      { id: "ing_forest_hare", name: "Forest Hare", flavor: "Protein", rarity: "common", icon: "🐇", lore: "Wild game meat sourced from woodland thickets." },
+      { id: "ing_river_trout", name: "River Trout", flavor: "Protein", rarity: "common", icon: "🐟", lore: "Fresh silver-scaled trout caught in mountain streams." },
+      { id: "ing_spice_boar", name: "Spice Boar", flavor: "Protein", rarity: "rare", icon: "🐗", lore: "Hearty game meat infused naturally with wild road herbs." },
+      { id: "ing_starlit_salmon", name: "Starlit Salmon", flavor: "Protein", rarity: "epic", icon: "🐠", lore: "Rare salmon that swim along glowing cosmic currents." },
+      { id: "ing_kraken_calamari", name: "Aether Calamari", flavor: "Protein", rarity: "legendary", icon: "🦑", lore: "Mythical deep-water delicacy brimming with magical flavor." }
+    ];
+
+    const RECIPE_DATABASE = [
+      { name: "Rustic Herb Soup", flavors: ["Herbal", "Umami"], basePrice: 20, icon: "🍲", hint: "Herb + Mushroom" },
+      { name: "Spiced Ember Stew", flavors: ["Spicy", "Savory"], basePrice: 35, icon: "🥘", hint: "Chili + Aether Salt" },
+      { name: "Hearty Campfire Hare Stew", flavors: ["Protein", "Herbal"], basePrice: 45, icon: "🍲", hint: "Hare + Herb" },
+      { name: "Smoked River Trout", flavors: ["Protein", "Savory"], basePrice: 50, icon: "🐟", hint: "Trout + Aether Salt" },
+      { name: "Spice Boar Roast", flavors: ["Protein", "Spicy"], basePrice: 85, icon: "🍖", hint: "Boar + Fire Chili" },
+      { name: "Starlit Salmon Chowder", flavors: ["Protein", "Magical"], basePrice: 130, icon: "🥣", hint: "Salmon + Moon Bloom" },
+      { name: "Starbloom Tart", flavors: ["Sweet", "Magical"], basePrice: 60, icon: "🥧", hint: "Berry + Moon Bloom" },
+      { name: "Celestial Truffle Risotto", flavors: ["Umami", "Magical"], basePrice: 120, icon: "🍚", hint: "Truffle + Moon Bloom" }
+    ];
+
+    const VISITOR_TEMPLATES = [
+      { name: "Mira the Herbalist", type: "Traveler", craving: "Herbal", rewardMult: 1.5, dialogue: "The roads are weary. A refreshing herbal brew would ease my mind." },
+      { name: "Ignis the Fire Mage", type: "VIP", craving: "Spicy", rewardMult: 2.2, dialogue: "Bring me something with a true kick! Fire fuels my spells!" },
+      { name: "Huntsman Gareth", type: "Hunter", craving: "Protein", rewardMult: 1.9, dialogue: "Nothing satisfies an old hunter like a hot roast of wild game!" },
+      { name: "Elder Bramble", type: "Scholar", craving: "Umami", rewardMult: 1.8, dialogue: "Ah, the savory dishes of my youth… do you know how to prepare them?" },
+      { name: "Celestial Spirit", type: "Mythic", craving: "Magical", rewardMult: 3.0, dialogue: "I drift across starways seeking dishes touched by cosmic light." },
+      { name: "Jinx the Peddler", type: "Merchant", craving: "Any", rewardMult: 1.0, dialogue: "Care to barter components or buy rare road treasures?" }
+    ];
+
+    const DECOR_PAINTS = [
+      { id: "default", name: "Warm Birch (Default)", cost: 0, color: "#854d0e" },
+      { id: "moss", name: "Forest Moss Green", cost: 75, color: "#2d5a27" },
+      { id: "midnight", name: "Midnight Starlight Blue", cost: 120, color: "#1e1b4b" },
+      { id: "rose", name: "Pastel Rose Pink", cost: 150, color: "#831843" }
+    ];
+
+    const DECOR_ROOF = [
+      { id: "none", name: "Standard Wooden Roof", cost: 0 },
+      { id: "lights", name: "Fairy Lights Strand", cost: 80 },
+      { id: "plants", name: "Roof Garden Planters", cost: 110 }
+    ];
+
+    const DECOR_HEARTH = [
+      { id: "stone", name: "Campfire Stones (Default)", cost: 0 },
+      { id: "iron", name: "Cast Iron Stove", cost: 100 },
+      { id: "rune", name: "Enchanted Rune Hearth", cost: 180 }
+    ];
+
+    const PET_CATALOG = [
+      { id: "fox", name: "Barnaby the Ember Fox", icon: "🦊", color: "#ea580c" },
+      { id: "turtle", name: "Mochi the Mossy Turtle", icon: "🐢", color: "#16a34a" },
+      { id: "owl", name: "Luna the Moon Owl", icon: "🦉", color: "#a855f7" }
+    ];
+
+    /* Career Milestones Achievements */
+    const MILESTONES = [
+      { id: "m_cook5", title: "Novice Chef", desc: "Cook 5 Dishes", target: 5, rewardGold: 100, field: "dishesCooked" },
+      { id: "m_cook20", title: "Master Culinary Artist", desc: "Cook 20 Dishes", target: 20, rewardGold: 300, field: "dishesCooked" },
+      { id: "m_fish10", title: "Master Angler", desc: "Catch 10 Fish", target: 10, rewardGold: 150, field: "fishCaught" },
+      { id: "m_hunt10", title: "Master Tracker", desc: "Hunt 10 Game Animals", target: 10, rewardGold: 150, field: "gameHunted" },
+      { id: "m_travel20", title: "Infinite Traveler", desc: "Travel 20 Highway Miles", target: 20, rewardGold: 250, field: "distanceTraveled" }
+    ];
+
+    /* ========================================================================
+       3. INITIAL GAME STATE
+       ======================================================================== */
+    let gameState = {
+      player: {
+        level: 1, xp: 0, xpToNext: 100, gold: 60, goldenSpices: 0,
+        totalGoldEarned: 0, dishesCooked: 0, distanceTraveled: 0,
+        fishCaught: 0, gameHunted: 0, petsPetted: 0, gardenHarvests: 0, questIndex: 1
+      },
+      time: { day: 1, timeIndex: 0, weather: "Clear" },
+      location: { ...BIOMES[0] },
+      pantry: [
+        { ...BASE_INGREDIENTS[0], qty: 3 },
+        { ...BASE_INGREDIENTS[1], qty: 2 },
+        { ...BASE_INGREDIENTS[9], qty: 2 }
+      ],
+      craftingSlots: [null, null, null],
+      recipeMastery: {},
+      upgrades: { stove: 1, drone: 0, bed: 0, greenhouse: 0, fishingGear: 0, huntingTrap: 0 },
+      decor: { paint: "default", roof: "none", hearth: "stone", owned: ["default", "none", "stone"] },
+      pet: { active: "fox", happiness: 100 },
+      garden: [
+        { id: 0, seed: "ing_herb", progress: 0, maxProgress: 3, ready: false },
+        { id: 1, seed: "ing_root", progress: 0, maxProgress: 4, ready: false },
+        { id: 2, seed: null, progress: 0, maxProgress: 3, ready: false }
+      ],
+      mailbox: [
+        { id: 1, sender: "Mira the Herbalist", msg: "Thank you for the warm tea at camp! Here are a few fresh rain herbs from my garden.", claimed: false, rewardItem: BASE_INGREDIENTS[1] }
+      ],
+      claimedMilestones: [],
+      discoveredIngredients: ["ing_mushroom", "ing_herb", "ing_root", "ing_forest_hare"],
+      discoveredRecipes: ["Rustic Herb Soup"],
+      npcAffinity: { "Mira the Herbalist": 1, "Ignis the Fire Mage": 0, "Huntsman Gareth": 0, "Elder Bramble": 0, "Celestial Spirit": 0, "Jinx the Peddler": 0 },
+      artifacts: { goldenSkillet: 0, seedVault: 0 },
+      currentVisitor: null,
+      quests: [],
+      log: []
+    };
+
+    /* Expanded Procedural Quests */
+    function generateQuest() {
+      const types = ["fish", "hunt", "forage", "cook", "serve", "pet", "garden"];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const questId = "q_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+      let title = "", desc = "", goal = 2;
+
+      if (type === "fish") {
+        goal = 2 + Math.floor(Math.random() * 2);
+        title = `Angler Bounty #${gameState.player.questIndex}`;
+        desc = `Catch ${goal} Fish in any stream`;
+      } else if (type === "hunt") {
+        goal = 2 + Math.floor(Math.random() * 2);
+        title = `Wild Hunt #${gameState.player.questIndex}`;
+        desc = `Hunt ${goal} Game Animals`;
+      } else if (type === "forage") {
+        goal = 3 + Math.floor(Math.random() * 2);
+        title = `Forager Supply #${gameState.player.questIndex}`;
+        desc = `Forage ${goal} Wild Plants`;
+      } else if (type === "cook") {
+        goal = 2 + Math.floor(Math.random() * 2);
+        title = `Culinary Feast #${gameState.player.questIndex}`;
+        desc = `Cook ${goal} Custom Meals`;
+      } else if (type === "serve") {
+        goal = 1 + Math.floor(Math.random() * 2);
+        title = `Hospitality Quest #${gameState.player.questIndex}`;
+        desc = `Serve ${goal} Campfire Travelers`;
+      } else if (type === "pet") {
+        goal = 2;
+        title = `Animal Bond #${gameState.player.questIndex}`;
+        desc = `Pet your companion ${goal} times`;
+      } else if (type === "garden") {
+        goal = 1;
+        title = `Green Thumb #${gameState.player.questIndex}`;
+        desc = `Harvest ${goal} Rooftop Crop`;
+      }
+
+      gameState.player.questIndex++;
+      const rewardGold = 40 + (gameState.player.level * 15) + (goal * 10);
+
+      return {
+        id: questId, title, desc, goal, current: 0, rewardGold,
+        rewardText: `🪙 ${rewardGold} Gold`, done: false, claimed: false, type
+      };
+    }
+
+    function initQuests() {
+      while (gameState.quests.length < 4) gameState.quests.push(generateQuest());
+    }
+
+    /* ========================================================================
+       4. PIXEL CANVAS GRAPHICS ENGINE (WITH WEATHER EFFECTS)
+       ======================================================================== */
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    let animFrame = 0;
+    let particleList = [];
+    let canvasFX = null;
+
+    function spawnParticle(x, y, color, speedX, speedY, life) {
+      particleList.push({ x, y, color, speedX, speedY, life, maxLife: life });
+    }
+
+    function renderCanvas() {
+      animFrame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const timeName = TIMES_OF_DAY[gameState.time.timeIndex];
+      const curBiome = gameState.location;
+
+      // Dynamic Sky Gradient
+      let skyColorTop = "#38bdf8", skyColorBot = "#bae6fd";
+      if (timeName === "Afternoon") { skyColorTop = "#0284c7"; skyColorBot = "#7dd3fc"; }
+      else if (timeName === "Dusk") { skyColorTop = "#581c87"; skyColorBot = "#f97316"; }
+      else if (timeName === "Night") { skyColorTop = "#090d16"; skyColorBot = "#1e1b4b"; }
+
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGrad.addColorStop(0, skyColorTop); skyGrad.addColorStop(1, skyColorBot);
+      ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Night Stars
+      if (timeName === "Night") {
+        ctx.fillStyle = "#ffffff";
+        for (let i = 0; i < 16; i++) {
+          let sx = (i * 37 + animFrame * 0.1) % canvas.width;
+          let sy = (i * 19) % 70;
+          if ((i + animFrame) % 10 < 7) ctx.fillRect(sx, sy, 2, 2);
+        }
+      }
+
+      // Parallax Trees based on Biome Color
+      ctx.fillStyle = curBiome.bgTree || "#15803d";
+      for (let i = 0; i < 5; i++) {
+        let mx = i * 90 - (animFrame * 0.2 % 90);
+        ctx.beginPath();
+        ctx.moveTo(mx, 130); ctx.lineTo(mx + 45, 70); ctx.lineTo(mx + 90, 130); ctx.fill();
+      }
+
+      // Ground Terrain Colors
+      ctx.fillStyle = curBiome.bgGround || "#166534"; ctx.fillRect(0, 120, canvas.width, 65);
+      ctx.fillStyle = "#0284c7"; ctx.fillRect(260, 135, 120, 50); // Water
+      ctx.fillStyle = "#38bdf8"; ctx.fillRect(260, 135, 120, 3);
+      ctx.fillStyle = curBiome.bgRoad || "#78350f"; ctx.fillRect(0, 145, 255, 25); // Road
+
+      // CARAVAN BODY
+      let caravanX = 65, caravanY = 105;
+      const paintColor = DECOR_PAINTS.find(p => p.id === gameState.decor.paint)?.color || "#854d0e";
+      ctx.fillStyle = paintColor; ctx.fillRect(caravanX, caravanY, 68, 38);
+      ctx.fillStyle = "#fef08a"; ctx.fillRect(caravanX - 2, caravanY - 8, 72, 10);
+
+      // Roof Decor
+      if (gameState.decor.roof === "lights") {
+        for (let l = 0; l < 7; l++) {
+          ctx.fillStyle = (l + animFrame / 15) % 2 < 1 ? "#facc15" : "#f472b6";
+          ctx.fillRect(caravanX + 2 + l * 10, caravanY - 10, 3, 3);
+        }
+      } else if (gameState.decor.roof === "plants") {
+        ctx.fillStyle = "#b45309"; ctx.fillRect(caravanX + 10, caravanY - 14, 12, 6);
+        ctx.fillStyle = "#22c55e"; ctx.fillRect(caravanX + 12, caravanY - 18, 8, 4);
+      }
+
+      // Wheels
+      ctx.fillStyle = "#292524";
+      ctx.beginPath(); ctx.arc(caravanX + 15, caravanY + 38, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(caravanX + 52, caravanY + 38, 8, 0, Math.PI * 2); ctx.fill();
+
+      // CAMPFIRE / HEARTH
+      let fireX = 160, fireY = 135;
+      if (gameState.decor.hearth === "iron") {
+        ctx.fillStyle = "#334155"; ctx.fillRect(fireX - 4, fireY - 10, 18, 20);
+        ctx.fillStyle = "#f97316"; ctx.fillRect(fireX + 2, fireY - 2, 6, 8);
+      } else if (gameState.decor.hearth === "rune") {
+        ctx.fillStyle = "#8b5cf6"; ctx.fillRect(fireX - 6, fireY + 4, 22, 5);
+        ctx.fillStyle = "#ec4899"; ctx.fillRect(fireX, fireY - 4, 10, 8);
+      } else {
+        ctx.fillStyle = "#dc2626"; ctx.fillRect(fireX, fireY + 4, 10, 5);
+        ctx.fillStyle = "#f97316"; ctx.fillRect(fireX + 2, fireY - 4, 6, 8);
+      }
+      ctx.fillStyle = animFrame % 10 < 5 ? "#ef4444" : "#facc15";
+      ctx.fillRect(fireX + 3, fireY - 8 - (animFrame % 3), 4, 5);
+
+      // CHEF & PET
+      let chefX = 145, chefY = 125;
+      ctx.fillStyle = "#e0f2fe"; ctx.fillRect(chefX, chefY, 10, 14);
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(chefX, chefY - 14, 10, 7);
+
+      let petX = 125, petY = 133;
+      const petInfo = PET_CATALOG.find(p => p.id === gameState.pet.active);
+      if (petInfo) {
+        ctx.fillStyle = petInfo.color;
+        let bounceY = Math.sin(animFrame * 0.1) * 2;
+        ctx.fillRect(petX, petY + bounceY, 9, 8);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(petX + 6, petY + 2 + bounceY, 2, 2);
+      }
+
+      if (gameState.currentVisitor) {
+        ctx.fillStyle = "#22c55e"; ctx.fillRect(190, 125, 10, 16);
+      }
+
+      // 🌧️ WEATHER PARTICLES ENGINE
+      const weather = gameState.time.weather;
+      if (weather === "Rainy") {
+        ctx.fillStyle = "#60a5fa";
+        for (let r = 0; r < 12; r++) {
+          let rx = (r * 32 + animFrame * 4) % canvas.width;
+          let ry = (r * 18 + animFrame * 7) % canvas.height;
+          ctx.fillRect(rx, ry, 1, 4);
+        }
+      } else if (weather === "Spore Breeze") {
+        ctx.fillStyle = "#4ade80";
+        for (let s = 0; s < 8; s++) {
+          let sx = (s * 45 + animFrame * 1.5) % canvas.width;
+          let sy = (s * 22 + Math.sin(animFrame * 0.05 + s) * 10) % canvas.height;
+          ctx.fillRect(sx, sy, 2, 2);
+        }
+      } else if (weather === "Starfall") {
+        ctx.fillStyle = "#facc15";
+        for (let st = 0; st < 6; st++) {
+          let stx = (st * 60 + animFrame * 3) % canvas.width;
+          let sty = (st * 30 + animFrame * 3) % canvas.height;
+          ctx.fillRect(stx, sty, 3, 1);
+        }
+      }
+
+      // RETICLES & PARTICLES
+      if (canvasFX === 'splash') {
+        ctx.fillStyle = "#60a5fa"; ctx.fillRect(300 + Math.sin(animFrame) * 4, 145, 8, 4);
+      } else if (canvasFX === 'reticle') {
+        ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2;
+        ctx.strokeRect(30 + (animFrame * 3 % 100), 125, 12, 12);
+      }
+
+      for (let i = particleList.length - 1; i >= 0; i--) {
+        let p = particleList[i];
+        p.x += p.speedX; p.y += p.speedY; p.life--;
+        ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 2, 2);
+        if (p.life <= 0) particleList.splice(i, 1);
+      }
+
+      requestAnimationFrame(renderCanvas);
+    }
+
+    /* ========================================================================
+       5. GAME LOGIC & FUNCTIONS
+       ======================================================================== */
+    function log(msg) {
+      const timeStr = `Day ${gameState.time.day} (${TIMES_OF_DAY[gameState.time.timeIndex]})`;
+      gameState.log.unshift({ time: timeStr, msg });
+      if (gameState.log.length > 50) gameState.log.pop();
+      renderLog();
+    }
+
+    function renderLog() {
+      document.getElementById("logBox").innerHTML = gameState.log.map(e => `
+        <div class="log-entry"><span class="time">[${e.time}]</span> ${e.msg}</div>
+      `).join("");
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement("div");
+      toast.className = "toast-msg"; toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    function discoverIngredient(ingId) {
+      if (!gameState.discoveredIngredients.includes(ingId)) {
+        gameState.discoveredIngredients.push(ingId);
+        showToast("📘 New Lore Entry Discovered in Museum!");
+      }
+    }
+
+    function advanceTime() {
+      gameState.time.timeIndex++;
+      if (gameState.time.timeIndex >= TIMES_OF_DAY.length) {
+        gameState.time.timeIndex = 0;
+        gameState.time.day++;
+        if (Math.random() < 0.4) {
+          gameState.time.weather = WEATHERS[Math.floor(Math.random() * WEATHERS.length)];
+        }
+      }
+
+      // Roof Garden Steps
+      gameState.garden.forEach(pot => {
+        if (pot.seed && !pot.ready) {
+          pot.progress++;
+          if (pot.progress >= pot.maxProgress) pot.ready = true;
+        }
+      });
+
+      updateUI();
+    }
+
+    function addPantryItem(item, qty = 1) {
+      discoverIngredient(item.id);
+      let existing = gameState.pantry.find(p => p.id === item.id);
+      if (existing) { existing.qty += qty; }
+      else {
+        gameState.pantry.push({
+          id: item.id, name: item.name, flavor: item.flavor,
+          rarity: item.rarity, icon: item.icon, lore: item.lore, qty: qty
+        });
+      }
+    }
+
+    function consumeBait() {
+      const select = document.getElementById("baitSelect");
+      const type = select.value;
+      if (type === "surplus") {
+        let herb = gameState.pantry.find(p => p.id === "ing_herb" && p.qty > 0);
+        if (herb) { herb.qty--; return 0.25; }
+      } else if (type === "salt") {
+        let salt = gameState.pantry.find(p => p.id === "ing_crystal_salt" && p.qty > 0);
+        if (salt) { salt.qty--; return 0.5; }
+      }
+      return 0;
+    }
+
+    function gainXP(amount) {
+      gameState.player.xp += amount;
+      while (gameState.player.xp >= gameState.player.xpToNext) {
+        gameState.player.xp -= gameState.player.xpToNext;
+        gameState.player.level++;
+        gameState.player.xpToNext = Math.floor(gameState.player.xpToNext * 1.5);
+        audioEngine.play('levelup');
+        showToast(`🎉 Level Up! Chef Level ${gameState.player.level}!`);
+      }
+    }
+
+    /* Actions */
+    function travel() {
+      audioEngine.play('travel'); advanceTime();
+      gameState.player.distanceTraveled++;
+      checkQuests("travel");
+
+      if (Math.random() < 0.6) {
+        gameState.currentVisitor = { ...VISITOR_TEMPLATES[Math.floor(Math.random() * VISITOR_TEMPLATES.length)] };
+        log(`Traveler arrived: ${gameState.currentVisitor.name}!`);
+      } else gameState.currentVisitor = null;
+      log("Traveled along the highway.");
+      updateUI();
+    }
+
+    function forage() {
+      audioEngine.play('forage'); advanceTime();
+      const item = BASE_INGREDIENTS[Math.floor(Math.random() * 5)];
+      addPantryItem(item, 1);
+      gainXP(15);
+      checkQuests("forage");
+      log(`Foraged: ${item.icon} ${item.name}!`);
+      updateUI();
+    }
+
+    function fish() {
+      audioEngine.play('fish'); advanceTime();
+      canvasFX = 'splash'; setTimeout(() => canvasFX = null, 1200);
+
+      const baitBonus = consumeBait();
+      const gearBonus = gameState.upgrades.fishingGear * 0.15;
+      const weatherBonus = gameState.time.weather === "Rainy" ? 0.2 : 0;
+      const roll = Math.random() + baitBonus + gearBonus + weatherBonus;
+
+      let caught = roll > 0.9 ? BASE_INGREDIENTS[13] : roll > 0.75 ? BASE_INGREDIENTS[12] : BASE_INGREDIENTS[10];
+
+      addPantryItem(caught, 1);
+      gameState.player.fishCaught++;
+      gainXP(20);
+      checkQuests("fish");
+      log(`Reeled in: ${caught.icon} ${caught.name}!`);
+      updateUI();
+    }
+
+    function hunt() {
+      audioEngine.play('hunt'); advanceTime();
+      canvasFX = 'reticle'; setTimeout(() => canvasFX = null, 1200);
+
+      const baitBonus = consumeBait();
+      const trapBonus = gameState.upgrades.huntingTrap * 0.15;
+      const roll = Math.random() + baitBonus + trapBonus;
+
+      let caught = roll > 0.7 ? BASE_INGREDIENTS[11] : BASE_INGREDIENTS[9];
+
+      addPantryItem(caught, 1);
+      gameState.player.gameHunted++;
+      gainXP(22);
+      checkQuests("hunt");
+      log(`Hunted: ${caught.icon} ${caught.name}!`);
+      updateUI();
+    }
+
+    function rest() {
+      audioEngine.play('click'); advanceTime(); gainXP(20);
+      if (Math.random() < 0.6) {
+        const giftItem = BASE_INGREDIENTS[Math.floor(Math.random() * 5)];
+        addPantryItem(giftItem, 1);
+        log(`🐾 Your pet brought a rest gift: ${giftItem.icon} ${giftItem.name}!`);
+      }
+      updateUI();
+    }
+
+    function petAnimal() {
+      audioEngine.play('pet');
+      gameState.player.petsPetted++;
+      checkQuests("pet");
+      for (let i = 0; i < 8; i++) {
+        spawnParticle(129, 126, "#f472b6", (Math.random() - 0.5) * 0.8, -1, 30);
+      }
+      showToast("💖 Loved your pet companion!");
+      updateUI();
+    }
+
+    /* Cooking & Serving */
+    function selectIngredientForCraft(ingredientId) {
+      const pantryItem = gameState.pantry.find(p => p.id === ingredientId);
+      if (!pantryItem || pantryItem.qty <= 0) return showToast("No ingredients left!");
+
+      const emptyIdx = gameState.craftingSlots.findIndex(s => s === null);
+      if (emptyIdx === -1) return showToast("Crafting slots full!");
+
+      pantryItem.qty--;
+      gameState.craftingSlots[emptyIdx] = { ...pantryItem, qty: 1 };
+      audioEngine.play('click');
+      updateUI();
+    }
+
+    function clearCraftSlot(idx) {
+      const slotted = gameState.craftingSlots[idx];
+      if (slotted) {
+        addPantryItem(slotted, 1);
+        gameState.craftingSlots[idx] = null;
+        audioEngine.play('click');
+        updateUI();
+      }
+    }
+
+    function autoFillRecipe(recipeName) {
+      const recipe = RECIPE_DATABASE.find(r => r.name === recipeName);
+      if (!recipe) return;
+
+      for (let k = 0; k < 3; k++) clearCraftSlot(k);
+
+      let filledCount = 0;
+      recipe.flavors.forEach(flavorNeeded => {
+        const matchingItem = gameState.pantry.find(p => p.flavor === flavorNeeded && p.qty > 0);
+        if (matchingItem) {
+          selectIngredientForCraft(matchingItem.id);
+          filledCount++;
+        }
+      });
+
+      if (filledCount > 0) switchTab('craft');
+    }
+
+    function cookSelectedIngredients() {
+      const items = gameState.craftingSlots.filter(s => s !== null);
+      if (items.length < 2) return showToast("Select at least 2 ingredients!");
+
+      audioEngine.play('cook'); advanceTime();
+      const flavors = items.map(i => i.flavor);
+      let matchedRecipe = RECIPE_DATABASE.find(r => r.flavors.every(f => flavors.includes(f)));
+
+      let dishName = matchedRecipe ? matchedRecipe.name : `${items[0].name.split(" ")[0]} Stir-Fry`;
+      let dishBasePrice = matchedRecipe ? matchedRecipe.basePrice : 35;
+
+      const currentMastery = gameState.recipeMastery[dishName] || 1;
+      gameState.recipeMastery[dishName] = Math.min(5, currentMastery + 1);
+
+      const earnedGold = Math.floor(dishBasePrice * currentMastery * (1 + gameState.upgrades.stove * 0.2));
+      gameState.player.gold += earnedGold;
+      gameState.player.dishesCooked++;
+      gainXP(35);
+
+      checkQuests("cook");
+      gameState.craftingSlots = [null, null, null];
+      showToast(`🍳 Cooked ${dishName}! Earned 🪙${earnedGold}`);
+      log(`Cooked ${dishName}. Earned 🪙${earnedGold}.`);
+      updateUI();
+    }
+
+    function serveVisitor() {
+      if (!gameState.currentVisitor) return;
+      audioEngine.play('coin'); advanceTime();
+
+      const visitorName = gameState.currentVisitor.name;
+      const curAffinity = gameState.npcAffinity[visitorName] || 1;
+      gameState.npcAffinity[visitorName] = Math.min(5, curAffinity + 1);
+
+      const reward = Math.floor(45 * gameState.currentVisitor.rewardMult * gameState.player.level * (1 + curAffinity * 0.15));
+      gameState.player.gold += reward;
+      checkQuests("serve");
+
+      // Deliver thank-you letter to mailbox
+      gameState.mailbox.push({
+        id: Date.now(), sender: visitorName,
+        msg: `Loved your cooking! Here are a few gold coins for the road.`,
+        claimed: false, rewardGold: 30
+      });
+
+      log(`Served ${visitorName}! (Affinity ❤️${gameState.npcAffinity[visitorName]}).`);
+      showToast(`Served ${visitorName}! Sent a thank-you letter to your mailbox!`);
+      gameState.currentVisitor = null;
+      updateUI();
+    }
+
+    function claimMail(mailId) {
+      const mail = gameState.mailbox.find(m => m.id === mailId);
+      if (mail && !mail.claimed) {
+        mail.claimed = true;
+        if (mail.rewardGold) gameState.player.gold += mail.rewardGold;
+        if (mail.rewardItem) addPantryItem(mail.rewardItem, 1);
+        audioEngine.play('coin');
+        showToast("Claimed mail rewards!");
+        updateUI();
+      }
+    }
+
+    function changeBiome(biomeId) {
+      const target = BIOMES.find(b => b.id === biomeId);
+      if (target) {
+        gameState.location = { ...target };
+        audioEngine.play('travel');
+        showToast(`Traveled to ${target.name}!`);
+        updateUI();
+      }
+    }
+
+    function harvestGarden(potId) {
+      const pot = gameState.garden[potId];
+      if (!pot || !pot.ready) return;
+
+      const baseIng = BASE_INGREDIENTS.find(i => i.id === pot.seed) || BASE_INGREDIENTS[1];
+      addPantryItem(baseIng, 2);
+      audioEngine.play('forage');
+      gameState.player.gardenHarvests++;
+      checkQuests("garden");
+      gameState.garden[potId] = { id: potId, seed: null, progress: 0, maxProgress: 3, ready: false };
+      updateUI();
+    }
+
+    function plantGarden(potId, ingId) {
+      const item = gameState.pantry.find(p => p.id === ingId);
+      if (!item || item.qty <= 0) return;
+      item.qty--;
+      gameState.garden[potId] = { id: potId, seed: ingId, progress: 0, maxProgress: 3, ready: false };
+      audioEngine.play('forage');
+      updateUI();
+    }
+
+    function equipDecor(category, id) { gameState.decor[category] = id; updateUI(); }
+    function buyDecor(category, item) {
+      if (gameState.player.gold >= item.cost) {
+        gameState.player.gold -= item.cost;
+        gameState.decor.owned.push(item.id);
+        gameState.decor[category] = item.id;
+        audioEngine.play('coin'); updateUI();
+      }
+    }
+
+    function buyUpgrade(key) {
+      const costs = { stove: 50, drone: 80, fishingGear: 60, huntingTrap: 60 };
+      const cost = costs[key] * (gameState.upgrades[key] + 1);
+      if (gameState.player.gold >= cost) {
+        gameState.player.gold -= cost;
+        gameState.upgrades[key]++;
+        audioEngine.play('coin'); updateUI();
+      }
+    }
+
+    function checkQuests(type) {
+      gameState.quests.forEach(q => {
+        if (!q.done && q.type === type) {
+          q.current++;
+          if (q.current >= q.goal) { q.done = true; showToast(`🏆 Bounty Completed: ${q.title}!`); }
+        }
+      });
+    }
+
+    function claimQuest(questId) {
+      const qIdx = gameState.quests.findIndex(q => q.id === questId);
+      if (qIdx === -1) return;
+      const q = gameState.quests[qIdx];
+      if (q.done && !q.claimed) {
+        gameState.player.gold += q.rewardGold;
+        gainXP(40);
+        audioEngine.play('levelup');
+        gameState.quests.splice(qIdx, 1, generateQuest());
+        updateUI();
+      }
+    }
+
+    function claimMilestone(mId) {
+      const m = MILESTONES.find(item => item.id === mId);
+      if (m && !gameState.claimedMilestones.includes(mId)) {
+        gameState.player.gold += m.rewardGold;
+        gameState.claimedMilestones.push(mId);
+        audioEngine.play('levelup');
+        showToast(`🏆 Claimed Milestone: ${m.title}!`);
+        updateUI();
+      }
+    }
+
+    /* Canvas Click Interactivity */
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+
+      if (clickX >= 150 && clickX <= 178 && clickY >= 120 && clickY <= 145) {
+        audioEngine.play('spark');
+        for (let i = 0; i < 10; i++) spawnParticle(165, 133, "#f97316", (Math.random() - 0.5) * 1.5, -Math.random() * 1.8, 30);
+      }
+      if (clickX >= 118 && clickX <= 138 && clickY >= 125 && clickY <= 142) petAnimal();
+    });
+
+    /* UI Rendering Engine */
+    function updateUI() {
+      initQuests();
+
+      document.getElementById("hdrLevel").textContent = gameState.player.level;
+      document.getElementById("hdrGold").textContent = gameState.player.gold;
+      document.getElementById("hdrPrestige").textContent = gameState.player.goldenSpices;
+
+      document.getElementById("vpBiome").textContent = gameState.location.name;
+      document.getElementById("vpDay").textContent = gameState.time.day;
+      document.getElementById("vpTime").textContent = TIMES_OF_DAY[gameState.time.timeIndex];
+      document.getElementById("vpWeather").textContent = gameState.time.weather;
+      document.getElementById("envBiome").textContent = gameState.location.name;
+      document.getElementById("envEvent").textContent = gameState.time.weather;
+
+      const visitorCard = document.getElementById("visitorCard");
+      const btnServeVisitor = document.getElementById("btnServeVisitor");
+      if (gameState.currentVisitor) {
+        const aff = gameState.npcAffinity[gameState.currentVisitor.name] || 1;
+        visitorCard.innerHTML = `<strong>[${gameState.currentVisitor.type}] ${gameState.currentVisitor.name}</strong> (❤️ ${aff}/5)<br><em>"${gameState.currentVisitor.dialogue}"</em><br><div style="color:var(--accent-gold); margin-top:3px;">Craves: ${gameState.currentVisitor.craving}</div>`;
+        btnServeVisitor.style.display = "block";
+      } else {
+        visitorCard.textContent = "No visitor present. Travel or rest to meet travelers!";
+        btnServeVisitor.style.display = "none";
+      }
+
+      // Pantry
+      const renderPantryCard = (i) => `
+        <div class="item-card ${i.qty <= 0 ? 'disabled' : ''}" onclick="selectIngredientForCraft('${i.id}')" style="cursor:pointer;">
+          <div class="item-info">
+            <div>${i.icon} <strong>${i.name}</strong> (x${i.qty})</div>
+            <div><span class="item-tag ${i.flavor === 'Protein' ? 'tag-protein' : 'tag-' + (i.rarity || 'common')}">${i.flavor}</span></div>
+          </div>
+          <span style="color:var(--accent-green); font-size:0.46rem;">${i.qty > 0 ? '+ Add' : 'Empty'}</span>
+        </div>
+      `;
+      document.getElementById("pantryList").innerHTML = gameState.pantry.map(renderPantryCard).join("");
+      document.getElementById("kitchenPantryList").innerHTML = gameState.pantry.map(renderPantryCard).join("");
+
+      // Crafting Slots
+      for (let k = 0; k < 3; k++) {
+        const slotEl = document.getElementById(`slot${k}`);
+        const slotted = gameState.craftingSlots[k];
+        slotEl.className = slotted ? "craft-slot filled" : "craft-slot";
+        slotEl.textContent = slotted ? `${slotted.icon} ${slotted.name}` : `+ Slot ${k + 1}`;
+      }
+
+      // Cookbook
+      document.getElementById("cookbookList").innerHTML = RECIPE_DATABASE.map(r => `
+        <div class="item-card">
+          <div class="item-info">
+            <div>${r.icon} <strong>${r.name}</strong> (Mastery ⭐${gameState.recipeMastery[r.name] || 1})</div>
+            <div>${r.flavors.map(f => `<span class="item-tag ${f === 'Protein' ? 'tag-protein' : 'tag-common'}">${f}</span>`).join("")}</div>
+          </div>
+          <button class="pixel-btn btn-cook" onclick="autoFillRecipe('${r.name}')" style="padding:4px 6px;">Auto-Fill</button>
+        </div>
+      `).join("");
+
+      // Roof Garden
+      document.getElementById("gardenContainer").innerHTML = gameState.garden.map(pot => {
+        if (!pot.seed) {
+          const firstHerb = gameState.pantry.find(p => p.qty > 0) || BASE_INGREDIENTS[1];
+          return `
+            <div class="garden-pot">
+              <div>🪴 Roof Pot #${pot.id + 1}</div>
+              <button class="pixel-btn" onclick="plantGarden(${pot.id}, '${firstHerb.id}')">Plant Seed</button>
+            </div>
+          `;
+        } else {
+          const ing = BASE_INGREDIENTS.find(i => i.id === pot.seed) || BASE_INGREDIENTS[1];
+          return `
+            <div class="garden-pot">
+              <div>${ing.icon} ${ing.name}</div>
+              <div>${pot.ready ? '<span style="color:#4ade80;">Ready!</span>' : `Growth: ${pot.progress}/${pot.maxProgress}`}</div>
+              ${pot.ready ? `<button class="pixel-btn btn-cook" onclick="harvestGarden(${pot.id})">Harvest x2</button>` : `<span>Growing...</span>`}
+            </div>
+          `;
+        }
+      }).join("");
+
+      // Museum
+      const totalIng = BASE_INGREDIENTS.length;
+      const foundIng = gameState.discoveredIngredients.length;
+      const pct = Math.floor((foundIng / totalIng) * 100);
+      document.getElementById("museumCompletionTxt").textContent = `${pct}% Complete`;
+      document.getElementById("museumBar").style.width = `${pct}%`;
+
+      document.getElementById("museumList").innerHTML = BASE_INGREDIENTS.map(ing => {
+        const discovered = gameState.discoveredIngredients.includes(ing.id);
+        return `
+          <div class="item-card ${discovered ? '' : 'disabled'}">
+            <div class="item-info">
+              <div>${discovered ? ing.icon : '❓'} <strong>${discovered ? ing.name : 'Unknown Discovery'}</strong></div>
+              <div style="font-size:0.46rem; color:var(--text-muted);">${discovered ? ing.lore : 'Forage or fish in wild biomes to unlock.'}</div>
+            </div>
+            <span class="item-tag tag-${ing.rarity}">${ing.rarity}</span>
+          </div>
+        `;
+      }).join("");
+
+      // Bounties & Milestones
+      document.getElementById("questsList").innerHTML = gameState.quests.map(q => `
+        <div class="item-card">
+          <div><strong>${q.title}</strong><br><span style="color:var(--text-muted); font-size:0.46rem;">${q.desc} (${q.current}/${q.goal})</span></div>
+          <div>${q.done ? `<button class="pixel-btn btn-cook" onclick="claimQuest('${q.id}')">Claim ${q.rewardText}</button>` : `<span style="color:var(--accent-gold); font-size:0.46rem;">${q.rewardText}</span>`}</div>
+        </div>
+      `).join("");
+
+      document.getElementById("milestonesList").innerHTML = MILESTONES.map(m => {
+        const curVal = gameState.player[m.field] || 0;
+        const isDone = curVal >= m.target;
+        const isClaimed = gameState.claimedMilestones.includes(m.id);
+        return `
+          <div class="item-card">
+            <div><strong>${m.title}</strong><br><span style="color:var(--text-muted); font-size:0.46rem;">${m.desc} (${Math.min(curVal, m.target)}/${m.target})</span></div>
+            <div>${isClaimed ? `<span style="color:var(--text-muted);">Claimed</span>` : isDone ? `<button class="pixel-btn btn-cook" onclick="claimMilestone('${m.id}')">Claim 🪙${m.rewardGold}</button>` : `<span style="color:var(--accent-gold);">🪙${m.rewardGold}</span>`}</div>
+          </div>
+        `;
+      }).join("");
+
+      // Map Biomes
+      document.getElementById("biomeList").innerHTML = BIOMES.map(b => `
+        <div class="item-card">
+          <div><strong>${b.name}</strong><br><span style="color:var(--text-muted); font-size:0.46rem;">${b.desc}</span></div>
+          <div>${gameState.location.id === b.id ? `<span style="color:var(--accent-gold);">Current</span>` : `<button class="pixel-btn" onclick="changeBiome('${b.id}')">Travel Here</button>`}</div>
+        </div>
+      `).join("");
+
+      // Mailbox
+      document.getElementById("mailboxList").innerHTML = gameState.mailbox.map(m => `
+        <div class="item-card">
+          <div><strong>From: ${m.sender}</strong><br><span style="color:var(--text-muted); font-size:0.46rem;">"${m.msg}"</span></div>
+          <div>${m.claimed ? `<span style="color:var(--text-muted);">Read</span>` : `<button class="pixel-btn btn-cook" onclick="claimMail(${m.id})">Open Letter</button>`}</div>
+        </div>
+      `).join("");
+
+      // Decor & Upgrades
+      const renderDecorCard = (cat, item) => {
+        const isOwned = gameState.decor.owned.includes(item.id);
+        const isEquipped = gameState.decor[cat] === item.id;
+        return `
+          <div class="item-card">
+            <div><strong>${item.name}</strong></div>
+            <div>${isEquipped ? `<span style="color:var(--accent-gold);">Equipped</span>` : isOwned ? `<button class="pixel-btn btn-secondary" onclick="equipDecor('${cat}', '${item.id}')">Equip</button>` : `<button class="pixel-btn" onclick="buyDecor('${cat}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">Buy 🪙${item.cost}</button>`}</div>
+          </div>
+        `;
+      };
+
+      document.getElementById("decorPaintList").innerHTML = DECOR_PAINTS.map(i => renderDecorCard('paint', i)).join("");
+      document.getElementById("decorRoofList").innerHTML = DECOR_ROOF.map(i => renderDecorCard('roof', i)).join("");
+      document.getElementById("decorHearthList").innerHTML = DECOR_HEARTH.map(i => renderDecorCard('hearth', i)).join("");
+
+      document.getElementById("upgradesList").innerHTML = `
+        <div class="item-card"><div><strong>Stove Engine</strong> (Lv ${gameState.upgrades.stove})</div><button class="pixel-btn" onclick="buyUpgrade('stove')">Lvl Up (🪙${(gameState.upgrades.stove + 1) * 50})</button></div>
+        <div class="item-card"><div><strong>Fishing Tackle</strong> (Lv ${gameState.upgrades.fishingGear})</div><button class="pixel-btn" onclick="buyUpgrade('fishingGear')">Lvl Up (🪙${(gameState.upgrades.fishingGear + 1) * 60})</button></div>
+        <div class="item-card"><div><strong>Hunting Traps</strong> (Lv ${gameState.upgrades.huntingTrap})</div><button class="pixel-btn" onclick="buyUpgrade('huntingTrap')">Lvl Up (🪙${(gameState.upgrades.huntingTrap + 1) * 60})</button></div>
+      `;
+    }
+
+    function switchTab(tabName) {
+      audioEngine.play('click');
+      const tabs = ['pantry', 'craft', 'cookbook', 'garden', 'museum', 'quests', 'map', 'mailbox', 'decor', 'upgrades', 'prestige', 'guide', 'log'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (el) el.style.display = t === tabName ? 'flex' : 'none';
+      });
+      document.querySelectorAll('.tab-btn').forEach((b, idx) => {
+        b.classList.toggle('active', tabs[idx] === tabName);
+      });
+    }
+
+    /* Listeners */
+    document.getElementById("btnTravel").onclick = travel;
+    document.getElementById("btnForage").onclick = forage;
+    document.getElementById("btnFish").onclick = fish;
+    document.getElementById("btnHunt").onclick = hunt;
+    document.getElementById("btnOpenCrafting").onclick = () => switchTab('craft');
+    document.getElementById("btnCookFeast").onclick = cookSelectedIngredients;
+    document.getElementById("btnServeVisitor").onclick = serveVisitor;
+    document.getElementById("btnPetAnimal").onclick = petAnimal;
+    document.getElementById("btnRest").onclick = rest;
+
+    document.getElementById("btnSave").onclick = () => { localStorage.setItem("wanderingChefState_v3", JSON.stringify(gameState)); showToast("Saved!"); };
+    document.getElementById("btnLoad").onclick = () => {
+      const s = localStorage.getItem("wanderingChefState_v3");
+      if (s) { gameState = { ...gameState, ...JSON.parse(s) }; updateUI(); showToast("Loaded!"); }
+    };
+    document.getElementById("btnReset").onclick = () => { if (confirm("Reset caravan journey?")) location.reload(); };
+
+    document.getElementById("btnAudioToggle").onclick = () => {
+      audioEngine.sfxEnabled = !audioEngine.sfxEnabled;
+      document.getElementById("btnAudioToggle").textContent = `🔊 SFX: ${audioEngine.sfxEnabled ? "ON" : "OFF"}`;
+    };
+
+    document.getElementById("btnAmbientToggle").onclick = () => {
+      const on = audioEngine.toggleAmbient();
+      document.getElementById("btnAmbientToggle").textContent = `🎶 Lo-Fi: ${on ? "ON" : "OFF"}`;
+      showToast(on ? "🎶 Ambient Lo-Fi started!" : "🎶 Ambient audio paused.");
+    };
+
+    updateUI();
+    requestAnimationFrame(renderCanvas);
+  </script>
+</body>
+</html>

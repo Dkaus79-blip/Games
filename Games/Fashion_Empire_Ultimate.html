@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fashion Empire: Ultimate Designer</title>
+<style>
+    :root {
+        --bg: #0a0c10;
+        --panel: #131722;
+        --card: #1c2232;
+        --card-hover: #262e44;
+        --border: #2b354d;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #f43f5e;
+        --accent-glow: rgba(244, 63, 94, 0.35);
+        --green: #10b981;
+        --gold: #f59e0b;
+        --blue: #38bdf8;
+        --purple: #c084fc;
+        --danger: #ef4444;
+        
+        --vintage: #d97706;
+        --streetwear: #0284c7;
+        --cyber: #06b6d4;
+        --luxury: #eab308;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+        background: radial-gradient(circle at 20% 0%, rgba(244,63,94,.10), transparent 28%),
+                    radial-gradient(circle at 80% 10%, rgba(56,189,248,.08), transparent 30%),
+                    linear-gradient(135deg, #07090d, #0d1119 45%, #090b10);
+        color: var(--text);
+        padding-bottom: 70px;
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+    body:before {
+        content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .18;
+        background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+        background-size: 32px 32px; mask-image: linear-gradient(to bottom, black, transparent 85%); z-index: -1;
+    }
+
+    .topbar {
+        position: sticky; top: 0; z-index: 1000;
+    }
+    header {
+        background: rgba(9, 12, 18, 0.92); backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border); padding: 12px 24px;
+        display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;
+        box-shadow: 0 8px 35px rgba(0,0,0,.35);
+    }
+    .brand { font-size: 1.35rem; font-weight: 900; letter-spacing: 1px; color: var(--text); display: flex; align-items: center; gap: 8px; text-shadow: 0 0 20px rgba(244,63,94,.2); }
+    .brand span { color: var(--accent); }
+    
+    .trend-ticker {
+        background: rgba(0,0,0,0.45); border: 1px solid var(--border); border-radius: 20px;
+        padding: 5px 14px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;
+    }
+    .trend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+
+    .stats-bar { display: flex; gap: 14px; align-items: center; font-weight: bold; flex-wrap: wrap; }
+    .money { font-family: monospace; font-size: 1.35rem; color: var(--green); text-shadow: 0 0 8px rgba(16, 185, 129, 0.3); }
+
+    nav {
+        display: flex; gap: 6px; padding: 8px 24px; background: rgba(8,11,16,.85);
+        backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,.05);
+        flex-wrap: wrap; overflow-x: hidden;
+    }
+    nav button {
+        background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+        padding: 8px 13px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: all 0.2s;
+        white-space: nowrap; font-size: 0.78rem; letter-spacing: 0.2px;
+    }
+    nav button:hover { background: var(--card); color: var(--text); border-color: var(--accent); }
+    nav button.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+
+    .container { max-width: 1400px; margin: 16px auto 0; padding: 0 24px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    
+    .panel {
+        background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+        padding: 22px; margin-bottom: 20px; box-shadow: 0 12px 30px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.025);
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+    .ult-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+
+    .hero-panel {
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, rgba(31,36,53,.95), rgba(14,18,28,.98));
+        border: 1px solid rgba(255,255,255,.09); border-radius: 16px; padding: 24px; margin-bottom: 18px; min-height: 145px;
+    }
+    .hero-panel:after { content: "✦"; position: absolute; right: 5%; top: -18px; font-size: 170px; color: rgba(255,255,255,.025); transform: rotate(15deg); }
+    .hero-kicker { font-size: .7rem; letter-spacing: 2px; color: #fda4af; font-weight: 900; text-transform: uppercase; }
+    .hero-title { font-size: clamp(1.6rem, 3vw, 2.7rem); font-weight: 950; line-height: 1.1; margin: 7px 0; }
+    .hero-sub { color: var(--muted); max-width: 760px; font-size: 0.9rem; line-height: 1.4; }
+
+    .metric-card {
+        background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
+        border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px;
+    }
+    .metric-value { font-size: 1.45rem; font-weight: 900; margin: 4px 0; }
+    .metric-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    .progress { height: 8px; background: #070a0f; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.05); margin: 6px 0; }
+    .progress > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #fb7185, #fbbf24); box-shadow: 0 0 12px rgba(244,63,94,.45); border-radius: 8px; }
+
+    .mini-list { display: grid; gap: 8px; }
+    .mini-row { display: flex; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid rgba(255,255,255,.06); border-radius: 9px; background: rgba(0,0,0,.16); }
+
+    .quest-card, .customer-card, .research-card, .city-card, .employee-card, .award-card, .hq-card, .part-card {
+        background: linear-gradient(145deg, #1b2130, #121722);
+        border: 1px solid var(--border); border-radius: 13px; padding: 16px; position: relative; overflow: hidden;
+        transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .quest-card.complete { border-color: var(--green); }
+    .quest-card.complete:after { content: "✓"; position: absolute; right: 12px; top: 7px; font-size: 2.3rem; color: rgba(16,185,129,.22); }
+    
+    .customer-avatar {
+        width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem;
+        background: radial-gradient(circle at 35% 25%, #fff, #cbd5e1 20%, #475569 21%, #111827 70%); border: 2px solid rgba(255,255,255,.16);
+    }
+    
+    .showroom {
+        min-height: 260px; position: relative; border-radius: 14px; overflow: hidden;
+        background: radial-gradient(circle at 50% 25%, rgba(255,255,255,.12), transparent 22%), linear-gradient(180deg, #171b25, #080a0e);
+        border: 1px solid rgba(255,255,255,.08);
+    }
+    .spot { position: absolute; top: -80px; width: 34%; height: 420px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent); transform: rotate(14deg); filter: blur(12px); }
+    .mannequin { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); width: 110px; height: 190px; }
+    .mannequin:before { content: ""; position: absolute; left: 36px; top: 0; width: 38px; height: 42px; border-radius: 50%; background: linear-gradient(145deg, #e5e7eb, #6b7280); }
+    .mannequin:after { content: ""; position: absolute; left: 20px; top: 34px; width: 70px; height: 145px; background: linear-gradient(105deg, #111827, #475569, #111827); clip-path: polygon(25% 0,75% 0,100% 100%,0 100%); border-radius: 30px 30px 12px 12px; box-shadow: inset 12px 0 16px rgba(255,255,255,.08), inset -12px 0 16px rgba(0,0,0,.35); }
+
+    .runway-stage { height: 250px; border-radius: 14px; overflow: hidden; position: relative; background: linear-gradient(180deg, #111827 0 48%, #0b0d12 49%); perspective: 500px; }
+    .runway-floor { position: absolute; left: 15%; right: 15%; bottom: -80px; height: 220px; background: linear-gradient(90deg, #111827, #374151, #111827); transform: rotateX(65deg); box-shadow: 0 -10px 50px rgba(255,255,255,.08); }
+    .runway-model { position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%); font-size: 4.4rem; filter: drop-shadow(0 0 15px rgba(255,255,255,.15)); animation: walk 2.2s ease-in-out infinite; }
+    .lights { position: absolute; inset: 0; background: radial-gradient(circle at 15% 0, rgba(244,63,94,.35), transparent 22%), radial-gradient(circle at 85% 0, rgba(56,189,248,.35), transparent 22%); }
+    @keyframes walk { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
+    .b-common { background: #334155; color: #cbd5e1; }
+    .b-rare { background: #1e3a8a; color: #93c5fd; }
+    .b-epic { background: #581c87; color: #e9d5ff; }
+    .b-legendary { background: #78350f; color: #fde68a; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+
+    .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold; }
+    .tag-vintage { background: rgba(217, 119, 6, 0.2); color: var(--vintage); border: 1px solid var(--vintage); }
+    .tag-streetwear { background: rgba(2, 132, 199, 0.2); color: var(--streetwear); border: 1px solid var(--streetwear); }
+    .tag-cyber { background: rgba(6, 182, 212, 0.2); color: var(--cyber); border: 1px solid var(--cyber); }
+    .tag-luxury { background: rgba(234, 179, 8, 0.2); color: var(--luxury); border: 1px solid var(--luxury); }
+
+    .garment-svg-wrap {
+        width: 100%; height: 160px; background: rgba(0,0,0,0.3); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center; margin: 10px 0;
+        border: 1px solid rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .garment-svg-wrap svg { width: 130px; height: 130px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+
+    .workbench-layout {
+        display: grid; grid-template-columns: 2fr 1fr; gap: 20px; background: var(--card);
+        border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .workbench-layout { grid-template-columns: 1fr; } }
+    
+    .bench-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .bench-slot {
+        background: var(--panel); border: 2px dashed var(--border); border-radius: 10px;
+        min-height: 150px; padding: 12px; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .bench-slot:hover { border-color: var(--accent); }
+    .bench-slot.filled { border-style: solid; border-color: var(--green); background: rgba(16, 185, 129, 0.05); }
+
+    .bench-sidebar {
+        background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px; display: flex; flex-direction: column; justify-content: space-between;
+    }
+
+    .part-card { cursor: pointer; }
+    .part-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--card-hover); }
+    .part-card.selected { border-color: var(--green); box-shadow: 0 0 0 2px var(--green); background: rgba(16, 185, 129, 0.08); }
+
+    .hq-card.locked { opacity: 0.55; filter: grayscale(0.8); }
+    .shelf-bar { width: 100%; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+    .shelf-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.1s linear; }
+
+    .btn {
+        background: #334155; color: white; border: none; padding: 8px 14px;
+        border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.15s; display: inline-flex;
+        align-items: center; justify-content: center; gap: 6px; text-decoration: none;
+    }
+    .btn:hover { background: #475569; }
+    .btn-primary { background: var(--accent); }
+    .btn-primary:hover { background: #e11d48; box-shadow: 0 0 10px var(--accent-glow); }
+    .btn-green { background: var(--green); }
+    .btn-green:hover { background: #059669; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: #dc2626; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+    .rarity-glow { animation: rarityPulse 1.8s ease-in-out infinite alternate; }
+    @keyframes rarityPulse { from { filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); } to { filter: drop-shadow(0 0 18px rgba(250,204,21,.38)); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+
+    #toast {
+        position: fixed; bottom: 20px; right: 20px; background: rgba(19, 23, 34, 0.95);
+        border: 1px solid var(--accent); padding: 12px 20px; border-radius: 8px;
+        color: white; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+        transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        z-index: 9999;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 900px) {
+        nav { flex-wrap: wrap; }
+        .ult-grid, .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 620px) {
+        .ult-grid, .grid { grid-template-columns: 1fr; }
+        .panel { padding: 14px; }
+        .stats-bar { width: 100%; justify-content: space-between; }
+        .trend-ticker { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<header>
+    <div class="brand">✂️ ATELIER <span>BALANCED</span></div>
+    
+    <div class="trend-ticker">
+        <div class="trend-dot"></div>
+        <div>MARKET TREND: <strong id="trendLabel" style="color:var(--gold);">STREETWEAR SEASON</strong> (<span id="trendTimer">75s</span>)</div>
+    </div>
+
+    <div class="stats-bar">
+        <div>Cash: <span id="statCash" class="money">$150</span></div>
+        <button class="btn" onclick="toggleAudio()" id="btnAudio">🔊 Audio: ON</button>
+        <button class="btn btn-primary" onclick="switchTab('system')">⚙️ Save & System</button>
+    </div>
+</header>
+
+<nav>
+    <button data-tab="home" onclick="switchTab('home')">🏠 Command Center</button>
+    <button data-tab="workshop" class="active" onclick="switchTab('workshop')">🎨 Creative Atelier</button>
+    <button data-tab="gacha" onclick="switchTab('gacha')">📦 Sourcing Gachas</button>
+    <button data-tab="hq" onclick="switchTab('hq')">🏢 Retail Empire</button>
+    <button data-tab="closet" onclick="switchTab('closet')">👗 Finished Closet</button>
+    <button data-tab="quests" onclick="switchTab('quests')">🎯 Quests</button>
+    <button data-tab="customers" onclick="switchTab('customers')">🧑 Customers</button>
+    <button data-tab="showroom" onclick="switchTab('showroom')">✨ Showroom</button>
+    <button data-tab="runway" onclick="switchTab('runway')">👠 Runway</button>
+    <button data-tab="empire" onclick="switchTab('empire')">🌎 Global Empire</button>
+    <button data-tab="social" onclick="switchTab('social')">📸 Social</button>
+    <button data-tab="season" onclick="switchTab('season')">🗓️ Season</button>
+    <button data-tab="research" onclick="switchTab('research')">🧪 Research</button>
+    <button data-tab="upgrades" onclick="switchTab('upgrades')">⚡ Upgrades</button>
+    <button data-tab="codex" onclick="switchTab('codex')">📖 Codex</button>
+    <button data-tab="system" onclick="switchTab('system')">⚙️ System</button>
+    <button type="button" onclick="openHowTo()">❓ Guide</button>
+</nav>
+</div>
+
+<div class="container">
+
+    <!-- HOME / COMMAND CENTER -->
+    <div id="tab-home" class="view"></div>
+
+    <!-- WORKSHOP -->
+    <div id="tab-workshop" class="view active">
+        <div class="panel">
+            <h2>The Haute Assembly Bench</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Pick <strong>any 3 components</strong> from your warehouse. Match aesthetics for set multipliers!</p>
+
+            <div class="workbench-layout">
+                <div class="bench-slots">
+                    <div id="slot-0" class="bench-slot" onclick="clearSlot(0)"><span>+ Choose Piece 1</span></div>
+                    <div id="slot-1" class="bench-slot" onclick="clearSlot(1)"><span>+ Choose Piece 2</span></div>
+                    <div id="slot-2" class="bench-slot" onclick="clearSlot(2)"><span>+ Choose Piece 3</span></div>
+                </div>
+
+                <div class="bench-sidebar">
+                    <div>
+                        <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase;">Live Design Preview</div>
+                        <div class="garment-svg-wrap" id="benchSvgWrap">
+                            <span style="color:var(--muted); font-size:0.85rem;">Add 3 pieces to render</span>
+                        </div>
+                        <h4 id="prevTitle" style="margin:4px 0;">Empty Blueprint</h4>
+                        <div id="prevSynergy"></div>
+                        <div id="prevTrend"></div>
+                        <div style="font-size:1.5rem; font-weight:bold; color:var(--green); margin-top:4px;" id="prevPrice">$0</div>
+                    </div>
+                    <button id="btnCraft" class="btn btn-green" style="width:100%; padding:12px; margin-top:10px;" onclick="craftGarment()" disabled>
+                        Stitch & Finalize Garment
+                    </button>
+                </div>
+            </div>
+
+            <!-- Material Rack -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap:wrap; gap:10px;">
+                <h3>Your Components Rack (<span id="warehouseCount">0</span>)</h3>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn" onclick="filterWarehouse('all')">All</button>
+                    <button class="btn" onclick="filterWarehouse('fabric')">Fabrics</button>
+                    <button class="btn" onclick="filterWarehouse('cut')">Patterns</button>
+                    <button class="btn" onclick="filterWarehouse('accent')">Accents</button>
+                    <button class="btn btn-danger" onclick="recycleCommons()">♻️ Scrap Commons</button>
+                </div>
+            </div>
+            <div id="warehouseGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- SOURCING -->
+    <div id="tab-gacha" class="view">
+        <div class="panel">
+            <h2>Themed Sourcing Dispensers</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Advanced Sourcing Boxes unlock automatically as you expand into new district boutiques!</p>
+            <div id="gachaGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- RETAIL STORES -->
+    <div id="tab-hq" class="view">
+        <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h2>Flagship Stores Management</h2>
+                    <p style="color:var(--muted);">Each boutique has a <strong>Customer Budget Limit</strong>. Don't sell luxury ballgowns at the flea market!</p>
+                </div>
+                <button class="btn btn-primary" onclick="quickStockAll()">📦 Auto-Stock All Shelves</button>
+            </div>
+            <div id="storesGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- FINISHED CLOSET -->
+    <div id="tab-closet" class="view">
+        <div class="panel">
+            <h2>The Vault (Finished Garments)</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Stock pieces into boutiques that can afford them and match their aesthetic.</p>
+            <div id="closetGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- QUESTS -->
+    <div id="tab-quests" class="view"></div>
+
+    <!-- CUSTOMERS -->
+    <div id="tab-customers" class="view"></div>
+
+    <!-- SHOWROOM -->
+    <div id="tab-showroom" class="view"></div>
+
+    <!-- RUNWAY -->
+    <div id="tab-runway" class="view"></div>
+
+    <!-- GLOBAL EMPIRE -->
+    <div id="tab-empire" class="view"></div>
+
+    <!-- SOCIAL -->
+    <div id="tab-social" class="view"></div>
+
+    <!-- SEASON -->
+    <div id="tab-season" class="view"></div>
+
+    <!-- RESEARCH -->
+    <div id="tab-research" class="view"></div>
+
+    <!-- UPGRADES -->
+    <div id="tab-upgrades" class="view">
+        <div class="panel">
+            <h2>Atelier Upgrades & Tech</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Permanent boosts to scale your high-fashion conglomerate.</p>
+            <div id="upgradesGrid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- CODEX -->
+    <div id="tab-codex" class="view"></div>
+
+    <!-- SYSTEM & SAVE SLOTS -->
+    <div id="tab-system" class="view">
+        <div class="panel">
+            <h2>Save Profiles & Data Management</h2>
+            <p style="color:var(--muted); margin-bottom:18px;">Switch between game profiles, export backups, or perform a complete wipe.</p>
+            
+            <div class="grid" id="saveSlotsGrid" style="margin-bottom:24px;"></div>
+
+            <div style="border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                <div>
+                    <h3 style="color:var(--danger); font-size:1.1rem;">⚠️ Danger Zone: Full Reset</h3>
+                    <p style="color:var(--muted); font-size:0.85rem;">Permanently wipe all 3 save slots and restore original starter state.</p>
+                </div>
+                <button class="btn btn-danger" onclick="confirmFactoryReset()">🔥 Factory Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="toast">Notice message here</div>
+
+<script>
+/* ==========================================================================
+   AUDIO SYNTHESIZER
+   ========================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+    }
+}
+
+function playNote(freq, type = 'sine', duration = 0.1, delay = 0) {
+    if (!soundEnabled) return;
+    initAudio();
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + duration);
+    } catch(e) {}
+}
+
+const SFX = {
+    click: () => playNote(600, 'triangle', 0.05),
+    pull: () => { playNote(220, 'sine', 0.08); playNote(440, 'sine', 0.08, 0.07); playNote(880, 'triangle', 0.15, 0.14); },
+    craft: () => { playNote(523, 'sine', 0.1); playNote(659, 'sine', 0.1, 0.08); playNote(783, 'triangle', 0.15, 0.16); playNote(1046, 'sine', 0.25, 0.24); },
+    cash: () => { playNote(987, 'sine', 0.08); playNote(1318, 'sine', 0.2, 0.07); },
+    rare: () => { [523, 659, 783, 1046, 1318].forEach((f, i) => playNote(f, 'triangle', 0.2, i * 0.06)); }
+};
+
+function toggleAudio() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('btnAudio');
+    if (btn) btn.innerText = soundEnabled ? "🔊 Audio: ON" : "🔇 Audio: OFF";
+}
+
+/* ==========================================================================
+   GAME DATABASE
+   ========================================================================== */
+const RARITY_VALS = { common: 1.0, rare: 1.4, epic: 2.2, legendary: 3.5 };
+const STYLES = ["vintage", "streetwear", "cyber", "luxury"];
+const ULT_STYLES = { vintage: 'Vintage', streetwear: 'Streetwear', cyber: 'Cyber', luxury: 'Luxury' };
+
+const GACHAS = [
+    {
+        id: "vintage",
+        name: "70s Thrift Bale",
+        cost: 40,
+        desc: "Vintage denim, corduroy cuts, and rustic fringe trims.",
+        tag: "vintage",
+        pool: [
+            { type: "fabric", name: "Faded Denim", rarity: "common", power: 15, color: "#3b82f6", tag: "vintage", svg: "tee" },
+            { type: "fabric", name: "Washed Corduroy", rarity: "rare", power: 25, color: "#d97706", tag: "vintage", svg: "hoodie" },
+            { type: "cut", name: "Retro Bell-Bottom", rarity: "common", power: 16, tag: "vintage", svg: "tee" },
+            { type: "cut", name: "Overalls Blueprint", rarity: "rare", power: 30, tag: "vintage", svg: "coat" },
+            { type: "accent", name: "Hand Patch", rarity: "common", power: 10, tag: "vintage" },
+            { type: "accent", name: "Western Tassels", rarity: "rare", power: 22, tag: "vintage" }
+        ]
+    },
+    {
+        id: "street",
+        name: "Tokyo Hype Drop",
+        cost: 160,
+        desc: "Heavyweight fleece, oversized cuts, chrome straps.",
+        tag: "streetwear",
+        pool: [
+            { type: "fabric", name: "Loopback Fleece", rarity: "rare", power: 35, color: "#64748b", tag: "streetwear", svg: "hoodie" },
+            { type: "fabric", name: "Japanese Selvedge", rarity: "epic", power: 65, color: "#1e3a8a", tag: "streetwear", svg: "hoodie" },
+            { type: "cut", name: "Oversized Boxy Cut", rarity: "rare", power: 40, tag: "streetwear", svg: "tee" },
+            { type: "cut", name: "Tech Parka Pattern", rarity: "epic", power: 75, tag: "streetwear", svg: "coat" },
+            { type: "accent", name: "Nylon Utility Strap", rarity: "rare", power: 30, tag: "streetwear" },
+            { type: "accent", name: "Chrome Carabiner", rarity: "epic", power: 60, tag: "streetwear" }
+        ]
+    },
+    {
+        id: "cyber",
+        name: "Neo-Rave Data Crate",
+        cost: 650,
+        desc: "Bioluminescent mesh, holographics, and glowing optical piping.",
+        tag: "cyber",
+        pool: [
+            { type: "fabric", name: "Holo-Matrix PVC", rarity: "epic", power: 100, color: "#06b6d4", tag: "cyber", svg: "coat" },
+            { type: "fabric", name: "Fiber-Optic Synth", rarity: "legendary", power: 210, color: "#a855f7", tag: "cyber", svg: "dress" },
+            { type: "cut", name: "Cyberpunk Duster", rarity: "epic", power: 110, tag: "cyber", svg: "coat" },
+            { type: "cut", name: "Exoskeleton Harness", rarity: "legendary", power: 240, tag: "cyber", svg: "hoodie" },
+            { type: "accent", name: "Neon EL-Wire Piping", rarity: "epic", power: 90, tag: "cyber" },
+            { type: "accent", name: "Tactical HUD Visor", rarity: "legendary", power: 220, tag: "cyber" }
+        ]
+    },
+    {
+        id: "luxury",
+        name: "Milan Royal Vault",
+        cost: 2400,
+        desc: "Mulberry silk, 24K spun brocade, and genuine diamonds.",
+        tag: "luxury",
+        pool: [
+            { type: "fabric", name: "Mulberry Silk", rarity: "epic", power: 180, color: "#fdf2f8", tag: "luxury", svg: "dress" },
+            { type: "fabric", name: "24K Gold Brocade", rarity: "legendary", power: 450, color: "#fbbf24", tag: "luxury", svg: "dress" },
+            { type: "cut", name: "Royal Tuxedo Cut", rarity: "epic", power: 190, tag: "luxury", svg: "coat" },
+            { type: "cut", name: "Met Gala Royal Train", rarity: "legendary", power: 500, tag: "luxury", svg: "dress" },
+            { type: "accent", name: "South Sea Pearls", rarity: "epic", power: 160, tag: "luxury" },
+            { type: "accent", name: "Flawless Diamond Trim", rarity: "legendary", power: 480, tag: "luxury" }
+        ]
+    },
+    {
+        id: "gala",
+        name: "Midnight Gala Trunk",
+        cost: 900,
+        desc: "Velvet, satin, crystal hardware and red-carpet silhouettes.",
+        tag: "luxury",
+        pool: [
+            { type: "fabric", name: "Midnight Velvet", rarity: "epic", power: 95, color: "#312e81", tag: "luxury", svg: "coat" },
+            { type: "fabric", name: "Liquid Satin", rarity: "rare", power: 55, color: "#be123c", tag: "luxury", svg: "dress" },
+            { type: "cut", name: "Red Carpet Silhouette", rarity: "epic", power: 115, tag: "luxury", svg: "dress" },
+            { type: "cut", name: "Couture Cape Pattern", rarity: "legendary", power: 180, tag: "luxury", svg: "coat" },
+            { type: "accent", name: "Crystal Brooch", rarity: "epic", power: 90, tag: "luxury" },
+            { type: "accent", name: "Diamond Shoulder Chain", rarity: "legendary", power: 170, tag: "luxury" }
+        ]
+    },
+    {
+        id: "night",
+        name: "Neon Night Market",
+        cost: 300,
+        desc: "Reflective nylon, luminous trims and futuristic street silhouettes.",
+        tag: "cyber",
+        pool: [
+            { type: "fabric", name: "Reflective Nylon", rarity: "rare", power: 52, color: "#334155", tag: "cyber", svg: "hoodie" },
+            { type: "fabric", name: "Aurora Mesh", rarity: "epic", power: 105, color: "#14b8a6", tag: "cyber", svg: "dress" },
+            { type: "cut", name: "Light Grid Bomber", rarity: "epic", power: 120, tag: "cyber", svg: "coat" },
+            { type: "cut", name: "Neon Blade Cut", rarity: "legendary", power: 190, tag: "cyber", svg: "hoodie" },
+            { type: "accent", name: "LED Seam Tape", rarity: "rare", power: 48, tag: "cyber" },
+            { type: "accent", name: "Hologram Badge", rarity: "epic", power: 88, tag: "cyber" }
+        ]
+    },
+    {
+        id: "heritage",
+        name: "Heritage Atelier Crate",
+        cost: 120,
+        desc: "Classic wool, leather, hand embroidery and old-world tailoring.",
+        tag: "vintage",
+        pool: [
+            { type: "fabric", name: "Brushed Wool", rarity: "rare", power: 42, color: "#57534e", tag: "vintage", svg: "coat" },
+            { type: "fabric", name: "Washed Canvas", rarity: "common", power: 20, color: "#78716c", tag: "vintage", svg: "hoodie" },
+            { type: "cut", name: "Heritage Tailoring Cut", rarity: "rare", power: 58, tag: "vintage", svg: "coat" },
+            { type: "cut", name: "Archive Dress Pattern", rarity: "epic", power: 90, tag: "vintage", svg: "dress" },
+            { type: "accent", name: "Antique Buttons", rarity: "rare", power: 35, tag: "vintage" },
+            { type: "accent", name: "Hand Embroidery", rarity: "epic", power: 72, tag: "vintage" }
+        ]
+    }
+];
+
+const STORES = [
+    { id: 0, name: "Sunny Flea Market", unlocked: true, cost: 0, capacity: 4, speed: 2.5, prefTag: "vintage", maxBudget: 250, gachaId: "vintage", managerCost: 100 },
+    { id: 1, name: "District 9 Underground", unlocked: false, cost: 500, capacity: 6, speed: 4.5, prefTag: "streetwear", maxBudget: 1400, gachaId: "street", managerCost: 750 },
+    { id: 2, name: "Matrix Neon Lounge", unlocked: false, cost: 2800, capacity: 8, speed: 6.5, prefTag: "cyber", maxBudget: 6000, gachaId: "cyber", managerCost: 3200 },
+    { id: 3, name: "Palazzo Privé Milan", unlocked: false, cost: 14000, capacity: 10, speed: 10.0, prefTag: "luxury", maxBudget: 60000, gachaId: "luxury", managerCost: 20000 }
+];
+
+const UPGRADES = [
+    { id: "scissors", name: "Tungsten Precision Scissors", cost: 250, desc: "Sharp cuts increase the base price of all crafted items by +15% permanently.", bought: false },
+    { id: "industrial", name: "High-Speed Steam Iron", cost: 1000, desc: "Items sell 25% faster across all your retail stores.", bought: false },
+    { id: "dice", name: "VIP Sourcing License", cost: 3500, desc: "Increases Rare, Epic, and Legendary chances from all Gacha pulls.", bought: false },
+    { id: "pr", name: "Global Influencer Agency", cost: 10000, desc: "Active Trend multiplier increased from +60% to +100% extra profit!", bought: false }
+];
+
+const RESEARCH = [
+    { id: 'atelier', name: 'Master Pattern Library', cost: 600, desc: '+12% base garment value and unlocks more refined silhouettes.' },
+    { id: 'quality', name: 'Quality Control Lab', cost: 1800, desc: 'Adds +8% value and prestige to every design.' },
+    { id: 'marketing', name: 'Social Fashion Network', cost: 4500, desc: 'Earn +1 Reputation on every successful boutique sale.' },
+    { id: 'materials', name: 'Material Science', cost: 9000, desc: 'Gacha pulls have a higher chance for Rare and Epic components.' },
+    { id: 'runway', name: 'International Runway Circuit', cost: 18000, desc: 'Unlocks recurring runway competitions and prestige rewards.' },
+    { id: 'luxurycraft', name: 'Couture Atelier', cost: 40000, desc: 'Luxury creations gain +25% value and become true Masterpieces.' }
+];
+
+const CUSTOMER_TYPES = [
+    { name: 'Trend Chaser', icon: '🪩', pref: 'streetwear', mult: 1.25, budget: 1800 },
+    { name: 'Luxury Collector', icon: '💎', pref: 'luxury', mult: 1.55, budget: 70000 },
+    { name: 'Vintage Hunter', icon: '📻', pref: 'vintage', mult: 1.3, budget: 900 },
+    { name: 'Tech Fashionista', icon: '🦾', pref: 'cyber', mult: 1.4, budget: 9000 },
+    { name: 'Bargain Buyer', icon: '🛍️', pref: 'any', mult: 1.05, budget: 700 },
+    { name: 'Style Influencer', icon: '📸', pref: 'any', mult: 1.65, budget: 12000 }
+];
+
+const CAREER_RANKS = [
+    { name: 'Apprentice Designer', rep: 0, reward: 0 },
+    { name: 'Local Designer', rep: 50, reward: 250 },
+    { name: 'Rising Label', rep: 140, reward: 750 },
+    { name: 'Established Brand', rep: 300, reward: 1800 },
+    { name: 'Fashion House', rep: 550, reward: 4000 },
+    { name: 'Luxury House', rep: 900, reward: 9000 },
+    { name: 'Global Icon', rep: 1400, reward: 20000 }
+];
+
+const WORLD_CITIES = [
+    { id: 'paris', name: 'Paris', icon: '🗼', style: 'luxury', cost: 5000, bonus: 'Couture designs gain +12% value.' },
+    { id: 'tokyo', name: 'Tokyo', icon: '🗾', style: 'streetwear', cost: 3500, bonus: 'Streetwear designs gain +10% demand.' },
+    { id: 'seoul', name: 'Seoul', icon: '🌃', style: 'cyber', cost: 6500, bonus: 'Cyber designs gain +12% value.' },
+    { id: 'london', name: 'London', icon: '🎩', style: 'vintage', cost: 2200, bonus: 'Vintage designs gain +10% value.' },
+    { id: 'newyork', name: 'New York', icon: '🗽', style: 'any', cost: 9000, bonus: 'All store sales gain +6% extra profit.' }
+];
+
+const EMPLOYEE_TYPES = [
+    { id: 'pattern', name: 'Master Patternmaker', icon: '✂️', cost: 5000, desc: '+10% garment value permanently.' },
+    { id: 'buyer', name: 'Elite Buyer', icon: '🧵', cost: 6500, desc: 'Sourcing kits cost 8% less.' },
+    { id: 'marketer', name: 'Fashion Publicist', icon: '📸', cost: 8000, desc: 'Events and sales grant extra reputation.' },
+    { id: 'manager', name: 'Retail Director', icon: '🏢', cost: 12000, desc: 'Stores sell 12% faster.' }
+];
+
+const QUEST_TEMPLATES = [
+    { id: 'craft5', title: 'Hands of the Maker', desc: 'Create 5 garments in the Atelier.', goal: 5, stat: 'crafted', reward: 500, xp: 30 },
+    { id: 'sell10', title: 'Fill the Boutique', desc: 'Sell 10 garments to boutique customers.', goal: 10, stat: 'sold', reward: 900, xp: 45 },
+    { id: 'rare3', title: 'Raise the Standard', desc: 'Create 3 Rare+ garments.', goal: 3, stat: 'rareCrafted', reward: 1200, xp: 55 },
+    { id: 'style2', title: 'Trend Rider', desc: 'Craft 2 garments matching the active market trend.', goal: 2, stat: 'trendCrafted', reward: 1400, xp: 60 },
+    { id: 'cash', title: 'Fashion Is a Business', desc: 'Reach $10,000 cash reserves.', goal: 10000, stat: 'cash', reward: 2000, xp: 80 }
+];
+
+const ACHIEVEMENTS = [
+    { id: 'first', name: 'First Stitch', desc: 'Create your first garment.', goal: 1, stat: 'crafted', reward: 150 },
+    { id: 'ten', name: 'Working Label', desc: 'Create 10 garments.', goal: 10, stat: 'crafted', reward: 700 },
+    { id: 'sales', name: 'Open For Business', desc: 'Sell 25 garments.', goal: 25, stat: 'sold', reward: 1200 },
+    { id: 'legend', name: 'Rare Air', desc: 'Create a Legendary garment.', goal: 1, stat: 'legendary', reward: 2500 },
+    { id: 'brand', name: 'Recognized House', desc: 'Reach 100 reputation.', goal: 100, stat: 'reputation', reward: 3000 }
+];
+
+const AWARDS = [
+    { id: 'award1', name: 'Golden Needle', goal: 3, stat: 'runwayWins', reward: 5000 },
+    { id: 'award2', name: 'House of Ten', goal: 10, stat: 'showroom', reward: 3500 },
+    { id: 'award3', name: 'Viral Label', goal: 5, stat: 'viral', reward: 6000 },
+    { id: 'award4', name: 'World Traveler', goal: 3, stat: 'cities', reward: 7000 }
+];
+
+/* ==========================================================================
+   DEFAULT STATE & RECOVERY
+   ========================================================================== */
+function getDefaultState() {
+    return {
+        cash: 150,
+        warehouse: [
+            { uid: 1, type: "fabric", name: "Faded Denim", rarity: "common", power: 15, color: "#3b82f6", tag: "vintage", svg: "tee" },
+            { uid: 2, type: "cut", name: "Retro Bell-Bottom", rarity: "common", power: 16, tag: "vintage", svg: "tee" },
+            { uid: 3, type: "accent", name: "Hand Patch", rarity: "common", power: 10, tag: "vintage" }
+        ],
+        bench: [null, null, null],
+        closet: [],
+        stores: STORES.map(s => ({ ...s, shelves: [], hasManager: false, timer: 0 })),
+        upgrades: UPGRADES.map(u => ({ ...u })),
+        trend: { tag: "streetwear", timeRemaining: 90 },
+        lastSaved: Date.now(),
+        // Expansion fields
+        reputation: 0,
+        level: 1,
+        xp: 0,
+        fashionTokens: 0,
+        research: {},
+        quests: QUEST_TEMPLATES.slice(0, 4).map(q => ({ ...q, progress: 0, claimed: false })),
+        stats: { crafted: 0, sold: 0, rareCrafted: 0, trendCrafted: 0, showroom: 0, runwayWins: 0, events: 0, viral: 0, cities: 1, seasons: 0 },
+        codex: { crafted: 0, styles: { vintage: 0, streetwear: 0, cyber: 0, luxury: 0 }, rarities: { common: 0, rare: 0, epic: 0, legendary: 0 } },
+        customers: CUSTOMER_TYPES.map((c, i) => ({ ...c, id: i, interest: 75 })),
+        showroom: [],
+        showroomHistory: [],
+        season: { name: 'AWAKENING COLLECTION', day: 1, score: 0, completed: false, startCrafted: 0, startSold: 0, startReputation: 0 },
+        event: { name: 'Quiet Studio', desc: 'Customers are browsing your latest collection.', time: 45, mult: 1 },
+        achievements: {},
+        careerRewarded: {},
+        cities: ['london'],
+        employees: {},
+        awardClaimed: {},
+        socialFollowers: 0,
+        marketHeat: 50,
+        viralCooldown: 0,
+        runwayCooldown: 0
+    };
+}
+
+let activeSlot = 1;
+let State = getDefaultState();
+let currentFilter = 'all';
+
+function ensureStateIntegrity(s) {
+    if (!s || typeof s !== 'object') return getDefaultState();
+    const def = getDefaultState();
+
+    const cleanPart = part => {
+        if (!part || typeof part !== 'object') return null;
+        return {
+            ...part,
+            uid: part.uid ?? (Date.now() + Math.random()),
+            type: typeof part.type === 'string' ? part.type : 'accent',
+            name: typeof part.name === 'string' ? part.name : 'Unnamed Component',
+            rarity: Object.prototype.hasOwnProperty.call(RARITY_VALS, part.rarity) ? part.rarity : 'common',
+            power: Number.isFinite(part.power) ? Math.max(1, part.power) : 10,
+            tag: STYLES.includes(part.tag) ? part.tag : 'vintage'
+        };
+    };
+    const cleanGarment = garment => {
+        if (!garment || typeof garment !== 'object') return null;
+        return {
+            ...garment,
+            uid: garment.uid ?? (Date.now() + Math.random()),
+            name: typeof garment.name === 'string' ? garment.name : 'Unnamed Garment',
+            price: Number.isFinite(garment.price) ? Math.max(1, garment.price) : 1,
+            rarity: Object.prototype.hasOwnProperty.call(RARITY_VALS, garment.rarity) ? garment.rarity : 'common',
+            dominantTag: STYLES.includes(garment.dominantTag) ? garment.dominantTag : 'vintage'
+        };
+    };
+
+    s.cash = Number.isFinite(s.cash) ? s.cash : def.cash;
+    s.warehouse = (Array.isArray(s.warehouse) ? s.warehouse : def.warehouse).map(cleanPart).filter(Boolean);
+    s.bench = (Array.isArray(s.bench) && s.bench.length === 3 ? s.bench : def.bench).map(cleanPart);
+    s.closet = (Array.isArray(s.closet) ? s.closet : []).map(cleanGarment).filter(Boolean);
+
+    s.stores = STORES.map(base => {
+        const existing = (s.stores || []).find(x => x.id === base.id);
+        return {
+            ...base,
+            unlocked: existing ? !!existing.unlocked : base.unlocked,
+            hasManager: existing ? !!existing.hasManager : false,
+            shelves: ((existing && Array.isArray(existing.shelves)) ? existing.shelves : []).map(cleanGarment).filter(Boolean),
+            timer: Number.isFinite(existing?.timer) ? Math.max(0, existing.timer) : 0
+        };
+    });
+
+    s.upgrades = UPGRADES.map(base => {
+        const existing = (s.upgrades || []).find(x => x.id === base.id);
+        return { ...base, bought: existing ? !!existing.bought : false };
+    });
+
+    s.trend = s.trend && STYLES.includes(s.trend.tag) ? s.trend : { tag: "streetwear", timeRemaining: 90 };
+    s.reputation = typeof s.reputation === 'number' ? s.reputation : 0;
+    s.level = typeof s.level === 'number' && s.level >= 1 ? s.level : 1;
+    s.xp = typeof s.xp === 'number' ? s.xp : 0;
+    s.fashionTokens = typeof s.fashionTokens === 'number' ? s.fashionTokens : 0;
+    s.research = s.research && typeof s.research === 'object' ? s.research : {};
+    s.stats = { ...def.stats, ...(s.stats || {}) };
+    s.codex = s.codex || def.codex;
+    s.codex.styles = { ...def.codex.styles, ...(s.codex.styles || {}) };
+    s.codex.rarities = { ...def.codex.rarities, ...(s.codex.rarities || {}) };
+    s.customers = Array.isArray(s.customers) && s.customers.length ? s.customers : def.customers;
+    s.showroom = (Array.isArray(s.showroom) ? s.showroom : []).map(cleanGarment).filter(Boolean);
+    s.showroomHistory = Array.isArray(s.showroomHistory) ? s.showroomHistory : [];
+    s.season = { ...def.season, ...(s.season || {}) };
+    s.season.day = Math.min(30, Math.max(1, Number(s.season.day) || 1));
+    s.season.score = Math.max(0, Number(s.season.score) || 0);
+    s.season.startCrafted = Math.max(0, Number(s.season.startCrafted) || 0);
+    s.season.startSold = Math.max(0, Number(s.season.startSold) || 0);
+    s.season.startReputation = Math.max(0, Number(s.season.startReputation) || 0);
+    s.event = s.event || def.event;
+    s.achievements = s.achievements || {};
+    s.careerRewarded = s.careerRewarded || {};
+    s.cities = Array.isArray(s.cities) && s.cities.length ? s.cities : ['london'];
+    s.employees = s.employees || {};
+    s.awardClaimed = s.awardClaimed || {};
+    s.socialFollowers = typeof s.socialFollowers === 'number' ? s.socialFollowers : 0;
+    s.marketHeat = typeof s.marketHeat === 'number' ? s.marketHeat : 50;
+    s.viralCooldown = typeof s.viralCooldown === 'number' ? s.viralCooldown : 0;
+    s.runwayCooldown = typeof s.runwayCooldown === 'number' ? s.runwayCooldown : 0;
+
+    if (!Array.isArray(s.quests) || !s.quests.length) {
+        s.quests = QUEST_TEMPLATES.slice(0, 4).map(q => ({ ...q, progress: 0, claimed: false }));
+    }
+
+    return s;
+}
+
+function loadSlot(slot) {
+    activeSlot = slot;
+    try {
+        const raw = localStorage.getItem(`AtelierDeluxe_Slot_${slot}`);
+        if (raw) {
+            State = ensureStateIntegrity(JSON.parse(raw));
+        } else {
+            State = getDefaultState();
+        }
+    } catch(e) {
+        console.warn("Storage load error:", e);
+        State = getDefaultState();
+    }
+}
+
+function saveActiveSlot() {
+    State.lastSaved = Date.now();
+    try {
+        localStorage.setItem(`AtelierDeluxe_Slot_${activeSlot}`, JSON.stringify(State));
+    } catch(e) {
+        console.error("Save error:", e);
+    }
+}
+
+function saveToSpecificSlot(slot) {
+    activeSlot = slot;
+    saveActiveSlot();
+    renderAll();
+    showToast(`💾 Game saved into Profile ${slot}!`);
+}
+
+function switchSlot(slot) {
+    if (slot === activeSlot) return;
+    saveActiveSlot();
+    loadSlot(slot);
+    renderAll();
+    showToast(`📁 Switched to Profile ${slot}`);
+}
+
+function clearSingleSlot(slot) {
+    if (!confirm(`Are you sure you want to erase Profile ${slot}?`)) return;
+    localStorage.removeItem(`AtelierDeluxe_Slot_${slot}`);
+    if (activeSlot === slot) {
+        State = getDefaultState();
+    }
+    renderAll();
+    showToast(`🗑️ Profile ${slot} erased.`);
+}
+
+function confirmFactoryReset() {
+    if (confirm("⚠️ WARNING: This will completely erase ALL 3 save slots and restore initial data. Proceed?")) {
+        try {
+            localStorage.removeItem("AtelierDeluxe_Slot_1");
+            localStorage.removeItem("AtelierDeluxe_Slot_2");
+            localStorage.removeItem("AtelierDeluxe_Slot_3");
+        } catch(e) {}
+        activeSlot = 1;
+        State = getDefaultState();
+        renderAll();
+        showToast("✨ Factory reset complete! Brand new atelier ready.");
+    }
+}
+
+/* ==========================================================================
+   PROGRESSION & BONUSES
+   ========================================================================== */
+function xpNeed() { return 100 + (State.level - 1) * 75; }
+
+function addXP(n) {
+    State.xp += n;
+    while (State.xp >= xpNeed()) {
+        State.xp -= xpNeed();
+        State.level++;
+        State.fashionTokens++;
+        State.reputation += 5;
+        showToast(`🏆 Level Up! Fashion Level ${State.level} (+1 Token)`);
+        SFX.rare();
+    }
+}
+
+function researchBought(id) { return !!State.research[id]; }
+function employeeBought(id) { return !!State.employees[id]; }
+
+function cityBonus(tag) {
+    let mult = 1.0;
+    State.cities.forEach(id => {
+        const c = WORLD_CITIES.find(x => x.id === id);
+        if (!c) return;
+        if (c.style === tag) mult *= 1.10;
+        else if (c.style === 'any') mult *= 1.06;
+    });
+    return mult;
+}
+
+function careerIndex() {
+    let idx = 0;
+    CAREER_RANKS.forEach((r, i) => {
+        if (State.reputation >= r.rep) idx = i;
+    });
+    return idx;
+}
+
+function careerName() { return CAREER_RANKS[careerIndex()].name; }
+
+function checkCareerRewards() {
+    CAREER_RANKS.forEach((r, i) => {
+        if (State.reputation >= r.rep && !State.careerRewarded[i] && r.reward > 0) {
+            State.careerRewarded[i] = true;
+            State.cash += r.reward;
+            State.fashionTokens++;
+            showToast(`🎖️ Career Milestone: ${r.name} (+$${r.reward})!`);
+        }
+    });
+}
+
+function updateAchievements() {
+    ACHIEVEMENTS.forEach(a => {
+        if (State.achievements[a.id]) return;
+        let val = a.stat === 'reputation' ? State.reputation :
+                  a.stat === 'legendary' ? (State.codex.rarities.legendary || 0) :
+                  (State.stats[a.stat] || 0);
+
+        if (val >= a.goal) {
+            State.achievements[a.id] = true;
+            State.cash += a.reward;
+            State.fashionTokens++;
+            SFX.rare();
+            showToast(`🏅 Achievement: ${a.name} (+$${a.reward})!`);
+        }
+    });
+}
+
+function updateQuests() {
+    State.quests.forEach(q => {
+        if (q.claimed) return;
+        if (q.stat === 'cash') q.progress = Math.min(q.goal, State.cash);
+        else q.progress = Math.min(q.goal, State.stats[q.stat] || 0);
+    });
+}
+
+function claimQuest(idx) {
+    const q = State.quests[idx];
+    if (!q || q.claimed || q.progress < q.goal) return;
+    q.claimed = true;
+    State.cash += q.reward;
+    State.fashionTokens++;
+    State.reputation += Math.ceil(q.xp / 10);
+    addXP(q.xp);
+    SFX.cash();
+    saveActiveSlot();
+    renderAll();
+    showToast(`🎯 Quest Complete: ${q.title} (+$${q.reward})!`);
+}
+
+/* ==========================================================================
+   SVG GARMENT RENDERER
+   ========================================================================== */
+function generateGarmentSvg(svgType, colorHex, rarity = "common", detail = {}) {
+    const fill = colorHex || "#64748b";
+    const id = "g" + Math.random().toString(36).slice(2,8);
+    const accent = detail.accent || (rarity === "legendary" ? "#fbbf24" : rarity === "epic" ? "#c084fc" : "#e2e8f0");
+    const metallic = rarity === "legendary" || detail.metallic;
+    const pattern = detail.pattern || (detail.tag === "cyber" ? "grid" : detail.tag === "luxury" ? "damask" : "none");
+    
+    const pat = pattern === "grid" ? `<pattern id="p${id}" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H8M0 0V8" stroke="${accent}" stroke-opacity=".25" stroke-width="1"/></pattern>` :
+      pattern === "damask" ? `<pattern id="p${id}" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M12 2C17 8 22 7 22 12S17 16 12 22C7 16 2 17 2 12S7 8 12 2Z" fill="none" stroke="${accent}" stroke-opacity=".20"/></pattern>` :
+      `<pattern id="p${id}" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 12L12 0" stroke="#fff" stroke-opacity=".045"/></pattern>`;
+      
+    const defs = `<defs><linearGradient id="m${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".18" stop-color="${fill}"/><stop offset=".62" stop-color="${fill}"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient><linearGradient id="s${id}" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff" stop-opacity=".28"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient><filter id="gl${id}"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>${pat}</defs>`;
+    
+    let body = "";
+    if (svgType === 'dress') {
+        body = `<path d="M48 20Q65 30 82 20L78 51Q91 65 116 121Q66 132 14 121Q39 65 52 51Z" fill="url(#m${id})" stroke="#111827" stroke-width="2"/><path d="M52 23Q65 42 78 23L73 57H57Z" fill="url(#s${id})"/><path d="M31 101Q65 88 99 101" fill="none" stroke="${accent}" stroke-opacity=".65" stroke-width="2"/><path d="M43 112Q65 103 87 112" fill="none" stroke="#fff" stroke-opacity=".15" stroke-width="2"/>`;
+    } else if (svgType === 'coat') {
+        body = `<path d="M35 28L52 18H78L96 28L116 72L96 82L88 55V124H42V55L34 82L14 72Z" fill="url(#m${id})" stroke="#111827" stroke-width="2"/><path d="M52 19L65 60L78 19L72 88H58Z" fill="url(#s${id})"/><path d="M65 58V124M48 78H82" stroke="#111827" stroke-width="2"/><circle cx="65" cy="72" r="2.2" fill="${accent}"/><circle cx="65" cy="86" r="2.2" fill="${accent}"/><path d="M23 69L38 62M107 69L92 62" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>`;
+    } else if (svgType === 'hoodie') {
+        body = `<path d="M30 39L46 23Q65 34 84 23L100 39L116 78L96 86L86 57V116H44V57L34 86L14 78Z" fill="url(#m${id})" stroke="#111827" stroke-width="2"/><path d="M47 24Q65 49 83 24Q80 51 65 56Q50 51 47 24Z" fill="#000" fill-opacity=".22" stroke="#fff" stroke-opacity=".12"/><path d="M49 78H81V103H49Z" fill="url(#s${id})" stroke="#111827"/><path d="M54 111Q65 106 76 111" stroke="${accent}" stroke-width="2" fill="none"/>`;
+    } else {
+        body = `<path d="M35 30L50 21H80L95 30L112 58L94 67L82 50V116H48V50L36 67L18 58Z" fill="url(#m${id})" stroke="#111827" stroke-width="2"/><path d="M51 22Q65 39 79 22Q76 37 65 42Q54 37 51 22Z" fill="#000" fill-opacity=".24"/><path d="M50 74H80" stroke="${accent}" stroke-width="2" opacity=".65"/>`;
+    }
+
+    const hardware = metallic ? `<path d="M41 45L89 45M43 51L87 51" stroke="${accent}" stroke-width="1.5" opacity=".8"/><circle cx="65" cy="64" r="2" fill="${accent}"/><circle cx="65" cy="75" r="2" fill="${accent}"/>` : `<path d="M42 45L88 45" stroke="#fff" stroke-opacity=".12"/>`;
+    const sparkles = (rarity === 'legendary' || rarity === 'epic') ? `<g fill="${accent}" filter="url(#gl${id})"><path d="M20 26l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M105 35l1.5 4.5L111 41l-4.5 1.5L105 47l-1.5-4.5L99 41l4.5-1.5z"/></g>` : '';
+    
+    return `<svg class="${rarity === 'legendary' || rarity === 'epic' ? 'rarity-glow' : ''}" viewBox="0 0 130 140" xmlns="http://www.w3.org/2000/svg">${defs}<rect x="7" y="7" width="116" height="126" rx="15" fill="url(#p${id})" opacity=".9"/>${body}${hardware}${sparkles}<path d="M30 122Q65 132 100 122" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="2"/></svg>`;
+}
+
+/* ==========================================================================
+   WORKBENCH & CRAFTING
+   ========================================================================== */
+function selectForBench(uid) {
+    SFX.click();
+    const alreadySlotIdx = State.bench.findIndex(s => s && s.uid === uid);
+    if (alreadySlotIdx > -1) {
+        clearSlot(alreadySlotIdx);
+        return;
+    }
+
+    const emptySlotIdx = State.bench.findIndex(s => s === null);
+    if (emptySlotIdx === -1) return showToast("Workbench is full! Clear a slot first.");
+
+    const item = State.warehouse.find(p => p.uid === uid);
+    if (item) {
+        State.bench[emptySlotIdx] = item;
+        renderBench();
+        renderWarehouse();
+    }
+}
+
+function clearSlot(slotIdx) {
+    if (State.bench[slotIdx]) {
+        SFX.click();
+        State.bench[slotIdx] = null;
+        renderBench();
+        renderWarehouse();
+    }
+}
+
+function calculateDesign() {
+    const parts = State.bench.filter(Boolean);
+    if (parts.length < 3) return null;
+
+    let sumPower = parts.reduce((acc, p) => acc + (p.power || 10), 0);
+
+    const tagCounts = {};
+    parts.forEach(p => tagCounts[p.tag] = (tagCounts[p.tag] || 0) + 1);
+
+    let synergyBonus = 1.0;
+    let synergyDesc = "Eclectic Blend";
+    let dominantTag = parts[0].tag || "vintage";
+
+    for (let tag in tagCounts) {
+        if (tagCounts[tag] === 2) {
+            synergyBonus = 1.15;
+            synergyDesc = `★ Duo ${tag.toUpperCase()} (+15%)`;
+            dominantTag = tag;
+        } else if (tagCounts[tag] === 3) {
+            synergyBonus = 1.35;
+            synergyDesc = `🔥 PURE ${tag.toUpperCase()} TRIO (+35%)`;
+            dominantTag = tag;
+        }
+    }
+
+    const rarities = parts.map(p => p.rarity);
+    let topRarity = "common";
+    if (rarities.includes("legendary")) topRarity = "legendary";
+    else if (rarities.includes("epic")) topRarity = "epic";
+    else if (rarities.includes("rare")) topRarity = "rare";
+
+    let finalPrice = Math.round(sumPower * synergyBonus * RARITY_VALS[topRarity] * 1.3);
+
+    // Apply permanent atelier bonuses directly into calculation
+    if (researchBought('atelier')) finalPrice = Math.round(finalPrice * 1.12);
+    if (researchBought('quality')) finalPrice = Math.round(finalPrice * 1.08);
+    if (researchBought('luxurycraft') && dominantTag === 'luxury') finalPrice = Math.round(finalPrice * 1.25);
+    if (employeeBought('pattern')) finalPrice = Math.round(finalPrice * 1.10);
+    finalPrice = Math.round(finalPrice * cityBonus(dominantTag));
+
+    if (dominantTag === State.trend.tag) finalPrice = Math.round(finalPrice * 1.08);
+    if (State.event && State.event.mult) finalPrice = Math.round(finalPrice * State.event.mult);
+
+    finalPrice = Math.max(1, finalPrice);
+
+    const name1 = (parts[0].name || "").split(" ")[0] || "Piece";
+    const name2 = (parts[1].name || "").split(" ")[0] || "Accent";
+    const name3 = parts[2].name || "Cut";
+    const title = `${name1} & ${name2} ${name3}`;
+
+    const svgModel = parts.find(p => p.svg)?.svg || "tee";
+    const color = parts.find(p => p.color)?.color || "#64748b";
+
+    return { title, finalPrice, synergyDesc, dominantTag, topRarity, color, svgModel };
+}
+
+function renderBench() {
+    for (let i = 0; i < 3; i++) {
+        const slotEl = document.getElementById(`slot-${i}`);
+        if (!slotEl) continue;
+        const item = State.bench[i];
+        if (item) {
+            slotEl.className = "bench-slot filled";
+            slotEl.innerHTML = `
+                <span class="badge b-${item.rarity}">${item.rarity}</span>
+                <span class="tag tag-${item.tag}">${item.tag}</span>
+                <strong style="margin:6px 0; font-size:0.85rem;">${item.name}</strong>
+                <span style="font-size:0.75rem; color:var(--muted);">${item.type.toUpperCase()} • Pwr: ${item.power}</span>
+                <div style="color:var(--accent); font-size:0.7rem; margin-top:4px;">Click to remove</div>
+            `;
+        } else {
+            slotEl.className = "bench-slot";
+            slotEl.innerHTML = `<span>+ Choose Piece ${i + 1}</span>`;
+        }
+    }
+
+    const preview = calculateDesign();
+    const btn = document.getElementById('btnCraft');
+    const svgWrap = document.getElementById('benchSvgWrap');
+
+    if (preview) {
+        document.getElementById('prevTitle').innerText = preview.title;
+        document.getElementById('prevSynergy').innerHTML = `<span style="color:var(--gold); font-size:0.85rem; font-weight:bold;">${preview.synergyDesc}</span>`;
+        
+        let trendNotice = preview.dominantTag === State.trend.tag ? 
+            `<span style="color:var(--green); font-size:0.8rem; font-weight:bold;">🔥 MATCHES CURRENT TREND (+60% on sale)</span>` : "";
+        document.getElementById('prevTrend').innerHTML = trendNotice;
+
+        document.getElementById('prevPrice').innerText = "$" + preview.finalPrice.toLocaleString();
+        svgWrap.innerHTML = generateGarmentSvg(preview.svgModel, preview.color, preview.topRarity);
+        btn.disabled = false;
+    } else {
+        document.getElementById('prevTitle').innerText = "Empty Blueprint";
+        document.getElementById('prevSynergy').innerText = "";
+        document.getElementById('prevTrend').innerText = "";
+        document.getElementById('prevPrice').innerText = "$0";
+        svgWrap.innerHTML = `<span style="color:var(--muted); font-size:0.85rem;">Add 3 pieces to render</span>`;
+        btn.disabled = true;
+    }
+}
+
+function craftGarment() {
+    const design = calculateDesign();
+    if (!design) return;
+
+    // Consume items from warehouse
+    State.bench.forEach(benchItem => {
+        const idx = State.warehouse.findIndex(p => p.uid === benchItem.uid);
+        if (idx > -1) State.warehouse.splice(idx, 1);
+    });
+    State.bench = [null, null, null];
+
+    const garment = {
+        uid: Date.now() + Math.random(),
+        name: design.title,
+        price: design.finalPrice,
+        rarity: design.topRarity,
+        dominantTag: design.dominantTag,
+        color: design.color,
+        svgModel: design.svgModel
+    };
+
+    State.closet.push(garment);
+    
+    // Stats & Codex Tracking
+    State.stats.crafted++;
+    State.codex.crafted++;
+    State.codex.styles[design.dominantTag] = (State.codex.styles[design.dominantTag] || 0) + 1;
+    State.codex.rarities[design.topRarity] = (State.codex.rarities[design.topRarity] || 0) + 1;
+    if (['rare', 'epic', 'legendary'].includes(design.topRarity)) State.stats.rareCrafted++;
+    if (design.dominantTag === State.trend.tag) State.stats.trendCrafted++;
+
+    const repGain = design.topRarity === 'legendary' ? 6 : design.topRarity === 'epic' ? 3 : 1;
+    State.reputation += repGain;
+    addXP(10 + ({ common: 0, rare: 8, epic: 18, legendary: 35 }[design.topRarity] || 0));
+
+    SFX.craft();
+    updateQuests();
+    updateAchievements();
+    checkCareerRewards();
+    saveActiveSlot();
+    renderAll();
+    showToast(`✨ Crafted: ${garment.name} ($${garment.price.toLocaleString()})!`);
+}
+
+/* ==========================================================================
+   SOURCING GACHAS
+   ========================================================================== */
+function pullGacha(id, multiplier = 1) {
+    const g = GACHAS.find(box => box.id === id);
+    if (!g) return;
+    const requiredStore = STORES.find(store => store.gachaId === id) || STORES.find(store => ({ gala: 3, night: 2, heritage: 0 }[id]) === store.id);
+    const unlockedStore = State.stores.find(store => store.id === requiredStore?.id);
+    if (requiredStore && !unlockedStore?.unlocked) {
+        return showToast(`🔒 Unlock ${requiredStore.name} before sourcing this kit.`);
+    }
+
+    let cost = g.cost * multiplier * (multiplier > 1 ? 0.9 : 1.0);
+    if (employeeBought('buyer')) cost *= 0.92;
+    cost = Math.round(cost);
+
+    if (State.cash < cost) return showToast("Not enough cash!");
+
+    State.cash -= cost;
+    SFX.pull();
+
+    const diceUpgrade = State.upgrades.find(u => u.id === "dice")?.bought;
+    const count = 3 * multiplier;
+
+    for (let i = 0; i < count; i++) {
+        let item = { ...g.pool[Math.floor(Math.random() * g.pool.length)] };
+        const scienceBoost = researchBought('materials') ? 0.16 : 0;
+        const upgradeBoost = diceUpgrade ? 0.25 : 0;
+        if (item.rarity === "common" && Math.random() < scienceBoost + upgradeBoost) {
+            item.rarity = "rare";
+            item.power = Math.round(item.power * 1.3);
+        } else if (researchBought('materials') && item.rarity === 'rare' && Math.random() < 0.08) {
+            item.rarity = 'epic';
+            item.power = Math.round(item.power * 1.35);
+        }
+        item.uid = Date.now() + Math.random();
+        State.warehouse.push(item);
+    }
+
+    saveActiveSlot();
+    renderAll();
+    showToast(`📦 Unboxed ${count} components from ${g.name}!`);
+}
+
+function recycleCommons() {
+    const commons = State.warehouse.filter(p => p.rarity === "common" && !State.bench.some(b => b && b.uid === p.uid));
+    if (!commons.length) return showToast("No spare common parts to scrap!");
+
+    const payout = commons.length * 8;
+    State.cash += payout;
+    State.warehouse = State.warehouse.filter(p => !commons.includes(p));
+
+    SFX.cash();
+    saveActiveSlot();
+    renderAll();
+    showToast(`♻️ Scrapped ${commons.length} common items for +$${payout}!`);
+}
+
+/* ==========================================================================
+   RETAIL STORES & TICK LOOP
+   ========================================================================== */
+function quickStockAll() {
+    let count = 0;
+    State.stores.filter(s => s.unlocked).forEach(store => {
+        while (store.shelves.length < store.capacity && State.closet.length > 0) {
+            let pickIdx = State.closet.findIndex(item => item.price <= (store.maxBudget || 250));
+            if (pickIdx === -1) break;
+            store.shelves.push(State.closet.splice(pickIdx, 1)[0]);
+            count++;
+        }
+    });
+
+    if (count > 0) {
+        SFX.cash();
+        saveActiveSlot();
+        renderAll();
+        showToast(`⚡ Stocked ${count} garments across boutiques!`);
+    } else {
+        showToast("No garments or free shelf space available!");
+    }
+}
+
+function stockItem(itemUid, storeId) {
+    const store = State.stores.find(s => s.id === storeId);
+    if (!store || store.shelves.length >= store.capacity) return showToast("Store shelves are completely full!");
+
+    const idx = State.closet.findIndex(g => g.uid === itemUid);
+    if (idx > -1) {
+        const garment = State.closet[idx];
+        if (garment.price > (store.maxBudget || 250)) {
+            return showToast(`${store.name} cannot attract buyers for a $${garment.price.toLocaleString()} garment.`);
+        }
+        store.shelves.push(State.closet.splice(idx, 1)[0]);
+        SFX.click();
+        saveActiveSlot();
+        renderAll();
+    }
+}
+
+function unlockStore(id) {
+    const store = State.stores.find(s => s.id === id);
+    if (store && State.cash >= store.cost) {
+        State.cash -= store.cost;
+        store.unlocked = true;
+        SFX.cash();
+        saveActiveSlot();
+        renderAll();
+        showToast(`🎉 Opened ${store.name}!`);
+    }
+}
+
+function hireManager(id) {
+    const store = State.stores.find(s => s.id === id);
+    if (store && State.cash >= store.managerCost) {
+        State.cash -= store.managerCost;
+        store.hasManager = true;
+        SFX.cash();
+        saveActiveSlot();
+        renderAll();
+        showToast(`👔 Hired Manager for ${store.name}!`);
+    }
+}
+
+function buyUpgrade(id) {
+    const u = State.upgrades.find(up => up.id === id);
+    if (u && State.cash >= u.cost && !u.bought) {
+        State.cash -= u.cost;
+        u.bought = true;
+        SFX.cash();
+        saveActiveSlot();
+        renderAll();
+        showToast(`⚡ Unlocked: ${u.name}!`);
+    }
+}
+
+function buyResearch(id) {
+    const r = RESEARCH.find(x => x.id === id);
+    if (!r || researchBought(id)) return;
+    if (State.cash < r.cost) return showToast('Not enough cash for this research.');
+    State.cash -= r.cost;
+    State.research[id] = true;
+    addXP(35);
+    SFX.cash();
+    saveActiveSlot();
+    renderAll();
+    showToast(`🧪 Research Complete: ${r.name}!`);
+}
+
+function buyEmployee(id) {
+    const e = EMPLOYEE_TYPES.find(x => x.id === id);
+    if (!e || employeeBought(id)) return;
+    if (State.cash < e.cost) return showToast('Not enough cash to hire this specialist.');
+    State.cash -= e.cost;
+    State.employees[id] = true;
+    State.reputation += 8;
+    addXP(50);
+    SFX.cash();
+    saveActiveSlot();
+    renderAll();
+    showToast(`👩‍🎨 Hired ${e.name}!`);
+}
+
+function travelCity(id) {
+    const c = WORLD_CITIES.find(x => x.id === id);
+    if (!c || State.cities.includes(id)) return;
+    if (State.cash < c.cost) return showToast('Not enough cash to open this fashion market.');
+    State.cash -= c.cost;
+    State.cities.push(id);
+    State.stats.cities++;
+    State.reputation += 15;
+    addXP(80);
+    SFX.cash();
+    saveActiveSlot();
+    renderAll();
+    showToast(`${c.icon} ${c.name} market opened!`);
+}
+
+function featureShowroom(uid) {
+    const g = State.closet.find(x => x.uid === uid);
+    if (!g) return;
+    const alreadyFeatured = State.showroomHistory.includes(g.uid);
+    State.showroom = [g];
+    if (!alreadyFeatured) {
+        State.showroomHistory.push(g.uid);
+        State.stats.showroom++;
+    }
+    State.reputation += 3;
+    addXP(12);
+    saveActiveSlot();
+    renderAll();
+    showToast(alreadyFeatured ? `✨ ${g.name} remains your signature piece.` : `✨ ${g.name} is now featured in your Showroom!`);
+}
+
+function enterRunway() {
+    if (!researchBought('runway')) return showToast('Research the Runway Circuit first.');
+    if (State.runwayCooldown > 0) return showToast(`Runway judging on cooldown (${Math.ceil(State.runwayCooldown)}s)!`);
+    if (!State.closet.length) return showToast('Craft a garment in the Atelier first.');
+
+    const best = [...State.closet].sort((a, b) => b.price - a.price)[0];
+    const score = Math.min(100, Math.round(45 + best.price / 80 + (best.dominantTag === State.trend.tag ? 18 : 0) + (best.rarity === 'legendary' ? 18 : best.rarity === 'epic' ? 10 : 5) + Math.random() * 15));
+
+    State.runwayCooldown = 15;
+    State.season.score += score;
+    State.reputation += Math.round(score / 8);
+    State.cash += Math.round(score * 22);
+    State.fashionTokens += score >= 90 ? 2 : 1;
+
+    if (score >= 88) {
+        State.stats.runwayWins++;
+        SFX.rare();
+        showToast(`🏆 Runway Victory! Score: ${score}/100!`);
+    } else {
+        SFX.cash();
+        showToast(`👠 Runway Judged: ${score}/100! Keep refining your collection.`);
+    }
+
+    addXP(40);
+    updateQuests();
+    updateAchievements();
+    saveActiveSlot();
+    renderAll();
+}
+
+function viralMoment() {
+    if (State.closet.length < 2) return showToast('Need at least 2 garments in your vault.');
+    if (State.viralCooldown > 0) return showToast(`Media spotlight on cooldown (${Math.ceil(State.viralCooldown)}s)!`);
+
+    State.viralCooldown = 30;
+    State.stats.viral++;
+    const followers = Math.floor(60 + Math.random() * 250);
+    const bonusCash = Math.floor(400 + Math.random() * 1200);
+
+    State.socialFollowers += followers;
+    State.cash += bonusCash;
+    State.reputation += 8 + (employeeBought('marketer') ? 4 : 0);
+    State.marketHeat = Math.min(100, State.marketHeat + 14);
+    addXP(60);
+
+    SFX.rare();
+    updateQuests();
+    updateAchievements();
+    saveActiveSlot();
+    renderAll();
+    showToast(`📸 VIRAL HIT! +${followers} Followers and +$${bonusCash}!`);
+}
+
+function claimAward(id) {
+    const a = AWARDS.find(x => x.id === id);
+    if (!a || State.awardClaimed[id]) return;
+    const val = a.stat === 'cities' ? State.stats.cities : (State.stats[a.stat] || 0);
+    if (val < a.goal) return;
+
+    State.awardClaimed[id] = true;
+    State.cash += a.reward;
+    State.fashionTokens += 2;
+    State.reputation += 12;
+    SFX.rare();
+    saveActiveSlot();
+    renderAll();
+    showToast(`🏆 Fashion Award Claimed: ${a.name}!`);
+}
+
+function chooseCustomerForSale(item) {
+    const candidates = State.customers.filter(customer => {
+        const styleMatch = customer.pref === 'any' || customer.pref === item.dominantTag;
+        return styleMatch && customer.budget >= item.price && customer.interest > 0;
+    });
+    if (!candidates.length) return null;
+    const totalInterest = candidates.reduce((sum, customer) => sum + customer.interest, 0);
+    let roll = Math.random() * totalInterest;
+    return candidates.find(customer => (roll -= customer.interest) <= 0) || candidates[0];
+}
+
+function completeSeason() {
+    const season = State.season;
+    const ready = State.stats.crafted - season.startCrafted >= 15 &&
+        State.stats.sold - season.startSold >= 20 &&
+        State.reputation - season.startReputation >= 250;
+    if (!season || season.day < 30 || !ready || season.completed) return;
+
+    season.completed = true;
+    State.stats.seasons++;
+    State.cash += 5000;
+    State.fashionTokens += 5;
+    State.reputation += 35;
+    addXP(150);
+    SFX.rare();
+    saveActiveSlot();
+    renderAll();
+    showToast(`🎉 ${season.name} completed! +$5,000, +5 Tokens, and a new season is ready.`);
+}
+
+function startNextSeason() {
+    if (!State.season.completed) return;
+    const names = ['NOCTURNE EDIT', 'SOLARIS LINE', 'NEON HERITAGE', 'GILDED FUTURE', 'COASTAL FORM'];
+    const available = names.filter(name => name !== State.season.name);
+    State.season = {
+        name: available[Math.floor(Math.random() * available.length)],
+        day: 1,
+        score: 0,
+        completed: false,
+        startCrafted: State.stats.crafted,
+        startSold: State.stats.sold,
+        startReputation: State.reputation
+    };
+    saveActiveSlot();
+    renderAll();
+    showToast(`🗓️ ${State.season.name} has begun.`);
+}
+
+/* ==========================================================================
+   GAME LOOP TICK
+   ========================================================================== */
+function gameTick() {
+    const scissorsBonus = State.upgrades.find(u => u.id === "scissors")?.bought ? 1.15 : 1.0;
+    let speedBonus = State.upgrades.find(u => u.id === "industrial")?.bought ? 0.75 : 1.0;
+    if (employeeBought('manager')) speedBonus *= 0.88;
+
+    let needsHQRender = false;
+
+    // Cooldown timers
+    if (State.viralCooldown > 0) State.viralCooldown = Math.max(0, State.viralCooldown - 0.1);
+    if (State.runwayCooldown > 0) State.runwayCooldown = Math.max(0, State.runwayCooldown - 0.1);
+
+    State.stores.forEach(store => {
+        if (!store.unlocked) return;
+
+        // Auto Restock by Managers
+        if (store.hasManager && store.shelves.length < store.capacity && State.closet.length > 0) {
+            let pickIdx = State.closet.findIndex(item => item.price <= (store.maxBudget || 250));
+            if (pickIdx > -1) {
+                store.shelves.push(State.closet.splice(pickIdx, 1)[0]);
+                needsHQRender = true;
+            }
+        }
+
+        const targetSellTime = (store.speed || 3) * speedBonus;
+        if (store.shelves.length > 0) {
+            store.timer += 0.1;
+            if (store.timer >= targetSellTime) {
+                store.timer = 0;
+                const item = store.shelves.shift();
+                const customer = chooseCustomerForSale(item);
+                if (!customer) {
+                    store.shelves.push(item);
+                } else {
+                    let payout = item.price * scissorsBonus * customer.mult;
+                    if (item.dominantTag === store.prefTag) payout = Math.round(payout * 1.3);
+                    if (item.dominantTag === State.trend.tag) {
+                        const trendMult = State.upgrades.find(u => u.id === "pr")?.bought ? 2.0 : 1.6;
+                        payout = Math.round(payout * trendMult);
+                    }
+
+                    const maxAllowed = store.maxBudget || 250;
+                    if (payout > maxAllowed) payout = maxAllowed;
+
+                    State.cash += Math.round(payout);
+                    State.stats.sold++;
+                    customer.interest = Math.max(0, customer.interest - 8);
+                    State.customers.forEach(other => {
+                        if (other.id !== customer.id) other.interest = Math.min(100, other.interest + 1);
+                    });
+                    if (researchBought('marketing')) State.reputation += 1;
+                    State.reputation += (employeeBought('marketer') ? 0.5 : 0.2);
+                    State.socialFollowers += 2;
+                    addXP(6);
+                    updateAchievements();
+
+                    SFX.cash();
+                    needsHQRender = true;
+                }
+            }
+        } else {
+            store.timer = 0;
+        }
+
+        const pbar = document.getElementById(`pb-${store.id}`);
+        if (pbar) {
+            pbar.style.width = store.shelves.length > 0 ? (store.timer / targetSellTime) * 100 + "%" : "0%";
+        }
+    });
+
+    // Market event timer
+    State.event.time = Math.max(0, (State.event.time || 0) - 0.1);
+    if (State.event.time <= 0) {
+        if (Math.random() < 0.25) {
+            const events = [
+                { name: 'Celebrity Styling Request', desc: 'High roller orders increase prices by 20%!', mult: 1.2 },
+                { name: 'Viral Fashion Week Post', desc: 'Social engagement is peaking across districts!', mult: 1.15 },
+                { name: 'Pop-Up Store Craze', desc: 'Customers are spending lavishly on new cuts!', mult: 1.1 }
+            ];
+            const pick = events[Math.floor(Math.random() * events.length)];
+            State.event = { ...pick, time: 50 };
+            State.stats.events++;
+            showToast(`📣 MARKET EVENT: ${pick.name}!`);
+        } else {
+            State.event = { name: 'Quiet Studio', desc: 'Customers are browsing your latest collection.', time: 45, mult: 1 };
+        }
+    }
+
+    const seasonCrafted = Math.max(0, State.stats.crafted - (State.season.startCrafted || 0));
+    State.season.day = Math.min(30, 1 + Math.floor(seasonCrafted / 4));
+    checkCareerRewards();
+    updateQuests();
+    updateStats();
+
+    if (needsHQRender) {
+        renderHQ();
+        renderCloset();
+    }
+}
+
+function trendTick() {
+    State.trend.timeRemaining--;
+    if (State.trend.timeRemaining <= 0) {
+        State.trend.timeRemaining = 90;
+        const available = STYLES.filter(s => s !== State.trend.tag);
+        State.trend.tag = available[Math.floor(Math.random() * available.length)];
+        showToast(`📢 NEW MARKET TREND: ${State.trend.tag.toUpperCase()}!`);
+    }
+    const label = document.getElementById('trendLabel');
+    const timer = document.getElementById('trendTimer');
+    if (label) label.innerText = `${State.trend.tag.toUpperCase()} SEASON`;
+    if (timer) timer.innerText = `${State.trend.timeRemaining}s`;
+}
+
+/* ==========================================================================
+   RENDERERS FOR ALL TABS
+   ========================================================================== */
+function renderAll() {
+    updateStats();
+    renderHome();
+    renderWarehouse();
+    renderBench();
+    renderGachas();
+    renderHQ();
+    renderCloset();
+    renderQuests();
+    renderCustomers();
+    renderShowroom();
+    renderRunway();
+    renderEmpire();
+    renderSocial();
+    renderSeason();
+    renderResearch();
+    renderUpgrades();
+    renderCodex();
+    renderSaveSlots();
+}
+
+function updateStats() {
+    const el = document.getElementById('statCash');
+    if (el) el.innerText = "$" + Math.floor(State.cash || 0).toLocaleString();
+}
+
+function renderHome() {
+    const el = document.getElementById('tab-home');
+    if (!el) return;
+    const xpPct = Math.min(100, (State.xp / xpNeed()) * 100);
+    const unlocked = State.stores.filter(s => s.unlocked).length;
+
+    el.innerHTML = `
+        <div class="hero-panel">
+            <div class="hero-kicker">Fashion Empire • Season Day ${State.season.day} of 30</div>
+            <div class="hero-title">Build a Global Fashion Dynasty.</div>
+            <div class="hero-sub">Design garments on the assembly bench, conquer international markets, master high-society runway shows, and recruit elite fashion specialists.</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:15px;">
+                <button class="btn btn-primary" onclick="switchTab('workshop')">🎨 Creative Atelier</button>
+                <button class="btn" onclick="switchTab('runway')">👠 Enter Runway</button>
+                <button class="btn" onclick="switchTab('empire')">🌎 Global Empire</button>
+                <button class="btn" onclick="openHowTo()">❓ Game Guide</button>
+            </div>
+        </div>
+
+        <div class="ult-grid">
+            <div class="metric-card">
+                <div class="metric-label">Career Rank</div>
+                <div class="metric-value">${careerName()}</div>
+                <div class="progress"><i style="width:${Math.min(100, State.reputation % 100)}%"></i></div>
+                <small style="color:var(--muted)">${Math.floor(State.reputation)} Reputation</small>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Fashion Level</div>
+                <div class="metric-value">Lv. ${State.level}</div>
+                <div class="progress"><i style="width:${xpPct}%"></i></div>
+                <small style="color:var(--muted)">${State.xp} / ${xpNeed()} XP</small>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Market Trend</div>
+                <div class="metric-value" style="color:var(--gold);">${ULT_STYLES[State.trend.tag]}</div>
+                <small style="color:var(--green)">Live demand bonus active</small>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Fashion Tokens</div>
+                <div class="metric-value">🪙 ${State.fashionTokens}</div>
+                <small style="color:var(--muted)">Earned from promotions & quests</small>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+            <h3>🏅 Achievements Progress</h3>
+            <div class="ult-grid" style="margin-top:12px;">
+                ${ACHIEVEMENTS.map(a => `
+                    <div class="mini-row">
+                        <span>${State.achievements[a.id] ? "✓" : "○"} ${a.name}</span>
+                        <strong style="color:${State.achievements[a.id] ? 'var(--green)' : 'var(--muted)'};">${State.achievements[a.id] ? "Unlocked" : "Locked"}</strong>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+            <h3>Studio Live Pulse</h3>
+            <div class="ult-grid" style="margin-top:12px;">
+                <div class="mini-row"><span>Garments Crafted</span><strong>${State.stats.crafted}</strong></div>
+                <div class="mini-row"><span>Garments Sold</span><strong>${State.stats.sold}</strong></div>
+                <div class="mini-row"><span>Stores Operating</span><strong>${unlocked} / ${State.stores.length}</strong></div>
+                <div class="mini-row"><span>Active Event</span><strong style="color:var(--blue);">${State.event.name}</strong></div>
+            </div>
+        </div>
+    `;
+}
+
+function renderWarehouse() {
+    const grid = document.getElementById('warehouseGrid');
+    const benchUids = State.bench.filter(Boolean).map(b => b.uid);
+    document.getElementById('warehouseCount').innerText = State.warehouse.length;
+
+    let items = [...State.warehouse];
+    if (currentFilter !== 'all') items = items.filter(i => i.type === currentFilter);
+
+    if (!items.length) {
+        grid.innerHTML = `<p style="color:var(--muted); grid-column:1/-1;">Warehouse is empty. Pull component crates from Sourcing!</p>`;
+        return;
+    }
+
+    grid.innerHTML = items.map(p => {
+        const onBench = benchUids.includes(p.uid);
+        return `
+            <div class="part-card ${onBench ? 'selected' : ''}" onclick="selectForBench(${p.uid})">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span class="badge b-${p.rarity}">${p.rarity}</span>
+                        <span class="tag tag-${p.tag}">${p.tag}</span>
+                    </div>
+                    ${onBench ? '<span style="color:var(--green); font-size:0.75rem; font-weight:bold;">[ON BENCH]</span>' : ''}
+                </div>
+                <strong style="display:block; margin: 8px 0 4px 0;">${p.name}</strong>
+                <div style="font-size:0.8rem; color:var(--muted);">${p.type.toUpperCase()} • Pwr: ${p.power}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterWarehouse(type) {
+    currentFilter = type;
+    renderWarehouse();
+}
+
+function renderGachas() {
+    const grid = document.getElementById('gachaGrid');
+    grid.innerHTML = GACHAS.map(g => {
+        const reqStore = STORES.find(s => s.gachaId === g.id) || STORES.find(s => ({ gala: 3, night: 2, heritage: 0 }[g.id]) === s.id);
+        const storeMatch = State.stores.find(s => s.id === (reqStore ? reqStore.id : 0));
+        const isUnlocked = storeMatch ? storeMatch.unlocked : true;
+
+        if (!isUnlocked) {
+            return `
+                <div class="hq-card locked">
+                    <span class="tag" style="background:#334155; color:#94a3b8;">LOCKED GACHA</span>
+                    <h3>${g.name}</h3>
+                    <p style="font-size:0.85rem; color:var(--muted);">Requires unlocking <strong>${reqStore ? reqStore.name : 'Store'}</strong> first.</p>
+                </div>
+            `;
+        }
+
+        let baseCost = g.cost;
+        if (employeeBought('buyer')) baseCost = Math.round(baseCost * 0.92);
+
+        return `
+            <div class="hq-card">
+                <span class="tag tag-${g.tag}" style="align-self:flex-start;">${g.tag.toUpperCase()} DESIGN HOUSE</span>
+                <h3>${g.name}</h3>
+                <p style="font-size:0.85rem; color:var(--muted);">${g.desc}</p>
+                <div style="display:flex; gap:6px; margin-top:auto;">
+                    <button class="btn btn-primary" style="flex:1;" onclick="pullGacha('${g.id}', 1)">
+                        1x Kit ($${baseCost})
+                    </button>
+                    <button class="btn" style="flex:1; background:#0284c7;" onclick="pullGacha('${g.id}', 3)">
+                        3x Kits ($${Math.round(baseCost * 3 * 0.9)})
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderHQ() {
+    const grid = document.getElementById('storesGrid');
+    grid.innerHTML = State.stores.map(s => {
+        const maxBud = (s.maxBudget || 250).toLocaleString();
+        return `
+            <div class="hq-card ${!s.unlocked ? 'locked' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>${s.name}</h3>
+                    <span class="tag tag-${s.prefTag}">Prefers ${(s.prefTag || 'style').toUpperCase()} (+30%)</span>
+                </div>
+
+                <div style="font-size:0.8rem; color:var(--gold); font-weight:bold;">Customer Budget Limit: $${maxBud}</div>
+
+                ${s.unlocked ? `
+                    <div style="font-size:0.85rem; margin-top:4px;">Shelves Stock: ${s.shelves.length} / ${s.capacity}</div>
+                    <div class="shelf-bar"><div id="pb-${s.id}" class="shelf-fill"></div></div>
+                    <div style="margin-top:8px;">
+                        ${s.hasManager ? 
+                            '<span style="color:var(--gold); font-size:0.85rem; font-weight:bold;">★ Manager Employed (Auto-Restock)</span>' :
+                            `<button class="btn" style="width:100%; font-size:0.8rem;" onclick="hireManager(${s.id})">Hire Manager ($${s.managerCost})</button>`
+                        }
+                    </div>
+                ` : `
+                    <p style="font-size:0.85rem; color:var(--muted); margin: 6px 0;">Expand your commercial retail footprint.</p>
+                    <button class="btn btn-primary" onclick="unlockStore(${s.id})">Unlock Boutique ($${s.cost.toLocaleString()})</button>
+                `}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCloset() {
+    const grid = document.getElementById('closetGrid');
+    if (!State.closet.length) {
+        grid.innerHTML = `<p style="color:var(--muted); grid-column:1/-1;">Your vault is empty. Assemble new designs in the Atelier!</p>`;
+        return;
+    }
+
+    grid.innerHTML = State.closet.map(g => `
+        <div class="part-card" style="cursor:default;">
+            <div style="display:flex; justify-content:space-between;">
+                <span class="badge b-${g.rarity}">${g.rarity}</span>
+                <span class="tag tag-${g.dominantTag}">${g.dominantTag}</span>
+            </div>
+            
+            <div class="garment-svg-wrap">
+                ${generateGarmentSvg(g.svgModel, g.color, g.rarity)}
+            </div>
+
+            <strong style="display:block; font-size:0.95rem;">${g.name}</strong>
+            <div style="font-size:1.3rem; font-weight:bold; color:var(--green); margin:6px 0;">$${g.price.toLocaleString()}</div>
+            
+            <div style="font-size:0.75rem; color:var(--muted); margin-bottom:4px;">Send to Boutique:</div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                ${State.stores.filter(s => s.unlocked).map(s => {
+                    const isOver = g.price > (s.maxBudget || 250);
+                    return `
+                        <button class="btn" style="font-size:0.7rem; padding:4px 8px; ${isOver ? 'border:1px solid #ef4444;' : ''}" onclick="stockItem(${g.uid}, ${s.id})">
+                            ${s.name.split(' ')[0]} ${isOver ? '(Cap $' + s.maxBudget + ')' : ''}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderQuests() {
+    const el = document.getElementById('tab-quests');
+    if (!el) return;
+    updateQuests();
+    el.innerHTML = `
+        <div class="panel">
+            <h2>🎯 Designer Contracts & Quests</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Fulfill house contracts to claim substantial monetary bonuses and prestige tokens.</p>
+            <div class="grid">
+                ${State.quests.map((q, i) => {
+                    const pct = Math.min(100, (q.progress / q.goal) * 100);
+                    return `
+                        <div class="quest-card ${q.claimed ? 'complete' : ''}">
+                            <span class="badge ${q.claimed ? 'b-rare' : 'b-common'}">${q.claimed ? 'COMPLETED' : 'ACTIVE'}</span>
+                            <h3 style="margin:8px 0">${q.title}</h3>
+                            <p style="font-size:.82rem; color:var(--muted); min-height:34px">${q.desc}</p>
+                            <div style="display:flex; justify-content:space-between; font-size:.75rem; margin:10px 0">
+                                <span>${Math.floor(q.progress).toLocaleString()} / ${q.goal.toLocaleString()}</span>
+                                <strong style="color:var(--gold)">$${q.reward.toLocaleString()}</strong>
+                            </div>
+                            <div class="progress"><i style="width:${pct}%"></i></div>
+                            <button class="btn ${q.progress >= q.goal && !q.claimed ? 'btn-green' : ''}" style="width:100%; margin-top:10px;" onclick="claimQuest(${i})" ${q.claimed || q.progress < q.goal ? 'disabled' : ''}>
+                                ${q.claimed ? '✓ Claimed' : q.progress >= q.goal ? 'Claim Reward' : 'In Progress'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderCustomers() {
+    const el = document.getElementById('tab-customers');
+    if (!el) return;
+    el.innerHTML = `
+        <div class="panel">
+            <h2>🧑 Customer Segments</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Your clientele has varying purchasing power and taste. Tailor your stock to their style profiles.</p>
+            <div class="grid">
+                ${State.customers.map(c => `
+                    <div class="customer-card">
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div class="customer-avatar">${c.icon}</div>
+                            <div>
+                                <h3>${c.name}</h3>
+                                <span class="tag tag-${c.pref === 'any' ? 'vintage' : c.pref}">${c.pref === 'any' ? 'VERSATILE' : c.pref.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <div class="mini-list" style="margin-top:12px;">
+                            <div class="mini-row"><span>Budget</span><strong>$${c.budget.toLocaleString()}</strong></div>
+                            <div class="mini-row"><span>Demand Multiplier</span><strong>×${c.mult.toFixed(2)}</strong></div>
+                            <div class="mini-row"><span>Current Interest</span><strong>${Math.round(c.interest || 0)}%</strong></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderShowroom() {
+    const el = document.getElementById('tab-showroom');
+    if (!el) return;
+    const g = State.showroom[0] || State.closet[0];
+    el.innerHTML = `
+        <div class="panel">
+            <h2>✨ Haute Couture Showroom</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Spotlight a signature masterpiece to build permanent prestige and visitor admiration.</p>
+            <div class="showroom">
+                <div class="spot" style="left:20%"></div>
+                <div class="spot" style="right:15%; transform:rotate(-14deg)"></div>
+                <div class="mannequin"></div>
+                <div style="position:absolute; left:20px; top:18px;">
+                    <span class="badge b-legendary">FEATURED ATELIER PIECE</span>
+                    <h2 style="margin-top:6px">${g ? g.name : 'No signature garment yet'}</h2>
+                    <p style="color:var(--muted); font-size:.85rem">${g ? 'Estimated Value: $' + g.price.toLocaleString() : 'Craft a garment, then feature it here.'}</p>
+                </div>
+            </div>
+            <h3 style="margin-top:18px; margin-bottom:10px;">Select from your Finished Vault:</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                ${State.closet.slice(0, 8).map(x => `
+                    <button class="btn" onclick="featureShowroom(${x.uid})">Spotlight: ${x.name.slice(0, 22)}</button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderRunway() {
+    const el = document.getElementById('tab-runway');
+    if (!el) return;
+    const locked = !researchBought('runway');
+    const cd = Math.ceil(State.runwayCooldown);
+    el.innerHTML = `
+        <div class="panel">
+            <h2>👠 International Fashion Week Runway</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">${locked ? 'Requires researching the International Runway Circuit in R&D.' : 'Present your most exquisite work to an elite panel of judges for global prestige.'}</p>
+            <div class="runway-stage">
+                <div class="lights"></div>
+                <div class="runway-floor"></div>
+                <div class="runway-model">${locked ? '🔒' : '👗'}</div>
+                <div style="position:absolute; bottom:14px; left:0; right:0; text-align:center; font-weight:900; letter-spacing:2px;">
+                    ${locked ? 'CIRCUIT LOCKED (RESEARCH REQUIRED)' : 'PARIS & MILAN FASHION WEEK'}
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
+                <button class="btn btn-primary" onclick="enterRunway()" ${locked || !State.closet.length || cd > 0 ? 'disabled' : ''}>
+                    ${cd > 0 ? `Judging In Progress (${cd}s)` : 'Submit Best Garment for Judging'}
+                </button>
+                <div class="metric-card" style="flex:1; min-width:180px;">
+                    <div class="metric-label">Runway Victories</div>
+                    <div class="metric-value">${State.stats.runwayWins} 🏆</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderEmpire() {
+    const el = document.getElementById('tab-empire');
+    if (!el) return;
+    const next = CAREER_RANKS[Math.min(CAREER_RANKS.length - 1, careerIndex() + 1)];
+    el.innerHTML = `
+        <div class="panel">
+            <div class="hero-kicker">GLOBAL CONGLOMERATE EXPANSION</div>
+            <h2>🌎 International Fashion Network</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Open boutiques across world capitals, recruit industry specialists, and claim historic career awards.</p>
+            
+            <div class="ult-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Current Designer Title</div>
+                    <div class="metric-value">${careerName()}</div>
+                    <small style="color:var(--muted)">${Math.floor(State.reputation)} Rep ${next ? '• Next: ' + next.name + ' at ' + next.rep + ' Rep' : ''}</small>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Social Reach</div>
+                    <div class="metric-value">${State.socialFollowers.toLocaleString()} 👥</div>
+                    <small style="color:var(--muted)">Followers from spotlights</small>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Market Heat</div>
+                    <div class="metric-value">${Math.round(State.marketHeat)}% 🔥</div>
+                    <div class="progress"><i style="width:${State.marketHeat}%"></i></div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:20px;">🌎 World Fashion Capitals</h3>
+            <div class="grid" style="margin-top:12px;">
+                ${WORLD_CITIES.map(c => {
+                    const open = State.cities.includes(c.id);
+                    return `
+                        <div class="city-card">
+                            <div style="font-size:2rem">${c.icon}</div>
+                            <h3>${c.name}</h3>
+                            <p>${c.bonus}</p>
+                            <button class="btn ${open ? '' : 'btn-primary'}" onclick="travelCity('${c.id}')" ${open ? 'disabled' : ''}>
+                                ${open ? '✓ Market Established' : 'Open Market ($' + c.cost.toLocaleString() + ')'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <h3 style="margin-top:20px;">👩‍🎨 Atelier Specialists & Staff</h3>
+            <div class="grid" style="margin-top:12px;">
+                ${EMPLOYEE_TYPES.map(e => {
+                    const hired = employeeBought(e.id);
+                    return `
+                        <div class="employee-card">
+                            <div style="font-size:1.8rem">${e.icon}</div>
+                            <h3>${e.name}</h3>
+                            <p>${e.desc}</p>
+                            <button class="btn ${hired ? '' : 'btn-green'}" onclick="buyEmployee('${e.id}')" ${hired ? 'disabled' : ''}>
+                                ${hired ? '✓ On Staff' : 'Hire ($' + e.cost.toLocaleString() + ')'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <h3 style="margin-top:20px;">🏆 Industry Accolades</h3>
+            <div class="grid" style="margin-top:12px;">
+                ${AWARDS.map(a => {
+                    const v = a.stat === 'cities' ? State.stats.cities : (State.stats[a.stat] || 0);
+                    const done = !!State.awardClaimed[a.id];
+                    const ready = v >= a.goal;
+                    return `
+                        <div class="award-card">
+                            <span class="badge ${done ? 'b-rare' : 'b-common'}">${done ? 'CLAIMED' : 'AWARD'}</span>
+                            <h3 style="margin:8px 0">${a.name}</h3>
+                            <div class="mini-row"><span>Requirement</span><strong>${v} / ${a.goal}</strong></div>
+                            <button class="btn ${ready && !done ? 'btn-green' : ''}" style="width:100%; margin-top:10px;" onclick="claimAward('${a.id}')" ${done || !ready ? 'disabled' : ''}>
+                                ${done ? '✓ Awarded' : ready ? 'Claim Accolade (+$' + a.reward.toLocaleString() + ')' : 'In Progress'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderSocial() {
+    const el = document.getElementById('tab-social');
+    if (!el) return;
+    const cd = Math.ceil(State.viralCooldown);
+    el.innerHTML = `
+        <div class="panel">
+            <h2>📸 Haute Couture Social Media & PR</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Build buzz around your newest collection to attract high-paying VIP customers and influencers.</p>
+            
+            <div class="ult-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Followers</div>
+                    <div class="metric-value">${State.socialFollowers.toLocaleString()}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Viral Moments</div>
+                    <div class="metric-value">${State.stats.viral}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Brand Heat</div>
+                    <div class="metric-value">${Math.round(State.marketHeat)}%</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:16px; background:rgba(0,0,0,0.2);">
+                <h3>Broadcast Atelier Spotlight</h3>
+                <p style="color:var(--muted); font-size:0.85rem; margin:6px 0 12px 0;">Post an editorial showcase of your current closet to social media.</p>
+                <button class="btn btn-primary" onclick="viralMoment()" ${State.closet.length < 2 || cd > 0 ? 'disabled' : ''}>
+                    ${cd > 0 ? `Media Cooldown (${cd}s)` : '📸 Publish Collection Spotlight'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderSeason() {
+    const el = document.getElementById('tab-season');
+    if (!el) return;
+    const day = State.season.day || 1;
+    const craftedThisSeason = Math.max(0, State.stats.crafted - (State.season.startCrafted || 0));
+    const soldThisSeason = Math.max(0, State.stats.sold - (State.season.startSold || 0));
+    const repThisSeason = Math.max(0, State.reputation - (State.season.startReputation || 0));
+    const ready = craftedThisSeason >= 15 && soldThisSeason >= 20 && repThisSeason >= 250;
+    el.innerHTML = `
+        <div class="panel">
+            <h2>🗓️ Fashion Season Calendar</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Each season challenges you to formulate cohesive looks across 30 design days.</p>
+            
+            <div class="ult-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Active Season</div>
+                    <div class="metric-value">${State.season.name}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Season Progress</div>
+                    <div class="metric-value">Day ${day} / 30</div>
+                    <div class="progress"><i style="width:${(day / 30) * 100}%"></i></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Prestige Score</div>
+                    <div class="metric-value">${State.season.score} pts</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:16px; background:rgba(0,0,0,0.2);">
+                <h3>Season Benchmarks</h3>
+                <div class="mini-row" style="margin-top:8px;"><span>Create 15 garments</span><strong>${Math.min(15, craftedThisSeason)} / 15</strong></div>
+                <div class="mini-row" style="margin-top:8px;"><span>Sell 20 garments</span><strong>${Math.min(20, soldThisSeason)} / 20</strong></div>
+                <div class="mini-row" style="margin-top:8px;"><span>Reach 250 reputation</span><strong>${Math.min(250, Math.floor(repThisSeason))} / 250</strong></div>
+                <button class="btn ${ready && !State.season.completed ? 'btn-green' : ''}" style="width:100%; margin-top:14px;" onclick="${State.season.completed ? 'startNextSeason()' : 'completeSeason()'}" ${(!ready && !State.season.completed) ? 'disabled' : ''}>
+                    ${State.season.completed ? 'Begin Next Collection' : ready ? 'Complete Season & Claim Rewards' : 'Complete the Benchmarks to Finish'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderResearch() {
+    const el = document.getElementById('tab-research');
+    if (!el) return;
+    el.innerHTML = `
+        <div class="panel">
+            <h2>🧪 Atelier Research & Development</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Invest profits into permanent technological innovations.</p>
+            <div class="grid">
+                ${RESEARCH.map(r => `
+                    <div class="research-card">
+                        <span class="badge ${researchBought(r.id) ? 'b-rare' : 'b-common'}">${researchBought(r.id) ? 'RESEARCHED' : 'R&D'}</span>
+                        <h3 style="margin:8px 0">${r.name}</h3>
+                        <p style="color:var(--muted); font-size:.82rem; min-height:45px">${r.desc}</p>
+                        <button class="btn ${researchBought(r.id) ? '' : 'btn-green'}" style="width:100%; margin-top:12px;" onclick="buyResearch('${r.id}')" ${researchBought(r.id) || State.cash < r.cost ? 'disabled' : ''}>
+                            ${researchBought(r.id) ? '✓ Completed' : 'Research ($' + r.cost.toLocaleString() + ')'}
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderUpgrades() {
+    const grid = document.getElementById('upgradesGrid');
+    grid.innerHTML = State.upgrades.map(u => `
+        <div class="hq-card">
+            <h3>${u.name}</h3>
+            <p style="font-size:0.85rem; color:var(--muted); margin: 6px 0;">${u.desc}</p>
+            <div style="margin-top:auto;">
+                ${u.bought ? 
+                    '<span style="color:var(--green); font-weight:bold; font-size:0.9rem;">✓ ACQUIRED</span>' :
+                    `<button class="btn btn-green" onclick="buyUpgrade('${u.id}')" ${State.cash < u.cost ? 'disabled' : ''}>Purchase ($${u.cost.toLocaleString()})</button>`
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCodex() {
+    const el = document.getElementById('tab-codex');
+    if (!el) return;
+    const total = Object.values(State.codex.styles).reduce((a, b) => a + b, 0);
+    el.innerHTML = `
+        <div class="panel">
+            <h2>📖 Fashion Codex Archive</h2>
+            <p style="color:var(--muted); margin-bottom:15px;">Every design aesthetic and component tier discovered in your atelier is recorded here.</p>
+            
+            <div class="ult-grid">
+                ${STYLES.map(k => `
+                    <div class="metric-card">
+                        <div class="metric-label">${ULT_STYLES[k]}</div>
+                        <div class="metric-value">${State.codex.styles[k] || 0}</div>
+                        <small style="color:var(--muted)">Creations logged</small>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="panel" style="margin-top:16px; background:rgba(0,0,0,.15);">
+                <h3>Discovered Rarity Distribution</h3>
+                <div class="ult-grid" style="margin-top:12px;">
+                    ${Object.keys(State.codex.rarities).map(r => `
+                        <div class="metric-card">
+                            <span class="badge b-${r}">${r}</span>
+                            <div class="metric-value">${State.codex.rarities[r] || 0}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="mini-row" style="margin-top:14px;">
+                <span>Total Designs Recorded</span>
+                <strong>${total}</strong>
+            </div>
+        </div>
+    `;
+}
+
+function renderSaveSlots() {
+    const grid = document.getElementById('saveSlotsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = [1, 2, 3].map(slot => {
+        let parsed = null;
+        try {
+            const raw = localStorage.getItem(`AtelierDeluxe_Slot_${slot}`);
+            if (raw) parsed = JSON.parse(raw);
+        } catch(e) {}
+
+        const isActive = (activeSlot === slot);
+        const hasData = (parsed !== null);
+
+        let dateStr = "Never";
+        if (hasData && parsed.lastSaved) {
+            dateStr = new Date(parsed.lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        return `
+            <div class="hq-card" style="${isActive ? 'border: 2px solid var(--accent); box-shadow: 0 0 14px var(--accent-glow);' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="font-size:1.05rem;">PROFILE SLOT ${slot}</strong>
+                    ${isActive ? '<span class="badge" style="background:var(--accent); color:white;">ACTIVE</span>' : ''}
+                </div>
+
+                <div style="font-size:0.85rem; color:var(--muted); line-height:1.5; margin: 8px 0;">
+                    ${hasData ? `
+                        <div>💰 <strong>Cash:</strong> $${Math.floor(parsed.cash || 0).toLocaleString()}</div>
+                        <div>👗 <strong>Closet Items:</strong> ${(parsed.closet || []).length}</div>
+                        <div>🏢 <strong>Boutiques:</strong> ${(parsed.stores || []).filter(s => s.unlocked).length} / 4</div>
+                        <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Last saved: ${dateStr}</div>
+                    ` : `
+                        <div style="color:#64748b; font-style:italic;">Empty profile slot</div>
+                    `}
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:auto;">
+                    <button class="btn btn-green" onclick="switchSlot(${slot})">
+                        ${isActive ? '🔄 Reload' : '📂 Load'}
+                    </button>
+                    <button class="btn btn-primary" onclick="saveToSpecificSlot(${slot})">
+                        💾 Save Here
+                    </button>
+                </div>
+                ${hasData ? `
+                    <button class="btn" style="background:#450a0a; color:#fca5a5; font-size:0.75rem; padding:5px; margin-top:4px;" onclick="clearSingleSlot(${slot})">
+                        Clear This Slot
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+/* ==========================================================================
+   NAVIGATION & UI HELPERS
+   ========================================================================== */
+function switchTab(id) {
+    SFX.click();
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    
+    const target = document.getElementById(`tab-${id}`);
+    if (target) target.classList.add('active');
+
+    const navBtn = document.querySelector(`nav button[data-tab="${id}"]`);
+    if (navBtn) navBtn.classList.add('active');
+
+    // Specific on-demand renders
+    if (id === 'home') renderHome();
+    if (id === 'quests') renderQuests();
+    if (id === 'customers') renderCustomers();
+    if (id === 'showroom') renderShowroom();
+    if (id === 'runway') renderRunway();
+    if (id === 'empire') renderEmpire();
+    if (id === 'social') renderSocial();
+    if (id === 'season') renderSeason();
+    if (id === 'research') renderResearch();
+    if (id === 'codex') renderCodex();
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function openHowTo() {
+    const old = document.getElementById('atelierHelp');
+    if (old) { old.remove(); return; }
+
+    const d = document.createElement('div');
+    d.id = 'atelierHelp';
+    d.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.72); backdrop-filter:blur(8px); z-index:10000; display:grid; place-items:center; padding:18px';
+    d.innerHTML = `
+        <div class="panel" style="max-width:850px; max-height:90vh; overflow:auto; background:linear-gradient(145deg,#171d2a,#0c1017); border-color:rgba(255,255,255,.12);">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:center">
+                <div>
+                    <div class="hero-kicker">Fashion Empire: Ultimate Designer</div>
+                    <h2>How To Play & Win</h2>
+                </div>
+                <button class="btn" onclick="document.getElementById('atelierHelp').remove()">✕</button>
+            </div>
+            <div class="ult-grid" style="margin-top:15px">
+                <div class="metric-card">
+                    <b>1. Source Materials</b>
+                    <p style="color:var(--muted); font-size:.82rem; margin-top:6px">Open themed boxes to acquire fabrics, patterns, and trims across four aesthetics.</p>
+                </div>
+                <div class="metric-card">
+                    <b>2. Assemble Looks</b>
+                    <p style="color:var(--muted); font-size:.82rem; margin-top:6px">Combine 3 parts on the bench. Matching aesthetics grants large synergy value multipliers.</p>
+                </div>
+                <div class="metric-card">
+                    <b>3. Distribute & Sell</b>
+                    <p style="color:var(--muted); font-size:.82rem; margin-top:6px">Stock garments in district boutiques matching their price cap. Hire managers to automate stocking.</p>
+                </div>
+                <div class="metric-card">
+                    <b>4. Global Expansion</b>
+                    <p style="color:var(--muted); font-size:.82rem; margin-top:6px">Open world markets (Paris, Tokyo, New York) and recruit master patternmakers and publicists.</p>
+                </div>
+            </div>
+            <div class="mini-row" style="margin-top:15px">
+                <span>Pro Tip</span>
+                <strong>Matching the active Live Market Trend yields a +60% to +100% price boost on boutique sales!</strong>
+            </div>
+        </div>
+    `;
+    d.addEventListener('click', e => { if (e.target === d) d.remove(); });
+    document.body.appendChild(d);
+}
+
+/* ==========================================================================
+   INITIALIZATION
+   ========================================================================== */
+function init() {
+    loadSlot(1);
+    renderAll();
+    
+    // Clear any residual timer intervals
+    if (window.__atelierIntervals) {
+        window.__atelierIntervals.forEach(clearInterval);
+    }
+    
+    window.__atelierIntervals = [
+        setInterval(gameTick, 100),
+        setInterval(trendTick, 1000),
+        setInterval(() => {
+            if (Date.now() - State.lastSaved > 15000) saveActiveSlot();
+        }, 5000)
+    ];
+}
+
+window.addEventListener('beforeunload', () => {
+    try { saveActiveSlot(); } catch(e) {}
+});
+
+window.onload = () => init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bureau Homicide Division - Master Noir Edition (20/20 Edition)</title>
+    <style>
+        :root {
+            --cork-bg: #4a3220;
+            --polaroid-bg: #f5eedc;
+            --string-color: #d62222;
+            --string-active: #ffea00;
+            --noir-dark: #0a0908;
+            --noir-panel: #161311;
+            --amber-gold: #daaa3f;
+            --paper-beige: #ebdcc9;
+            --darkroom-red: #240808;
+            --accent-green: #4ca662;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--noir-dark);
+            font-family: 'Courier New', Courier, monospace;
+            color: #dcdcdc;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Header */
+        #bureau-header {
+            background: #120f0d;
+            border-bottom: 2px solid #3d2f23;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.9);
+            z-index: 200;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--amber-gold);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-title p {
+            margin: 2px 0 0 0;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: #201914;
+            color: #a89887;
+            border: 1px solid #4a3728;
+            border-bottom: none;
+            padding: 7px 12px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 11px;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { background: #35271d; color: #fff; }
+        .tab-btn.active {
+            background: var(--paper-beige);
+            color: #1a1a1a;
+            border-color: #6e523b;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.4);
+        }
+
+        .system-btns {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #2a1d13;
+            color: #e2d7c5;
+            border: 1px solid #5a422f;
+            padding: 5px 10px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 11px;
+            border-radius: 3px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: #423021; color: #fff; }
+        .btn-gold { background: #685017; border-color: var(--amber-gold); color: #fff; }
+        .btn-gold:hover { background: #82641c; }
+        .btn-red { background: #561616; border-color: #9e3030; color: #fff; }
+        .btn-red:hover { background: #752020; }
+        .btn-audio { background: #1f2d1e; border-color: #3b5c39; color: #a4d4a1; }
+        .btn-audio.active { background: #335930; color: #fff; }
+
+        /* Viewport Container */
+        #viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-page {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-page.active { display: block; }
+
+        /* TAB 1: BUREAU DESK */
+        #tab-desk {
+            background: radial-gradient(circle at center, #241d17 0%, #0a0908 100%);
+        }
+
+        .desk-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .desk-card {
+            background: var(--paper-beige);
+            color: #1a1a1a;
+            padding: 20px;
+            border-radius: 4px;
+            border: 2px solid #4a3728;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+        }
+
+        .desk-card h2 {
+            margin-top: 0;
+            color: #4a1515;
+            border-bottom: 2px solid #a89885;
+            padding-bottom: 6px;
+            font-size: 15px;
+            text-transform: uppercase;
+        }
+
+        .rank-badge-box {
+            background: #d9c8b0;
+            border: 1px solid #998875;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .medals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .medal-badge {
+            background: #241d17;
+            border: 1px solid #4a3728;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .medal-badge.unlocked {
+            background: #3b2c1a;
+            border-color: var(--amber-gold);
+            color: #fff;
+        }
+
+        .medal-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        /* TAB 2: CASEBOARD */
+        #tab-caseboard {
+            padding: 0;
+            background-color: var(--cork-bg);
+            background-image: radial-gradient(rgba(0,0,0,0.4) 15%, transparent 16%),
+                              radial-gradient(rgba(0,0,0,0.3) 15%, transparent 16%);
+            background-size: 24px 24px;
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.85);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #string-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .clue-card {
+            position: absolute;
+            background: var(--polaroid-bg);
+            padding: 10px 10px 18px 10px;
+            box-shadow: 4px 8px 20px rgba(0,0,0,0.6);
+            cursor: grab;
+            z-index: 20;
+            width: 180px;
+            border-radius: 2px;
+            color: #222;
+            transition: transform 0.15s ease;
+        }
+
+        .clue-card:active { cursor: grabbing; z-index: 50; }
+        .clue-card.note { background: #faf2d9; padding: 12px; width: 195px; font-size: 11px; border: 1px solid #c8be9c; }
+        .clue-card.newspaper { background: #e5ded0; padding: 12px; width: 210px; font-size: 11px; border: 1px solid #a89d88; }
+
+        .clue-card canvas {
+            width: 100%; height: 105px;
+            object-fit: cover;
+            background: #1e1b18;
+            border: 1px solid #666;
+            filter: sepia(0.4) contrast(1.1);
+        }
+
+        .clue-title { font-weight: bold; font-size: 11px; margin-top: 6px; text-align: center; color: #111; text-transform: uppercase; }
+
+        .pin {
+            position: absolute;
+            top: -8px; left: 50%;
+            transform: translateX(-50%);
+            width: 16px; height: 16px;
+            background: radial-gradient(circle at 30% 30%, #e62b2b, #550000);
+            border-radius: 50%;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+            cursor: pointer;
+            z-index: 80;
+        }
+        .pin.active { background: radial-gradient(circle at 30% 30%, #ffea00, #886600); box-shadow: 0 0 12px #ffea00; }
+
+        #board-toolbar {
+            position: absolute;
+            bottom: 12px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 13, 12, 0.92);
+            color: #c5b8a5;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid #3d2f23;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        /* TAB 3: DISTRICT HUB */
+        #tab-district { background: #12100e; }
+
+        .district-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100%;
+        }
+
+        .district-sidebar {
+            background: var(--noir-panel);
+            border: 1px solid #33271d;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .location-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #241d17;
+            color: #dcdcdc;
+            border: 1px solid #3d2f23;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+
+        .location-btn.active { background: var(--amber-gold); color: #000; border-color: #fff; }
+
+        .district-view {
+            background: #181512;
+            border: 1px solid #33271d;
+            padding: 20px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .scene-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .scene-object {
+            background: #261f18;
+            border: 1px solid #4a3728;
+            padding: 14px;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scene-object:hover { background: #382c22; border-color: var(--amber-gold); }
+        .scene-object.searched { opacity: 0.55; cursor: default; }
+
+        .suspect-card {
+            background: #241d17;
+            border: 1px solid #3d2f23;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+
+        .tension-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #110d0a;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 6px 0 10px 0;
+        }
+
+        .tension-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4ca662, #e6a15c, #d62222);
+            transition: width 0.3s;
+        }
+
+        /* TAB 4: CRIME LAB & REAGENT MINIGAME */
+        #tab-lab {
+            background: var(--darkroom-red);
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.95);
+        }
+
+        .lab-container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: rgba(18, 8, 8, 0.9);
+            border: 2px solid #6e1c1c;
+            padding: 25px;
+            border-radius: 4px;
+        }
+
+        .lab-item {
+            background: #210c0c;
+            border: 1px solid #541717;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reagent-bench {
+            background: #140707;
+            border: 1px dashed #702020;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }
+        .reagent-bench.active { display: block; }
+
+        .reagent-btn {
+            background: #361010;
+            color: #ffb3b3;
+            border: 1px solid #752525;
+            padding: 8px 12px;
+            margin-right: 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .reagent-btn:hover { background: #5c1818; color: #fff; }
+
+        /* TAB 5: EVIDENCE LOCKER */
+        #tab-locker { background: #13110f; }
+
+        /* TAB 6: ARCHIVES */
+        #tab-archives { background: #141210; }
+
+        .archive-card {
+            background: var(--paper-beige);
+            color: #1a1a1a;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 3px;
+            border: 1px solid #6e5e4d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* TAB 7: NOTEBOOK */
+        #tab-notebook { background: #181512; }
+
+        .journal-entry {
+            background: #221c17;
+            border: 1px solid #3d2f23;
+            border-left: 4px solid var(--amber-gold);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+
+        .journal-meta {
+            font-size: 10px;
+            color: var(--amber-gold);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Atmosphere Overlay */
+        #weather-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 0.28;
+            display: none;
+        }
+        #weather-overlay.active { display: block; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: var(--paper-beige);
+            padding: 25px;
+            border-radius: 4px;
+            color: #1a1a1a;
+            width: 480px;
+            border: 3px solid #332418;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.85);
+        }
+
+        .modal-box.typewriter-manual {
+            width: 90%;
+            max-width: 600px;
+            max-height: 82vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #4a3728;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #4a1515;
+            font-size: 15px;
+            text-transform: uppercase;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #4a3728;
+            font-weight: bold;
+        }
+        .close-btn:hover { color: #8b0000; }
+
+        .manual-section { margin-bottom: 14px; }
+        .manual-section h3 {
+            font-size: 12px;
+            margin: 0 0 4px 0;
+            color: #8b0000;
+            text-transform: uppercase;
+        }
+        .manual-section p {
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .accuse-input {
+            width: 100%; padding: 10px; font-family: inherit; font-size: 14px;
+            border: 2px solid #332418; text-align: center; text-transform: uppercase; margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Atmospheric Canvas Overlay -->
+    <canvas id="weather-overlay"></canvas>
+
+    <!-- Bureau Header HUD -->
+    <div id="bureau-header">
+        <div class="header-title">
+            <h1 id="hud-case-title">Case #01: The Whitechapel Fiend</h1>
+            <p>Detective Level: <strong id="hud-level" style="color:var(--amber-gold);">1</strong> | Title: <strong id="hud-rank" style="color:var(--accent-green);">Rookie Gumshoe</strong> | EXP: <span id="hud-exp">0 / 100</span> | Atmosphere: <span id="hud-weather" style="color:#7ca6db;">Clear Night</span></p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('desk')">🕵️ Desk</button>
+            <button class="tab-btn" onclick="switchTab('caseboard')">📌 Caseboard</button>
+            <button class="tab-btn" onclick="switchTab('district')">🏙️ District</button>
+            <button class="tab-btn" onclick="switchTab('lab')">🔬 Crime Lab</button>
+            <button class="tab-btn" onclick="switchTab('locker')">🔒 Locker</button>
+            <button class="tab-btn" onclick="switchTab('notebook')">📓 Notebook</button>
+            <button class="tab-btn" onclick="switchTab('archives')">📂 Archives</button>
+        </div>
+
+        <div class="system-btns">
+            <button class="btn btn-audio" id="bgm-btn" onclick="toggleAudioEngine()">🎷 Noir BGM: OFF</button>
+            <button class="btn btn-gold" onclick="openHowToPlay()">❓ Manual</button>
+            <button class="btn btn-red" id="solve-btn">🚨 Arrest Warrant</button>
+            <button class="btn" id="save-btn">💾 Save</button>
+            <button class="btn" id="load-btn">📂 Load</button>
+        </div>
+    </div>
+
+    <!-- Viewport Container -->
+    <div id="viewport">
+
+        <!-- TAB 1: BUREAU DESK -->
+        <div id="tab-desk" class="tab-page active">
+            <div class="desk-grid">
+                <div class="desk-card">
+                    <h2>Detective Bureau Credentials</h2>
+                    <div class="rank-badge-box">
+                        <p style="margin:0 0 5px 0; font-size:13px;"><strong>Current Rank:</strong> <span id="desk-rank-title" style="color:#5c1d1d;">Rookie Gumshoe</span></p>
+                        <p style="margin:0 0 5px 0; font-size:12px;"><strong>Detective Level:</strong> Level <span id="desk-level-num">1</span></p>
+                        <p style="margin:0; font-size:12px;"><strong>Total Homicide EXP:</strong> <span id="desk-exp-num">0</span> PTS</p>
+                    </div>
+                    <p style="font-size: 12px; line-height: 1.5;">Solve active homicide cases to earn EXP and level up through 5 detective ranks: <em>Rookie Gumshoe &rarr; Flatfoot Detective &rarr; Senior Inspector &rarr; Lead Homicide Sleuth &rarr; Chief of Detectives</em>.</p>
+                    
+                    <h3 style="font-size:12px; text-transform:uppercase; color:#4a1515; margin-top:20px; border-bottom:1px solid #bbb; padding-bottom:4px;">Bureau Service Medals</h3>
+                    <div class="medals-grid" id="desk-medals-grid"></div>
+                </div>
+
+                <div class="desk-card">
+                    <h2>Active Case Docket Summary</h2>
+                    <div id="desk-case-summary" style="font-size: 12px; line-height: 1.55;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CASEBOARD -->
+        <div id="tab-caseboard" class="tab-page">
+            <svg id="string-canvas">
+                <g id="strings-group"></g>
+            </svg>
+            <div id="board-toolbar">
+                <span>📌 Left-click pins to connect red string</span>
+                <span>✂️ Right-click string to snip</span>
+                <button class="btn" style="padding:3px 8px; font-size:10px;" onclick="autoOrganizeBoard()">⚡ Auto-Organize Board</button>
+            </div>
+        </div>
+
+        <!-- TAB 3: DISTRICT HUB -->
+        <div id="tab-district" class="tab-page">
+            <div class="district-layout">
+                <div class="district-sidebar">
+                    <h3 style="margin-top:0; color:var(--amber-gold); font-size: 13px; text-transform: uppercase;">Crime Scenes</h3>
+                    <div id="district-nav-list"></div>
+                    <hr style="border:0; border-top:1px solid #33271d; margin: 15px 0;">
+                    <button class="btn btn-gold" style="width:100%; padding:10px;" onclick="cycleWeather()">🌤️ Shift Weather/Atmosphere</button>
+                </div>
+
+                <div class="district-view">
+                    <h2 id="district-current-name" style="margin-top:0; color:var(--amber-gold);">Location View</h2>
+                    <hr style="border:0; border-top:1px solid #33271d; margin: 10px 0 20px 0;">
+                    
+                    <h3 style="font-size: 13px; text-transform: uppercase; color: #a89887;">Physical Evidence Objects</h3>
+                    <div class="scene-grid" id="district-objects-grid"></div>
+
+                    <h3 style="font-size: 13px; text-transform: uppercase; color: #a89887; margin-top:25px;">Persons of Interest</h3>
+                    <div id="district-suspects-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CRIME LAB & FORENSICS -->
+        <div id="tab-lab" class="tab-page">
+            <div class="lab-container">
+                <h2 style="color:#ff6b6b; margin-top:0; border-bottom:1px solid #6e1c1c; padding-bottom:8px;">🔬 Forensics & Darkroom Crime Lab</h2>
+                <p style="font-size:12px; color:#d89898;">Perform chemical testing and forensic analysis on unexamined physical items to extract confirmed caseboard leads:</p>
+                
+                <div id="lab-evidence-list"></div>
+
+                <div id="reagent-bench" class="reagent-bench">
+                    <h4 id="reagent-bench-title" style="margin:0 0 10px 0; color:var(--amber-gold); text-transform:uppercase; font-size:12px;">Forensic Chemical Reagent Bench</h4>
+                    <p style="font-size:11px; color:#aaa; margin-bottom:12px;">Select the matching chemical testing reagent to process this physical exhibit:</p>
+                    <div>
+                        <button class="reagent-btn" onclick="applyReagent('Luminol Hydroxide')">🧪 Luminol Blood Reaction</button>
+                        <button class="reagent-btn" onclick="applyReagent('Carbolic Acid Test')">🧪 Carbolic Acid Test</button>
+                        <button class="reagent-btn" onclick="applyReagent('Iodine Vapor Fuming')">🧪 Iodine Vapor Fuming</button>
+                        <button class="reagent-btn" onclick="applyReagent('Carbon Dust Print')">🧪 Carbon Powder Prints</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: EVIDENCE LOCKER -->
+        <div id="tab-locker" class="tab-page">
+            <div style="max-width:900px; margin:0 auto;">
+                <h2 style="color:var(--amber-gold); border-bottom: 1px solid #3d2f23; padding-bottom: 8px;">🔒 Bureau Evidence Locker (Storage Vault)</h2>
+                <p style="font-size:12px; color:#aaa; margin-bottom:20px;">Cataloged inventory of raw physical evidence items and collected leads currently in storage:</p>
+                <div id="locker-inventory-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 6: NOTEBOOK & TRANSCRIPTS -->
+        <div id="tab-notebook" class="tab-page">
+            <div style="max-width:900px; margin:0 auto;">
+                <h2 style="color:var(--amber-gold); border-bottom: 1px solid #3d2f23; padding-bottom: 8px;">📓 Detective Case Journal & Interrogation Logs</h2>
+                <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Automated chronological log of suspect questioning, scene inspections, and physical discoveries:</p>
+                <div id="notebook-journal-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 7: ARCHIVES -->
+        <div id="tab-archives" class="tab-page">
+            <div style="max-width:900px; margin:0 auto;">
+                <h2 style="color:var(--amber-gold); border-bottom: 1px solid #3d2f23; padding-bottom: 8px;">📂 Bureau Homicide Archives (Municipal Rotation)</h2>
+                <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Select historical murder investigations to launch active inquiry:</p>
+                <div id="archives-main-list"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Field Manual Modal -->
+    <div class="modal-overlay" id="how-to-play-modal">
+        <div class="modal-box typewriter-manual">
+            <div class="modal-header">
+                <h2>🕵️ DETECTIVE'S FIELD MANUAL</h2>
+                <button class="close-btn" onclick="closeHowToPlay()">&times;</button>
+            </div>
+            
+            <div class="manual-section">
+                <h3>1. Active Case Rotation (Archives)</h3>
+                <p>Open <strong>📂 Archives</strong> to switch between municipal murder dockets.</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>2. Scene Investigation & Interrogations (District)</h3>
+                <p>Visit scenes to inspect objects and question suspects. Use interrogation tactics (Pressure, Sympathize, Present Evidence) to break down suspect tension and reveal leads!</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>3. Forensics & Chemical Reagents (Crime Lab)</h3>
+                <p>Take raw items to the <strong>🔬 Crime Lab</strong>. Choose the correct chemical reagent (Luminol, Iodine, Carbolic Test, Carbon Dust) to transform raw evidence into confirmed lab reports.</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>4. Build the Red String Logic Net (Caseboard)</h3>
+                <p>Drag polaroids and clue notes across your corkboard. Left-click a suspect's pin, then left-click an evidence card's pin to link them with red string. Right-click string to snip.</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>5. Execute Arrest Warrants & Rank Up</h3>
+                <p>Once you connect the killer to key incriminating evidence, click <strong>🚨 Arrest Warrant</strong> and enter their surname. Solving cases awards EXP, levels up rank, and earns service medals!</p>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px; border-top: 1px dashed #4a3728; padding-top: 10px;">
+                <button class="btn btn-gold" onclick="closeHowToPlay()">Return to Investigation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accusation Modal -->
+    <div class="modal-overlay" id="accuse-overlay">
+        <div class="modal-box">
+            <h2 style="margin-top:0; color:#5c1d1d;">Execute Arrest Warrant</h2>
+            <p style="font-size:12px;">Type the exact surname of the primary suspect based on your caseboard evidence links:</p>
+            <input type="text" id="suspect-name-input" class="accuse-input" placeholder="e.g. Tumblety, Briggs, Sterling..." autofocus>
+            <div style="text-align: center;">
+                <button class="btn btn-red" onclick="submitWarrant()">Execute Warrant</button>
+                <button class="btn" onclick="document.getElementById('accuse-overlay').classList.remove('active')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Dialogue Modal -->
+    <div class="modal-overlay" id="dialogue-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="dialogue-title">INVESTIGATION LOG</h2>
+                <button class="close-btn" onclick="closeDialogue()">&times;</button>
+            </div>
+            <div id="dialogue-text" style="font-size: 12px; line-height: 1.55; margin: 15px 0;"></div>
+            <div style="text-align: right; margin-top: 15px; border-top: 1px dashed #4a3728; padding-top: 10px;">
+                <button class="btn btn-gold" onclick="closeDialogue()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio Audio Engine (Sound FX & Procedural Noir Synth BGM)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let bgmGain = null;
+        let isBgmPlaying = false;
+        let bgmNodes = [];
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if (type === 'pin') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(580, now); osc.frequency.exponentialRampToValueAtTime(140, now + 0.04);
+                gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                osc.start(now); osc.stop(now + 0.04);
+            } else if (type === 'snip') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(320, now); osc.frequency.linearRampToValueAtTime(70, now + 0.07);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+                osc.start(now); osc.stop(now + 0.07);
+            } else if (type === 'paper') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(130, now); osc.frequency.exponentialRampToValueAtTime(35, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(420, now); osc.frequency.exponentialRampToValueAtTime(210, now + 0.03);
+                gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+                osc.start(now); osc.stop(now + 0.03);
+            } else if (type === 'beaker') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.linearRampToValueAtTime(1200, now + 0.15);
+                gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.start(now); osc.stop(now + 0.18);
+            } else if (type === 'success') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(280, now); osc.frequency.setValueAtTime(440, now + 0.12); osc.frequency.setValueAtTime(660, now + 0.24);
+                gain.gain.setValueAtTime(0.22, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
+
+        function toggleAudioEngine() {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            const btn = document.getElementById('bgm-btn');
+            if (isBgmPlaying) {
+                stopNoirBGM();
+                btn.innerText = "🎷 Noir BGM: OFF";
+                btn.classList.remove('active');
+            } else {
+                startNoirBGM();
+                btn.innerText = "🎷 Noir BGM: ON";
+                btn.classList.add('active');
+            }
+        }
+
+        function startNoirBGM() {
+            if (isBgmPlaying) return;
+            isBgmPlaying = true;
+            bgmGain = audioCtx.createGain();
+            bgmGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            bgmGain.connect(audioCtx.destination);
+
+            // Vinyl Crackle noise generator
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1) * 0.015;
+            }
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            whiteNoise.connect(filter);
+            filter.connect(bgmGain);
+            whiteNoise.start();
+
+            // Low Jazz Drone Bass Oscillator
+            const droneOsc = audioCtx.createOscillator();
+            droneOsc.type = 'sine';
+            droneOsc.frequency.setValueAtTime(65.41, audioCtx.currentTime); // C2
+            const droneGain = audioCtx.createGain();
+            droneGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            droneOsc.connect(droneGain);
+            droneGain.connect(bgmGain);
+            droneOsc.start();
+
+            bgmNodes = [whiteNoise, droneOsc];
+        }
+
+        function stopNoirBGM() {
+            isBgmPlaying = false;
+            bgmNodes.forEach(node => { try { node.stop(); } catch(e){} });
+            bgmNodes = [];
+        }
+
+        function openHowToPlay() { playSound('paper'); document.getElementById('how-to-play-modal').classList.add('active'); }
+        function closeHowToPlay() { playSound('paper'); document.getElementById('how-to-play-modal').classList.remove('active'); }
+
+        function showDialogue(title, htmlText) {
+            document.getElementById('dialogue-title').innerText = title;
+            document.getElementById('dialogue-text').innerHTML = htmlText;
+            document.getElementById('dialogue-modal').classList.add('active');
+        }
+
+        function closeDialogue() {
+            playSound('paper');
+            document.getElementById('dialogue-modal').classList.remove('active');
+        }
+
+        // Expanded Municipal Cases Database
+        const cases = [
+            {
+                id: 1, 
+                title: "Case #01: The Whitechapel Fiend (London 1888)", 
+                desc: "A midnight homicide in East London. Scotland Yard needs hard physical evidence linking the quack doctor to the scene.",
+                culpritName: "Tumblety", 
+                acceptedNames: ["tumblety", "dr tumblety", "francis tumblety"],
+                cities: [
+                    { 
+                        name: "Miller's Court Alley", 
+                        suspects: [{ id: 'c1_s1', name: 'Dr. Francis Tumblety', desc: 'Quack physician carrying a leather bag of surgical scalpels.', tension: 20, questions: [
+                            { q: "Where were you at midnight?", a: "In my lodging room reading medical books! I do not wander murky alleys." },
+                            { q: "Why carry surgical tools at night?", a: "I carry high-grade Irish scalpels for private anatomical study, nothing more.", clue: { id: 'c1_k1', type: 'note', title: 'Irish Surgical Scalpel', text: '<strong>Custom Scalpel:</strong> High-grade surgical steel stamped with Irish medical initials.' } }
+                        ]}], 
+                        objects: [
+                            { id: 'c1_o1', name: 'Cobblestone Trash Bin', desc: 'A chemical-soaked rag smelling of carbolic acid.', rawLabItem: { id: 'c1_raw1', name: 'Carbolic Chemical Cloth', type: 'Chemical Residue', correctReagent: 'Carbolic Acid Test' } },
+                            { id: 'c1_o2', name: 'Muddy Gutter Drain', desc: 'Discarded pawn receipt for a doctor\'s bag.', clue: null }
+                        ]
+                    },
+                    { 
+                        name: "Ten Bells Pub", 
+                        suspects: [{ id: 'c1_s2', name: 'John Pizer (Leather Apron)', desc: 'Local bootmaker found with blood on his work apron.', tension: 50, questions: [
+                            { q: "Explain the blood on your apron!", a: "I scrape pig hides at the tannery until dusk! Ask the foreman.", clue: { id: 'c1_k2', type: 'newspaper', title: 'Tannery Receipt', text: '<strong>Verified Work Log:</strong> Confirms Pizer was skinning pig hides all evening.' } }
+                        ]}], 
+                        objects: []
+                    },
+                    { 
+                        name: "Commercial St Boarding", 
+                        suspects: [], 
+                        objects: [
+                            { id: 'c1_o3', name: 'Locked Writing Desk', desc: 'A steamship ticket booked under an alias.', clue: { id: 'c1_k3', type: 'note', title: 'Liverpool Express Ticket', text: '<strong>Express Steamship Ticket:</strong> Booked under Tumblety\'s alias for immediate departure.' } }
+                        ]
+                    }
+                ],
+                solution: [['c1_s1', 'c1_k1'], ['c1_s1', 'c1_k3']]
+            },
+            {
+                id: 2, 
+                title: "Case #02: The Speakeasy Poisoning (Chicago 1928)", 
+                desc: "A bootlegging boss was poisoned in a locked VIP backroom during a jazz show.",
+                culpritName: "Briggs", 
+                acceptedNames: ["briggs", "officer briggs", "frank briggs"],
+                cities: [
+                    { 
+                        name: "O'Malley's Speakeasy", 
+                        suspects: [{ id: 'c2_s1', name: 'Veronica Vance (Torch Singer)', desc: 'Claims she stayed on stage during her entire music set.', tension: 15, questions: [
+                            { q: "Did you enter the VIP room?", a: "I didn't leave the microphone for a single second. The bandleader backs me up.", clue: { id: 'c2_k1', type: 'note', title: 'Stage Music Setlist', text: '<strong>Bandleader Log:</strong> Proves Veronica performed continuously on stage.' } }
+                        ]}], 
+                        objects: [
+                            { id: 'c2_o1', name: 'VIP Whiskey Table', desc: 'A crystal tumbler with bitter residue at the bottom.', rawLabItem: { id: 'c2_raw1', name: 'Whiskey Tumbler Residue', type: 'Toxicology Analysis', correctReagent: 'Iodine Vapor Fuming' } }
+                        ]
+                    },
+                    { 
+                        name: "Precinct 4 Station Alley", 
+                        suspects: [{ id: 'c2_s2', name: 'Officer Frank Briggs', desc: 'Beat cop who entered the backroom right before the murder.', tension: 40, questions: [
+                            { q: "Why did you enter the VIP lounge alone?", a: "Just conducting a routine liquor inspection, detective." }
+                        ]}], 
+                        objects: [
+                            { id: 'c2_o2', name: 'Patrol Locker #14', desc: 'Found a police flask containing trace cyanide.', clue: { id: 'c2_k2', type: 'note', title: 'Cyanide Police Flask', text: '<strong>Brass Flask:</strong> Traces of potassium cyanide match the victim\'s glass.' } }
+                        ]
+                    },
+                    { 
+                        name: "Waterfront Docks", 
+                        suspects: [], 
+                        objects: [
+                            { id: 'c2_o3', name: 'Payoff Shipping Crate', desc: 'Hidden payoff ledger detailing police bribes.', clue: { id: 'c2_k3', type: 'newspaper', title: 'Mob Payoff Ledger', text: '<strong>Bribe Payment List:</strong> Shows Officer Briggs received monthly payouts from the Mob.' } }
+                        ]
+                    }
+                ],
+                solution: [['c2_s2', 'c2_k2'], ['c2_s2', 'c2_k3']]
+            },
+            {
+                id: 3, 
+                title: "Case #03: The Blackwood Estate Manor Slaying (1935)", 
+                desc: "Millionaire Arthur Blackwood was stabbed in his locked study right before signing a new will.",
+                culpritName: "Sterling", 
+                acceptedNames: ["sterling", "julian sterling"],
+                cities: [
+                    { 
+                        name: "Manor Study Scene", 
+                        suspects: [{ id: 'c3_s1', name: 'Julian Sterling (Disinherited Nephew)', desc: 'Found arguing with Blackwood over family wealth.', tension: 35, questions: [
+                            { q: "What were you doing near the study door?", a: "I was in the garden courtyard having a cigarette!" }
+                        ]}], 
+                        objects: [
+                            { id: 'c3_o1', name: 'Wall Vault Safe', desc: 'An altered draft of the estate testament.', clue: { id: 'c3_k1', type: 'note', title: 'Forged Estate Testament', text: '<strong>Forged Will:</strong> Draft cutting out Arthur\'s charitable foundation in Sterling\'s favor.' } },
+                            { id: 'c3_o2', name: 'Study Carpet Edge', desc: 'A mud-stained leather driving glove.', rawLabItem: { id: 'c3_raw1', name: 'Muddy Leather Glove', type: 'Soil Analysis', correctReagent: 'Carbon Dust Print' } }
+                        ]
+                    },
+                    { 
+                        name: "Conservatory & Gardens", 
+                        suspects: [{ id: 'c3_s2', name: 'Beatrice Vance (Housekeeper)', desc: 'Worked for the family for 30 years.', tension: 10, questions: [
+                            { q: "Did you see anyone near the study?", a: "I saw Mr. Sterling hurrying back from the muddy garden path with one glove missing!", clue: { id: 'c3_k2', type: 'newspaper', title: 'Housekeeper Statement', text: '<strong>Eyewitness Account:</strong> Confirms Sterling fled the study missing his leather glove.' } }
+                        ]}], 
+                        objects: []
+                    }
+                ],
+                solution: [['c3_s1', 'c3_k1'], ['c3_s1', 'c3_k2']]
+            },
+            {
+                id: 4, 
+                title: "Case #04: The Pier 17 Dockside Homicide (1941)", 
+                desc: "A key harbor informant was shot dead on the docks hours before testifying against the syndicate.",
+                culpritName: "Moretti", 
+                acceptedNames: ["moretti", "don moretti", "carmine moretti"],
+                cities: [
+                    { 
+                        name: "Pier 17 Hangar", 
+                        suspects: [{ id: 'c4_s1', name: 'Don Carmine Moretti', desc: 'Dock boss controlling the harbor cargo manifests.', tension: 60, questions: [
+                            { q: "Where were you when the shots rang out?", a: "In my private harbor office going over freight bills, detective." }
+                        ]}], 
+                        objects: [
+                            { id: 'c4_o1', name: 'Stacked Wooden Crates', desc: 'Spent brass bullet shell lodged in a crate.', rawLabItem: { id: 'c4_raw1', name: 'Spent .38 Casing', type: 'Ballistics Test', correctReagent: 'Luminol Hydroxide' } }
+                        ]
+                    },
+                    { 
+                        name: "Dockside Diner", 
+                        suspects: [{ id: 'c4_s2', name: '"Salty" Sam (Dockworker)', desc: 'Night shift crane operator.', tension: 15, questions: [
+                            { q: "Did you hear the gunshot?", a: "Sure did! Saw Moretti\'s custom pearl-handled revolver glint under the dock light!", clue: { id: 'c4_k1', type: 'newspaper', title: 'Dockworker Statement', text: '<strong>Witness ID:</strong> Confirms seeing Moretti carrying his pearl-handled .38 revolver.' } }
+                        ]}], 
+                        objects: [
+                            { id: 'c4_o2', name: 'Trash Can Outside Diner', desc: 'A handwritten blackmail letter.', clue: { id: 'c4_k2', type: 'note', title: 'Threatening Telegram', text: '<strong>Threat Note:</strong> Warns the victim to keep silent or meet Moretti at Pier 17.' } }
+                        ]
+                    }
+                ],
+                solution: [['c4_s1', 'c4_k1'], ['c4_s1', 'c4_k2']]
+            },
+            {
+                id: 5, 
+                title: "Case #05: The Hollywood Starlet Strangling (1947)", 
+                desc: "Rising movie star Evelyn Marsh was found strangled in her studio dressing room during night reshoots.",
+                culpritName: "Vance", 
+                acceptedNames: ["vance", "charles vance", "director vance"],
+                cities: [
+                    { 
+                        name: "Studio Stage 4 Dressing Room", 
+                        suspects: [{ id: 'c5_s1', name: 'Director Charles Vance', desc: 'Short-tempered film director known for demanding perfection.', tension: 45, questions: [
+                            { q: "Why were you in her dressing room during break?", a: "Only to review script line changes! I left long before midnight." }
+                        ]}], 
+                        objects: [
+                            { id: 'c5_o1', name: 'Vanity Mirror Table', desc: 'Torn silk scarf caught on the vanity hinge.', rawLabItem: { id: 'c5_raw1', name: 'Monogrammed Silk Scarf', type: 'Fiber Analysis', correctReagent: 'Carbon Dust Print' } }
+                        ]
+                    },
+                    { 
+                        name: "The Black Cat Lounge", 
+                        suspects: [{ id: 'c5_s2', name: 'Scarlett Noir (Rival Actress)', desc: 'Lost the lead movie role to Evelyn.', tension: 30, questions: [
+                            { q: "Did you harbor ill will toward Evelyn?", a: "I was furious over the casting, but I spent my evening at the bar surrounded by reporters!", clue: { id: 'c5_k1', type: 'newspaper', title: 'Press Reporter Alibi', text: '<strong>Press Confirmation:</strong> Multiple columnists confirm Scarlett never left the bar.' } }
+                        ]}], 
+                        objects: [
+                            { id: 'c5_o2', name: 'Private Booth Coat Rack', desc: 'A studio memo detailing Vance\'s financial extortion.', clue: { id: 'c5_k2', type: 'note', title: 'Extortion Contract', text: '<strong>Studio Memo:</strong> Reveals Evelyn threatened to expose Director Vance\'s fraud.' } }
+                        ]
+                    }
+                ],
+                solution: [['c5_s1', 'c5_k2']]
+            },
+            {
+                id: 6, 
+                title: "Case #06: The Midnight Express Sabotage (1932)", 
+                desc: "A railway tycoon was found derailed and sabotaged on the express line passing through upstate New York.",
+                culpritName: "Hawthorne", 
+                acceptedNames: ["hawthorne", "arthur hawthorne"],
+                cities: [
+                    { 
+                        name: "Carriage 3 Pullman", 
+                        suspects: [{ id: 'c6_s1', name: 'Arthur Hawthorne (Chief Engineer)', desc: 'Maintains the locomotive boiler tracks.', tension: 40, questions: [
+                            { q: "Where were you during the crash?", a: "In the engine cabin managing steam pressure valves!" }
+                        ]}], 
+                        objects: [
+                            { id: 'c6_o1', name: 'Engine Control Lever', desc: 'An adjusted override valve pin.', rawLabItem: { id: 'c6_raw1', name: 'Override Valve Pin', type: 'Metal Stress Test', correctReagent: 'Carbolic Acid Test' } }
+                        ]
+                    },
+                    { 
+                        name: "Terminal Platform", 
+                        suspects: [{ id: 'c6_s2', name: 'Clara Oswald (Ticket Conductor)', desc: 'Checked passes prior to departure.', tension: 15, questions: [
+                            { q: "Did anyone tamper with the coupling?", a: "I saw Hawthorne messing with the rear track switch right before departure!", clue: { id: 'c6_k1', type: 'newspaper', title: 'Conductor Log', text: '<strong>Station Log:</strong> Places Hawthorne near the rear track switch before midnight.' } }
+                        ]}], 
+                        objects: []
+                    }
+                ],
+                solution: [['c6_s1', 'c6_k1']]
+            },
+            {
+                id: 7, 
+                title: "Case #07: The Museum Artifact Heist & Murder (1950)", 
+                desc: "A night curator was silenced inside the municipal antiquities gallery during a high-value relic robbery.",
+                culpritName: "Sinclair", 
+                acceptedNames: ["sinclair", "victor sinclair"],
+                cities: [
+                    { 
+                        name: "Antiquities Gallery", 
+                        suspects: [{ id: 'c7_s1', name: 'Victor Sinclair (Artifact Dealer)', desc: 'Notorious black-market broker of stolen art.', tension: 55, questions: [
+                            { q: "What was your business at the gallery?", a: "I was merely appraising ancient Greek statues for a private buyer." }
+                        ]}], 
+                        objects: [
+                            { id: 'c7_o1', name: 'Broken Display Case', desc: 'Shattered glass with a monogrammed signet ring left behind.', rawLabItem: { id: 'c7_raw1', name: 'Silver Signet Ring', type: 'Engraving Analysis', correctReagent: 'Iodine Vapor Fuming' } }
+                        ]
+                    },
+                    { 
+                        name: "Museum Courtyard", 
+                        suspects: [{ id: 'c7_s2', name: 'Night Watchman Pete', desc: 'Patrolled the gallery perimeter.', tension: 10, questions: [
+                            { q: "Did you spot the intruder?", a: "Saw Sinclair fleeing the shattered exhibit hall wearing his distinctive signet ring!", clue: { id: 'c7_k1', type: 'newspaper', title: 'Watchman Statement', text: '<strong>Watchman ID:</strong> Confirms Sinclair dropped his monogrammed ring at the crime scene.' } }
+                        ]}], 
+                        objects: []
+                    }
+                ],
+                solution: [['c7_s1', 'c7_k1']]
+            }
+        ];
+
+        // Bureau Medals Configuration
+        const bureauMedals = [
+            { id: 'm_rookie', name: 'First Case Solved', icon: '🎖️', desc: 'Successfully execute your first arrest warrant.' },
+            { id: 'm_forensic', name: 'Master Forensics', icon: '🔬', desc: 'Process 3 raw items using lab reagents.' },
+            { id: 'm_pressure', name: 'Sleuth Interrogator', icon: '❓', desc: 'Question 5 suspects across crime districts.' },
+            { id: 'm_rainy', name: 'Rainy Night Detective', icon: '🌧️', desc: 'Conduct investigation during a Rain Storm.' },
+            { id: 'm_chief', name: 'Chief of Detectives', icon: '⭐', desc: 'Reach Level 5 Detective Rank.' }
+        ];
+
+        function getRankTitle(level) {
+            if (level >= 5) return "Chief of Detectives";
+            if (level === 4) return "Lead Homicide Sleuth";
+            if (level === 3) return "Senior Inspector";
+            if (level === 2) return "Flatfoot Detective";
+            return "Rookie Gumshoe";
+        }
+
+        // Weather & Atmosphere System
+        let currentWeatherMode = 0; // 0: Clear Night, 1: Rain, 2: Heavy Fog
+        const weatherNames = ["Clear Night", "Rain Storm", "Heavy Fog"];
+
+        function cycleWeather() {
+            playSound('click');
+            currentWeatherMode = (currentWeatherMode + 1) % 3;
+            if (currentWeatherMode === 1) unlockMedal('m_rainy');
+            document.getElementById('hud-weather').innerText = weatherNames[currentWeatherMode];
+            updateWeatherCanvas();
+        }
+
+        function updateWeatherCanvas() {
+            const canvas = document.getElementById('weather-overlay');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (currentWeatherMode === 0) {
+                canvas.classList.remove('active');
+            } else {
+                canvas.classList.add('active');
+                if (currentWeatherMode === 1) {
+                    ctx.strokeStyle = 'rgba(160, 190, 230, 0.45)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 140; i++) {
+                        let rx = Math.random() * canvas.width;
+                        let ry = Math.random() * canvas.height;
+                        ctx.beginPath();
+                        ctx.moveTo(rx, ry);
+                        ctx.lineTo(rx - 5, ry + 28);
+                        ctx.stroke();
+                    }
+                } else if (currentWeatherMode === 2) {
+                    let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grad.addColorStop(0, 'rgba(180, 180, 180, 0.18)');
+                    grad.addColorStop(0.5, 'rgba(120, 120, 120, 0.38)');
+                    grad.addColorStop(1, 'rgba(180, 180, 180, 0.18)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        // Global State
+        let gameState = {
+            level: 1,
+            exp: 0,
+            currentCaseIndex: 0,
+            currentCityIndex: 0,
+            unlockedClues: [],
+            searchedObjects: [],
+            rawLabItems: [],
+            processedLabItems: [],
+            askedQuestions: [],
+            connections: [],
+            solvedCases: [],
+            unlockedMedals: [],
+            journalLogs: [],
+            selectedLabItem: null,
+            cardPositions: {}
+        };
+
+        let activePin = null;
+        let spawnedClues = [];
+
+        function switchTab(tabId) {
+            playSound('paper');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetPage = document.getElementById(`tab-${tabId}`);
+            if (targetPage) targetPage.classList.add('active');
+
+            if (tabId === 'caseboard') renderStrings();
+            else if (tabId === 'district') { renderDistrictView(); updateWeatherCanvas(); }
+            else if (tabId === 'lab') renderLabView();
+            else if (tabId === 'locker') renderLockerView();
+            else if (tabId === 'desk') renderDeskView();
+            else if (tabId === 'notebook') renderNotebookView();
+            else if (tabId === 'archives') renderArchivesView();
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-level').innerText = gameState.level;
+            document.getElementById('hud-rank').innerText = getRankTitle(gameState.level);
+            document.getElementById('hud-exp').innerText = `${gameState.exp} / ${gameState.level * 100}`;
+            document.getElementById('hud-case-title').innerText = cases[gameState.currentCaseIndex].title;
+            document.getElementById('hud-weather').innerText = weatherNames[currentWeatherMode];
+        }
+
+        function addJournalEntry(type, text) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            gameState.journalLogs.unshift({ type, text, time, caseTitle: cases[gameState.currentCaseIndex].title });
+        }
+
+        function unlockMedal(medalId) {
+            if (!gameState.unlockedMedals.includes(medalId)) {
+                gameState.unlockedMedals.push(medalId);
+                const medal = bureauMedals.find(m => m.id === medalId);
+                playSound('success');
+                showDialogue("🎖️ BUREAU MEDAL AWARDED", `Congratulations Detective!<br><br>You earned the <strong>${medal.name}</strong> service badge!<br><em>"${medal.desc}"</em>`);
+            }
+        }
+
+        function loadCase(caseIdx, cityIdx = 0) {
+            gameState.currentCaseIndex = caseIdx;
+            gameState.currentCityIndex = cityIdx;
+            const caseData = cases[caseIdx];
+
+            document.querySelectorAll('.clue-card').forEach(el => el.remove());
+            spawnedClues = [];
+            activePin = null;
+
+            let startX = 60;
+            let cardIdx = 0;
+            caseData.cities.forEach(c => {
+                c.suspects.forEach(suspect => {
+                    const savedPos = gameState.cardPositions[suspect.id] || { x: startX + (cardIdx * 210), y: 80 };
+                    createBoardCard({
+                        id: suspect.id, type: 'polaroid', title: suspect.name, 
+                        x: savedPos.x, y: savedPos.y
+                    });
+                    cardIdx++;
+                });
+            });
+
+            let clueIdx = 0;
+            caseData.cities.forEach(c => {
+                c.suspects.forEach(s => {
+                    s.questions.forEach(q => {
+                        if (q.clue && gameState.unlockedClues.includes(q.clue.id)) {
+                            const savedPos = gameState.cardPositions[q.clue.id] || { x: 60 + (clueIdx * 225), y: 320 };
+                            createBoardCard({
+                                id: q.clue.id, type: q.clue.type, title: q.clue.title, text: q.clue.text,
+                                x: savedPos.x, y: savedPos.y
+                            });
+                            clueIdx++;
+                        }
+                    });
+                });
+                c.objects.forEach(o => {
+                    if (o.clue && gameState.unlockedClues.includes(o.clue.id)) {
+                        const savedPos = gameState.cardPositions[o.clue.id] || { x: 60 + (clueIdx * 225), y: 320 };
+                        createBoardCard({
+                            id: o.clue.id, type: o.clue.type, title: o.clue.title, text: o.clue.text,
+                            x: savedPos.x, y: savedPos.y
+                        });
+                        clueIdx++;
+                    }
+                });
+            });
+
+            gameState.processedLabItems.forEach(labId => {
+                const labClueId = `lab_clue_${labId}`;
+                if (!gameState.unlockedClues.includes(labClueId)) {
+                    gameState.unlockedClues.push(labClueId);
+                }
+                const savedPos = gameState.cardPositions[labClueId] || { x: 60 + (clueIdx * 225), y: 320 };
+                createBoardCard({
+                    id: labClueId, type: 'note', title: 'Lab Forensic Report', text: `<strong>Lab Verified:</strong> Chemical reagent test confirmed physical match for raw item [${labId}].`,
+                    x: savedPos.x, y: savedPos.y
+                });
+                clueIdx++;
+            });
+
+            updateHUD();
+            setTimeout(renderStrings, 50);
+        }
+
+        // Caseboard Functions
+        function createBoardCard(clue) {
+            if (spawnedClues.some(c => c.id === clue.id)) return;
+            spawnedClues.push(clue);
+
+            const card = document.createElement('div');
+            let cardClass = 'clue-card';
+            if (clue.type === 'note') cardClass += ' note';
+            if (clue.type === 'newspaper') cardClass += ' newspaper';
+
+            card.className = cardClass;
+            card.style.left = clue.x + 'px';
+            card.style.top = clue.y + 'px';
+            card.dataset.id = clue.id;
+
+            let innerHTML = `<div class="pin" data-id="${clue.id}"></div>`;
+            if (clue.type === 'polaroid') {
+                innerHTML += `<canvas width="160" height="105"></canvas>`;
+                innerHTML += `<div class="clue-title">${clue.title}</div>`;
+            } else {
+                innerHTML += `<strong>${clue.title}</strong><hr style="border:0; border-top:1px dashed #cca; margin:5px 0;">${clue.text}`;
+            }
+
+            card.innerHTML = innerHTML;
+            document.getElementById('tab-caseboard').appendChild(card);
+
+            if (clue.type === 'polaroid') {
+                const canvas = card.querySelector('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#1c1815'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#443b35'; ctx.beginPath(); ctx.arc(80, 95, 38, Math.PI, 0); ctx.fill(); 
+                ctx.fillStyle = '#6e6056'; ctx.beginPath(); ctx.arc(80, 48, 22, 0, Math.PI*2); ctx.fill(); 
+            }
+
+            makeDraggable(card);
+
+            card.querySelector('.pin').addEventListener('click', (e) => {
+                e.stopPropagation();
+                handlePinClick(clue.id);
+            });
+        }
+
+        function autoOrganizeBoard() {
+            playSound('paper');
+            let polaroids = spawnedClues.filter(c => c.type === 'polaroid');
+            let notes = spawnedClues.filter(c => c.type !== 'polaroid');
+
+            polaroids.forEach((c, idx) => {
+                const posX = 60 + (idx * 210);
+                const posY = 70;
+                gameState.cardPositions[c.id] = { x: posX, y: posY };
+                const card = document.querySelector(`.clue-card[data-id="${c.id}"]`);
+                if (card) { card.style.left = posX + 'px'; card.style.top = posY + 'px'; }
+            });
+
+            notes.forEach((c, idx) => {
+                const posX = 60 + (idx % 4) * 225;
+                const posY = 300 + Math.floor(idx / 4) * 160;
+                gameState.cardPositions[c.id] = { x: posX, y: posY };
+                const card = document.querySelector(`.clue-card[data-id="${c.id}"]`);
+                if (card) { card.style.left = posX + 'px'; card.style.top = posY + 'px'; }
+            });
+
+            renderStrings();
+        }
+
+        function makeDraggable(elm) {
+            let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
+            elm.addEventListener('mousedown', dragMouseDown);
+
+            function dragMouseDown(e) {
+                if (e.target.classList.contains('pin')) return;
+                e.preventDefault();
+                mouseX = e.clientX; mouseY = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                document.querySelectorAll('.clue-card').forEach(c => c.style.zIndex = 20);
+                elm.style.zIndex = 50;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                posX = mouseX - e.clientX; posY = mouseY - e.clientY;
+                mouseX = e.clientX; mouseY = e.clientY;
+                const newY = (elm.offsetTop - posY);
+                const newX = (elm.offsetLeft - posX);
+                elm.style.top = newY + "px";
+                elm.style.left = newX + "px";
+                gameState.cardPositions[elm.dataset.id] = { x: newX, y: newY };
+                renderStrings();
+            }
+
+            function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
+        }
+
+        function handlePinClick(clueId) {
+            if (!activePin) {
+                playSound('pin');
+                activePin = clueId;
+                const pinElm = document.querySelector(`.pin[data-id="${clueId}"]`);
+                if (pinElm) pinElm.classList.add('active');
+            } else {
+                if (activePin !== clueId) {
+                    playSound('pin');
+                    const exists = gameState.connections.some(conn => 
+                        (conn[0] === activePin && conn[1] === clueId) || (conn[0] === clueId && conn[1] === activePin)
+                    );
+                    if (!exists) gameState.connections.push([activePin, clueId]);
+                }
+                const activeElm = document.querySelector(`.pin[data-id="${activePin}"]`);
+                if (activeElm) activeElm.classList.remove('active');
+                activePin = null;
+                renderStrings();
+            }
+        }
+
+        function renderStrings() {
+            const stringsGroup = document.getElementById('strings-group');
+            if (!stringsGroup) return;
+            stringsGroup.innerHTML = '';
+
+            gameState.connections.forEach((conn, index) => {
+                const p1 = getPinCenter(conn[0]);
+                const p2 = getPinCenter(conn[1]);
+
+                if (p1.x === 0 && p1.y === 0 || p2.x === 0 && p2.y === 0) return;
+
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.style.cursor = 'pointer'; 
+                g.style.pointerEvents = 'auto';
+
+                const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hitLine.setAttribute('x1', p1.x); hitLine.setAttribute('y1', p1.y);
+                hitLine.setAttribute('x2', p2.x); hitLine.setAttribute('y2', p2.y);
+                hitLine.setAttribute('stroke', 'transparent'); hitLine.setAttribute('stroke-width', '20');
+
+                const visibleLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                visibleLine.setAttribute('x1', p1.x); visibleLine.setAttribute('y1', p1.y);
+                visibleLine.setAttribute('x2', p2.x); visibleLine.setAttribute('y2', p2.y);
+                visibleLine.setAttribute('stroke', 'var(--string-color)'); visibleLine.setAttribute('stroke-width', '3');
+
+                g.appendChild(hitLine); g.appendChild(visibleLine);
+
+                g.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    playSound('snip');
+                    gameState.connections.splice(index, 1);
+                    renderStrings();
+                });
+                stringsGroup.appendChild(g);
+            });
+        }
+
+        function getPinCenter(clueId) {
+            const pin = document.querySelector(`.pin[data-id="${clueId}"]`);
+            if (!pin) return { x: 0, y: 0 };
+            const rect = pin.getBoundingClientRect();
+            const boardRect = document.getElementById('tab-caseboard').getBoundingClientRect();
+            return { x: rect.left - boardRect.left + rect.width / 2, y: rect.top - boardRect.top + rect.height / 2 };
+        }
+
+        // District View Logic
+        function renderDistrictView() {
+            const caseData = cases[gameState.currentCaseIndex];
+            const navList = document.getElementById('district-nav-list');
+            navList.innerHTML = '';
+
+            caseData.cities.forEach((city, idx) => {
+                navList.innerHTML += `
+                    <button class="location-btn ${idx === gameState.currentCityIndex ? 'active' : ''}" onclick="selectDistrict(${idx})">
+                        📍 ${city.name}
+                    </button>`;
+            });
+
+            const currentCity = caseData.cities[gameState.currentCityIndex];
+            document.getElementById('district-current-name').innerText = currentCity.name;
+
+            const objGrid = document.getElementById('district-objects-grid');
+            objGrid.innerHTML = '';
+            if (currentCity.objects.length === 0) {
+                objGrid.innerHTML = `<div style="color:#777; font-size:12px;">No searchable physical items at this scene.</div>`;
+            } else {
+                currentCity.objects.forEach(obj => {
+                    const searched = gameState.searchedObjects.includes(obj.id);
+                    objGrid.innerHTML += `
+                        <div class="scene-object ${searched ? 'searched' : ''}" onclick="inspectObject('${obj.id}')">
+                            <strong>📦 ${obj.name}</strong><br>
+                            <span style="font-size:11px; opacity:0.8;">${searched ? 'Already Inspected' : 'Click to Examine'}</span>
+                        </div>`;
+                });
+            }
+
+            const suspList = document.getElementById('district-suspects-list');
+            suspList.innerHTML = '';
+            if (currentCity.suspects.length === 0) {
+                suspList.innerHTML = `<div style="color:#777; font-size:12px;">No key suspects present at this location.</div>`;
+            } else {
+                currentCity.suspects.forEach(s => {
+                    let questionsHTML = '';
+                    s.questions.forEach((q, qIdx) => {
+                        const qKey = `${s.id}_q${qIdx}`;
+                        const asked = gameState.askedQuestions.includes(qKey);
+                        questionsHTML += `
+                            <button class="btn ${asked ? '' : 'btn-gold'}" style="margin-top:5px; margin-right:5px;" onclick="askSuspect('${s.id}', ${qIdx})">
+                                ${asked ? '✓ ' : '❓ '}${q.q}
+                            </button>`;
+                    });
+
+                    suspList.innerHTML += `
+                        <div class="suspect-card">
+                            <strong>👤 ${s.name}</strong> - <em>${s.desc}</em><br>
+                            <div style="font-size:10px; color:#aaa; margin-top:6px;">Suspect Tension / Resistance Level: ${s.tension}%</div>
+                            <div class="tension-bar-container"><div class="tension-bar" style="width:${s.tension}%;"></div></div>
+                            <div style="margin-top:8px;">${questionsHTML}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        function selectDistrict(idx) {
+            gameState.currentCityIndex = idx;
+            renderDistrictView();
+        }
+
+        function inspectObject(objId) {
+            const city = cases[gameState.currentCaseIndex].cities[gameState.currentCityIndex];
+            const obj = city.objects.find(o => o.id === objId);
+            if (!obj || gameState.searchedObjects.includes(objId)) return;
+
+            gameState.searchedObjects.push(objId);
+            playSound('paper');
+
+            let msg = `<strong>EXAMINING [${obj.name.toUpperCase()}]:</strong><br><br>${obj.desc}`;
+
+            if (obj.rawLabItem && !gameState.rawLabItems.some(r => r.id === obj.rawLabItem.id)) {
+                gameState.rawLabItems.push(obj.rawLabItem);
+                playSound('success');
+                msg += `<br><br><strong style="color:#ff6b6b;">🔬 RAW EVIDENCE RECOVERED:</strong><br>${obj.rawLabItem.name} sent to Crime Lab for Chemical Testing!`;
+                addJournalEntry("EVIDENCE", `Recovered raw evidence item: ${obj.rawLabItem.name} at ${city.name}.`);
+            } else if (obj.clue && !gameState.unlockedClues.includes(obj.clue.id)) {
+                gameState.unlockedClues.push(obj.clue.id);
+                playSound('success');
+                msg += `<br><br><strong style="color:var(--amber-gold);">💡 CRUCIAL LEAD DISCOVERED:</strong><br>${obj.clue.title} pinned to Caseboard!`;
+                addJournalEntry("LEAD", `Discovered clue: ${obj.clue.title} at ${city.name}.`);
+            }
+
+            showDialogue("SCENE INSPECTION", msg);
+            loadCase(gameState.currentCaseIndex, gameState.currentCityIndex);
+            renderDistrictView();
+        }
+
+        function askSuspect(suspectId, qIdx) {
+            const city = cases[gameState.currentCaseIndex].cities[gameState.currentCityIndex];
+            const s = city.suspects.find(s => s.id === suspectId);
+            const q = s.questions[qIdx];
+            const qKey = `${suspectId}_q${qIdx}`;
+
+            if (!gameState.askedQuestions.includes(qKey)) gameState.askedQuestions.push(qKey);
+            playSound('paper');
+            if (gameState.askedQuestions.length >= 5) unlockMedal('m_pressure');
+
+            let msg = `<strong>INTERROGATION STATEMENT (${s.name.toUpperCase()}):</strong><br><br><em>"${q.a}"</em>`;
+
+            if (q.clue && !gameState.unlockedClues.includes(q.clue.id)) {
+                gameState.unlockedClues.push(q.clue.id);
+                playSound('success');
+                msg += `<br><br><strong style="color:var(--amber-gold);">💡 INTERROGATION LEAD DISCOVERED:</strong><br>${q.clue.title} pinned to Caseboard!`;
+                addJournalEntry("INTERROGATION", `Questioned ${s.name}: Revealed lead [${q.clue.title}].`);
+            } else {
+                addJournalEntry("INTERROGATION", `Questioned ${s.name}: "${q.q}"`);
+            }
+
+            showDialogue("SUSPECT INTERROGATION", msg);
+            loadCase(gameState.currentCaseIndex, gameState.currentCityIndex);
+            renderDistrictView();
+        }
+
+        // Crime Lab View & Chemical Reagent Minigame
+        function renderLabView() {
+            const list = document.getElementById('lab-evidence-list');
+            list.innerHTML = '';
+
+            if (gameState.rawLabItems.length === 0) {
+                list.innerHTML = `<div style="color:#d89898; font-size:12px;">No unexamined physical evidence in storage trays. Search crime scenes to locate raw items.</div>`;
+            } else {
+                gameState.rawLabItems.forEach(item => {
+                    const processed = gameState.processedLabItems.includes(item.id);
+                    list.innerHTML += `
+                        <div class="lab-item">
+                            <span><strong>🔬 ${item.name}</strong> (${item.type})<br><small style="color:#aaa;">${processed ? 'Analysis Complete' : 'Requires Chemical Testing'}</small></span>
+                            <button class="btn ${processed ? '' : 'btn-gold'}" ${processed ? 'disabled' : ''} onclick="prepareReagentBench('${item.id}')">
+                                ${processed ? 'Processed' : 'Select Reagent'}
+                            </button>
+                        </div>`;
+                });
+            }
+        }
+
+        function prepareReagentBench(itemId) {
+            playSound('beaker');
+            gameState.selectedLabItem = itemId;
+            const bench = document.getElementById('reagent-bench');
+            const item = gameState.rawLabItems.find(r => r.id === itemId);
+            document.getElementById('reagent-bench-title').innerText = `Chemical Reagent Testing Bench: [${item.name}]`;
+            bench.classList.add('active');
+        }
+
+        function applyReagent(reagentName) {
+            if (!gameState.selectedLabItem) return;
+            const item = gameState.rawLabItems.find(r => r.id === gameState.selectedLabItem);
+            document.getElementById('reagent-bench').classList.remove('active');
+
+            if (item.correctReagent === reagentName) {
+                gameState.processedLabItems.push(item.id);
+                playSound('success');
+                if (gameState.processedLabItems.length >= 3) unlockMedal('m_forensic');
+                addJournalEntry("FORENSICS", `Chemical test ${reagentName} verified raw exhibit [${item.name}].`);
+                showDialogue("🔬 CHEMICAL REACTION VERIFIED", `<strong>SUCCESSFUL FORENSIC ANALYSIS:</strong><br><br>Applying <em>${reagentName}</em> revealed verified forensic evidence for [${item.name}]!<br><br>Lab report added to your Caseboard!`);
+            } else {
+                playSound('snip');
+                showDialogue("🧪 INCONCLUSIVE TEST", `<strong>REAGENT FAILED:</strong><br><br>Applying <em>${reagentName}</em> yielded no reaction on [${item.name}]. Try a different chemical reagent!`);
+            }
+
+            loadCase(gameState.currentCaseIndex, gameState.currentCityIndex);
+            renderLabView();
+        }
+
+        // Evidence Locker View
+        function renderLockerView() {
+            const lockerList = document.getElementById('locker-inventory-list');
+            lockerList.innerHTML = '';
+
+            if (gameState.rawLabItems.length === 0 && gameState.unlockedClues.length === 0) {
+                lockerList.innerHTML = `<div style="color:#777; font-size:12px;">Evidence locker is currently empty.</div>`;
+                return;
+            }
+
+            let html = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">`;
+            
+            gameState.rawLabItems.forEach(item => {
+                const processed = gameState.processedLabItems.includes(item.id);
+                html += `
+                    <div style="background:#1d1814; border:1px solid #4a3728; padding:14px; border-radius:4px;">
+                        <strong>📦 Raw Exhibit:</strong> ${item.name}<br>
+                        <span style="font-size:11px; color:#aaa;">Type: ${item.type}</span><br>
+                        <span style="font-size:11px; color:${processed ? 'var(--accent-green)' : '#e6a15c'};">${processed ? 'Status: Processed in Lab' : 'Status: Unprocessed'}</span>
+                    </div>`;
+            });
+
+            gameState.unlockedClues.forEach(clueId => {
+                html += `
+                    <div style="background:#1d1814; border:1px solid #4a3728; padding:14px; border-radius:4px;">
+                        <strong>📄 Cataloged Lead:</strong> ID [${clueId}]<br>
+                        <span style="font-size:11px; color:var(--accent-green);">Status: Pinned / Active on Board</span>
+                    </div>`;
+            });
+
+            html += `</div>`;
+            lockerList.innerHTML = html;
+        }
+
+        // Notebook & Transcripts View
+        function renderNotebookView() {
+            const list = document.getElementById('notebook-journal-list');
+            list.innerHTML = '';
+
+            if (gameState.journalLogs.length === 0) {
+                list.innerHTML = `<div style="color:#777; font-size:12px;">Notebook empty. Perform investigations to log entries.</div>`;
+                return;
+            }
+
+            gameState.journalLogs.forEach(entry => {
+                list.innerHTML += `
+                    <div class="journal-entry">
+                        <div class="journal-meta">[${entry.time}] - ${entry.caseTitle} | ${entry.type}</div>
+                        <div>${entry.text}</div>
+                    </div>`;
+            });
+        }
+
+        // Bureau Desk View
+        function renderDeskView() {
+            const caseData = cases[gameState.currentCaseIndex];
+            document.getElementById('desk-rank-title').innerText = getRankTitle(gameState.level);
+            document.getElementById('desk-level-num').innerText = gameState.level;
+            document.getElementById('desk-exp-num').innerText = gameState.exp;
+
+            const summary = document.getElementById('desk-case-summary');
+            summary.innerHTML = `
+                <p><strong>Primary Title:</strong> ${caseData.title}</p>
+                <p><strong>Case Summary:</strong> ${caseData.desc}</p>
+                <p><strong>Unlocked Board Leads:</strong> ${gameState.unlockedClues.length}</p>
+                <p><strong>Active Red String Links:</strong> ${gameState.connections.length}</p>
+                <p><strong>Total Cases Solved:</strong> ${gameState.solvedCases.length} / ${cases.length}</p>
+            `;
+
+            const medalsGrid = document.getElementById('desk-medals-grid');
+            medalsGrid.innerHTML = '';
+            bureauMedals.forEach(m => {
+                const unlocked = gameState.unlockedMedals.includes(m.id);
+                medalsGrid.innerHTML += `
+                    <div class="medal-badge ${unlocked ? 'unlocked' : ''}">
+                        <span class="medal-icon">${m.icon}</span>
+                        <strong>${m.name}</strong>
+                    </div>`;
+            });
+        }
+
+        // Archives View
+        function renderArchivesView() {
+            const mainList = document.getElementById('archives-main-list');
+            mainList.innerHTML = '';
+            cases.forEach((c, idx) => {
+                const isSolved = gameState.solvedCases.includes(c.id);
+                mainList.innerHTML += `
+                    <div class="archive-card">
+                        <span><strong>${c.title}</strong> ${isSolved ? '<strong style="color:var(--accent-green);">[CLOSED]</strong>' : ''}<br><small>${c.desc}</small></span>
+                        <button class="btn ${idx === gameState.currentCaseIndex ? 'btn-gold' : ''}" onclick="selectArchiveCase(${idx})">
+                            ${idx === gameState.currentCaseIndex ? 'Active Docket' : 'Open Case'}
+                        </button>
+                    </div>`;
+            });
+        }
+
+        function selectArchiveCase(idx) {
+            if (gameState.currentCaseIndex !== idx) {
+                gameState.unlockedClues = [];
+                gameState.searchedObjects = [];
+                gameState.rawLabItems = [];
+                gameState.processedLabItems = [];
+                gameState.askedQuestions = [];
+                gameState.connections = [];
+                gameState.cardPositions = {};
+            }
+            loadCase(idx, 0);
+            switchTab('caseboard');
+        }
+
+        function addEXP(amount) {
+            gameState.exp += amount;
+            if (gameState.exp >= gameState.level * 100) {
+                gameState.exp -= (gameState.level * 100);
+                gameState.level++;
+                playSound('success');
+                if (gameState.level >= 5) unlockMedal('m_chief');
+                showDialogue("RANK PROMOTION", `🌟 <strong>DETECTIVE RANK PROMOTION!</strong><br><br>You reached Level ${gameState.level}!<br>New Title: <strong style="color:var(--amber-gold);">${getRankTitle(gameState.level).toUpperCase()}</strong>`);
+            }
+            updateHUD();
+        }
+
+        // Arrest Warrant Execution
+        document.getElementById('solve-btn').addEventListener('click', () => {
+            playSound('paper');
+            document.getElementById('accuse-overlay').classList.add('active');
+        });
+
+        function submitWarrant() {
+            document.getElementById('accuse-overlay').classList.remove('active');
+            const caseData = cases[gameState.currentCaseIndex];
+
+            let stringsCorrect = true;
+            if (caseData.solution) {
+                if (gameState.connections.length !== caseData.solution.length) {
+                    stringsCorrect = false;
+                } else {
+                    for (let req of caseData.solution) {
+                        const found = gameState.connections.some(c => 
+                            (c[0] === req[0] && c[1] === req[1]) || (c[0] === req[1] && c[1] === req[0])
+                        );
+                        if (!found) { stringsCorrect = false; break; }
+                    }
+                }
+            }
+
+            const typedName = document.getElementById('suspect-name-input').value.trim().toLowerCase();
+            const nameCorrect = caseData.acceptedNames.some(name => typedName.includes(name));
+
+            if (stringsCorrect && nameCorrect) {
+                playSound('success');
+                unlockMedal('m_rookie');
+                if (!gameState.solvedCases.includes(caseData.id)) {
+                    gameState.solvedCases.push(caseData.id);
+                }
+                addJournalEntry("CLOSED", `Case Closed! Successfully arrested ${caseData.culpritName}.`);
+                showDialogue("🚨 CASE CLOSED", `<strong>ARREST WARRANT EXECUTED!</strong><br><br>Outstanding sleuthing! You identified ${caseData.culpritName} and verified all string evidence links.<br><br><strong style="color:var(--amber-gold);">+100 Homicide EXP Awarded!</strong>`);
+                addEXP(100);
+            } else {
+                playSound('snip');
+                let failReason = "The District Attorney denied your warrant request.";
+                if (!nameCorrect) failReason += " The suspect surname entered was incorrect.";
+                if (!stringsCorrect) failReason += " Your red string connections are missing key evidence or contain extra incorrect links.";
+                showDialogue("❌ WARRANT REJECTED", `<strong>DISTRICT ATTORNEY DENIAL</strong><br><br>${failReason}`);
+            }
+        }
+
+        // Modal Controls & Hotkeys
+        window.addEventListener('click', (e) => {
+            const manualModal = document.getElementById('how-to-play-modal');
+            const accuseModal = document.getElementById('accuse-overlay');
+            const dialogueModal = document.getElementById('dialogue-modal');
+            if (e.target === manualModal) closeHowToPlay();
+            if (e.target === accuseModal) accuseModal.classList.remove('active');
+            if (e.target === dialogueModal) closeDialogue();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeHowToPlay();
+                closeDialogue();
+                document.getElementById('accuse-overlay').classList.remove('active');
+            }
+        });
+
+        // Save & Load System
+        document.getElementById('save-btn').addEventListener('click', () => {
+            localStorage.setItem('noir_detective_master_save', JSON.stringify(gameState));
+            playSound('paper');
+            showDialogue("FILE SAVED", "📁 Investigation progress saved to municipal archives!");
+        });
+
+        document.getElementById('load-btn').addEventListener('click', () => {
+            const saved = localStorage.getItem('noir_detective_master_save');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                loadCase(gameState.currentCaseIndex, gameState.currentCityIndex);
+                playSound('paper');
+                showDialogue("FILE LOADED", "📂 Investigation progress restored from municipal archives!");
+            }
+        });
+
+        window.onload = () => {
+            loadCase(0, 0);
+            window.addEventListener('resize', () => {
+                renderStrings();
+                updateWeatherCanvas();
+            });
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Cozy Cat & Coffee Nook - Ultimate Edition</title>
+    <style>
+        :root {
+            --bg-color: #1f1816;
+            --panel-bg: #2d2320;
+            --panel-border: #4a3a35;
+            --panel-hover: #3a2e2a;
+            --text-main: #f5ebe6;
+            --text-muted: #bfaea5;
+            --accent-gold: #f3be5d;
+            --accent-pink: #ee889a;
+            --accent-green: #83c5be;
+            --accent-blue: #7cb9e8;
+            --accent-purple: #b39ddb;
+            --card-bg: #251c19;
+            --btn-bg: #523f38;
+            --btn-hover: #6a524a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        /* HEADER & STATS */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #362a26 0%, #281e1b 100%);
+            border: 2px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 8px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .stats-group {
+            display: flex;
+            gap: 16px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.25);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value { color: var(--accent-gold); }
+        .stat-value.hearts { color: var(--accent-pink); }
+        .stat-value.rep { color: var(--accent-blue); }
+        .stat-value.level { color: var(--accent-purple); }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* MAIN LAYOUT */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .cafe-floor-panel {
+            flex: 2;
+            position: relative;
+            overflow: hidden;
+            background: #231b18;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        canvas#cafeCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .floor-overlay {
+            position: absolute;
+            top: 10px;
+            left: 12px;
+            background: rgba(0,0,0,0.65);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            overflow-y: hidden;
+        }
+
+        h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 4px;
+            color: var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--btn-bg);
+            color: var(--accent-gold);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: calc(100vh - 190px);
+            padding-right: 4px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* CARDS & BUTTONS */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            transition: transform 0.15s ease;
+        }
+
+        .card:hover {
+            border-color: #634f47;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .card-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-common { background: #555; color: #fff; }
+        .badge-uncommon { background: #2e7d32; color: #fff; }
+        .badge-rare { background: #1565c0; color: #fff; }
+        .badge-epic { background: #6a1b9a; color: #fff; }
+        .badge-legendary { background: #c62828; color: #fff; }
+        .badge-mythic { background: #f57f17; color: #fff; }
+
+        .btn {
+            background-color: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--panel-border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--btn-hover);
+            border-color: var(--accent-gold);
+            color: #fff;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-gold {
+            background-color: var(--accent-gold);
+            color: #1a120b;
+            border: none;
+        }
+        .btn-gold:hover:not(:disabled) {
+            background-color: #ffd27d;
+            color: #000;
+        }
+
+        .btn-sm {
+            padding: 3px 8px;
+            font-size: 10px;
+        }
+
+        .btn-full { width: 100%; }
+
+        .progress-bar-container {
+            background-color: #15100e;
+            border-radius: 4px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+            margin-top: 4px;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-gold) 0%, #ffdf9e 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .log-box {
+            background-color: #181210;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            height: 80px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            line-height: 1.4;
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.75);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal h2 {
+            color: var(--accent-gold);
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal p {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .modal-stats {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        textarea.save-code-box {
+            width: 100%;
+            height: 70px;
+            background-color: #15100e;
+            border: 1px solid var(--panel-border);
+            color: var(--accent-gold);
+            border-radius: 6px;
+            padding: 6px;
+            font-family: monospace;
+            font-size: 10px;
+            resize: none;
+        }
+
+        /* TOAST NOTIFICATION */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent-gold);
+            color: #1a120b;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--btn-hover); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">
+            <span>☕</span> The Cozy Cat & Coffee Nook
+        </div>
+        <div class="stats-group">
+            <div class="stat-item" title="Coins">
+                <span>🪙</span>
+                <span id="stat-coins" class="stat-value">150</span>
+            </div>
+            <div class="stat-item" title="Hearts">
+                <span>💖</span>
+                <span id="stat-hearts" class="stat-value hearts">20</span>
+            </div>
+            <div class="stat-item" title="Cafe Reputation">
+                <span>⭐</span>
+                <span id="stat-rep" class="stat-value rep">1.0</span>
+            </div>
+            <div class="stat-item" title="Cafe Level">
+                <span>🏷️ Lv.</span>
+                <span id="stat-level" class="stat-value level">1</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-sm" onclick="toggleAudio()" id="btn-audio">🔊 Audio ON</button>
+            <button class="btn btn-sm" onclick="openModal('how-modal')">❓ Guide</button>
+            <button class="btn btn-sm" onclick="openModal('daily-modal')">🎁 Daily</button>
+            <button class="btn btn-sm" onclick="openModal('data-modal')">⚙️ Data</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- LEFT COLUMN: CANVAS FLOOR & LOG -->
+        <div class="left-column">
+            <div class="panel cafe-floor-panel">
+                <div class="floor-overlay">
+                    <span>📍 Click cats to pet & patrons to serve!</span>
+                    <button class="btn btn-sm btn-gold" id="btn-laser-toggle" onclick="toggleLaserMode()">🔦 Laser Toy: OFF</button>
+                </div>
+                <canvas id="cafeCanvas"></canvas>
+            </div>
+
+            <div class="panel" style="height: 125px;">
+                <h3>Live Cafe Feed</h3>
+                <div class="log-box" id="activity-log">
+                    [System] Welcome to your expanded cozy cat cafe! Brew coffee, bake pastries, and adopt adorable cats!
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CONTROL TABS -->
+        <div class="right-column">
+            <div class="panel" style="flex: 1;">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('brew')">☕ Brews</button>
+                    <button class="tab-btn" onclick="switchTab('bakery')">🥐 Bakery</button>
+                    <button class="tab-btn" onclick="switchTab('cats')">🐱 Sanctuary</button>
+                    <button class="tab-btn" onclick="switchTab('upgrades')">🪑 Upgrades</button>
+                    <button class="tab-btn" onclick="switchTab('badges')">🏆 Badges</button>
+                </div>
+
+                <!-- BREWS TAB -->
+                <div id="tab-brew" class="tab-content active"></div>
+
+                <!-- BAKERY TAB -->
+                <div id="tab-bakery" class="tab-content"></div>
+
+                <!-- CATS TAB -->
+                <div id="tab-cats" class="tab-content"></div>
+
+                <!-- UPGRADES TAB -->
+                <div id="tab-upgrades" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🪑 Lounge Armchair Slot</span>
+                            <span id="upgrade-slot-count">2 / 12 Slots</span>
+                        </div>
+                        <div class="card-desc">Expand cafe seating to allow more cats and patrons to relax simultaneously.</div>
+                        <button class="btn btn-gold" onclick="buyFurnitureSlot()">Unlock Seat (Cost: <span id="slot-cost">100</span>🪙)</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>⚙️ Espresso Brewer Tech</span>
+                            <span id="upgrade-machine-level">Lv. 1</span>
+                        </div>
+                        <div class="card-desc">Increases brew batch speed and improves drink quality tips by +20% per level.</div>
+                        <button class="btn btn-gold" onclick="upgradeMachine()">Upgrade (Cost: <span id="machine-cost">200</span>🪙)</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>✨ Cozy Cafe Ambiance</span>
+                            <span id="upgrade-decor-level">Lv. 1</span>
+                        </div>
+                        <div class="card-desc">Attracts customer walk-ins faster and boosts patron patience duration.</div>
+                        <button class="btn btn-gold" onclick="upgradeDecor()">Upgrade (Cost: <span id="decor-cost">150</span>🪙)</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🎨 Floor Wallpaper Theme</span>
+                        </div>
+                        <div class="card-desc">Customize your cafe floor style:</div>
+                        <div style="display:flex; gap:6px; margin-top:4px;">
+                            <button class="btn btn-sm" onclick="setFloorTheme('oak')">🪵 Oak Wood</button>
+                            <button class="btn btn-sm" onclick="setFloorTheme('sakura')">🌸 Sakura</button>
+                            <button class="btn btn-sm" onclick="setFloorTheme('retro')">🧱 Pixel Tiles</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BADGES TAB -->
+                <div id="tab-badges" class="tab-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div class="modal-overlay" id="how-modal">
+        <div class="modal">
+            <h2><span>❓ How to Play Guide</span> <button class="btn btn-sm" onclick="closeModal('how-modal')">✖</button></h2>
+            <p>Welcome to <b>The Cozy Cat & Coffee Nook</b>! Your goal is to build the ultimate cozy sanctuary:</p>
+            <div class="modal-stats" style="grid-template-columns: 1fr;">
+                <div><b>☕ 1. Brew & Bake:</b> Prepare coffee batches and bake delicious pastries to earn Coins and Hearts.</div>
+                <div><b>🐱 2. Adopt & Pet Cats:</b> Adopt cats from the Sanctuary! Each cat grants passive bonuses. Click cats directly on the canvas floor to pet them for hearts!</div>
+                <div><b>🔦 3. Laser Pointer:</b> Toggle Laser Toy Mode on the floor to lead cats around and generate bonus purrs!</div>
+                <div><b>⭐ 4. Serve Patrons:</b> Click sitting patrons when order bubbles appear above their heads before their patience bar runs out!</div>
+                <div><b>💰 5. Lucky Coin Bags:</b> Keep an eye out for lucky coin bags dropped on the floor by cats like Clover!</div>
+            </div>
+            <button class="btn btn-gold btn-full" onclick="closeModal('how-modal')">Got it! Let's Brew!</button>
+        </div>
+    </div>
+
+    <!-- DAILY REWARD MODAL -->
+    <div class="modal-overlay" id="daily-modal">
+        <div class="modal">
+            <h2><span>🎁 Daily Streak Reward</span> <button class="btn btn-sm" onclick="closeModal('daily-modal')">✖</button></h2>
+            <p>Claim your daily barista bonus reward for visiting every day!</p>
+            <div class="modal-stats" id="daily-streak-container"></div>
+            <button class="btn btn-gold btn-full" id="btn-claim-daily" onclick="claimDailyReward()">Claim Today's Bonus!</button>
+        </div>
+    </div>
+
+    <!-- DATA & SAVE MODAL -->
+    <div class="modal-overlay" id="data-modal">
+        <div class="modal">
+            <h2><span>⚙️ Save & Data Management</span> <button class="btn btn-sm" onclick="closeModal('data-modal')">✖</button></h2>
+            <p>Your game auto-saves every 10 seconds. You can also export/import save codes manually.</p>
+            
+            <button class="btn btn-gold btn-full" onclick="manualSave()">💾 Save Game Now</button>
+
+            <div>
+                <label style="font-size:11px; font-weight:bold; color:var(--text-muted);">Export Save Code:</label>
+                <textarea class="save-code-box" id="export-code-box" readonly onclick="this.select()"></textarea>
+                <button class="btn btn-full" style="margin-top:4px;" onclick="copyExportCode()">📋 Copy Code to Clipboard</button>
+            </div>
+
+            <div>
+                <label style="font-size:11px; font-weight:bold; color:var(--text-muted);">Import Save Code:</label>
+                <textarea class="save-code-box" id="import-code-box" placeholder="Paste save code here..."></textarea>
+                <button class="btn btn-full" style="margin-top:4px;" onclick="importSaveCode()">📥 Import Save State</button>
+            </div>
+
+            <hr style="border-color: var(--panel-border); margin: 4px 0;">
+
+            <button class="btn btn-full" style="background-color:#8b0000; color:#fff;" onclick="hardResetGame()">⚠️ Hard Reset Game Progress</button>
+        </div>
+    </div>
+
+    <!-- WELCOME BACK OFFLINE MODAL -->
+    <div class="modal-overlay" id="welcome-modal">
+        <div class="modal">
+            <h2><span>☕ Welcome Back, Barista!</span></h2>
+            <p>Your cafe kept purring smoothly while you were away taking care of real life!</p>
+            <div class="modal-stats" id="modal-report-text"></div>
+            <button class="btn btn-gold btn-full" onclick="closeModal('welcome-modal')" style="padding: 10px;">Open Cafe Doors</button>
+        </div>
+    </div>
+
+    <div id="toast">Game Saved!</div>
+
+<script>
+    /* ==================== SAFE UTF-8 ENCODING UTILS ==================== */
+    function encodeSaveCode(obj) {
+        const jsonStr = JSON.stringify(obj);
+        const bytes = new TextEncoder().encode(jsonStr);
+        let bin = '';
+        bytes.forEach(b => bin += String.fromCharCode(b));
+        return btoa(bin);
+    }
+
+    function decodeSaveCode(str) {
+        const bin = atob(str);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const jsonStr = new TextDecoder().decode(bytes);
+        return JSON.parse(jsonStr);
+    }
+
+    /* ==================== AUDIO SYNTHESIZER ENGINE ==================== */
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function toggleAudio() {
+        soundEnabled = !soundEnabled;
+        document.getElementById('btn-audio').innerText = soundEnabled ? "🔊 Audio ON" : "🔇 Audio OFF";
+        showToast(soundEnabled ? "Audio Enabled" : "Audio Muted");
+    }
+
+    function playSound(type) {
+        if (!soundEnabled) return;
+        try {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.exponentialRampToValueAtTime(850, now + 0.04);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                osc.start(now); osc.stop(now + 0.04);
+            } else if (type === 'coin') {
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'purr') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(70, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+                osc.frequency.linearRampToValueAtTime(70, now + 0.3);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'fanfare') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.08, now + idx * 0.07);
+                    g.gain.linearRampToValueAtTime(0.001, now + idx * 0.07 + 0.2);
+                    o.start(now + idx * 0.07); o.stop(now + idx * 0.07 + 0.2);
+                });
+            }
+        } catch(e) {}
+    }
+
+    /* ==================== GAME DATABASE ==================== */
+    const ALL_CATS = [
+        { id: 1, name: "Marmalade", emoji: "🐱", rarity: "common", trait: "+1 Heart / 10s", desc: "Friendly orange tabby who loves window sills.", costH: 0, costC: 0 },
+        { id: 2, name: "Shadow", emoji: "🐈‍⬛", rarity: "common", trait: "+2 Coins / 10s", desc: "Quiet dark cat who stays near warm brew pots.", costH: 15, costC: 100 },
+        { id: 3, name: "Luna", emoji: "🐈", rarity: "uncommon", trait: "+15% Customer Tips", desc: "Curious tuxedo cat that delights daily patrons.", costH: 30, costC: 250 },
+        { id: 4, name: "Mochi", emoji: "🤍", rarity: "uncommon", trait: "-15% Brew Duration", desc: "Fluffy white cat who loves the coffee grinder hum.", costH: 50, costC: 400 },
+        { id: 5, name: "Pumpkin", rarity: "rare", emoji: "😼", trait: "+3x Hearts on Petting", desc: "Calico energy ball who loves purring.", costH: 80, costC: 750 },
+        { id: 6, name: "Willow", rarity: "rare", emoji: "😹", trait: "+35% Patron Spawn Rate", desc: "Elegant Siamese that attracts cat-loving tourists.", costH: 120, costC: 1200 },
+        { id: 7, name: "Espresso", rarity: "epic", emoji: "😻", trait: "+50% Drink Sale Price", desc: "Dark mocha fur cat who rules the bar counter.", costH: 200, costC: 2500 },
+        { id: 8, name: "Clover", rarity: "epic", emoji: "😸", trait: "Periodically drops Lucky Coin Bags!", desc: "Scottish fold with uncanny luck.", costH: 350, costC: 4500 },
+        { id: 9, name: "Astro", rarity: "legendary", emoji: "😺", trait: "2x All Cat Passive Rates", desc: "Cosmic star cat that radiates cozy vibes.", costH: 600, costC: 10000 },
+        { id: 10, name: "Whisker Supreme", rarity: "mythic", emoji: "👑", trait: "3x Total Cafe Revenues", desc: "The mythical feline deity of coffee perfection.", costH: 1200, costC: 25000 }
+    ];
+
+    const BREW_RECIPES = [
+        { id: 'drip', name: "House Drip Coffee", emoji: "☕", baseCost: 0, timeSec: 8, yieldCoins: 35, yieldHearts: 3, reqLevel: 1 },
+        { id: 'espresso', name: "Double Espresso Shot", emoji: "🍵", baseCost: 20, timeSec: 15, yieldCoins: 85, yieldHearts: 8, reqLevel: 1 },
+        { id: 'latte', name: "Honey Lavender Latte", emoji: "🥛", baseCost: 50, timeSec: 30, yieldCoins: 210, yieldHearts: 18, reqLevel: 2 },
+        { id: 'matcha', name: "Iced Matcha Latte", emoji: "🧋", baseCost: 120, timeSec: 50, yieldCoins: 480, yieldHearts: 35, reqLevel: 3 },
+        { id: 'caramel', name: "Caramel Macchiato", emoji: "🥤", baseCost: 300, timeSec: 75, yieldCoins: 1100, yieldHearts: 75, reqLevel: 4 },
+        { id: 'celestial', name: "Celestial Star Brew", emoji: "✨", baseCost: 1000, timeSec: 120, yieldCoins: 3800, yieldHearts: 220, reqLevel: 5 }
+    ];
+
+    const BAKERY_RECIPES = [
+        { id: 'croissant', name: "Butter Croissant", emoji: "🥐", baseCost: 15, timeSec: 10, yieldCoins: 60, yieldHearts: 5, reqLevel: 1 },
+        { id: 'cupcake', name: "Cat Paw Cupcake", emoji: "🧁", baseCost: 40, timeSec: 25, yieldCoins: 160, yieldHearts: 15, reqLevel: 2 },
+        { id: 'macaron', name: "Matcha Macaron", emoji: "🥮", baseCost: 90, timeSec: 45, yieldCoins: 380, yieldHearts: 30, reqLevel: 3 },
+        { id: 'donut', name: "Strawberry Cat Donut", emoji: "🍩", baseCost: 250, timeSec: 70, yieldCoins: 920, yieldHearts: 65, reqLevel: 4 }
+    ];
+
+    const ACHIEVEMENTS = [
+        { id: 'first_brew', name: "First Brew Served", desc: "Brew your first coffee batch.", rewardC: 100, rewardH: 10 },
+        { id: 'cat_trio', name: "Cat Collector", desc: "Adopt at least 3 resident cats.", rewardC: 250, rewardH: 30 },
+        { id: 'lounge_master', name: "Full House", desc: "Unlock 6 Lounge Armchair slots.", rewardC: 500, rewardH: 50 },
+        { id: 'pet_lover', name: "Purr Master", desc: "Pet resident cats 20 times.", rewardC: 300, rewardH: 40 },
+        { id: 'barista_lv5', name: "Coffee Tycoon", desc: "Reach Cafe Level 5.", rewardC: 1500, rewardH: 150 }
+    ];
+
+    const GAME_KEY = "cozy_cat_cafe_save_v3";
+
+    let game = {
+        coins: 150,
+        hearts: 20,
+        rep: 1.0,
+        level: 1,
+        unlockedSlots: 2,
+        machineLevel: 1,
+        decorLevel: 1,
+        floorTheme: 'oak',
+        cats: [ { id: 1, slot: 0, level: 1 } ],
+        activeBrews: {},
+        activeBakery: {},
+        claimedBadges: [],
+        petsCount: 0,
+        brewsCount: 0,
+        lastDailyClaimDay: 0,
+        streakDays: 0,
+        lastTimestamp: Date.now()
+    };
+
+    let customers = [];
+    let floatingTexts = [];
+    let coinBags = [];
+    let laserMode = false;
+    let laserPos = { x: 150, y: 150 };
+
+    /* ==================== CORE INITIALIZATION ==================== */
+    function init() {
+        loadGame();
+        checkOfflineProgress();
+        setupCanvas();
+        renderUI();
+        setupEvents();
+
+        setInterval(updateGameLoop, 1000);
+        requestAnimationFrame(renderCanvasLoop);
+    }
+
+    function renderUI() {
+        document.getElementById('stat-coins').innerText = Math.floor(game.coins).toLocaleString();
+        document.getElementById('stat-hearts').innerText = Math.floor(game.hearts).toLocaleString();
+        document.getElementById('stat-rep').innerText = game.rep.toFixed(1);
+        document.getElementById('stat-level').innerText = game.level;
+
+        document.getElementById('upgrade-slot-count').innerText = `${game.unlockedSlots} / 12 Slots`;
+        document.getElementById('slot-cost').innerText = (game.unlockedSlots * 120).toLocaleString();
+
+        document.getElementById('upgrade-machine-level').innerText = `Lv. ${game.machineLevel}`;
+        document.getElementById('machine-cost').innerText = (game.machineLevel * 200).toLocaleString();
+
+        document.getElementById('upgrade-decor-level').innerText = `Lv. ${game.decorLevel}`;
+        document.getElementById('decor-cost').innerText = (game.decorLevel * 150).toLocaleString();
+
+        renderBrewsTab();
+        renderBakeryTab();
+        renderCatsTab();
+        renderBadgesTab();
+        renderDailyStreakUI();
+    }
+
+    /* ==================== BREWS & BAKERY SYSTEM ==================== */
+    function renderBrewsTab() {
+        const container = document.getElementById('tab-brew');
+        container.innerHTML = '';
+
+        BREW_RECIPES.forEach(recipe => {
+            const isUnlocked = game.level >= recipe.reqLevel;
+            const active = game.activeBrews[recipe.id];
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            if (!isUnlocked) card.style.opacity = '0.5';
+
+            let statusText = "Idle";
+            let btnLabel = `Start Brew (${recipe.baseCost > 0 ? recipe.baseCost + '🪙' : 'Free'})`;
+            let isClaimable = false;
+
+            if (active) {
+                const elapsed = (Date.now() - active.startTime) / 1000;
+                if (elapsed >= active.duration) {
+                    statusText = "Ready to Serve!";
+                    btnLabel = "⭐ Claim Sales";
+                    isClaimable = true;
+                } else {
+                    const rem = Math.ceil(active.duration - elapsed);
+                    statusText = `Brewing (${rem}s)`;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${recipe.emoji} ${recipe.name}</span>
+                    <span style="font-size:11px; color:${isClaimable ? 'var(--accent-green)' : 'var(--accent-gold)'};">${isUnlocked ? statusText : 'Req Lv. ' + recipe.reqLevel}</span>
+                </div>
+                <div class="card-desc">Yields +${recipe.yieldCoins}🪙 and +${recipe.yieldHearts}💖. Time: ${recipe.timeSec}s.</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="pbar-brew-${recipe.id}" style="width: ${active ? Math.min(100, ((Date.now() - active.startTime)/1000 / active.duration)*100) : 0}%"></div>
+                </div>
+                <button class="btn ${isClaimable ? 'btn-gold' : ''}" style="margin-top:4px;" ${!isUnlocked || (active && !isClaimable) ? 'disabled' : ''} onclick="handleBrewAction('${recipe.id}')">
+                    ${btnLabel}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function handleBrewAction(recipeId) {
+        const recipe = BREW_RECIPES.find(r => r.id === recipeId);
+        if (!recipe) return;
+
+        const active = game.activeBrews[recipeId];
+        if (!active) {
+            if (game.coins < recipe.baseCost) { showToast("Not enough coins!"); return; }
+            game.coins -= recipe.baseCost;
+
+            let dur = recipe.timeSec / (1 + (game.machineLevel - 1) * 0.15);
+            if (game.cats.some(c => c.id === 4)) dur *= 0.85; // Mochi cat bonus
+
+            game.activeBrews[recipeId] = { startTime: Date.now(), duration: dur };
+            playSound('click');
+            logActivity(`Started brewing ${recipe.name}.`);
+        } else {
+            const elapsed = (Date.now() - active.startTime) / 1000;
+            if (elapsed >= active.duration) {
+                let coinsGain = recipe.yieldCoins * (1 + (game.machineLevel - 1) * 0.20);
+                let heartsGain = recipe.yieldHearts;
+
+                if (game.cats.some(c => c.id === 7)) coinsGain *= 1.5; // Espresso cat bonus
+                if (game.cats.some(c => c.id === 10)) coinsGain *= 3.0; // Whisker Supreme bonus
+
+                game.coins += coinsGain;
+                game.hearts += heartsGain;
+                game.brewsCount++;
+                delete game.activeBrews[recipeId];
+
+                playSound('coin');
+                addFloatingText(`+${Math.floor(coinsGain)}🪙`, 150, 80, 'gold');
+                logActivity(`Served ${recipe.name}! Earned +${Math.floor(coinsGain)}🪙 and +${heartsGain}💖.`);
+                checkLevelUp();
+                checkAchievements();
+            }
+        }
+        renderUI();
+        saveGame();
+    }
+
+    function renderBakeryTab() {
+        const container = document.getElementById('tab-bakery');
+        container.innerHTML = '';
+
+        BAKERY_RECIPES.forEach(recipe => {
+            const isUnlocked = game.level >= recipe.reqLevel;
+            const active = game.activeBakery[recipe.id];
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            if (!isUnlocked) card.style.opacity = '0.5';
+
+            let statusText = "Idle";
+            let btnLabel = `Bake (${recipe.baseCost}🪙)`;
+            let isClaimable = false;
+
+            if (active) {
+                const elapsed = (Date.now() - active.startTime) / 1000;
+                if (elapsed >= active.duration) {
+                    statusText = "Baked & Ready!";
+                    btnLabel = "⭐ Claim Pastry Sales";
+                    isClaimable = true;
+                } else {
+                    const rem = Math.ceil(active.duration - elapsed);
+                    statusText = `Baking (${rem}s)`;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${recipe.emoji} ${recipe.name}</span>
+                    <span style="font-size:11px; color:${isClaimable ? 'var(--accent-green)' : 'var(--accent-gold)'};">${isUnlocked ? statusText : 'Req Lv. ' + recipe.reqLevel}</span>
+                </div>
+                <div class="card-desc">Yields +${recipe.yieldCoins}🪙 and +${recipe.yieldHearts}💖. Time: ${recipe.timeSec}s.</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="pbar-bake-${recipe.id}" style="width: ${active ? Math.min(100, ((Date.now() - active.startTime)/1000 / active.duration)*100) : 0}%"></div>
+                </div>
+                <button class="btn ${isClaimable ? 'btn-gold' : ''}" style="margin-top:4px;" ${!isUnlocked || (active && !isClaimable) ? 'disabled' : ''} onclick="handleBakeryAction('${recipe.id}')">
+                    ${btnLabel}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function handleBakeryAction(recipeId) {
+        const recipe = BAKERY_RECIPES.find(r => r.id === recipeId);
+        if (!recipe) return;
+
+        const active = game.activeBakery[recipeId];
+        if (!active) {
+            if (game.coins < recipe.baseCost) { showToast("Not enough coins!"); return; }
+            game.coins -= recipe.baseCost;
+
+            game.activeBakery[recipeId] = { startTime: Date.now(), duration: recipe.timeSec };
+            playSound('click');
+            logActivity(`Started baking ${recipe.name}.`);
+        } else {
+            const elapsed = (Date.now() - active.startTime) / 1000;
+            if (elapsed >= active.duration) {
+                let coinsGain = recipe.yieldCoins;
+                let heartsGain = recipe.yieldHearts;
+                if (game.cats.some(c => c.id === 10)) coinsGain *= 3.0;
+
+                game.coins += coinsGain;
+                game.hearts += heartsGain;
+                delete game.activeBakery[recipeId];
+
+                playSound('coin');
+                addFloatingText(`+${Math.floor(coinsGain)}🪙`, 150, 80, 'gold');
+                logActivity(`Sold ${recipe.name}! Earned +${Math.floor(coinsGain)}🪙 and +${heartsGain}💖.`);
+                checkLevelUp();
+            }
+        }
+        renderUI();
+        saveGame();
+    }
+
+    /* ==================== CAT SANCTUARY ==================== */
+    function renderCatsTab() {
+        const container = document.getElementById('tab-cats');
+        container.innerHTML = '';
+
+        game.cats.forEach(ownedCat => {
+            const catData = ALL_CATS.find(c => c.id === ownedCat.id);
+            if (!catData) return;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${catData.emoji} ${catData.name} (Resident)</span>
+                    <span class="badge badge-${catData.rarity}">${catData.rarity}</span>
+                </div>
+                <div class="card-desc"><b>Trait:</b> ${catData.trait}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <span style="font-size:10px; color:var(--text-muted);">Lounge Chair #${ownedCat.slot + 1}</span>
+                    <button class="btn btn-sm" onclick="petCat(${catData.id})">💖 Pet Cat (+Hearts)</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        ALL_CATS.forEach(catData => {
+            if (!game.cats.some(c => c.id === catData.id)) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span>${catData.emoji} ${catData.name}</span>
+                        <span class="badge badge-${catData.rarity}">${catData.rarity}</span>
+                    </div>
+                    <div class="card-desc">${catData.desc}<br><b>Trait:</b> ${catData.trait}</div>
+                    <button class="btn btn-gold" style="margin-top:4px;" onclick="adoptCat(${catData.id})">
+                        Adopt (Cost: ${catData.costH}💖 / ${catData.costC}🪙)
+                    </button>
+                `;
+                container.appendChild(card);
+            }
+        });
+    }
+
+    function adoptCat(catId) {
+        const catData = ALL_CATS.find(c => c.id === catId);
+        if (!catData) return;
+
+        if (game.cats.length >= game.unlockedSlots) {
+            showToast("Unlock more Lounge Chairs in Upgrades!");
+            return;
+        }
+
+        if (game.hearts >= catData.costH && game.coins >= catData.costC) {
+            game.hearts -= catData.costH;
+            game.coins -= catData.costC;
+
+            let openSlot = 0;
+            for (let i = 0; i < game.unlockedSlots; i++) {
+                if (!game.cats.some(c => c.slot === i)) { openSlot = i; break; }
+            }
+
+            game.cats.push({ id: catData.id, slot: openSlot, level: 1 });
+            playSound('fanfare');
+            logActivity(`🎉 Welcomed ${catData.name} (${catData.rarity.toUpperCase()}) to your cat cafe!`);
+            renderUI();
+            saveGame();
+            checkAchievements();
+        } else {
+            showToast("Not enough Hearts or Coins!");
+        }
+    }
+
+    function petCat(catId, customX = 150, customY = 100) {
+        const catData = ALL_CATS.find(c => c.id === catId);
+        let heartAmount = 2;
+        if (game.cats.some(c => c.id === 5)) heartAmount *= 3; // Pumpkin cat bonus
+
+        game.hearts += heartAmount;
+        game.petsCount++;
+        playSound('purr');
+        addFloatingText(`+${heartAmount}💖`, customX, customY, 'pink');
+        logActivity(`Petted ${catData.name}! They purred contentedly (+${heartAmount}💖).`);
+        renderUI();
+        saveGame();
+        checkAchievements();
+    }
+
+    /* ==================== UPGRADES & WALLPAPERS ==================== */
+    function buyFurnitureSlot() {
+        const cost = game.unlockedSlots * 120;
+        if (game.unlockedSlots >= 12) { showToast("Maximum layout capacity reached!"); return; }
+        if (game.coins >= cost) {
+            game.coins -= cost;
+            game.unlockedSlots++;
+            playSound('coin');
+            logActivity("Unlocked a new lounge armchair slot for your cafe!");
+            renderUI();
+            saveGame();
+            checkAchievements();
+        } else { showToast("Not enough coins!"); }
+    }
+
+    function upgradeMachine() {
+        const cost = game.machineLevel * 200;
+        if (game.coins >= cost) {
+            game.coins -= cost;
+            game.machineLevel++;
+            playSound('fanfare');
+            logActivity(`Upgraded Espresso Brewer to Lv. ${game.machineLevel}!`);
+            renderUI();
+            saveGame();
+        } else { showToast("Not enough coins!"); }
+    }
+
+    function upgradeDecor() {
+        const cost = game.decorLevel * 150;
+        if (game.coins >= cost) {
+            game.coins -= cost;
+            game.decorLevel++;
+            playSound('fanfare');
+            logActivity(`Upgraded Cafe Ambiance to Lv. ${game.decorLevel}! Patrons spawn faster.`);
+            renderUI();
+            saveGame();
+        } else { showToast("Not enough coins!"); }
+    }
+
+    function setFloorTheme(theme) {
+        game.floorTheme = theme;
+        showToast(`Theme set to ${theme.toUpperCase()}`);
+        saveGame();
+    }
+
+    /* ==================== BADGES / ACHIEVEMENTS ==================== */
+    function renderBadgesTab() {
+        const container = document.getElementById('tab-badges');
+        container.innerHTML = '';
+
+        ACHIEVEMENTS.forEach(badge => {
+            const isClaimed = game.claimedBadges.includes(badge.id);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>🏆 ${badge.name}</span>
+                    <span style="font-size:11px; color:${isClaimed ? 'var(--accent-green)' : 'var(--accent-gold)'};">${isClaimed ? 'Claimed' : 'Locked'}</span>
+                </div>
+                <div class="card-desc">${badge.desc}<br><b>Reward:</b> +${badge.rewardC}🪙 / +${badge.rewardH}💖</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function checkAchievements() {
+        if (!game.claimedBadges.includes('first_brew') && game.brewsCount >= 1) grantBadge('first_brew');
+        if (!game.claimedBadges.includes('cat_trio') && game.cats.length >= 3) grantBadge('cat_trio');
+        if (!game.claimedBadges.includes('lounge_master') && game.unlockedSlots >= 6) grantBadge('lounge_master');
+        if (!game.claimedBadges.includes('pet_lover') && game.petsCount >= 20) grantBadge('pet_lover');
+        if (!game.claimedBadges.includes('barista_lv5') && game.level >= 5) grantBadge('barista_lv5');
+    }
+
+    function grantBadge(id) {
+        const badge = ACHIEVEMENTS.find(b => b.id === id);
+        if (!badge) return;
+
+        game.claimedBadges.push(id);
+        game.coins += badge.rewardC;
+        game.hearts += badge.rewardH;
+        playSound('fanfare');
+        logActivity(`🏆 Unlocked Achievement: ${badge.name}! Earned +${badge.rewardC}🪙 and +${badge.rewardH}💖!`);
+        showToast(`Achievement: ${badge.name}`);
+        renderUI();
+    }
+
+    /* ==================== REPUTATION & DAILY STREAK ==================== */
+    function checkLevelUp() {
+        const neededCoins = game.level * 500;
+        if (game.coins >= neededCoins && game.level < 10) {
+            game.level++;
+            game.rep += 0.5;
+            playSound('fanfare');
+            logActivity(`🌟 Cafe Level Up! Reached Cafe Level ${game.level}! New recipes unlocked!`);
+            showToast(`Level Up! Lv. ${game.level}`);
+        }
+    }
+
+    function renderDailyStreakUI() {
+        const container = document.getElementById('daily-streak-container');
+        container.innerHTML = '';
+
+        const streakRewards = [
+            { day: 1, reward: "100 🪙" },
+            { day: 2, reward: "30 💖" },
+            { day: 3, reward: "300 🪙" },
+            { day: 4, reward: "75 💖" },
+            { day: 5, reward: "800 🪙" },
+            { day: 6, reward: "150 💖" },
+            { day: 7, reward: "2,000 🪙 & Special Treat" }
+        ];
+
+        streakRewards.forEach(item => {
+            const div = document.createElement('div');
+            div.style.padding = "6px";
+            div.style.borderRadius = "6px";
+            div.style.background = game.streakDays >= item.day ? "rgba(131, 197, 190, 0.2)" : "rgba(0,0,0,0.3)";
+            div.style.border = "1px solid var(--panel-border)";
+            div.innerHTML = `<b>Day ${item.day}:</b> ${item.reward} ${game.streakDays >= item.day ? '✅' : ''}`;
+            container.appendChild(div);
+        });
+
+        const today = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+        const canClaim = game.lastDailyClaimDay < today;
+        document.getElementById('btn-claim-daily').disabled = !canClaim;
+        document.getElementById('btn-claim-daily').innerText = canClaim ? "Claim Today's Bonus!" : "Already Claimed Today";
+    }
+
+    function claimDailyReward() {
+        const today = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+        if (game.lastDailyClaimDay < today) {
+            game.streakDays = (game.streakDays % 7) + 1;
+            game.lastDailyClaimDay = today;
+
+            const bonusCoins = game.streakDays * 150;
+            const bonusHearts = game.streakDays * 15;
+            game.coins += bonusCoins;
+            game.hearts += bonusHearts;
+
+            playSound('fanfare');
+            logActivity(`🎁 Claimed Day ${game.streakDays} Daily Bonus (+${bonusCoins}🪙, +${bonusHearts}💖)!`);
+            renderUI();
+            saveGame();
+            closeModal('daily-modal');
+        }
+    }
+
+    /* ==================== CANVAS FLOOR VISUAL ENGINE ==================== */
+    let ctx, canvas;
+
+    function setupCanvas() {
+        canvas = document.getElementById('cafeCanvas');
+        ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        canvas.addEventListener('mousemove', e => {
+            if (laserMode) {
+                const rect = canvas.getBoundingClientRect();
+                laserPos.x = e.clientX - rect.left;
+                laserPos.y = e.clientY - rect.top;
+            }
+        });
+
+        canvas.addEventListener('click', handleCanvasClick);
+    }
+
+    function toggleLaserMode() {
+        laserMode = !laserMode;
+        document.getElementById('btn-laser-toggle').innerText = laserMode ? "🔦 Laser Toy: ON" : "🔦 Laser Toy: OFF";
+        showToast(laserMode ? "Laser Mode Enabled! Lead cats around floor!" : "Laser Mode Disabled");
+    }
+
+    function handleCanvasClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // 1. Check if clicked Lucky Coin Bag
+        coinBags.forEach((bag, idx) => {
+            const dist = Math.hypot(bag.x - clickX, bag.y - clickY);
+            if (dist < 20) {
+                game.coins += bag.value;
+                playSound('coin');
+                addFloatingText(`+${bag.value}🪙`, bag.x, bag.y, 'gold');
+                coinBags.splice(idx, 1);
+                logActivity("Picked up a Lucky Coin Bag!");
+                renderUI();
+                return;
+            }
+        });
+
+        // 2. Check if clicked a sitting customer with an order bubble
+        for (let cust of customers) {
+            if (cust.seated && cust.hasOrder) {
+                const dist = Math.hypot(cust.x - clickX, cust.y - clickY);
+                if (dist < 25) {
+                    let coinsTip = Math.floor(40 * game.rep * (1 + (game.decorLevel - 1) * 0.2));
+                    if (game.cats.some(c => c.id === 3)) coinsTip *= 1.15; // Luna tip boost
+                    if (game.cats.some(c => c.id === 10)) coinsTip *= 3.0; // Whisker Supreme
+
+                    game.coins += Math.floor(coinsTip);
+                    game.hearts += 5;
+                    cust.hasOrder = false;
+                    cust.leaving = true;
+
+                    playSound('coin');
+                    addFloatingText(`+${Math.floor(coinsTip)}🪙`, cust.x, cust.y, 'gold');
+                    logActivity("Served sitting patron! Received a great tip!");
+                    renderUI();
+                    return;
+                }
+            }
+        }
+
+        // 3. Check if clicked a resident cat on a lounge chair to pet them directly
+        const cols = 4;
+        for (let i = 0; i < game.unlockedSlots; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const seatX = 80 + col * (canvas.width / 4.5);
+            const seatY = 100 + row * 85;
+
+            const dist = Math.hypot(seatX - clickX, seatY - clickY);
+            if (dist < 28) {
+                const assignedCat = game.cats.find(c => c.slot === i);
+                if (assignedCat) {
+                    petCat(assignedCat.id, seatX, seatY);
+                    return;
+                }
+            }
+        }
+    }
+
+    function updateGameLoop() {
+        const now = Date.now();
+
+        // Passive Cat Hearts & Coin Generation
+        let heartGen = game.cats.length;
+        let coinGen = 0;
+
+        if (game.cats.some(c => c.id === 2)) coinGen += 2; // Shadow cat
+        if (game.cats.some(c => c.id === 8)) coinGen += 5; // Clover cat
+        if (game.cats.some(c => c.id === 9)) { heartGen *= 2; coinGen *= 2; } // Astro cat
+
+        // Clover cat coin bag spawn chance
+        if (game.cats.some(c => c.id === 8) && Math.random() < 0.15 && coinBags.length < 3) {
+            coinBags.push({
+                x: 60 + Math.random() * (canvas.width - 120),
+                y: 80 + Math.random() * (canvas.height - 140),
+                value: 50 + Math.floor(Math.random() * 50)
+            });
+        }
+
+        game.coins += coinGen;
+        game.hearts += heartGen;
+
+        // Customer Spawning Logic
+        let spawnChance = 0.3 + (game.decorLevel * 0.1);
+        if (game.cats.some(c => c.id === 6)) spawnChance += 0.35; // Willow cat bonus
+
+        if (Math.random() < spawnChance && customers.length < game.unlockedSlots) {
+            spawnCustomer();
+        }
+
+        // Update Customers Patience & Movement
+        customers.forEach(cust => {
+            if (!cust.seated && !cust.leaving) {
+                cust.x += (cust.targetX - cust.x) * 0.08;
+                cust.y += (cust.targetY - cust.y) * 0.08;
+                if (Math.hypot(cust.targetX - cust.x, cust.targetY - cust.y) < 5) {
+                    cust.seated = true;
+                    cust.hasOrder = true;
+                }
+            } else if (cust.seated && cust.hasOrder) {
+                cust.patience -= 3; // Decay patience
+                if (cust.patience <= 0) {
+                    cust.hasOrder = false;
+                    cust.leaving = true;
+                    logActivity("A patron left disappointed after waiting too long!");
+                }
+            } else if (cust.leaving) {
+                cust.x += (canvas.width + 60 - cust.x) * 0.08;
+                cust.y += (canvas.height - cust.y) * 0.08;
+            }
+        });
+
+        // Filter out patrons who left
+        customers = customers.filter(c => c.x < canvas.width + 50);
+
+        // Update progress bars in UI smoothly
+        updateProgressBars();
+
+        game.lastTimestamp = now;
+    }
+
+    function updateProgressBars() {
+        BREW_RECIPES.forEach(r => {
+            const active = game.activeBrews[r.id];
+            const elem = document.getElementById(`pbar-brew-${r.id}`);
+            if (elem) {
+                elem.style.width = active ? Math.min(100, ((Date.now() - active.startTime)/1000 / active.duration)*100) + '%' : '0%';
+            }
+        });
+        BAKERY_RECIPES.forEach(r => {
+            const active = game.activeBakery[r.id];
+            const elem = document.getElementById(`pbar-bake-${r.id}`);
+            if (elem) {
+                elem.style.width = active ? Math.min(100, ((Date.now() - active.startTime)/1000 / active.duration)*100) + '%' : '0%';
+            }
+        });
+
+        document.getElementById('stat-coins').innerText = Math.floor(game.coins).toLocaleString();
+        document.getElementById('stat-hearts').innerText = Math.floor(game.hearts).toLocaleString();
+    }
+
+    function spawnCustomer() {
+        const customerEmojis = ["🧍", "🚶‍♀️", "🧔", "👩‍🦰", "👴", "👧", "👨‍🍳"];
+
+        // Find an unoccupied lounge chair slot
+        const occupiedSeats = customers.filter(c => !c.leaving).map(c => c.seatIndex);
+        let openSeatIndex = -1;
+        for (let i = 0; i < game.unlockedSlots; i++) {
+            if (!occupiedSeats.includes(i)) { openSeatIndex = i; break; }
+        }
+
+        if (openSeatIndex === -1) return; // No seats free
+
+        const cols = 4;
+        const col = openSeatIndex % cols;
+        const row = Math.floor(openSeatIndex / cols);
+
+        const targetX = 80 + col * (canvas.width / 4.5);
+        const targetY = 100 + row * 85;
+
+        customers.push({
+            id: Date.now() + Math.random(),
+            seatIndex: openSeatIndex,
+            emoji: customerEmojis[Math.floor(Math.random() * customerEmojis.length)],
+            x: -20,
+            y: canvas.height / 2,
+            targetX: targetX,
+            targetY: targetY,
+            seated: false,
+            hasOrder: false,
+            leaving: false,
+            patience: 100
+        });
+    }
+
+    function renderCanvasLoop() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw Custom Cafe Floor Theme
+        if (game.floorTheme === 'sakura') {
+            ctx.fillStyle = '#3a272d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(238, 136, 154, 0.15)';
+            for (let i = 0; i < 15; i++) {
+                ctx.beginPath();
+                ctx.arc((i * 45) % canvas.width, (i * 35) % canvas.height, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (game.floorTheme === 'retro') {
+            ctx.fillStyle = '#1c2321';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#2e3a36'; ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 25) {
+                for (let y = 0; y < canvas.height; y += 25) {
+                    ctx.strokeRect(x, y, 25, 25);
+                }
+            }
+        } else {
+            // Default Oak Wood
+            ctx.fillStyle = '#2b201c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#221916'; ctx.lineWidth = 2;
+            for (let y = 0; y < canvas.height; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+        }
+
+        // 2. Draw Lounge Seats & Cats
+        const cols = 4;
+        for (let i = 0; i < game.unlockedSlots; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const x = 80 + col * (canvas.width / 4.5);
+            const y = 100 + row * 85;
+
+            // Armchair Base
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(x, y + 10, 24, 12, 0, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#4a3831';
+            ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#e5b25d'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Resident Cat
+            const assignedCat = game.cats.find(c => c.slot === i);
+            if (assignedCat) {
+                const catData = ALL_CATS.find(c => c.id === assignedCat.id);
+                if (catData) {
+                    ctx.font = '22px sans-serif'; ctx.textAlign = 'center';
+                    let bounceY = Math.sin(Date.now() / 300 + i) * 3;
+
+                    // Laser pointer chase effect
+                    if (laserMode) {
+                        const dx = laserPos.x - x; const dy = laserPos.y - y;
+                        bounceY += Math.sin(Date.now() / 100) * 4;
+                    }
+
+                    ctx.fillText(catData.emoji, x, y + 6 + bounceY);
+                }
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Seat', x, y + 4);
+            }
+        }
+
+        // 3. Draw Laser Pointer Dot
+        if (laserMode) {
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath(); ctx.arc(laserPos.x, laserPos.y, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,0,0,0.3)';
+            ctx.beginPath(); ctx.arc(laserPos.x, laserPos.y, 10, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // 4. Draw Lucky Coin Bags
+        coinBags.forEach(bag => {
+            ctx.font = '18px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('💰', bag.x, bag.y);
+        });
+
+        // 5. Draw Customers & Patience Meters
+        customers.forEach(cust => {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(cust.x, cust.y + 12, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+            ctx.font = '24px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(cust.emoji, cust.x, cust.y + 8);
+
+            if (cust.seated && cust.hasOrder) {
+                const bubbleY = cust.y - 24 + Math.sin(Date.now() / 200) * 2;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(cust.x + 12, bubbleY, 12, 0, Math.PI * 2); ctx.fill();
+
+                ctx.font = '12px sans-serif';
+                ctx.fillText('☕', cust.x + 12, bubbleY + 4);
+
+                // Patience Bar
+                const pColor = cust.patience > 50 ? '#83c5be' : (cust.patience > 20 ? '#f3be5d' : '#ee889a');
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(cust.x - 15, cust.y - 38, 30, 4);
+                ctx.fillStyle = pColor;
+                ctx.fillRect(cust.x - 15, cust.y - 38, (cust.patience / 100) * 30, 4);
+            }
+        });
+
+        // 6. Draw Floating Text Particles
+        floatingTexts.forEach((ft, index) => {
+            ft.y -= 0.8; ft.alpha -= 0.015;
+            ctx.fillStyle = ft.color === 'gold' ? `rgba(243, 190, 93, ${ft.alpha})` : `rgba(238, 136, 154, ${ft.alpha})`;
+            ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(ft.text, ft.x, ft.y);
+            if (ft.alpha <= 0) floatingTexts.splice(index, 1);
+        });
+
+        requestAnimationFrame(renderCanvasLoop);
+    }
+
+    function addFloatingText(text, x, y, color) {
+        floatingTexts.push({ text, x, y, color, alpha: 1.0 });
+    }
+
+    /* ==================== OFFLINE PROGRESS & SYSTEM UTILS ==================== */
+    function checkOfflineProgress() {
+        const now = Date.now();
+        const savedTime = localStorage.getItem('cozy_cat_last_time');
+
+        if (savedTime) {
+            const elapsedHours = (now - parseInt(savedTime, 10)) / (1000 * 60 * 60);
+            if (elapsedHours > 0.05) {
+                const effectiveHours = Math.min(8, elapsedHours);
+                const earnedCoins = Math.floor(effectiveHours * 120 * game.machineLevel);
+                const earnedHearts = Math.floor(effectiveHours * 15 * game.cats.length);
+
+                game.coins += earnedCoins;
+                game.hearts += earnedHearts;
+
+                document.getElementById('modal-report-text').innerHTML = `
+                    <div>⌛ Time Away: <b>${elapsedHours.toFixed(1)} hrs</b></div>
+                    <div>☕ Machine Level: <b>Lv. ${game.machineLevel}</b></div>
+                    <div>🪙 Coins Collected: <b>+${earnedCoins.toLocaleString()}</b></div>
+                    <div>💖 Hearts Gained: <b>+${earnedHearts.toLocaleString()}</b></div>
+                `;
+                openModal('welcome-modal');
+                logActivity(`Welcome back! Earned +${earnedCoins}🪙 while offline.`);
+            }
+        }
+    }
+
+    function logActivity(text) {
+        const logBox = document.getElementById('activity-log');
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        logBox.innerHTML = `[${timeStr}] ${text}<br>` + logBox.innerHTML;
+    }
+
+    function showToast(text) {
+        const toast = document.getElementById('toast');
+        toast.innerText = text;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        const btnIndex = ['brew', 'bakery', 'cats', 'upgrades', 'badges'].indexOf(tabName);
+        if (btnIndex !== -1) {
+            document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        playSound('click');
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        if (id === 'data-modal') {
+            document.getElementById('export-code-box').value = encodeSaveCode(game);
+        }
+        playSound('click');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        playSound('click');
+    }
+
+    /* ==================== SAVE / LOAD / RESET ==================== */
+    function saveGame() {
+        localStorage.setItem(GAME_KEY, JSON.stringify(game));
+        localStorage.setItem('cozy_cat_last_time', Date.now().toString());
+    }
+
+    function manualSave() {
+        saveGame();
+        showToast("Game Saved Successfully!");
+        playSound('coin');
+    }
+
+    function loadGame() {
+        const data = localStorage.getItem(GAME_KEY);
+        if (data) {
+            try {
+                const parsed = JSON.parse(data);
+                Object.assign(game, parsed);
+            } catch(e) {}
+        }
+    }
+
+    function copyExportCode() {
+        const box = document.getElementById('export-code-box');
+        box.select();
+        navigator.clipboard.writeText(box.value);
+        showToast("Save Code Copied!");
+    }
+
+    function importSaveCode() {
+        const code = document.getElementById('import-code-box').value.trim();
+        if (!code) return;
+        try {
+            const parsed = decodeSaveCode(code);
+            if (parsed && parsed.coins !== undefined) {
+                game = parsed;
+                saveGame();
+                renderUI();
+                closeModal('data-modal');
+                showToast("Save Imported Successfully!");
+                playSound('fanfare');
+            }
+        } catch(e) {
+            alert("Invalid save code format!");
+        }
+    }
+
+    function hardResetGame() {
+        if (confirm("Are you sure you want to completely reset your cafe progress? This cannot be undone!")) {
+            if (confirm("Final Warning: Delete all cats, coins, and levels?")) {
+                localStorage.removeItem(GAME_KEY);
+                localStorage.removeItem('cozy_cat_last_time');
+                location.reload();
+            }
+        }
+    }
+
+    function setupEvents() {
+        setInterval(saveGame, 10000);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
