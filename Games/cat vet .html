@@ -4880,7 +4880,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', initCanvasSize);
   loadGameProgress();
 
-  document.getElementById('btn-howtoplay').onclick = openTutorialModal;
+  document.getElementById('btn-howtoplay').onclick = () => openTutorialModal();
   document.getElementById('btn-shop').onclick = openShopModal;
   document.getElementById('btn-catodex').onclick = openCatodexModal;
   document.getElementById('btn-goals').onclick = openGoalsModal;
