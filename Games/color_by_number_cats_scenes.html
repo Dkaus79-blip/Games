@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Color by Number — 50 Cat Story Scenes</title>
+<style>
+:root{
+  --navy:#0e254f;--blue:#225cb8;--blue2:#4384e6;--gold:#e4aa34;
+  --wood:#d9a85c;--wood2:#f3d79e;--cream:#fffdf6;--ink:#1c273a;
+  --green:#2fa85e;--panel:#fffdf9;--accent:#f29424;
+}
+*{box-sizing:border-box}
+body{
+ margin:0;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+ background:
+  radial-gradient(circle at 15% 0%,#d9f2ff 0 16%,transparent 35%),
+  radial-gradient(circle at 85% 10%,#ffeacc 0 14%,transparent 30%),
+  linear-gradient(180deg,#b7e3ff 0,#e5f6ff 30%,#d5eef7 100%);
+ min-height:100vh;
+}
+button{font:inherit}
+#app{max-width:1520px;margin:auto;padding:8px 12px 18px}
+header{
+ display:flex;align-items:center;gap:12px;justify-content:space-between;
+ padding:10px 16px;margin-bottom:8px;border-radius:20px;
+ background:linear-gradient(180deg,#163c7e,#0f2856);
+ color:#fff;box-shadow:0 8px 24px #122b5044;border:2px solid #6faeff;
+}
+.logo{font-size:clamp(20px,2.4vw,34px);font-weight:900;line-height:1;text-shadow:0 2px 0 #081a3d}
+.logo span{color:#ffd042}
+.logo small{display:block;font-size:11px;letter-spacing:1.5px;color:#c0dfff;margin-top:4px;font-weight:700}
+.headerBtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hbtn{
+ background:linear-gradient(180deg,#4384e6,#1e4fa8);border:1px solid #9dc7ff;color:#fff;
+ border-radius:12px;padding:7px 11px;font-weight:800;font-size:12px;cursor:pointer;
+ box-shadow:inset 0 1px #ffffff55,0 3px 8px #001a4a44;transition:.12s
+}
+.hbtn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.layout{display:grid;grid-template-columns:280px minmax(440px,1fr) 290px;gap:10px}
+.panel{
+ background:linear-gradient(180deg,#fffdfa,#fff3e0);border:2px solid #d8b47e;border-radius:18px;
+ box-shadow:0 6px 18px #54402618;overflow:hidden
+}
+.left,.right{padding:12px}
+.levelCard{
+ background:linear-gradient(180deg,#fae0aa,#eebc60);border-radius:14px;padding:11px 13px;color:#35230c;
+ border:1px solid #c09040;box-shadow:inset 0 1px #fff8;position:relative
+}
+.levelHeader{display:flex;align-items:center;gap:8px}
+.paw{font-size:26px}
+.levelName{font-weight:900;font-size:18px;line-height:1.15}
+.levelSub{font-size:11px;font-weight:800;color:#5a411e;margin-top:2px}
+.progressOuter{height:14px;background:#eddac0;border-radius:20px;overflow:hidden;margin-top:8px;border:1px solid #c4ab87}
+#progress{height:100%;width:0;background:linear-gradient(90deg,#20bd65,#7fe49f);transition:width .2s}
+.percent{font-size:11px;text-align:right;margin-top:3px;font-weight:900;color:#3d290f}
+
+.sectionTitle{font-weight:900;margin:10px 0 6px;font-size:13px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
+.colorGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:480px;overflow-y:auto;padding-right:2px}
+.swatch{
+ display:flex;align-items:center;gap:6px;background:#fff;border:2px solid #d8cbba;border-radius:10px;
+ padding:4px 6px;min-height:40px;cursor:pointer;transition:.12s;user-select:none;position:relative
+}
+.swatch:hover{transform:translateY(-1px);box-shadow:0 3px 8px #0001;border-color:#b4a088}
+.swatch.selected{border-color:#e49220;box-shadow:0 0 0 3px #e6962455;background:#fff9ee}
+.swatch.done{opacity:.45;background:#f3f3f3}
+.swatch.done:after{content:"✓";position:absolute;right:6px;top:4px;font-weight:900;font-size:11px;color:#2fa85e}
+.dot{width:24px;height:24px;border-radius:7px;border:1px solid #4a3e32;flex:none;box-shadow:inset 0 1px 2px #fff8}
+.swatch b{font-size:11px;display:block;line-height:1.1}.swatch span{font-size:9px;color:#6b5f52;line-height:1}
+.hint{font-size:11px;color:#6a5c4e;margin-top:8px;line-height:1.3}
+.achievement{margin-top:8px;padding:8px;border-radius:10px;background:#fff3c4;border:1px solid #e0c268;font-size:11px;font-weight:800;line-height:1.35}
+
+.artPanel{padding:8px;min-width:0;display:flex;flex-direction:column}
+.artTop{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:2px 6px 6px}
+.artTitle{font-weight:900;font-size:18px}.artDesc{font-size:11px;color:#685848;line-height:1.2}
+.badge{background:#fff;border:1px solid #cebeab;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+#artFrame{
+ position:relative;border-radius:14px;overflow:auto;border:3px solid #fff;box-shadow:0 4px 16px #3e526c28;
+ background:#f0f5fa;flex:1;display:flex;align-items:center;justify-content:center;touch-action:none;min-height:360px
+}
+#catGrid{
+ display:grid;grid-template-columns:repeat(45,1fr);width:100%;aspect-ratio:45/34;background:#fff;
+ transform-origin:center center;transition:transform .12s;user-select:none;cursor:crosshair;margin:auto
+}
+.cell{
+ position:relative;aspect-ratio:1/1;border:1px solid #d4d8de;background:#fff;
+ display:flex;align-items:center;justify-content:center;
+ font-size:clamp(6px,.75vw,10px);font-weight:800;color:#243247;
+ line-height:1;box-sizing:border-box;transition:background-color .08s
+}
+.cell.highlight{background:#fffae5;color:#b26700;font-weight:900}
+.cell:hover{outline:2px solid #e88e1e;outline-offset:-2px;z-index:2}
+.cell.filled{
+ color:transparent!important;border-color:rgba(0,0,0,0.12)!important;
+ box-shadow:inset 0 0 0 1px #ffffff44;
+ background-image:radial-gradient(circle at 35% 35%,#ffffff33 0,transparent 65%)
+}
+.cell.hint-glow{outline:3px solid #ff4500!important;outline-offset:-2px;z-index:5;animation:hintPulse .5s infinite alternate}
+.cell.wrong{animation:wrongCell .2s ease}
+@keyframes wrongCell{50%{transform:scale(.82);background:#ffcaca!important}}
+@keyframes hintPulse{from{transform:scale(1)}to{transform:scale(1.25);background:#ffe680}}
+
+.artTools{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 2px}
+.toolBtns{display:flex;gap:5px}.tool{
+ border:1px solid #c8b79d;background:#fff8eb;border-radius:8px;padding:5px 9px;cursor:pointer;font-weight:800;font-size:11px
+}
+.tool:hover{filter:brightness(1.05);background:#fff}
+
+.galleryCard{margin-top:8px;background:#f3dfbf;border:1px solid #c9a66d;border-radius:12px;padding:6px 8px}
+.galleryHead{display:flex;justify-content:space-between;align-items:center;padding:2px 2px 5px;font-size:12px;font-weight:900}
+.galleryHeadNav{display:flex;gap:5px;align-items:center}
+.galleryHeadNav .tool{padding:3px 8px;font-size:12px}
+.gallery{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px}
+.thumb{
+ flex:0 0 100px;height:72px;border-radius:9px;border:3px solid #d4c19d;background:#fff;cursor:pointer;overflow:hidden;position:relative
+}
+.thumb.active{border-color:#f09822;box-shadow:0 0 0 2px #f0982255}
+.thumb .mini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f8ecda}
+.miniCanvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.thumb .tn{position:absolute;bottom:0;left:0;right:0;background:#142d59ee;color:#fff;font-size:8.5px;padding:2px;text-align:center;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.rightTitle{font-size:16px;font-weight:900}
+.current{
+ display:flex;gap:9px;align-items:center;background:#fff;border:1px solid #d7c7b0;border-radius:12px;padding:7px 9px;margin-bottom:8px
+}
+.currentColor{width:46px;height:46px;border-radius:10px;border:2px solid #5b4b39;box-shadow:inset 0 1px 3px #fff8;flex:none}
+.current b{font-size:13px}.current small{display:block;color:#6d5d4d;font-size:11px}
+.ref{
+ border-radius:12px;background:#fff;border:1px solid #d7c7b0;padding:6px;margin-top:8px
+}
+.refScene{
+ height:140px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:72px;position:relative;overflow:hidden
+}
+.refText{font-size:10.5px;color:#675747;padding:5px 2px 2px;line-height:1.3}
+.navGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.action{
+ border:0;border-radius:10px;padding:8px 6px;background:linear-gradient(180deg,#3cb66c,#20894e);color:#fff;
+ font-weight:900;cursor:pointer;box-shadow:0 3px 6px #185c3b33;font-size:12px
+}
+.action:hover{filter:brightness(1.08)}
+.action.secondary{background:linear-gradient(180deg,#578ee0,#285bb5)}
+.action.gold{background:linear-gradient(180deg,#f0c75d,#cc932b);color:#332207}
+.message{margin-top:8px;background:#fff;border:1px solid #d6c6ad;border-radius:10px;padding:8px;font-size:11.5px;min-height:48px;line-height:1.35}
+.collectionBox{margin-top:8px;background:#fff8ea;border:1px solid #d9be8c;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:800}
+
+/* Victory Celebration Modal & Confetti */
+#modalOverlay{
+ position:fixed;inset:0;background:#00000080;backdrop-filter:blur(3px);z-index:99;
+ display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s ease
+}
+#modalOverlay.active{opacity:1;pointer-events:auto}
+.modalBox{
+ background:linear-gradient(180deg,#fffdf7,#fff1db);border:3px solid #d8a046;border-radius:24px;
+ width:90%;max-width:420px;padding:22px;text-align:center;box-shadow:0 18px 40px #00000066;
+ transform:scale(0.85);transition:transform .25s cubic-bezier(.17,.89,.32,1.28);position:relative;overflow:hidden
+}
+#modalOverlay.active .modalBox{transform:scale(1)}
+.modalEmoji{font-size:58px;line-height:1;margin-bottom:6px}
+.modalTitle{font-size:22px;font-weight:900;color:#1e3252}
+.modalDesc{font-size:13px;color:#5a4933;margin:8px 0 16px;line-height:1.4}
+.modalBtns{display:flex;gap:8px;justify-content:center}
+.confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:100}
+
+@media(max-width:1120px){
+ .layout{grid-template-columns:240px minmax(380px,1fr)}
+ .right{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .rightTitle,.current,.ref{grid-column:1}
+ .navGrid,.message,.collectionBox{grid-column:2}
+}
+@media(max-width:760px){
+ .layout{grid-template-columns:1fr}
+ .left,.right{grid-column:auto}
+ .right{display:block}
+ .colorGrid{grid-template-columns:repeat(3,1fr)}
+ #catGrid{font-size:7px}
+ .headerBtns{width:100%;justify-content:center}
+ header{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo">🐾 <span>Color by Number</span><small>50 STORY CATS • 5 COLLECTIONS • HIGH-CONTRAST 45×34 SCENES</small></div>
+  <div class="headerBtns">
+    <button class="hbtn" id="howBtn">❔ How to Play</button>
+    <button class="hbtn" id="galleryBtn">🖼 Gallery</button>
+    <button class="hbtn" id="soundBtn">🔊 Sound: ON</button>
+    <button class="hbtn" id="randomBtn">🎲 Random Scene</button>
+    <button class="hbtn" id="resetAllBtn">↻ Reset All</button>
+  </div>
+</header>
+
+<div class="layout">
+ <aside class="panel left">
+  <div class="levelCard">
+   <div class="levelHeader">
+     <div class="paw" id="levelPaw">🐾</div>
+     <div>
+       <div class="levelName" id="levelName">Sleepy Cat</div>
+       <div class="levelSub" id="levelSub">🐱 Everyday Cats • 1 of 50</div>
+     </div>
+   </div>
+   <div class="progressOuter"><div id="progress"></div></div>
+   <div class="percent" id="percent">0% Completed</div>
+  </div>
+  <div class="sectionTitle"><span>🎨 Palette</span><small id="paletteProgress">0/20 Done</small></div>
+  <div class="colorGrid" id="palette"></div>
+  <div class="hint">Tap or drag across squares matching your selected color.</div>
+  <div class="achievement" id="achievement">⭐ Complete 10/10 in a collection to unlock its bonus star scene!</div>
+ </aside>
+
+ <main class="panel artPanel">
+  <div class="artTop">
+   <div><div class="artTitle" id="artTitle">Sleepy Cat</div><div class="artDesc" id="artDesc">Curled up for a warm nap in a cozy bedroom.</div></div>
+   <div class="badge" id="countBadge">0 / 1530 tiles</div>
+  </div>
+  <div id="artFrame"><div id="catGrid" aria-label="Diamond painting cat canvas"></div></div>
+  <div class="artTools">
+   <div class="toolBtns">
+    <button class="tool" id="zoomIn">＋ Zoom In</button>
+    <button class="tool" id="zoomOut">－ Zoom Out</button>
+    <button class="tool" id="zoomReset">⊙ Reset</button>
+   </div>
+   <div class="badge">💡 Active Color: <span id="currentNum">—</span></div>
+  </div>
+  <div class="galleryCard">
+    <div class="galleryHead">
+      <span id="galleryCollectionTitle">Collection 1/5 • 🐱 Everyday Cats (0/10)</span>
+      <div class="galleryHeadNav">
+        <button class="tool" id="galleryPrev">◀ Prev</button>
+        <span class="badge" id="galleryPageBadge">Page 1 / 5</span>
+        <button class="tool" id="galleryNext">Next ▶</button>
+      </div>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+ </main>
+
+ <aside class="panel right">
+   <div class="rightTitle">Active Selection</div>
+   <div class="current">
+    <div class="currentColor" id="currentColor"></div>
+    <div><b id="currentName">Select a Color</b><small id="currentHint">Tap any palette swatch to paint.</small></div>
+   </div>
+   <div class="ref">
+    <div class="refScene" id="refScene">🐈</div>
+    <div class="refText" id="refText">Rich scenery with strong silhouette contrast between cat and background.</div>
+   </div>
+   <div class="navGrid">
+    <button class="action secondary" id="prevBtn">◀ Previous</button>
+    <button class="action secondary" id="nextBtn">Next ▶</button>
+    <button class="action gold" id="resetBtn">↻ Clear Canvas</button>
+    <button class="action" id="hintBtn">💡 Find Number</button>
+    <button class="action secondary" id="autoFillDone" style="grid-column:1/-1">⚡ Complete Current Color</button>
+   </div>
+   <div class="message" id="message">Pick a numbered swatch from the left palette to start painting!</div>
+   <div class="collectionBox" id="collectionBox">🏆 0 / 50 Standard Cats • 0 / 5 Bonus Stars</div>
+ </aside>
+</div>
+</div>
+
+<!-- Victory Celebration Modal -->
+<div id="modalOverlay">
+  <div class="modalBox">
+    <div class="modalEmoji" id="modalEmoji">🎉</div>
+    <div class="modalTitle" id="modalTitle">Masterpiece Complete!</div>
+    <div class="modalDesc" id="modalDesc">You beautifully colored Sleepy Cat!</div>
+    <div class="modalBtns">
+      <button class="action secondary" id="modalClose">Keep Viewing</button>
+      <button class="action" id="modalNext">Next Cat ➔</button>
+    </div>
+  </div>
+</div>
+<canvas class="confettiCanvas" id="confettiCanvas"></canvas>
+
+<script>
+// 20 High-Contrast Colors
+const COLORS={
+ 1:["Light Brown","#C68A52"],2:["Dark Brown","#67412B"],3:["Black","#242428"],4:["White","#F7F6F0"],
+ 5:["Gray","#97A0A8"],6:["Pink","#EB8CA3"],7:["Red","#D64540"],8:["Orange","#F38923"],
+ 9:["Yellow","#F5CB2A"],10:["Forest Green","#3C8542"],11:["Cobalt Blue","#3676CE"],12:["Royal Purple","#7B52B3"],
+ 13:["Teal","#2E9F9D"],14:["Magenta","#C53F88"],15:["Warm Gold","#DDA72A"],16:["Sky Blue","#85CCF0"],
+ 17:["Lavender","#B69CE3"],18:["Peach","#F4A48C"],19:["Warm Cream","#F3DDb4"],20:["Midnight Navy","#1C325D"]
+};
+
+const CN=["🐱 Everyday Cats","🎭 Costume Cats","🌲 Adventure Cats","🍰 Food & Fun Cats","✨ Fantasy Cats"];
+
+const S=`🛏️|Sleepy Cat|5|9|s|room|19|ncap|_bed|Curled up for a nap in a cozy purple bed.
+🧶|Yarn Cat|8|10|t|room|16|bow|yarn|Playing with a huge ball of bright red yarn.
+☕|Cafe Cat|4|11|s|room|1|bow|table,cake|Sipping warm tea at a sunny café table.
+🏡|Porch Cat|1|10|t|sky|16||_porch|Relaxing happily on the sunlit front porch.
+🌧️|Rainy Day Cat|8|10|t|sky|5|brolly|rain|Raincoat, umbrella and splashing through puddles.
+📚|Bookworm Cat|5|10|s|room|19|specs book|_shelf|Curled up reading in a cozy oak library.
+❤️|Cozy Home Cat|3|9|s|room|19|bow|_couch,toys,lamp|Playing with cozy home cushions and cat toys.
+🐟|Aquarium Cat|4|9|s|room|20||_tank|Fascinated watching colorful fish swim in the tank.
+🎨|Artist Cat|2|10|t|room|16|beret o14|easel|Painting a scenic landscape on an easel.
+🌸|Flower Shop Cat|18|10|s|room|13|o10|shopfl|Arranging colorful blossoms in the florist shop.
+👨‍🍳|Chef Cat|5|10|s|room|19|chef o4|stove|Cooking savory vegetable soup at the kitchen stove.
+🏴‍☠️|Pirate Cat|3|9|s|beach|16|pir o7|_ship,chest|Guarding secret treasure on a pirate galleon.
+🤠|Cowboy Cat|1|10|t|sky|16|cow o7|_saloon,cactus|Cowboy hat in a dusty wild west town.
+🚓|Police Cat|5|10|s|sky|19|cop o20|police|Patrolling the neighborhood beside the police cruiser.
+🚒|Firefighter Cat|19|10|s|sky|11|fire o9|truck,ladder|Ready for action beside the big red fire engine.
+🦸|Super Cat|4|11|s|night|20|cape mask|_city|Heroic superhero flying high above the skyline.
+🥷|Ninja Cat|4|9|s|night|20|ninja|_roof|Stealthily leaping across tile rooftops at night.
+🎸|Rockstar Cat|6|11|s|stage|20|shades o3 guitar|_amp|Strumming electric guitar riffs under stage lights.
+🎻|Musician Cat|18|10|s|room|20|violin|stand,notes|Playing classical violin by sheet music.
+🎭|Theater Cat|4|9|s|stage|20|topH o12|mask|Dramatic performance on stage under theater curtains.
+👩‍🚀|Space Cat|18|10|s|space|20|astro|flag|Astronaut exploring the moon crater with a flag.
+⛺|Camping Cat|8|10|t|night|20|beanie|_tent,fire|Toasting marshmallows by the glowing campfire.
+🎣|Fishing Cat|1|10|t|sky|16|rod|_pond|Patiently fishing with a rod beside a reed pond.
+🦁|Safari Cat|9|10|t|sky|16|expl o19|_jungle|Exploring lush jungle greenery with an explorer hat.
+🤿|Diving Cat|8|10|t|water|11|dive|reef|Diving among coral reefs and ocean critters.
+🏹|Ranger Cat|5|10|t|sky|19|expl o10|_trees|Forest ranger cat guarding towering pines.
+🏖️|Beach Cat|6|10|s|beach|16|shades|_umb,ball|Sunbathing with sunglasses and a beach umbrella.
+🚲|Adventure Cat|4|10|s|sky|13|helm|_bike|Riding a bicycle down scenic country trails.
+🚗|Road Trip Cat|5|10|t|sky|19|shades cap|_carunder|Cruising on a road trip in a vintage convertible.
+🐦|Birdwatching Cat|1|10|t|sky|16|binoc|_tree,birds|Birdwatching in leafy trees with binoculars.
+🍕|Pizza Cat|8|10|t|room|11|bow|table,pizza|Enjoying a fresh slice of delicious pepperoni pizza.
+🧁|Baker Cat|19|11|s|room|11|chef o4|table,cupcakes|Decorating frosted cupcakes in the bakery.
+🎂|Birthday Cat|6|11|s|room|11|party|balloons,gifts,bigcake|Blowing out candles on a 3-tier birthday cake.
+🎄|Christmas Cat|8|10|t|room|11|santa|xtree,gifts|Decorating the festive holiday Christmas tree.
+🎃|Halloween Cat|4|9|s|night|20|witch|pumpkins,bats|Witch hat beside glowing carved pumpkins and bats.
+❄️|Snow Cat|8|10|t|snow|16|beanie o7|snowman|Building a round smiling snowman in the yard.
+🛷|Winter Cat|1|10|t|snow|16|beanie|_sled,pine|Sledding down crisp snowy pine slopes.
+🍁|Autumn Cat|5|10|t|sky|19||atree,leaves|Jumping playfully into a giant pile of autumn leaves.
+🎪|Circus Cat|4|9|s|stage|20|topH o7|cball,flags|Balancing atop a circus acrobatics sphere.
+🏆|Champion Cat|1|10|t|stage|20|headband o7|podium,trophy|Holding the gold championship trophy on the podium.
+🧙|Wizard Cat|5|9|s|room|20|wiz o12|potions|Brewing magical glowing potions with a spellbook.
+👑|Royal Cat|4|9|s|room|20|crown cape|_throne|Sitting regally on an ornate velvet throne.
+🏰|Castle Cat|3|11|s|sky|19|knight o5|_castle|Brave knight cat guarding the stone fortress.
+🧚|Fairy Cat|6|11|s|sky|16|wings tiara wand|mush,flw,sparks|Enchanted fairy cat sprinkling magic dust.
+🦋|Butterfly Cat|18|10|s|sky|16|bow|bflies,flw|Chasing colorful fluttery butterflies in the garden.
+🌻|Sunflower Cat|3|9|s|sky|19|sun|sunfl|Basking among giant golden sunflowers.
+🌼|Garden Cat|6|10|s|sky|16|sun|flw,bflower|Watering vibrant floral garden blooms.
+🧑‍🌾|Farm Cat|8|10|t|sky|16|sun o11|_barn,hens|Feeding pecking chickens by the classic red barn.
+🚂|Train Cat|9|10|s|sky|16|cond o20|_train|Proud conductor whistling aboard the steam train.
+🚀|Rocket Cat|4|11|s|space|20|helm|rocket|Ready for launch into the cosmos beside a rocket.
+🌟|Golden Star Cat|9|11|s|room|20|crown|balloons,lamp|Everyday Collection Star Master Cat!
+🎖️|Grand Costume Cat|4|9|s|stage|20|crown cape o15|trophy|Costume Collection Star Master Cat!
+🗺️|Treasure Hunter Cat|8|10|t|beach|16|pir|_ship,chest|Adventure Collection Star Master Cat!
+🎉|Party Champion Cat|6|11|s|room|11|party|balloons,gifts,trophy|Food & Fun Collection Star Master Cat!
+🌈|Rainbow Fairy Cat|17|10|s|sky|16|wings tiara wand|flw,sparks,bflies|Fantasy Collection Star Master Cat!`.split("\n").map(l=>l.split("|"));
+
+const cats=S.map((s,i)=>({
+  emoji:s[0],name:s[1],coll:i<50?Math.floor(i/10):i-50,
+  fur:+s[2],eye:+s[3],pt:s[4],bg:s[5],sk:+s[6]||16,cos:s[7],pr:s[8],desc:s[9]
+}));
+
+// Procedural Prop Engines
+const veh=(c,l)=>(r,e,t,p)=>{r(29,22,44,29,c);r(32,17,43,22,c);r(33,18,42,21,16);r(34,15,35,16,l);r(40,15,41,16,l==7?11:7);r(29,25,44,25,4);e(34,30,2.5,2,3);e(41,30,2.5,2,3)};
+const PR={
+_bed:(r,e)=>{r(0,23,44,25,2);r(0,26,44,33,12);e(34,24,6,2,4);r(0,29,44,33,17)},
+yarn:(r,e)=>{e(36,26,6,6,7);e(36,26,4,4,14);e(36,26,2,2,7);r(28,30,33,31,7);e(39,24,1,1,14)},
+table:r=>{r(28,21,44,23,2);r(30,24,31,31,2);r(41,24,42,31,2);r(33,18,36,20,4)},
+cake:(r,e,t,p)=>{r(38,14,43,20,6);r(38,13,43,14,4);p(40,11,9);p(40,12,7);p(41,15,7);p(39,18,7)},
+_porch:r=>{r(28,1,30,26,4);r(41,1,43,26,4);r(28,1,43,3,4);r(33,6,38,26,2);r(36,16,36,17,9);r(0,27,44,33,19);r(0,26,44,26,2)},
+rain:(r,e,t,p)=>{for(let i=0;i<45;i++)p(i*7%45,i*11%24,16);e(9,31,5,1.5,11);e(36,31,6,1.5,11);e(22,32,4,1,11)},
+_shelf:r=>{r(28,1,44,25,2);for(let y=2;y<24;y+=6)for(let x=29;x<44;x++)r(x,y,x,y+4,[7,11,9,10,12,14,13][x%7])},
+_couch:r=>{r(23,16,44,27,17);r(26,18,42,25,12);r(23,13,25,27,17)},
+toys:(r,e)=>{e(35,29,3,3,7);e(35,29,1,1,4);r(40,26,43,30,11);e(30,31,2,1,5);e(38,31,1.5,1.5,9)},
+lamp:(r,e,t)=>{r(41,13,41,25,2);t(37,13,41,7,45,13,9);e(41,13,2,1,15)},
+_tank:(r,e,t,p)=>{r(27,7,44,24,2);r(28,8,43,23,11);e(33,13,2.5,1.5,8);p(36,13,8);e(39,17,2.5,1.5,9);p(41,17,9);r(28,22,43,23,19);r(38,15,38,21,10);r(32,16,32,21,10);r(27,25,44,33,2)},
+easel:(r,e,t)=>{r(29,15,30,31,2);r(41,15,42,31,2);r(28,2,43,17,4);r(30,4,41,15,16);r(30,10,41,15,10);e(37,7,2,2,9);t(30,10,34,6,38,10,5);e(36,32,3,1,19)},
+shopfl:(r,e)=>{for(let i=0;i<3;i++){const x=29+i*5;r(x,23,x+3,30,5);r(x+1,18,x+1,22,10);e(x+1,17,2.5,2.5,[7,9,14][i])}},
+stove:(r,e,t,p)=>{r(27,19,44,31,5);r(29,14,37,18,3);r(30,15,36,15,8);r(29,13,37,13,3);e(40,17,2,2,8);p(40,14,10);p(33,10,4);p(34,8,4)},
+_ship:(r,e,t,p)=>{r(34,2,35,22,2);r(36,3,43,13,4);p(39,7,3);p(38,6,3);p(40,6,3);r(19,21,44,28,2);r(19,21,44,21,15)},
+chest:(r,e,t,p)=>{r(29,26,38,32,2);r(29,26,38,28,15);p(34,29,9);p(34,30,3)},
+_saloon:r=>{r(26,8,44,26,2);r(26,6,44,8,15);r(29,11,33,16,16);r(37,11,41,16,16);r(32,19,38,26,19)},
+cactus:r=>{r(42,17,43,29,10);r(39,21,41,22,10);r(39,19,40,22,10)},
+police:veh(20,7),truck:veh(7,9),ladder:r=>{r(30,16,44,16,5)},
+_city:r=>{[[0,11,6],[7,7,9],[17,13,6],[24,5,8],[34,9,7],[40,12,5]].forEach(([x,y,w])=>{r(x,y,x+w-1,25,5);for(let j=y+2;j<24;j+=3)for(let i=x+1;i<x+w-1;i+=2)r(i,j,i,j,9)})},
+_roof:r=>{r(21,19,44,33,2);r(21,18,44,18,15);r(27,13,28,18,2)},
+_amp:(r,e)=>{r(28,15,44,31,3);e(36,23,4.5,4.5,5);e(36,23,2,2,3);r(29,16,43,17,5)},
+stand:r=>{r(36,7,36,28,3);r(31,7,42,14,4);r(32,9,41,9,3);r(32,11,41,11,3)},
+notes:(r,e,t,p)=>{[[29,4,9],[36,2,14],[41,7,7],[43,1,11]].forEach(([x,y,c])=>{p(x,y,c);p(x,y+1,c);p(x-1,y+2,c)})},
+mask:(r,e,t,p)=>{e(36,17,5,6,9);p(34,15,3);p(38,15,3);r(34,20,38,20,3);p(33,19,3);p(39,19,3)},
+flag:r=>{r(36,8,36,28,4);r(37,8,43,13,7)},
+_tent:(r,e,t)=>{t(24,27,35,8,44,27,7);t(31,27,35,16,38,27,3)},
+fire:(r,e,t)=>{r(1,30,6,31,2);t(1,30,3.5,23,6,30,8);t(2,30,3.5,26,5,30,9)},
+_pond:(r,e)=>{r(24,26,44,33,11);e(34,28,4,1,16);e(41,29,2,1,10);r(24,25,44,25,19)},
+_jungle:(r,e)=>{[30,40].forEach(x=>{r(x,7,x+1,27,2);e(x,6,5,2,10);e(x+3,8,4,2,10);e(x-3,8,4,2,10)})},
+reef:(r,e,t,p)=>{[29,35,41].forEach(x=>{r(x,18,x,32,10);r(x+1,22,x+1,32,10)});e(43,30,2,2,14);e(30,8,2,1,9);p(32,8,9);e(39,4,2,1,7);p(41,4,7);for(let i=0;i<8;i++)p(30+i*2%13,27-i*3,4)},
+_trees:(r,e,t)=>{[[31,25],[40,23]].forEach(([x,b])=>{r(x,b-8,x,b+3,2);t(x-5,b-4,x,b-20,x+5,b-4,10);t(x-6,b,x,b-12,x+6,b,10)})},
+_umb:(r,e)=>{e(36,12,8,3,7);r(36,12,36,28,2);r(32,10,40,10,4)},
+ball:(r,e)=>{e(40,29,2.5,2.5,9);r(38,29,42,29,11);r(40,27,40,31,7)},
+_bike:(r,e,t,p,q)=>{q(11,29,4,4,3);q(33,29,4,4,3);r(12,28,32,28,7);r(15,23,15,28,7);r(30,21,30,28,7);r(28,20,32,20,3)},
+_carunder:(r,e)=>{r(1,24,41,31,11);r(1,24,41,25,4);e(8,31,3,2,3);e(34,31,3,2,3);r(29,17,33,24,16)},
+_tree:(r,e)=>{r(33,9,35,33,2);e(34,7,9,6,10);e(41,11,4,4,10)},
+birds:(r,e,t,p)=>{[[37,3],[28,9],[42,15]].forEach(([x,y])=>{e(x,y,1,1,7);p(x+1,y,9)})},
+pizza:(r,e,t,p)=>{e(36,19,5,2,15);p(34,19,7);p(37,18,7);p(36,20,10);p(39,19,7);r(31,22,41,25,19)},
+cupcakes:r=>{[29,35,40].forEach(x=>{r(x,18,x+3,20,18);r(x,16,x+3,17,6);r(x+1,15,x+1,15,7)})},
+balloons:(r,e)=>{[[30,4,7],[36,2,11],[41,5,9]].forEach(([x,y,c])=>{e(x,y,2,3,c);r(x,y+3,x,y+9,4)})},
+gifts:r=>{r(27,27,33,32,12);r(30,27,30,32,9);r(36,27,43,32,8);r(39,27,39,32,4)},
+bigcake:(r,e,t,p)=>{r(28,17,43,24,6);r(28,17,43,18,4);r(28,25,43,26,2);[32,36,40].forEach(x=>{r(x,14,x,16,9);p(x,13,7)})},
+xtree:(r,e,t,p)=>{t(28,19,36,2,43,19,10);t(29,26,36,11,42,26,10);r(35,26,37,31,2);p(36,1,9);[[34,11,7],[38,15,11],[33,19,9],[39,21,7],[36,7,14],[36,23,11]].forEach(([x,y,c])=>p(x,y,c))},
+pumpkins:(r,e)=>{e(31,28,4,3,8);r(31,24,32,25,10);e(39,29,3,2,8);r(39,26,39,27,10)},
+bats:(r,e,t,p)=>{[[29,5],[37,11],[23,2]].forEach(([x,y])=>{p(x,y,5);p(x-1,y-1,5);p(x+1,y-1,5);p(x-2,y,5);p(x+2,y,5)})},
+snowman:(r,e,t,p)=>{e(36,27,5,4,4);e(36,20,4,3,4);e(36,15,3,2,4);p(35,15,3);p(37,15,3);p(36,16,8);r(34,12,38,13,3);r(33,11,39,11,3);r(33,18,39,18,7)},
+_sled:r=>{r(2,30,26,30,5);r(4,27,24,29,7);r(2,28,3,29,5)},
+pine:(r,e,t)=>{[[31,25],[40,23]].forEach(([x,b])=>{t(x-5,b,x,b-17,x+5,b,10);r(x,b,x,b+3,2)})},
+atree:r=>{r(36,7,38,26,2)},
+leaves:(r,e,t,p)=>{e(37,5,7,5,8);e(32,8,3,3,7);e(42,8,3,3,9);e(33,29,8,3,8);e(39,28,4,3,7);e(27,30,4,2,9);[[4,4,8],[11,11,7],[21,2,8]].forEach(([x,y,c])=>p(x,y,c))},
+cball:(r,e)=>{e(36,26,5,5,11);e(36,26,5,1,4)},
+flags:(r,e,t)=>{for(let i=0;i<11;i++)t(i*4,0,i*4+2,4,i*4+4,0,[7,9,11][i%3])},
+podium:r=>{r(27,26,44,32,15);r(32,22,39,25,9)},
+trophy:r=>{r(32,12,38,18,15);r(34,19,36,21,15);r(33,21,37,21,2)},
+potions:r=>{r(28,21,43,22,2);r(30,23,31,31,2);r(40,23,41,31,2);[29,34,39].forEach((x,i)=>{r(x,15,x+2,20,[14,10,7][i]);r(x+1,13,x+1,14,4)})},
+_throne:r=>{r(4,1,31,32,15);r(7,5,28,31,7)},
+_castle:r=>{r(23,9,44,27,5);[23,27,31,35,39,43].forEach(x=>r(x,6,x+1,8,5));r(30,16,36,27,2);r(26,11,27,14,3);r(39,11,40,14,3);r(33,0,33,6,2);r(34,1,37,3,7)},
+mush:(r,e)=>{e(35,26,5,3,7);r(34,27,36,31,4);e(33,25,1,1,4);e(37,26,1,1,4)},
+flw:(r,e,t,p)=>{[[30,24,7],[35,27,9],[40,23,14],[32,29,14]].forEach(([x,y,c])=>{r(x,y,x,y+3,10);e(x,y-1,2,1,c);p(x,y-1,9)})},
+sparks:(r,e,t,p)=>{[[29,5],[37,9],[41,3],[25,1],[42,17]].forEach(([x,y])=>{p(x,y,9);p(x-1,y,9);p(x+1,y,9);p(x,y-1,9);p(x,y+1,9)})},
+bflies:(r,e,t,p)=>{[[30,7,7],[36,12,9],[40,4,14],[26,15,12]].forEach(([x,y,c])=>{e(x-1,y,1,1,c);e(x+1,y,1,1,c);p(x,y,3)})},
+sunfl:(r,e)=>{[29,35,41].forEach((x,i)=>{r(x,13+i*2,x,31,10);e(x,11+i*2,3,3,9);e(x,11+i*2,1,1,2)})},
+bflower:(r,e)=>{r(29,19,29,31,10);e(29,17,3,3,14);e(29,17,1,1,9)},
+_barn:(r,e,t)=>{r(27,9,44,27,7);t(26,9,35,1,45,9,7);r(32,14,38,27,4);r(35,14,35,27,7);r(32,14,38,14,7)},
+hens:(r,e,t,p)=>{[[29,29],[35,30],[40,28]].forEach(([x,y])=>{e(x,y,2,2,4);p(x+2,y-1,8);p(x+1,y-2,7)});p(32,31,9);p(38,31,9)},
+_train:(r,e)=>{r(25,13,44,28,20);r(25,11,44,12,7);r(29,15,33,20,16);r(37,15,41,20,16);r(26,8,28,12,3);e(31,29,3,3,3);e(37,29,3,3,3);e(43,29,3,3,3)},
+rocket:(r,e,t)=>{e(36,13,4,10,4);t(32,9,36,0,40,9,7);r(30,17,32,25,7);r(40,17,42,25,7);e(36,12,2,2,16);t(34,23,36,30,38,23,8)}
+};
+
+const W=45,H=34;
+let current=0,selected=null,zoom=1,gridData=[],soundEnabled=true,isMouseDown=false;
+let completed=JSON.parse(localStorage.getItem("catColorCompleted50")||"[]");
+let savedCells=JSON.parse(localStorage.getItem("catColorCells50")||"{}");
+
+const grid=document.getElementById("catGrid"),palette=document.getElementById("palette");
+const progress=document.getElementById("progress"),percent=document.getElementById("percent");
+const countBadge=document.getElementById("countBadge"),message=document.getElementById("message");
+const currentColor=document.getElementById("currentColor"),currentName=document.getElementById("currentName");
+const currentHint=document.getElementById("currentHint"),currentNum=document.getElementById("currentNum");
+const collectionBox=document.getElementById("collectionBox"),gallery=document.getElementById("gallery");
+const levelName=document.getElementById("levelName"),levelSub=document.getElementById("levelSub"),levelPaw=document.getElementById("levelPaw");
+const artTitle=document.getElementById("artTitle"),artDesc=document.getElementById("artDesc");
+const refScene=document.getElementById("refScene"),refText=document.getElementById("refText");
+const soundBtn=document.getElementById("soundBtn");
+
+// Victory Modal Elements
+const modalOverlay=document.getElementById("modalOverlay");
+const modalEmoji=document.getElementById("modalEmoji"),modalTitle=document.getElementById("modalTitle"),modalDesc=document.getElementById("modalDesc");
+const modalClose=document.getElementById("modalClose"),modalNext=document.getElementById("modalNext");
+
+// Sound Synthesizer
+let audioCtx=null;
+function initAudio(){
+ try{
+   if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+   if(audioCtx.state==="suspended") audioCtx.resume();
+ }catch(e){}
+}
+function playBeep(freq,type,dur,gainVal=0.08){
+ if(!soundEnabled)return;
+ initAudio();
+ try{
+   const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+   osc.type=type;osc.frequency.setValueAtTime(freq,audioCtx.currentTime);
+   gain.gain.setValueAtTime(gainVal,audioCtx.currentTime);
+   gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+   osc.connect(gain);gain.connect(audioCtx.destination);
+   osc.start();osc.stop(audioCtx.currentTime+dur);
+ }catch(e){}
+}
+
+let lastWrongTime=0;
+function sfxPaint(){playBeep(520,"sine",0.06,0.06)}
+function sfxDoneColor(){playBeep(780,"triangle",0.15,0.1);setTimeout(()=>playBeep(1040,"sine",0.2,0.1),80)}
+function sfxWrongSafe(){
+ const now=Date.now();
+ if(now-lastWrongTime>220){
+   playBeep(180,"sawtooth",0.12,0.08);
+   lastWrongTime=now;
+ }
+}
+function sfxWin(){[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>playBeep(f,"triangle",0.3,0.12),i*110))}
+
+soundBtn.onclick=()=>{soundEnabled=!soundEnabled;soundBtn.textContent=soundEnabled?"🔊 Sound: ON":"🔈 Sound: OFF"};
+
+function ellipse(x,y,cx,cy,rx,ry){return ((x-cx)*(x-cx))/(rx*rx)+((y-cy)*(y-cy))/(ry*ry)<=1}
+function tri(x,y,ax,ay,bx,by,cx,cy){
+ const s=(ax-cx)*(by-cy)-(bx-cx)*(ay-cy);
+ const s1=(ax-x)*(by-y)-(bx-x)*(ay-y),s2=(bx-x)*(cy-y)-(cx-x)*(by-y),s3=(cx-x)*(ay-y)-(ax-x)*(cy-y);
+ return (s>=0&&s1>=0&&s2>=0&&s3>=0)||(s<0&&s1<=0&&s2<=0&&s3<=0);
+}
+
+// Scene Drawing Engine
+function makePicture(o){
+ const mk=g=>({g,
+  r:(x1,y1,x2,y2,c)=>{for(let y=Math.max(0,Math.floor(y1));y<=Math.min(H-1,Math.floor(y2));y++)for(let x=Math.max(0,Math.floor(x1));x<=Math.min(W-1,Math.floor(x2));x++)g[y][x]=c},
+  e:(cx,cy,rx,ry,c)=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ellipse(x,y,cx,cy,rx,ry))g[y][x]=c},
+  t:(ax,ay,bx,by,cx,cy,c)=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(tri(x,y,ax,ay,bx,by,cx,cy))g[y][x]=c},
+  p:(x,y,c)=>{if(g[y]&&x>=0&&x<W)g[y][x]=c},
+  q:(cx,cy,rx,ry,c)=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ellipse(x,y,cx,cy,rx,ry)&&!ellipse(x,y,cx,cy,Math.max(0.1,rx-1.5),Math.max(0.1,ry-1.5)))g[y][x]=c}
+ });
+ const blank=v=>Array.from({length:H},()=>Array(W).fill(v));
+ const a=blank(16),c=blank(0),A=mk(a),C=mk(c),{r,e,t,p,q}=A,F=o.fur,K=F===3?20:F===2?3:2,D=-6,X=23+D,B=o.bg;
+ const sk=o.sk||(F===8?11:16),wall=o.sk||(F===4?20:F===3?19:16);
+
+ if(B==="room"){
+   r(0,0,44,25,wall);r(0,26,44,33,F===2?15:2);
+   r(31,2,42,10,2);r(32,3,41,9,16);r(36,3,37,9,2);r(32,6,41,6,2);
+ }else if(B==="sky"||B==="beach"){
+   r(0,0,44,25,sk);r(0,26,44,33,10);e(40,4,3,3,9);e(10,4,4,2,4);e(15,5,3,2,4);
+   if(B==="beach"){r(0,14,44,21,11);r(0,22,44,33,19)}
+ }else if(B==="snow"){
+   r(0,0,44,25,16);r(0,26,44,33,17);e(8,5,4,2,4);for(let i=0;i<30;i++)p(i*7%45,i*5%25,4);
+ }else if(B==="water"){
+   r(0,0,44,33,11);r(0,20,44,33,13);r(0,30,44,33,19);for(let i=0;i<10;i++)p(i*9%45,i*7%28,4);
+ }else{
+   r(0,0,44,25,20);r(0,26,44,33,B==="space"?5:B==="stage"?15:10);
+   if(B==="stage"){r(0,0,5,25,7);r(39,0,44,25,7)}
+   else{for(let i=0;i<26;i++)p(i*13%45,i*7%24,9);e(38,5,3,3,B==="space"?11:9);if(B==="space")e(38,5,1.5,1.5,10)}
+ }
+
+ const names=(o.pr||"").split(",").filter(Boolean),toks=(o.cos||"").split(" ").filter(Boolean);
+ names.filter(n=>n[0]==="_").forEach(n=>PR[n]&&PR[n](r,e,t,p,q));
+
+ const BK={cape:()=>{e(23.5+D,22,13,10,7)},wings:()=>{e(11+D,18,6,8,17);e(35+D,18,6,8,17);e(11+D,18,3,5,14);e(35+D,18,3,5,14)}};
+ toks.forEach(k=>BK[k]&&BK[k]());
+
+ C.e(35+D,23,4,7,F);C.e(34+D,22,2,5,0);C.e(23.5+D,23,9,10,F);C.e(23.5+D,24,5,7,4);C.e(23.5+D,13.5,9,7,F);
+ C.t(14+D,12,15+D,3,21+D,9,F);C.t(26+D,9,32+D,3,33+D,12,F);C.t(16+D,10,17+D,6,20+D,9,6);C.t(27+D,9,31+D,6,31+D,10,6);
+ C.e(23.5+D,17,5,3,4);C.e(19.5+D,13.5,2.2,1.5,o.eye);C.e(27.5+D,13.5,2.2,1.5,o.eye);
+ C.p(19+D,13,3);C.p(27+D,13,3);C.p(23+D,17,6);C.p(22+D,18,K);C.p(24+D,18,K);
+ C.e(18.5+D,28.5,3,2.5,F);C.e(28.5+D,28.5,3,2.5,F);
+
+ if(o.pt==="t"){
+  for(let x=20;x<=27;x+=3)for(let y=9;y<=11;y++)C.p(x+D,y,K);
+  for(let y=14;y<=16;y++){C.p(16+D,y,K);C.p(31+D,y,K)}
+  for(let x=17;x<=29;x+=4)for(let y=20;y<=23;y++)if(c[y][x+D]===F)c[y][x+D]=K;
+  for(let y=24;y<=26;y++)if(c[y][35+D]===F)c[y][35+D]=K;
+ }
+
+ toks.forEach(k=>{
+  if(/^o\d+$/.test(k)){
+    const n=+k.slice(1);
+    for(let y=20;y<=25;y++)for(let x=14+D;x<=33+D;x++)if(c[y][x]===F||c[y][x]===4)c[y][x]=n;
+  }
+ });
+
+ const oc=F===3||F===20?0:3,ol=[];
+ if(oc)for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(!c[y][x]&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>c[y+dy]?.[x+dx]>0))ol.push([x,y]);
+ ol.forEach(([x,y])=>c[y][x]=oc);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(c[y][x])a[y][x]=c[y][x];
+
+ names.filter(n=>n[0]!=="_").forEach(n=>PR[n]&&PR[n](r,e,t,p,q));
+
+ const HT={
+  chef:()=>{e(X,3,5,3,4);r(X-5,5,X+5,7,4)},
+  pir:()=>{r(X-7,5,X+7,7,3);t(X-6,5,X,0,X+6,5,3);p(X,3,4);p(X-1,2,4);p(X+1,2,4)},
+  crown:()=>{r(X-5,5,X+5,8,15);[-5,-2,2,5].forEach(i=>p(X+i,4,15));p(X,3,15);p(X,7,7)},
+  sun:()=>{e(X,7,10,2,9);e(X,5,5,3,9);r(X-5,5,X+5,5,7)},
+  party:()=>{t(X-4,8,X,0,X+4,8,14);p(X,0,9);p(X-1,4,9);p(X+1,6,4)},
+  fire:()=>{e(X,6,8,3,7);r(X-9,8,X+9,8,7);p(X,5,9)},
+  cop:()=>{r(X-6,4,X+6,7,20);r(X-8,8,X+8,8,3);p(X,5,15)},
+  cow:()=>{e(X,7,11,2,2);r(X-4,3,X+4,7,2);r(X-4,6,X+4,6,15)},
+  knight:()=>{r(X-8,5,X+8,9,5);r(X-1,2,X+1,5,7);r(X-3,9,X+3,9,3)},
+  astro:()=>q(X,13,11,10,4),
+  dive:()=>q(X,13,11,10,15),
+  ninja:()=>{for(let y=4;y<19;y++)for(let x=0;x<W;x++)if(ellipse(x,y,X+.5,13.5,9,7)&&(y<12||y>14)&&[F,4,6].includes(a[y][x]))a[y][x]=3},
+  expl:()=>{e(X,7,11,2,19);r(X-5,3,X+5,7,19);r(X-5,6,X+5,6,2)},
+  beret:()=>{e(X+1,5,7,3,14);p(X+1,1,14)},
+  cond:()=>{r(X-6,4,X+6,7,20);r(X-8,8,X+8,8,3);p(X,5,9)},
+  santa:()=>{t(X-6,8,X,0,X+6,8,7);r(X-7,7,X+7,8,4);p(X,0,4)},
+  witch:()=>{t(X-5,8,X,0,X+5,8,12);r(X-9,7,X+9,8,12);r(X-5,6,X+5,6,9)},
+  wiz:()=>{t(X-6,8,X,0,X+6,8,12);r(X-9,7,X+9,8,12);p(X,3,9);p(X-2,6,9);p(X+2,5,9)},
+  shades:()=>{r(17+D,12,22+D,14,3);r(25+D,12,30+D,14,3);r(22+D,13,24+D,13,3)},
+  bow:()=>{r(X-4,19,X+4,20,14);r(X-1,19,X+1,20,9)},
+  tiara:()=>{r(X-4,6,X+4,7,9);p(X,5,9);p(X-3,5,9);p(X+3,5,9)},
+  topH:()=>{r(X-5,0,X+5,6,3);r(X-8,7,X+8,7,3);r(X-5,5,X+5,5,7)},
+  beanie:()=>{e(X,6,8,3,7);p(X,2,4);r(X-8,8,X+8,8,4)},
+  helm:()=>{e(X,6,8,3,7);r(X-9,8,X+9,8,15)},
+  headband:()=>r(X-8,8,X+8,9,7),
+  ncap:()=>{t(X-6,8,X,1,X+6,8,12);p(X,0,4)},
+  cap:()=>{e(X,6,8,3,13);r(X-8,8,X+8,8,13);r(X+4,8,X+11,9,13)},
+  mask:()=>{r(17+D,11,30+D,14,7);p(19+D,13,4);p(27+D,13,4)},
+  specs:()=>{q(19+D,13,3,2,3);q(27+D,13,3,2,3);r(22+D,13,24+D,13,3)},
+  binoc:()=>{r(17+D,11,22+D,15,3);r(25+D,11,30+D,15,3);r(22+D,12,24+D,13,3);p(19+D,13,16);p(27+D,13,16)},
+  brolly:()=>{e(X,4,14,5,7);r(X+12,5,X+12,22,2)},
+  guitar:()=>{e(21+D,26,5,4,7);r(24+D,25,38+D,26,2);p(21+D,26,3)},
+  violin:()=>{e(22+D,23,3,4,2);r(24+D,17,25+D,23,2);r(27+D,18,36+D,18,1)},
+  book:()=>{r(17+D,21,29+D,26,11);r(17+D,21,29+D,21,4);r(23+D,21,23+D,26,2)},
+  rod:()=>{for(let i=0;i<16;i++)p(20+i,22-Math.floor(i*.9),2);r(36,8,36,25,4);e(36,26,1,1,7)},
+  wand:()=>{for(let i=0;i<9;i++)p(29+D+i,25-i,2);p(38+D,15,9);p(37+D,16,9);p(39+D,16,9)}
+ };
+ toks.forEach(k=>HT[k]&&HT[k]());
+ return a;
+}
+
+const locked=i=>i>=50&&completed.filter(k=>k<50&&cats[k].coll===i-50).length<10;
+function keyFor(i){return String(i)}
+
+function loadLevel(i){
+ i=(i+cats.length)%cats.length;
+ if(locked(i)){
+   message.textContent="🔒 This bonus star cat is locked! Finish all 10 cats in its collection to unlock it.";
+   sfxWrongSafe();
+   return;
+ }
+ current=i;selected=null;zoom=1;
+ const c=cats[current], data=makePicture(c);gridData=data;
+ levelPaw.textContent=c.emoji;
+ levelName.textContent=c.name;
+ levelSub.textContent=current<50?`${CN[c.coll]} • #${(current%10)+1} of 10`:`⭐ Bonus Master Scene`;
+ artTitle.textContent=c.name;artDesc.textContent=c.desc;
+ refScene.style.background=`linear-gradient(135deg,${COLORS[c.fur][1]},#fff8eb)`;
+ refScene.textContent=c.emoji;
+
+ grid.style.transform="scale(1)";
+ grid.innerHTML="";
+ grid.style.gridTemplateColumns=`repeat(${W},1fr)`;
+
+ const saved=savedCells[keyFor(current)]||{};
+ for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+   const n=data[y][x], idx=y*W+x, cell=document.createElement("div");
+   cell.className="cell";cell.dataset.num=n;cell.dataset.idx=idx;cell.textContent=n;
+   if(saved[idx]){cell.classList.add("filled");cell.style.background=COLORS[n][1]}
+   
+   // Mouse Desktop Listeners
+   cell.addEventListener("mousedown",()=>{isMouseDown=true;paint(cell)});
+   cell.addEventListener("mouseenter",()=>{if(isMouseDown)paint(cell)});
+   grid.appendChild(cell);
+ }
+
+ buildPalette();
+ buildGallery(cats[current].coll);
+ update();
+ updateCollection();
+ selectFirstAvailableColor();
+ message.textContent="Pick a color from the palette, then tap or drag across matching numbered tiles.";
+}
+
+function selectFirstAvailableColor(){
+ const unpainted=grid.querySelectorAll(".cell:not(.filled)");
+ if(unpainted.length>0){
+   select(+unpainted[0].dataset.num);
+ }
+}
+
+function buildPalette(){
+ palette.innerHTML="";
+ const activeNumbersInGrid=new Set();
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)activeNumbersInGrid.add(gridData[y][x]);
+
+ Object.entries(COLORS).forEach(([n,v])=>{
+   const num=+n;
+   if(!activeNumbersInGrid.has(num))return;
+   const d=document.createElement("div");
+   d.className="swatch";d.dataset.num=num;
+   d.innerHTML=`<div class="dot" style="background:${v[1]}"></div><div><b>${num}. ${v[0]}</b><span class="countLeft"></span></div>`;
+   d.onclick=()=>select(num);
+   palette.appendChild(d);
+ });
+ refreshPaletteCounts();
+}
+
+function refreshPaletteCounts(){
+ let doneColors=0, totalColors=0;
+ document.querySelectorAll(".swatch").forEach(sw=>{
+   const num=+sw.dataset.num;
+   totalColors++;
+   const remaining=grid.querySelectorAll(`.cell:not(.filled)[data-num="${num}"]`).length;
+   const countSpan=sw.querySelector(".countLeft");
+   if(countSpan) countSpan.textContent=remaining===0?"Done":`${remaining} left`;
+   if(remaining===0){
+     sw.classList.add("done");
+     doneColors++;
+   }else{
+     sw.classList.remove("done");
+   }
+ });
+ document.getElementById("paletteProgress").textContent=`${doneColors}/${totalColors} Colors Done`;
+}
+
+function select(n){
+ selected=n;
+ document.querySelectorAll(".swatch").forEach(x=>x.classList.toggle("selected",+x.dataset.num===n));
+ currentColor.style.background=COLORS[n][1];
+ currentName.textContent=`${n} — ${COLORS[n][0]}`;
+ currentHint.textContent=`Tap or drag matching squares marked with number ${n}.`;
+ currentNum.textContent=n;
+
+ document.querySelectorAll(".cell").forEach(cell=>{
+   if(!cell.classList.contains("filled")&&+cell.dataset.num===n){
+     cell.classList.add("highlight");
+   }else{
+     cell.classList.remove("highlight");
+   }
+ });
+}
+
+function paint(cell){
+ if(selected===null){message.textContent="🎨 Select a numbered swatch first.";return}
+ const wanted=+cell.dataset.num;
+ if(cell.classList.contains("filled"))return;
+ if(wanted!==selected){
+   cell.classList.remove("wrong");void cell.offsetWidth;cell.classList.add("wrong");
+   sfxWrongSafe();
+   message.textContent=`Oops! That tile is number ${wanted} (${COLORS[wanted][0]}).`;
+   return;
+ }
+
+ cell.classList.remove("highlight");
+ cell.classList.add("filled");
+ cell.style.background=COLORS[wanted][1];
+ sfxPaint();
+
+ if(!savedCells[keyFor(current)]) savedCells[keyFor(current)]={};
+ savedCells[keyFor(current)][cell.dataset.idx]=1;
+ localStorage.setItem("catColorCells50",JSON.stringify(savedCells));
+
+ update();
+ const remainingForColor=grid.querySelectorAll(`.cell:not(.filled)[data-num="${wanted}"]`).length;
+ if(remainingForColor===0){
+   sfxDoneColor();
+   message.textContent=`✨ Awesome! All number ${wanted} (${COLORS[wanted][0]}) tiles are complete.`;
+   refreshPaletteCounts();
+   const nextCell=grid.querySelector(".cell:not(.filled)");
+   if(nextCell) select(+nextCell.dataset.num);
+ }
+
+ const left=grid.querySelectorAll(".cell:not(.filled)").length;
+ if(!left) complete();
+}
+
+function update(){
+ const all=grid.querySelectorAll(".cell"),done=grid.querySelectorAll(".cell.filled").length;
+ const pct=all.length?Math.round(done/all.length*100):0;
+ progress.style.width=pct+"%";
+ percent.textContent=pct+"% Completed";
+ countBadge.textContent=`${done} / ${all.length} tiles`;
+}
+
+function complete(){
+ if(!completed.includes(current)){
+   completed.push(current);
+   localStorage.setItem("catColorCompleted50",JSON.stringify(completed));
+ }
+ progress.style.width="100%";
+ percent.textContent="100% Completed";
+ sfxWin();
+ startConfetti();
+
+ const cl=cats[current].coll;
+ const n=completed.filter(k=>k<50&&cats[k].coll===cl).length;
+ const isBonusUnlock=current<50&&n===10;
+
+ modalEmoji.textContent=cats[current].emoji;
+ modalTitle.textContent=isBonusUnlock?"Collection Complete! ⭐":"Cat Scene Complete! 🎉";
+ modalDesc.textContent=isBonusUnlock
+   ?`Incredible! You completed all 10 cats in ${CN[cl]} and unlocked the Bonus Master Star Cat!`
+   :`You finished coloring ${cats[current].name} beautifully!`;
+ modalOverlay.classList.add("active");
+
+ updateCollection();
+ buildGallery(galleryPage);
+}
+
+function updateCollection(){
+ const stdDone=completed.filter(k=>k<50).length;
+ const bonusDone=completed.filter(k=>k>=50).length;
+ collectionBox.textContent=`🏆 ${stdDone} / 50 Standard Cats • ${bonusDone} / 5 Bonus Stars`;
+ document.getElementById("achievement").textContent=CN.map((n,k)=>{
+   const cCount=completed.filter(x=>x<50&&cats[x].coll===k).length;
+   return `${n.split(" ")[0]} ${cCount}/10`;
+ }).join("  ");
+}
+
+function resetPicture(){
+ delete savedCells[keyFor(current)];
+ localStorage.setItem("catColorCells50",JSON.stringify(savedCells));
+ loadLevel(current);
+ message.textContent="Canvas cleared — all squares are ready to color again.";
+}
+
+// Gallery Pagination
+let galleryPage=0;
+function makeThumb(c){
+ const canvas=document.createElement("canvas");
+ canvas.className="miniCanvas";canvas.width=W;canvas.height=H;
+ const ctx=canvas.getContext("2d"),data=makePicture(c);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+   ctx.fillStyle=COLORS[data[y][x]][1];
+   ctx.fillRect(x,y,1,1);
+ }
+ return canvas;
+}
+
+function buildGallery(pg){
+ galleryPage=pg===undefined?cats[current].coll:pg;
+ if(galleryPage<0)galleryPage=0;
+ if(galleryPage>4)galleryPage=4;
+
+ gallery.innerHTML="";
+ let collCompletedCount=0;
+
+ cats.forEach((c,i)=>{
+   if(c.coll!==galleryPage)return;
+   const lk=locked(i),dn=completed.includes(i);
+   if(i<50&&dn) collCompletedCount++;
+
+   const d=document.createElement("div");
+   d.className="thumb"+(i===current?" active":"");
+   const mini=document.createElement("div");
+   mini.className="mini";
+   if(lk){
+     mini.style.cssText="font-size:28px;background:#444;color:#fff";
+     mini.textContent="🔒";
+   }else{
+     mini.appendChild(makeThumb(c));
+   }
+   const tn=document.createElement("div");
+   tn.className="tn";
+   tn.textContent=(dn?"✅ ":"")+(i<50?(i%10+1)+". ":"⭐ ")+c.name;
+   d.append(mini,tn);
+   d.onclick=()=>loadLevel(i);
+   gallery.appendChild(d);
+ });
+
+ document.getElementById("galleryPageBadge").textContent=`Page ${galleryPage+1} / 5`;
+ document.getElementById("galleryCollectionTitle").textContent=`Collection ${galleryPage+1}/5 • ${CN[galleryPage]} (${collCompletedCount}/10)`;
+ document.getElementById("galleryPrev").disabled=(galleryPage===0);
+ document.getElementById("galleryNext").disabled=(galleryPage===4);
+}
+
+function showHint(){
+ let cell=[...grid.querySelectorAll(".cell:not(.filled)")].find(c=>selected===null||+c.dataset.num===selected);
+ if(!cell){
+   cell=grid.querySelector(".cell:not(.filled)");
+   if(!cell){message.textContent="🎉 Every square in this scene is already painted!";return}
+ }
+ select(+cell.dataset.num);
+ cell.classList.remove("hint-glow");void cell.offsetWidth;cell.classList.add("hint-glow");
+ cell.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});
+ setTimeout(()=>cell.classList.remove("hint-glow"),1800);
+ message.textContent=`💡 Hint: Found square for color ${cell.dataset.num} (${COLORS[cell.dataset.num][0]}).`;
+}
+
+function autoFillCurrentColor(){
+ if(selected===null){message.textContent="Pick a color first.";return}
+ const targets=grid.querySelectorAll(`.cell:not(.filled)[data-num="${selected}"]`);
+ if(!targets.length){message.textContent=`Color ${selected} is already completely filled!`;return}
+ targets.forEach(cell=>{
+   cell.classList.remove("highlight");
+   cell.classList.add("filled");
+   cell.style.background=COLORS[selected][1];
+   if(!savedCells[keyFor(current)]) savedCells[keyFor(current)]={};
+   savedCells[keyFor(current)][cell.dataset.idx]=1;
+ });
+ localStorage.setItem("catColorCells50",JSON.stringify(savedCells));
+ sfxDoneColor();
+ update();
+ refreshPaletteCounts();
+ const left=grid.querySelectorAll(".cell:not(.filled)").length;
+ if(!left) complete();
+ else selectFirstAvailableColor();
+}
+
+// Confetti Particle Engine
+const confettiCanvas=document.getElementById("confettiCanvas");
+const cctx=confettiCanvas.getContext("2d");
+let confettiParticles=[];
+function resizeConfetti(){confettiCanvas.width=window.innerWidth;confettiCanvas.height=window.innerHeight}
+window.addEventListener("resize",resizeConfetti);
+resizeConfetti();
+
+function startConfetti(){
+ confettiParticles=[];
+ const cCols=["#f38923","#e4aa34","#d64540","#2fa85e","#3676ce","#c53f88","#f7f6f0"];
+ for(let i=0;i<120;i++){
+   confettiParticles.push({
+     x:window.innerWidth/2+(Math.random()-0.5)*200,
+     y:window.innerHeight/2+(Math.random()-0.5)*100,
+     vx:(Math.random()-0.5)*16,
+     vy:(Math.random()*-14)-6,
+     size:Math.random()*8+5,
+     color:cCols[Math.floor(Math.random()*cCols.length)],
+     rot:Math.random()*360,
+     vRot:(Math.random()-0.5)*12,
+     alpha:1
+   });
+ }
+ animateConfetti();
+}
+
+function animateConfetti(){
+ cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+ let active=false;
+ confettiParticles.forEach(p=>{
+   p.x+=p.vx;p.y+=p.vy;
+   p.vy+=0.4;p.rot+=p.vRot;
+   p.alpha=Math.max(0,p.alpha-0.008);
+   if(p.alpha>0){
+     active=true;
+     cctx.save();
+     cctx.globalAlpha=p.alpha;
+     cctx.translate(p.x,p.y);
+     cctx.rotate(p.rot*Math.PI/180);
+     cctx.fillStyle=p.color;
+     cctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
+     cctx.restore();
+   }
+ });
+ if(active) requestAnimationFrame(animateConfetti);
+ else cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+}
+
+// Mobile & Tablet Touch-Drag Listeners
+grid.addEventListener("touchstart",e=>{
+ const touch=e.touches[0];
+ const target=document.elementFromPoint(touch.clientX,touch.clientY);
+ if(target&&target.classList.contains("cell")){
+   paint(target);
+ }
+},{passive:true});
+
+grid.addEventListener("touchmove",e=>{
+ e.preventDefault();
+ const touch=e.touches[0];
+ const target=document.elementFromPoint(touch.clientX,touch.clientY);
+ if(target&&target.classList.contains("cell")){
+   paint(target);
+ }
+},{passive:false});
+
+window.addEventListener("mouseup",()=>isMouseDown=false);
+window.addEventListener("mouseleave",()=>isMouseDown=false);
+
+// Modal button actions
+modalClose.onclick=()=>modalOverlay.classList.remove("active");
+modalNext.onclick=()=>{modalOverlay.classList.remove("active");loadLevel(current+1)};
+
+// Nav & Control Handlers
+document.getElementById("prevBtn").onclick=()=>loadLevel(current-1);
+document.getElementById("nextBtn").onclick=()=>loadLevel(current+1);
+document.getElementById("resetBtn").onclick=resetPicture;
+document.getElementById("hintBtn").onclick=showHint;
+document.getElementById("autoFillDone").onclick=autoFillCurrentColor;
+document.getElementById("randomBtn").onclick=()=>loadLevel(Math.floor(Math.random()*50));
+document.getElementById("howBtn").onclick=()=>alert("HOW TO PLAY — 50 CATS COLOR BY NUMBER\n\n1. Select a numbered color swatch from the left palette.\n2. Matching numbered tiles on the canvas will highlight.\n3. Tap, click, or drag across matching squares to diamond-paint them.\n4. Complete all 10 cats in any collection to unlock its special Bonus Master Scene!\n5. Collect all 50 cats + 5 bonus stars!");
+document.getElementById("galleryBtn").onclick=()=>gallery.scrollIntoView({behavior:"smooth",block:"nearest"});
+
+document.getElementById("galleryPrev").onclick=()=>buildGallery(galleryPage-1);
+document.getElementById("galleryNext").onclick=()=>buildGallery(galleryPage+1);
+
+document.getElementById("resetAllBtn").onclick=()=>{
+ if(confirm("Are you sure you want to reset all 50 completed pictures and progress?")){
+   completed=[];savedCells={};
+   localStorage.removeItem("catColorCompleted50");
+   localStorage.removeItem("catColorCells50");
+   loadLevel(0);
+ }
+};
+
+document.getElementById("zoomIn").onclick=()=>{zoom=Math.min(2.0,zoom+0.2);grid.style.transform=`scale(${zoom})`};
+document.getElementById("zoomOut").onclick=()=>{zoom=Math.max(0.75,zoom-0.2);grid.style.transform=`scale(${zoom})`};
+document.getElementById("zoomReset").onclick=()=>{zoom=1;grid.style.transform=`scale(1)`};
+
+// Start Game
+loadLevel(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,3316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sovereign Lapidary Guild — an idle crafting game: mine geodes, cut gemstones, forge royal jewelry and build a gem empire.">
+  <meta name="theme-color" content="#05070b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%8E%3C/text%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap" rel="stylesheet">
+  <title>Sovereign Lapidary Guild</title>
+  <style>
+    :root {
+      --bg: #05070b;
+      --panel: #0d121d;
+      --panel-alt: #131b2a;
+      --card: #182235;
+      --card-hover: #222f49;
+      --border: #26354f;
+      --border-glow: rgba(56, 189, 248, 0.35);
+      --accent: #38bdf8;
+      --gold: #f59e0b;
+      --gold-light: #fde68a;
+      --gold-dark: #b45309;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+      --purple: #c084fc;
+      --amber: #fbbf24;
+      --glass: rgba(13, 18, 29, 0.82);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: 'Cinzel', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #152238 0%, var(--bg) 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* HEADER & STATUS BARS */
+    header {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 60;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fffbeb 0%, #fcd34d 40%, #f59e0b 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rank-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 99px;
+      padding: 3px 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .top-stats { display: flex; gap: 8px; align-items: center; }
+    .capsule {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .capsule-bar {
+      width: 60px;
+      height: 6px;
+      background: #090e17;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-left: 4px;
+    }
+    .capsule-fill { height: 100%; width: 100%; transition: width 0.2s ease; }
+
+    /* WORKSHOP TABS */
+    nav.station-bar {
+      display: flex;
+      background: #090d15;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      gap: 4px;
+    }
+    .station-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .station-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .station-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .badge {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 0.7rem;
+      color: var(--text);
+    }
+
+    /* SCREENS & PANELS */
+    main { flex: 1; position: relative; overflow: hidden; }
+    .screen {
+      position: absolute;
+      inset: 0;
+      padding: 16px 24px;
+      display: none;
+      overflow-y: auto;
+    }
+    .screen.active { display: flex; }
+
+    .view-grid {
+      width: 100%;
+      max-width: 1380px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.5);
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--card-hover);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-gold {
+      background: linear-gradient(135deg, #d97706, #92400e);
+      border-color: #f59e0b;
+      color: white;
+    }
+    .btn-gold:hover:not(:disabled) {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+    .btn-cyan {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-color: #38bdf8;
+      color: white;
+    }
+    .btn-sm { padding: 5px 10px; font-size: 0.72rem; }
+
+    /* AUTOMATION CARDS */
+    .auto-rack {
+      background: rgba(8, 12, 20, 0.85);
+      border: 1px dashed #243550;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    .auto-progress-bar {
+      height: 6px;
+      background: #141c2c;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .auto-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.1s linear;
+    }
+
+    /* 1. MINE STAGE */
+    .mine-viewport {
+      background: radial-gradient(circle at center, #111724 0%, #070a10 100%);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+      box-shadow: inset 0 0 35px rgba(0,0,0,0.9);
+    }
+    .tile {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.08s, filter 0.12s;
+    }
+    .tile:hover { filter: brightness(1.28); }
+    .tile:active { transform: scale(0.94); }
+    .tile.strata-1 { background: #3d2c1f; border-bottom: 3px solid #231810; color: #fde68a; }
+    .tile.strata-2 { background: #223046; border-bottom: 3px solid #141c29; color: #7dd3fc; }
+    .tile.strata-3 { background: #3b1b36; border-bottom: 3px solid #230d20; color: #f472b6; }
+    .tile.strata-4 { background: #172b27; border-bottom: 3px solid #0b1715; color: #6ee7b7; }
+    .tile.strata-5 { background: #26114a; border-bottom: 3px solid #15052c; color: #c084fc; }
+    .tile.cleared {
+      background: #090d15 !important;
+      border: 1px solid #162030 !important;
+      cursor: default;
+    }
+    .tile.sonar-val { font-size: 0.95rem; color: var(--accent); font-weight: 900; letter-spacing: 1px; }
+    .tile.revealed-geode {
+      background: radial-gradient(circle, #6366f1 0%, #1e1b4b 100%) !important;
+      border: 2px solid #a5b4fc !important;
+      animation: pulseGlow 1.2s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 4px #818cf8; }
+      to { box-shadow: 0 0 16px #c084fc; }
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .tool-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 4px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.74rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+    .tool-card.active {
+      border-color: var(--gold);
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--gold-light);
+    }
+
+    /* 2. LAPIDARY WHEEL & CUTTING */
+    .lapidary-stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    #lapidaryCanvas {
+      background: radial-gradient(circle at center, #111a2a 0%, #06090e 100%);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+    }
+    .wheel-meter-wrap {
+      width: 100%;
+      height: 32px;
+      background: #080d16;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .sweet-spot {
+      position: absolute;
+      top: 0; bottom: 0;
+      background: rgba(16, 185, 129, 0.45);
+      border-left: 2px solid var(--success);
+      border-right: 2px solid var(--success);
+    }
+    .meter-needle {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 4px;
+      background: #ffffff;
+      box-shadow: 0 0 10px #ffffff;
+    }
+
+    /* 3. FORGE ARCHITECTURE */
+    .socket-row { display: flex; justify-content: center; gap: 14px; margin: 12px 0; }
+    .socket {
+      width: 62px; height: 62px;
+      border: 2px dashed #475569;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.2s;
+    }
+    .socket.filled {
+      border-style: solid;
+      border-color: var(--gold);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+    }
+    .deck-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .deck-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.72rem;
+      transition: all 0.15s;
+    }
+    .deck-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .deck-item.selected {
+      border-color: var(--gold);
+      background: rgba(245, 158, 11, 0.16);
+    }
+
+    /* 4. BOUTIQUE & SALON PATRONS */
+    .patron-dossier {
+      background: #090e17;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .avatar-frame {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      background: #141c2c;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .haggle-box {
+      background: #0b111c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex; flex-direction: column; gap: 6px;
+      margin-top: 10px;
+    }
+    .patience-bar {
+      height: 8px;
+      background: #172235;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .patience-fill {
+      height: 100%;
+      background: var(--success);
+      width: 100%;
+      transition: width 0.3s, background-color 0.3s;
+    }
+
+    /* LISTS, COMPENDIUM & BADGES */
+    .scroll-list { display: flex; flex-direction: column; gap: 6px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+    .list-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+    .market-banner {
+      background: linear-gradient(90deg, #111a2f, #1b2844);
+      border: 1px solid #293a59;
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+
+    /* MODAL CERTIFICATE & INSPECTOR */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .cert-card {
+      background: #0d131f;
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      width: 440px;
+      padding: 24px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    #fxCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
+    footer {
+      background: #06090e;
+      border-top: 1px solid var(--border);
+      padding: 6px 24px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* =========================================================
+       FINAL EDITION UI — FIXED WORKSHOP / NO PAGE SCROLL
+       ========================================================= */
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body { height:100vh; height:100dvh; }
+    header { padding:6px 14px; min-height:54px; flex-shrink:0; }
+    .brand-title { font-size:clamp(.9rem,1.35vw,1.2rem); }
+    .rank-pill { font-size:.65rem; padding:3px 8px; }
+    .top-stats { gap:5px; }
+    .capsule { padding:4px 9px; font-size:.72rem; }
+    .capsule-bar { width:48px; }
+    nav.station-bar { padding:0 10px; gap:2px; min-height:42px; flex-shrink:0; }
+    .station-btn { padding:7px 11px; font-size:.74rem; gap:5px; }
+    main { min-height:0; overflow:hidden; }
+    .screen { padding:8px 12px; overflow:hidden; min-height:0; }
+    .screen.active { display:flex; }
+    .screen.active .view-grid { height:100%; min-height:0; }
+    .view-grid { max-width:1600px; height:100%; min-height:0; grid-template-columns:minmax(300px, .78fr) minmax(420px, 1.22fr); gap:10px; align-items:stretch; }
+    .panel-card { padding:10px; border-radius:11px; min-height:0; overflow:hidden; }
+
+    /* FINAL FIX: the 7x7 quarry board must fit completely inside its panel.
+       The old version allowed the board to grow vertically, which clipped
+       the bottom row when page scrolling was disabled. */
+    #view-mine .panel-card:last-child { min-height:0; display:flex; flex-direction:column; align-items:center; }
+    #view-mine .panel-card:last-child > div:first-child { flex:0 0 auto; }
+    #view-mine .mine-viewport {
+      box-sizing:border-box;
+      flex:1 1 auto;
+      width:min(100%, 560px);
+      height:auto;
+      max-width:560px;
+      max-height:calc(100% - 34px);
+      min-width:0;
+      min-height:0;
+      aspect-ratio:1 / 1;
+      grid-template-columns:repeat(7, minmax(0, 1fr));
+      grid-template-rows:repeat(7, minmax(0, 1fr));
+      gap:clamp(3px, .55vw, 6px);
+      padding:clamp(6px, .8vw, 10px);
+      align-self:center;
+      overflow:hidden;
+    }
+    #view-mine .mine-viewport .tile {
+      min-width:0;
+      min-height:0;
+      width:auto;
+      height:auto;
+      aspect-ratio:auto;
+      border-radius:clamp(5px, .55vw, 8px);
+      font-size:clamp(.72rem, 1.1vw, 1.1rem);
+    }
+    .panel-header { margin-bottom:6px; }
+    .panel-title { font-size:.88rem; }
+    .panel-card p { line-height:1.25; }
+    .auto-rack { padding:7px 9px; margin-bottom:6px; }
+    .tool-grid { gap:5px; }
+    .tool-card { padding:6px; min-height:58px; }
+    .scroll-list { max-height:none !important; min-height:0; overflow:hidden; }
+    .deck-grid { max-height:none; min-height:0; overflow:hidden; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
+    .list-row { padding:6px 8px; }
+    .market-banner { margin-bottom:7px; padding:6px 9px; }
+    footer { min-height:28px; padding:4px 12px; flex-shrink:0; }
+    #logText { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:75vw; }
+    #lapidaryCanvas { max-width:100%; max-height:30vh; }
+    #jewelryPreviewCanvas { max-width:100%; height:auto; max-height:20vh; }
+    .final-mini { font-size:.68rem; }
+    .final-pill { background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.22); border-radius:99px; padding:2px 7px; }
+    .final-overlay { position:fixed; inset:0; z-index:2500; display:none; align-items:center; justify-content:center; background:rgba(2,6,12,.78); backdrop-filter:blur(10px); }
+    .final-overlay.active { display:flex; }
+    .final-modal { width:min(980px,94vw); height:min(650px,88dvh); background:#0c1320; border:1px solid #334766; border-radius:16px; box-shadow:0 24px 90px rgba(0,0,0,.7); display:flex; flex-direction:column; overflow:hidden; }
+    .final-modal-head { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); background:#0a101a; flex-shrink:0; }
+    .final-modal-title { font-weight:900; color:var(--gold-light); letter-spacing:.4px; }
+    .final-tabs { display:flex; gap:4px; padding:7px 10px; border-bottom:1px solid var(--border); background:#0b111c; overflow:hidden; flex-shrink:0; }
+    .final-tab { border:1px solid var(--border); background:#111a29; color:var(--text-dim); border-radius:7px; padding:6px 10px; font-size:.7rem; font-weight:800; cursor:pointer; }
+    .final-tab.active { color:white; border-color:var(--gold); background:rgba(245,158,11,.12); }
+    .final-pane { flex:1; min-height:0; display:none; padding:10px; overflow:hidden; }
+    .final-pane.active { display:block; }
+    .final-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; height:100%; }
+    .final-card { background:#111a29; border:1px solid var(--border); border-radius:10px; padding:10px; min-width:0; overflow:hidden; }
+    .final-card h3 { font-size:.78rem; margin-bottom:6px; color:#f8fafc; }
+    .final-card p { font-size:.68rem; color:var(--text-dim); line-height:1.35; }
+    .final-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(38,53,79,.55); font-size:.7rem; }
+    .final-row:last-child { border-bottom:0; }
+    .progress { height:7px; background:#080d16; border-radius:99px; overflow:hidden; margin:4px 0 7px; }
+    .progress > i { display:block; height:100%; width:0; background:linear-gradient(90deg,#38bdf8,#c084fc,#f59e0b); }
+    .save-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .save-card { background:#111a29; border:1px solid var(--border); border-radius:10px; padding:10px; }
+    .save-card.active { border-color:var(--gold); box-shadow:0 0 18px rgba(245,158,11,.12); }
+    .save-card h3 { font-size:.78rem; }
+    .save-card .meta { font-size:.65rem; color:var(--text-dim); min-height:34px; margin:5px 0; }
+    .quest-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; height:100%; }
+    .quest-card { background:#111a29; border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; min-width:0; }
+    .quest-card.complete { border-color:var(--success); }
+    .quest-card h3 { font-size:.78rem; margin-bottom:4px; }
+    .quest-card .reward { color:var(--gold-light); font-size:.68rem; margin-top:auto; padding-top:6px; }
+    .collection-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+    .collection-card { background:#111a29; border:1px solid var(--border); border-radius:9px; padding:8px; text-align:center; }
+    .collection-card b { display:block; font-size:.72rem; }
+
+    @media (max-width:900px) {
+      #view-mine .mine-viewport {
+        width:min(100%, 520px);
+        max-width:520px;
+        max-height:calc(100% - 34px);
+      }
+    }
+    @media (max-height:760px) {
+      #view-mine .mine-viewport {
+        max-height:calc(100% - 28px);
+        padding:5px;
+        gap:3px;
+      }
+      #view-mine .panel-card:last-child > div:first-child {
+        margin-bottom:4px !important;
+      }
+    }
+    .collection-card span { font-size:.62rem; color:var(--text-dim); }
+    .legacy-hero { display:flex; align-items:center; justify-content:space-between; gap:12px; background:linear-gradient(90deg,#141b2e,#22172e); border:1px solid #55416d; border-radius:10px; padding:10px; margin-bottom:8px; }
+    .legacy-token { font-size:1.3rem; font-weight:900; color:#d8b4fe; }
+    @media (max-width:1050px){ .capsule:nth-child(1){display:none}.brand-title{font-size:.9rem}.view-grid{grid-template-columns:1fr 1.15fr}.station-btn{padding:7px 8px;font-size:.68rem}.final-grid,.quest-grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:760px){ header{padding:5px 8px}.rank-pill{display:none}.top-stats .capsule{display:none}.station-bar{overflow-x:auto}.station-btn{flex:0 0 auto}.view-grid{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.view-grid>.panel-card:nth-child(2){display:none}.screen{padding:6px}.final-grid,.quest-grid,.save-grid{grid-template-columns:1fr}.collection-grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-height:700px){ header{min-height:46px;padding:4px 10px}.station-bar{min-height:38px}.station-btn{padding:5px 8px}.screen{padding:5px 8px}.panel-card{padding:8px}.auto-rack{padding:5px 7px}.tool-card{min-height:48px;padding:4px}.btn{padding:6px 10px}.btn-sm{padding:4px 8px}.final-modal{height:92dvh} }
+
+  
+    /* FORGE FIX: keep the make-item action visible even on shorter screens.
+       The forge bench itself becomes the only scrollable region if its controls
+       exceed the available height; the page and station layout remain fixed. */
+    #view-forge .view-grid > .panel-card:first-child {
+      height: 100%;
+      min-height: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #334766 #0b111c;
+      padding-bottom: 10px;
+    }
+    #view-forge .view-grid > .panel-card:first-child > button[onclick="forgeJewel()"] {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      flex: 0 0 auto;
+      margin-top: auto;
+      min-height: 42px;
+      box-shadow: 0 -8px 18px rgba(8, 13, 22, .92);
+      border: 1px solid rgba(255, 210, 100, .55);
+    }
+    #view-forge .view-grid > .panel-card:first-child #jewelryPreviewCanvas {
+      flex: 0 0 auto;
+    }
+
+  </style>
+<style id="scroll-fix">
+/* panels scroll internally instead of clipping */
+.screen{overflow-y:auto!important}
+.panel-card{overflow-y:auto!important;overflow-x:hidden!important}
+.scroll-list,.deck-grid{overflow-y:auto!important;max-height:none!important}
+.station-bar{overflow-x:auto!important;overflow-y:hidden;scrollbar-width:thin}
+.station-btn{flex:0 0 auto}
+.panel-card,.screen,.scroll-list,.deck-grid,.station-bar,#xpBox,#x2Box{scrollbar-width:thin;scrollbar-color:#3a4a68 transparent}
+.panel-card::-webkit-scrollbar,.screen::-webkit-scrollbar,.scroll-list::-webkit-scrollbar,.deck-grid::-webkit-scrollbar{width:7px;height:7px}
+.panel-card::-webkit-scrollbar-thumb,.screen::-webkit-scrollbar-thumb,.scroll-list::-webkit-scrollbar-thumb,.deck-grid::-webkit-scrollbar-thumb{background:#3a4a68;border-radius:4px}
+#view-boutique .panel-card>*,#view-forge .panel-card>*{flex-shrink:0}
+#commissionsList,#upgradeList{overflow:visible!important;max-height:none!important;flex-shrink:0}
+</style>
+</head>
+<body>
+
+  <!-- FINAL EDITION COMMAND CENTER -->
+  <div class="final-overlay" id="finalOverlay" onclick="if(event.target===this)closeFinalModal()">
+    <div class="final-modal">
+      <div class="final-modal-head">
+        <div class="final-modal-title" id="finalModalTitle">Guild Command Center</div>
+        <button class="btn btn-sm" onclick="closeFinalModal()">✕ Close</button>
+      </div>
+      <div class="final-tabs">
+        <button class="final-tab active" data-pane="guild" onclick="switchFinalPane('guild')">📈 Mastery</button>
+        <button class="final-tab" data-pane="quests" onclick="switchFinalPane('quests')">📜 Contracts</button>
+        <button class="final-tab" data-pane="collection" onclick="switchFinalPane('collection')">💎 Collection</button>
+        <button class="final-tab" data-pane="saves" onclick="switchFinalPane('saves')">💾 Save Slots</button>
+        <button class="final-tab" data-pane="help" onclick="switchFinalPane('help')">❓ How To Play</button>
+      </div>
+      <div class="final-pane active" id="finalPane-guild"><div class="final-grid" id="finalGuildContent"></div></div>
+      <div class="final-pane" id="finalPane-quests"><div class="quest-grid" id="finalQuestContent"></div></div>
+      <div class="final-pane" id="finalPane-collection"><div id="finalCollectionContent"></div></div>
+      <div class="final-pane" id="finalPane-saves"><div id="finalSaveContent"></div></div>
+      <div class="final-pane" id="finalPane-help"><div id="finalHelpContent"></div></div>
+    </div>
+  </div>
+
+  <canvas id="fxCanvas"></canvas>
+
+  <!-- MASTER TOPBAR -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-title">👑 Sovereign Lapidary Guild</div>
+      <div class="rank-pill" id="guildRank">Rank I: Apprentice Carver</div>
+    </div>
+
+    <div class="top-stats">
+      <div class="capsule" style="color:var(--accent);">
+        <span>⚡ Focus:</span>
+        <span id="statFocus">100 / 100</span>
+        <div class="capsule-bar"><div class="capsule-fill" id="focusFill" style="background:var(--accent); width:100%;"></div></div>
+      </div>
+      <div class="capsule" style="color:var(--gold-light);">
+        <span>💰 Gold:</span>
+        <span id="statGold">$200</span>
+      </div>
+      <div class="capsule" style="color:var(--purple);">
+        <span>⭐ Prestige:</span>
+        <span id="statRep">0</span>
+      </div>
+      <button class="btn btn-sm" id="btnAudio" onclick="toggleAudio()">🔊 Audio: ON</button>
+      <button class="btn btn-sm" onclick="openFinalModal('guild')">📈 Guild</button>
+      <button class="btn btn-sm" onclick="openFinalModal('quests')">📜 Contracts</button>
+      <button class="btn btn-sm" onclick="openFinalModal('saves')">💾 Saves</button>
+      <button class="btn btn-sm" onclick="openFinalModal('help')">❓ Help</button>
+      <button class="btn btn-sm" onclick="showGuildTutorial(true)">🎓 Tutorial</button>
+    </div>
+  </header>
+
+  <!-- WORKSHOP NAVIGATION -->
+  <nav class="station-bar">
+    <button class="station-btn active" onclick="nav('mine')" id="tab-mine">⛏️ 1. Quarry Mine</button>
+    <button class="station-btn" onclick="nav('lapidary')" id="tab-lapidary">
+      💎 2. Faceting Lap <span class="badge" id="badgeRaw">0</span>
+    </button>
+    <button class="station-btn" onclick="nav('forge')" id="tab-forge">
+      💍 3. Jewelry Forge <span class="badge" id="badgeGems">0</span>
+    </button>
+    <button class="station-btn" onclick="nav('boutique')" id="tab-boutique">
+      🏪 4. Salon & Court <span class="badge" id="badgeStock">0</span>
+    </button>
+    <button class="station-btn" onclick="nav('codex')" id="tab-codex">
+      📜 5. Royal Codex & Trophies
+    </button>
+  </nav>
+
+  <main>
+    <!-- ==================== 1. QUARRY MINE ==================== -->
+    <section class="screen active" id="view-mine">
+      <div class="view-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">⛏️ Excavation Shaft Controls</span>
+            <span class="badge" id="siteTitle">Strata 1</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;">
+            Clear a tile to reveal arrows toward directly adjacent geodes. Blank cleared tiles have no adjacent deposits.
+          </p>
+
+          <!-- Steam Bore Automaton -->
+          <div class="auto-rack">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b>⚙️ Steam Bore Excavator</b>
+              <button class="btn btn-sm btn-gold" id="btnBuyBore" onclick="buyAutomaton('bore')">Commission ($220)</button>
+            </div>
+            <div id="boreStatus" style="color:var(--text-dim); font-size:0.7rem; margin-top:2px;">Status: Offline</div>
+            <div class="auto-progress-bar"><div class="auto-fill" id="boreBar"></div></div>
+          </div>
+
+          <label style="font-size:0.7rem; font-weight:700; color:var(--text-dim);">SELECT EXCAVATION STRATA</label>
+          <select id="mineDepthSelect" style="background:#090d16; color:white; border:1px solid var(--border); padding:8px; border-radius:8px; margin:4px 0 10px 0; font-size:0.75rem;" onchange="changeDepth()">
+            <option value="1">Strata I: Riverbed Alluvium (Free — Quartz, Agate, Jade)</option>
+            <option value="2">Strata II: Granite Caverns ($140 — Amethyst, Garnet, Lapis)</option>
+            <option value="3">Strata III: Magma Vents ($420 — Fire Opal, Pigeon Ruby, Heliodor)</option>
+            <option value="4">Strata IV: Kimberlite Deep Pipe ($900 — Emerald, Alexandrite, Sapphire)</option>
+            <option value="5">Strata V: Celestial Meteorite Crater ($2,200 — Starlight Diamond, Void Tanzanite)</option>
+          </select>
+
+          <label style="font-size:0.7rem; font-weight:700; color:var(--text-dim);">MINING TOOLS</label>
+          <div class="tool-grid">
+            <div class="tool-card active" id="tool-pick" onclick="setTool('pick')">
+              <span style="font-size:1.15rem;">⛏️</span>
+              <span>Heavy Pick</span>
+              <span style="font-size:0.65rem; color:var(--accent);">-8 Focus</span>
+            </div>
+            <div class="tool-card" id="tool-chisel" onclick="setTool('chisel')">
+              <span style="font-size:1.15rem;">🪓</span>
+              <span>Point Needle</span>
+              <span style="font-size:0.65rem; color:var(--accent);">-4 Focus</span>
+            </div>
+            <div class="tool-card" id="tool-tnt" onclick="setTool('tnt')">
+              <span style="font-size:1.15rem;">🧨</span>
+              <span>Dynamite</span>
+              <span style="font-size:0.65rem; color:var(--danger);">-24 Focus</span>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:8px;">
+            <span>Shaft Ceiling Integrity:</span>
+            <b id="stabilityText" style="color:var(--success);">100%</b>
+          </div>
+          <div style="height:7px; background:#101725; border-radius:4px; overflow:hidden; margin:4px 0 12px 0;">
+            <div id="stabilityBar" style="height:100%; width:100%; background:linear-gradient(90deg, #ef4444, #10b981); transition:width 0.3s;"></div>
+          </div>
+
+          <button class="btn btn-gold" style="width:100%;" onclick="resetMineGrid()">🔄 Survey Fresh Grid</button>
+        </div>
+
+        <div class="panel-card" style="align-items:center;">
+          <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; font-size:0.8rem; font-weight:700;">
+            <span style="color:var(--gold-light);" id="quarrySubtitle">Alluvial Riverbed</span>
+            <span style="color:var(--accent);">Arrows point to adjacent geodes</span>
+          </div>
+          <div class="mine-viewport" id="mineGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. LAPIDARY WHEEL ==================== -->
+    <section class="screen" id="view-lapidary">
+      <div class="view-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">🎒 Rough Geode Satchel</span>
+            <span class="badge" id="rawCountLabel">0 nodule</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+            Select a raw nodule to affix onto the dop stick, or run the vibratory tumbler.
+          </p>
+
+          <!-- Automatic Tumbler -->
+          <div class="auto-rack">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b>🧪 Ultrasonic Vibratory Tumbler</b>
+              <button class="btn btn-sm btn-gold" id="btnBuyTumbler" onclick="buyAutomaton('tumbler')">Commission ($280)</button>
+            </div>
+            <div id="tumblerStatus" style="color:var(--text-dim); font-size:0.7rem; margin-top:2px;">Status: Offline</div>
+            <div class="auto-progress-bar"><div class="auto-fill" id="tumblerBar"></div></div>
+          </div>
+
+          <div class="scroll-list" id="rawGeodeList" style="margin-top:6px;"></div>
+        </div>
+
+        <div class="panel-card lapidary-stage">
+          <div style="text-align:center;">
+            <h2 style="font-size:1.15rem;" id="cuttingTitle">Select a stone from satchel</h2>
+            <p style="font-size:0.76rem; color:var(--text-dim);" id="cuttingStepDesc">Affix a raw mineral nodule onto the dop stick to begin faceting.</p>
+          </div>
+
+          <canvas id="lapidaryCanvas" width="460" height="240"></canvas>
+
+          <!-- Controls for Interactive Gem Faceting -->
+          <div style="width:100%; max-width:460px; display:none;" id="facetControls">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.76rem;">
+              <span id="facetStageLabel">Stage 1: Coarse Pre-Forming (600 Grit)</span>
+              <span id="cutRatingLabel" style="color:var(--gold); font-weight:700;">Strike: —</span>
+            </div>
+
+            <div class="wheel-meter-wrap">
+              <div class="sweet-spot" id="wheelSweetSpot"></div>
+              <div class="meter-needle" id="lapNeedle"></div>
+            </div>
+
+            <!-- Shape selector -->
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin:12px 0;">
+              <button class="btn btn-sm active" id="cut-brilliant" onclick="setCutShape('brilliant')">Round Brilliant (1.0x)</button>
+              <button class="btn btn-sm" id="cut-emerald" onclick="setCutShape('emerald')">Emerald Step (1.25x)</button>
+              <button class="btn btn-sm" id="cut-marquise" onclick="setCutShape('marquise')">Royal Marquise (1.5x)</button>
+              <button class="btn btn-sm" id="cut-cushion" onclick="setCutShape('cushion')">Cushion Nova (1.35x)</button>
+              <button class="btn btn-sm" id="cut-pear" onclick="setCutShape('pear')">Imperial Pear (1.6x)</button>
+              <button class="btn btn-sm" id="cut-heart" onclick="setCutShape('heart')">Heart Sovereign (2.0x)</button>
+            </div>
+
+            <button class="btn btn-gold" style="width:100%; padding:10px; font-size:0.85rem;" onclick="strikeFacet()">
+              💎 Polish Lap Strike!
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. FORGE SCREEN ==================== -->
+    <section class="screen" id="view-forge">
+      <div class="view-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">💍 Imperial Goldsmith Bench</span>
+            <span class="badge" id="forgeLevelBadge">Guild Certified</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+            Cast metallic bands, prong settings, seat cut gemstones, and trigger harmonic element synergies.
+          </p>
+
+          <!-- Apprentice Jeweler -->
+          <div class="auto-rack">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b>🔨 Guild Apprentice Smith</b>
+              <button class="btn btn-sm btn-gold" id="btnBuySmith" onclick="buyAutomaton('smith')">Contract ($400)</button>
+            </div>
+            <div id="smithStatus" style="color:var(--text-dim); font-size:0.7rem; margin-top:2px;">Status: Offline</div>
+            <div class="auto-progress-bar"><div class="auto-fill" id="smithBar"></div></div>
+          </div>
+
+          <label style="font-size:0.7rem; font-weight:700; color:var(--text-dim);">MOUNT ARCHITECTURE</label>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin:4px 0 10px 0;">
+            <button class="btn btn-sm active" id="m-ring" onclick="setMount('ring')">💍 Solitaire Ring (1 Slot)</button>
+            <button class="btn btn-sm" id="m-pendant" onclick="setMount('pendant')">📿 Halo Pendant (2 Slots)</button>
+            <button class="btn btn-sm" id="m-tiara" onclick="setMount('tiara')">👑 Royal Tiara (3 Slots)</button>
+            <button class="btn btn-sm" id="m-earrings" onclick="setMount('earrings')">✨ Chandelier (2 Slots)</button>
+            <button class="btn btn-sm" id="m-scepter" onclick="setMount('scepter')">🪄 Guild Scepter (4 Slots)</button>
+          </div>
+
+          <label style="font-size:0.7rem; font-weight:700; color:var(--text-dim);">METALLURGICAL ALLOY</label>
+          <select id="metalSelect" style="background:#090d16; color:white; border:1px solid var(--border); padding:8px; border-radius:8px; margin:4px 0 10px 0; font-size:0.75rem;" onchange="updateForgePreview()">
+            <option value="silver">Sterling Silver (-$40) — 1.3x Luster</option>
+            <option value="roseGold">Rose Gold (-$110) — 1.7x Warmth</option>
+            <option value="gold">18k Imperial Gold (-$240) — 2.2x Brilliance</option>
+            <option value="platinum">Astral Platinum (-$520) — 3.2x Radiant Glow</option>
+            <option value="meteorite">Damascus Meteorite Steel (-$850) — 4.4x Cosmic Luster</option>
+            <option value="orichalcum">Royal Orichalcum (-$1,800) — 6.5x Mythic Aura</option>
+          </select>
+
+          <div class="socket-row" id="forgeSockets"></div>
+          <canvas id="jewelryPreviewCanvas" width="340" height="150" style="margin: 0 auto; display:block;"></canvas>
+
+          <div style="background:#080d16; padding:12px; border-radius:8px; font-size:0.78rem; margin:10px 0; border:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span>Estimated Piece Valuation:</span>
+              <b id="forgeEstPrice" style="color:var(--gold-light); font-size:1.15rem;">$0</b>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:4px; margin-top:6px; font-size:0.72rem;">
+              <span>Alloy cost (gold spent)</span><b id="forgeCostEstimate">$0</b>
+              <span>Expected patron payout</span><b id="forgeSaleEstimate">$0</b>
+              <span>Estimated profit after alloy*</span><b id="forgeProfitEstimate">$0</b>
+            </div>
+            <div id="forgeEstimateNote" style="font-size:0.66rem; color:var(--text-dim); margin-top:4px;">*Gem value is an appraisal, not gold spent. Estimate assumes sale to a patron.</div>
+            <div id="synergyLabel" style="font-size:0.72rem; color:var(--purple); margin-top:4px;">No synergies active</div>
+          </div>
+
+          <div id="forgeOrderBoard" style="background:#0b1320; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:0.73rem; margin-bottom:10px;"></div>
+
+          <button class="btn btn-gold" id="forgeButton" style="width:100%; padding:10px;" onclick="forgeJewel()">
+            🔨 Cast & Seat Masterwork
+          </button>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">💎 Cut Gemstones Vault</span>
+            <span class="badge" id="vaultCount">0 cut gems</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+            Click gems to socket them, or quick-sell loose stones for 60% of appraisal.
+          </p>
+          <div class="deck-grid" id="gemVault"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4. BOUTIQUE SCREEN ==================== -->
+    <section class="screen" id="view-boutique">
+      <div class="view-grid">
+        <div class="panel-card">
+          <!-- Dynamic Market Trends -->
+          <div class="market-banner">
+            <div>
+              <span>📈 <b>Guild Market Trend:</b></span>
+              <div id="marketTrendText" style="color:var(--gold-light); font-weight:700; font-size:0.75rem;">Amethyst in high demand (+30%)</div>
+            </div>
+            <span class="badge" id="trendTimerBadge">45s</span>
+          </div>
+
+          <div class="panel-header">
+            <span class="panel-title">📜 Royal Sovereign Warrants</span>
+            <span class="badge" style="background:#701a75;">High Bounty</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+            Deliver verified high-prestige works directly to the Royal Court.
+          </p>
+          <div id="commissionsList" class="scroll-list" style="max-height:160px;"></div>
+
+          <!-- Consignment Peddler -->
+          <div class="auto-rack" style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b>🤝 Autonomous Consignment Peddler</b>
+              <button class="btn btn-sm btn-gold" id="btnBuyPeddler" onclick="buyAutomaton('peddler')">Contract ($600)</button>
+            </div>
+            <div id="peddlerStatus" style="color:var(--text-dim); font-size:0.7rem; margin-top:2px;">Status: Offline</div>
+            <div class="auto-progress-bar"><div class="auto-fill" id="peddlerBar"></div></div>
+          </div>
+
+          <div class="panel-header" style="margin-top:14px;">
+            <span class="panel-title">🛠️ Workshop Master Upgrades</span>
+          </div>
+          <div class="scroll-list" id="upgradeList" style="max-height:150px;"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">👤 Visiting Aristocratic Patron</span>
+            <span class="badge" id="patronRankTag">Nobility</span>
+          </div>
+          <div id="clientBox"></div>
+
+          <div class="panel-header" style="margin-top:16px;">
+            <span class="panel-title">📦 Masterwork Safe Inventory</span>
+            <span class="badge" id="stockCountBadge">0 pieces</span>
+          </div>
+          <div class="scroll-list" id="stockList" style="max-height:240px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 5. ROYAL CODEX & TROPHIES ==================== -->
+    <section class="screen" id="view-codex">
+      <div class="view-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">📜 Mineralogical Compendium</span>
+            <span class="badge" id="discoveredBadge">0/12 Discovered</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;">
+            Examine known mineral species, their crystallographic properties, and Mohs hardness.
+          </p>
+          <div class="scroll-list" id="codexList" style="max-height:480px;"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">🏆 Guild Hall Trophies & Milestones</span>
+            <span class="badge" id="trophyBadge">0 Unlocked</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;">
+            Historic records etched into the annals of the Sovereign Lapidary Guild.
+          </p>
+          <div class="scroll-list" id="trophyList" style="max-height:280px;"></div>
+
+          <div class="panel-header" style="margin-top:16px;">
+            <span class="panel-title">📊 Career Ledger</span>
+          </div>
+          <div style="background:#090e17; border:1px solid var(--border); border-radius:10px; padding:12px; font-size:0.76rem; display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div>Total Revenue: <b id="statTotalRev" style="color:var(--gold);">$0</b></div>
+            <div>Gems Faceted: <b id="statGemsFaceted" style="color:var(--accent);">0</b></div>
+            <div>Flawless Cuts: <b id="statFlawless" style="color:var(--purple);">0</b></div>
+            <div>Masterpieces Forged: <b id="statMasterpieces" style="color:var(--success);">0</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- GEMOLOGICAL CERTIFICATE MODAL -->
+  <div class="modal-overlay" id="certModal">
+    <div class="cert-card">
+      <div style="text-align:center; border-bottom:1px solid rgba(245,158,11,0.3); padding-bottom:12px; margin-bottom:12px;">
+        <h3 style="font-size:1.15rem; color:var(--gold);">GUILD GEMOLOGICAL REPORT</h3>
+        <p style="font-size:0.68rem; color:var(--text-dim); letter-spacing:1px;">SOVEREIGN IMPERIAL APPRAISAL</p>
+      </div>
+
+      <div id="certBody" style="font-size:0.8rem; display:flex; flex-direction:column; gap:8px;"></div>
+
+      <button class="btn btn-gold" style="width:100%; margin-top:18px;" onclick="closeCertModal()">
+        Seal & Return to Vault
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    <div><b style="color:var(--gold);">GUILD DISPATCH:</b> <span id="logText">Welcome, Master Carver. Enter the quarry or inspect your faceting laps.</span></div>
+    <div>Guild Cloud Sync: <span style="color:var(--success);">Active</span></div>
+  </footer>
+
+  <script>
+    /* =========================================================
+       POLYPHONIC PROCEDURAL AUDIO ENGINE (WEB AUDIO API)
+       ========================================================= */
+    let audioEnabled = true;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+
+    function getAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+
+    function playTone(freq, type='sine', dur=0.1, vol=0.1, decay=0.08) {
+      if (!audioEnabled) return;
+      try {
+        const ctx = getAudio();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur);
+      } catch(e) {}
+    }
+
+    const SFX = {
+      pick: () => {
+        playTone(180, 'triangle', 0.12, 0.25);
+        setTimeout(() => playTone(95, 'sawtooth', 0.15, 0.18), 30);
+      },
+      chisel: () => {
+        playTone(650, 'triangle', 0.04, 0.2);
+        playTone(1200, 'sine', 0.03, 0.1);
+      },
+      boom: () => {
+        playTone(55, 'sawtooth', 0.5, 0.45);
+        playTone(40, 'square', 0.5, 0.35);
+      },
+      chimeFlawless: () => {
+        [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.4, 0.18), i * 75);
+        });
+      },
+      clink: () => {
+        playTone(1400, 'sine', 0.08, 0.2);
+        setTimeout(() => playTone(1800, 'triangle', 0.06, 0.1), 25);
+      },
+      forgeHammer: () => {
+        playTone(220, 'square', 0.12, 0.3);
+        playTone(880, 'sine', 0.35, 0.25);
+        setTimeout(() => playTone(1760, 'sine', 0.4, 0.12), 40);
+      },
+      goldSale: () => {
+        [987.77, 1318.51, 1567.98].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'triangle', 0.25, 0.2), i * 70);
+        });
+      }
+    };
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById("btnAudio").textContent = audioEnabled ? "🔊 Audio: ON" : "🔇 Audio: OFF";
+    }
+
+    /* =========================================================
+       PARTICLE FX & CANVAS RENDERING
+       ========================================================= */
+    const fxCanvas = document.getElementById("fxCanvas");
+    const fxCtx = fxCanvas.getContext("2d");
+    let particles = [];
+    let screenShake = 0;
+
+    function resizeFX() {
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeFX);
+    resizeFX();
+
+    function spawnBurst(x, y, color="#f59e0b", count=16) {
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 2 + Math.random() * 6;
+        particles.push({
+          x, y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          life: 1.0,
+          decay: 0.015 + Math.random() * 0.025,
+          color,
+          size: 2.5 + Math.random() * 3.5
+        });
+      }
+    }
+
+    function triggerShake(amt=8) { screenShake = amt; }
+
+    function loopFX() {
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      if (screenShake > 0) {
+        const sx = (Math.random() - 0.5) * screenShake;
+        const sy = (Math.random() - 0.5) * screenShake;
+        document.body.style.transform = `translate(${sx}px, ${sy}px)`;
+        screenShake *= 0.85;
+        if (screenShake < 0.4) {
+          screenShake = 0;
+          document.body.style.transform = "none";
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life -= p.decay;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        fxCtx.save();
+        fxCtx.globalAlpha = Math.max(0, p.life);
+        fxCtx.fillStyle = p.color;
+        fxCtx.shadowColor = p.color;
+        fxCtx.shadowBlur = 6;
+        fxCtx.beginPath();
+        fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        fxCtx.fill();
+        fxCtx.restore();
+      }
+      requestAnimationFrame(loopFX);
+    }
+    loopFX();
+
+    /* =========================================================
+       GAME STATE & MINERALOGICAL CODEX
+       ========================================================= */
+    const G = {
+      gold: 200,
+      focus: 100,
+      maxFocus: 100,
+      rep: 0,
+      station: 'mine',
+
+      // Mining
+      mineDepth: 1,
+      unlockedDepth: 1,
+      tool: 'pick',
+      stability: 100,
+      grid: [],
+
+      // Inventories
+      rawGeodes: [],
+      cutGems: [],
+      stock: [],
+
+      // Lapidary
+      activeStone: null,
+      facetStep: 0,
+      needlePos: 0,
+      needleDir: 1,
+      needleSpeed: 1.9,
+      cutShape: 'brilliant',
+      gemScores: [],
+      animFrame: null,
+
+      // Forge
+      mount: 'ring',
+      metal: 'silver',
+      sockets: [],
+
+      // Boutique & Economy
+      patron: null,
+      trendGem: "Amethyst",
+      trendMult: 1.35,
+      trendTimer: 45,
+      commissions: [],
+
+      // Upgrades & Tech
+      upgrades: {
+        diamondLap: false,
+        groundRadar: false,
+        royalCharter: false,
+        hydraulicBellows: false
+      },
+      automations: {
+        bore: { owned: false, cost: 220, progress: 0, time: 5500 },
+        tumbler: { owned: false, cost: 280, progress: 0, time: 4800 },
+        smith: { owned: false, cost: 400, progress: 0, time: 7500 },
+        peddler: { owned: false, cost: 600, progress: 0, time: 8500 }
+      },
+
+      // Codex & Career Records
+      discoveredGems: {},
+      stats: {
+        totalRevenue: 0,
+        gemsFaceted: 0,
+        flawlessCuts: 0,
+        masterpiecesForged: 0
+      },
+      trophies: {
+        firstCut: false,
+        highRoller: false,
+        elementalTrio: false,
+        grandArchon: false
+      }
+    };
+
+    const DEPTHS = {
+      1: { name: "Riverbed Alluvium", cost: 0, geodes: ["Rough Quartz", "Milky Agate", "Nephrite Jade"] },
+      2: { name: "Granite Caverns", cost: 140, geodes: ["Amethyst Druzy", "Pyrope Garnet", "Cobalt Lapis"] },
+      3: { name: "Magma Vents", cost: 420, geodes: ["Dragon Fire Opal", "Pigeon Ruby", "Golden Heliodor"] },
+      4: { name: "Kimberlite Deep Pipe", cost: 900, geodes: ["Imperial Emerald", "Royal Alexandrite", "Deep Sapphire"] },
+      5: { name: "Celestial Meteorite Crater", cost: 2200, geodes: ["Starlight Diamond", "Void Tanzanite"] }
+    };
+
+    const GEM_SPECIES = {
+      "Rough Quartz": { name: "Smoky Quartz", family: "Quartz", hardness: 7.0, val: 38, hue: 200, color: "#e2e8f0", desc: "Hexagonal silicate crystal found in river beds." },
+      "Milky Agate": { name: "Banded Agate", family: "Agate", hardness: 6.8, val: 54, hue: 195, color: "#38bdf8", desc: "Microcrystalline chalcedony with mesmerizing concentric layers." },
+      "Nephrite Jade": { name: "Imperial Jade", family: "Jade", hardness: 6.5, val: 85, hue: 155, color: "#34d399", desc: "Tough silicate treasured by royal dynasties for centuries." },
+      "Amethyst Druzy": { name: "Royal Amethyst", family: "Amethyst", hardness: 7.0, val: 140, hue: 280, color: "#c084fc", desc: "Violet quartz naturally irradiated in subterranean geodes." },
+      "Pyrope Garnet": { name: "Crimson Garnet", family: "Garnet", hardness: 7.5, val: 210, hue: 350, color: "#f87171", desc: "Deep red pyrope garnet from high-pressure metamorphism." },
+      "Cobalt Lapis": { name: "Celestial Lapis", family: "Lapis", hardness: 6.0, val: 290, hue: 220, color: "#60a5fa", desc: "Deep celestial blue rock rich in lazurite and golden pyrite specks." },
+      "Dragon Fire Opal": { name: "Prismatic Opal", family: "Opal", hardness: 6.0, val: 520, hue: 40, color: "#fbbf24", desc: "Hydrated silica displaying fiery rainbow optical diffraction." },
+      "Pigeon Ruby": { name: "Sovereign Ruby", family: "Ruby", hardness: 9.0, val: 780, hue: 345, color: "#f43f5e", desc: "Corundum with vivid red chromium hue. Surpassed only by diamond." },
+      "Golden Heliodor": { name: "Solar Heliodor", family: "Beryl", hardness: 7.8, val: 680, hue: 50, color: "#fde047", desc: "Golden beryl named after the Greek sun god Helios." },
+      "Imperial Emerald": { name: "Verdant Emerald", family: "Emerald", hardness: 7.5, val: 1100, hue: 145, color: "#10b981", desc: "Precious beryl colored by trace amounts of chromium and vanadium." },
+      "Royal Alexandrite": { name: "Chameleon Alexandrite", family: "Alexandrite", hardness: 8.5, val: 1650, hue: 175, color: "#2dd4bf", desc: "Extremely rare chrysoberyl exhibiting dramatic color change in candlelight." },
+      "Deep Sapphire": { name: "Abyssal Sapphire", family: "Sapphire", hardness: 9.0, val: 1450, hue: 230, color: "#3b82f6", desc: "Deep midnight corundum celebrated for royal regalia rings." },
+      "Starlight Diamond": { name: "Archon Diamond", family: "Diamond", hardness: 10.0, val: 2400, hue: 185, color: "#a5f3fc", desc: "Pure cubic carbon lattice. Supreme hardness and refractive fire." },
+      "Void Tanzanite": { name: "Astral Tanzanite", family: "Tanzanite", hardness: 6.5, val: 2100, hue: 265, color: "#818cf8", desc: "Pleochroic zoisite displaying trichroic blue-violet-burgundy flashes." }
+    };
+
+
+    /* FINAL COLLECTION EXPANSION: 40 additional mineral species (52 total) */
+    Object.assign(GEM_SPECIES, {
+      "Sunstone": {name:"Sunstone",family:"Feldspar",hardness:6.5,val:120,hue:25,color:"#fb923c",desc:"Copper-bearing feldspar with warm aventurescent flashes."},
+      "Moonstone": {name:"Moonstone",family:"Feldspar",hardness:6.5,val:135,hue:210,color:"#cbd5e1",desc:"Feldspar with a soft floating adularescent glow."},
+      "Peridot": {name:"Peridot",family:"Olivine",hardness:6.5,val:180,hue:95,color:"#a3e635",desc:"Fresh green olivine formed deep within the mantle."},
+      "Citrine": {name:"Citrine",family:"Quartz",hardness:7,val:155,hue:45,color:"#facc15",desc:"Golden quartz prized for its bright honey color."},
+      "Blue Topaz": {name:"Blue Topaz",family:"Topaz",hardness:8,val:260,hue:195,color:"#67e8f9",desc:"Clear blue topaz with crisp glassy brilliance."},
+      "Imperial Topaz": {name:"Imperial Topaz",family:"Topaz",hardness:8,val:520,hue:30,color:"#fb923c",desc:"Rare pink-orange topaz of exceptional saturation."},
+      "Spinel": {name:"Spinel",family:"Spinel",hardness:8,val:430,hue:335,color:"#fb7185",desc:"A durable gemstone known for vivid red and pink colors."},
+      "Tsavorite": {name:"Tsavorite",family:"Garnet",hardness:7.5,val:760,hue:135,color:"#22c55e",desc:"Electric green grossular garnet from rare geological pockets."},
+      "Spessartine": {name:"Spessartine",family:"Garnet",hardness:7.25,val:390,hue:20,color:"#f97316",desc:"Orange garnet with intense fire-like saturation."},
+      "Demantoid": {name:"Demantoid",family:"Garnet",hardness:6.5,val:980,hue:125,color:"#4ade80",desc:"Brilliant green andalusite garnet with exceptional dispersion."},
+      "Iolite": {name:"Iolite",family:"Cordierite",hardness:7,val:240,hue:245,color:"#818cf8",desc:"Blue-violet pleochroic gemstone prized by collectors."},
+      "Kyanite": {name:"Kyanite",family:"Kyanite",hardness:6,val:210,hue:220,color:"#60a5fa",desc:"Blade-like blue crystals with striking color zoning."},
+      "Labradorite": {name:"Labradorite",family:"Feldspar",hardness:6,val:170,hue:210,color:"#38bdf8",desc:"Feldspar displaying dramatic blue-green labradorescence."},
+      "Turquoise": {name:"Turquoise",family:"Phosphate",hardness:6,val:190,hue:190,color:"#2dd4bf",desc:"Opaque blue-green phosphate long treasured as ornament."},
+      "Malachite": {name:"Malachite",family:"Carbonate",hardness:4,val:145,hue:150,color:"#16a34a",desc:"Banded green copper carbonate with distinctive concentric patterns."},
+      "Azurite": {name:"Azurite",family:"Carbonate",hardness:3.5,val:165,hue:230,color:"#2563eb",desc:"Deep blue copper carbonate often found beside malachite."},
+      "Rhodochrosite": {name:"Rhodochrosite",family:"Carbonate",hardness:4,val:230,hue:345,color:"#f472b6",desc:"Pink manganese carbonate with striking banded crystals."},
+      "Smithsonite": {name:"Smithsonite",family:"Carbonate",hardness:4.5,val:205,hue:175,color:"#5eead4",desc:"Soft pastel carbonate occurring in blue, green and pink hues."},
+      "Fluorite": {name:"Fluorite",family:"Halide",hardness:4,val:110,hue:275,color:"#a78bfa",desc:"Colorful cubic crystals valued for clarity and zoning."},
+      "Hematite": {name:"Hematite",family:"Oxide",hardness:6,val:75,hue:350,color:"#94a3b8",desc:"Metallic iron oxide with a distinctive steel-gray sheen."},
+      "Magnetite": {name:"Magnetite",family:"Oxide",hardness:6,val:82,hue:215,color:"#64748b",desc:"Magnetic iron oxide common in igneous and metamorphic rocks."},
+      "Cassiterite": {name:"Cassiterite",family:"Oxide",hardness:7,val:310,hue:25,color:"#78716c",desc:"Dense tin oxide with adamantine luster."},
+      "Rutile": {name:"Rutile",family:"Oxide",hardness:6.5,val:280,hue:5,color:"#f59e0b",desc:"Titanium oxide crystal often forming needle-like inclusions."},
+      "Zircon": {name:"Zircon",family:"Zircon",hardness:7.5,val:360,hue:200,color:"#a5f3fc",desc:"Brilliant natural gemstone with strong fire and luster."},
+      "Danburite": {name:"Danburite",family:"Silicate",hardness:7,val:410,hue:40,color:"#fef3c7",desc:"Clear to golden crystal with diamond-like brilliance."},
+      "Morganite": {name:"Morganite",family:"Beryl",hardness:7.5,val:620,hue:330,color:"#f9a8d4",desc:"Peach-pink beryl with elegant pastel transparency."},
+      "Aquamarine": {name:"Aquamarine",family:"Beryl",hardness:7.5,val:700,hue:195,color:"#67e8f9",desc:"Sea-blue beryl with clean transparent clarity."},
+      "Heliodor": {name:"Heliodor",family:"Beryl",hardness:7.5,val:560,hue:50,color:"#fde047",desc:"Golden-yellow beryl with sunny brilliance."},
+      "Paraiba Tourmaline": {name:"Paraiba Tourmaline",family:"Tourmaline",hardness:7.5,val:1800,hue:185,color:"#22d3ee",desc:"Neon blue-green tourmaline of extraordinary rarity."},
+      "Rubellite": {name:"Rubellite",family:"Tourmaline",hardness:7.5,val:820,hue:345,color:"#e11d48",desc:"Vivid red-pink tourmaline with rich saturation."},
+      "Indicolite": {name:"Indicolite",family:"Tourmaline",hardness:7.5,val:760,hue:210,color:"#2563eb",desc:"Deep blue tourmaline with cool oceanic color."},
+      "Chrome Diopside": {name:"Chrome Diopside",family:"Diopside",hardness:5.5,val:330,hue:140,color:"#22c55e",desc:"Intense forest-green gemstone colored by chromium."},
+      "Sphene": {name:"Sphene",family:"Titanite",hardness:5.5,val:460,hue:75,color:"#bef264",desc:"Brilliant yellow-green gemstone with exceptional dispersion."},
+      "Alexandrite Catseye": {name:"Alexandrite Catseye",family:"Chrysoberyl",hardness:8.5,val:2400,hue:130,color:"#84cc16",desc:"Rare chrysoberyl combining color change with chatoyancy."},
+      "Black Opal": {name:"Black Opal",family:"Opal",hardness:6,val:2200,hue:260,color:"#312e81",desc:"Dark-bodied opal with intense spectral play-of-color."},
+      "Fire Agate": {name:"Fire Agate",family:"Agate",hardness:7,val:420,hue:15,color:"#f97316",desc:"Layered chalcedony with shimmering iridescent fire."},
+      "Star Sapphire": {name:"Star Sapphire",family:"Sapphire",hardness:9,val:1500,hue:220,color:"#818cf8",desc:"Corundum displaying a six-rayed asterism under light."},
+      "Star Ruby": {name:"Star Ruby",family:"Ruby",hardness:9,val:1700,hue:345,color:"#fb7185",desc:"Ruby with a natural six-rayed star effect."},
+      "Black Spinel": {name:"Black Spinel",family:"Spinel",hardness:8,val:360,hue:220,color:"#334155",desc:"Opaque black spinel with a polished mirror-like luster."},
+      "Jeremejevite": {name:"Jeremejevite",family:"Borate",hardness:7.5,val:2600,hue:190,color:"#a5f3fc",desc:"Exceptionally scarce pale-blue borate collector stone."},
+      "Painite": {name:"Painite",family:"Borate",hardness:8,val:3200,hue:10,color:"#b91c1c",desc:"Ultra-rare borate mineral once famous for extreme scarcity."},
+      "Musgravite": {name:"Musgravite",family:"Taaffeite",hardness:8.5,val:4200,hue:300,color:"#c084fc",desc:"Extremely rare gemstone prized by advanced collectors."}
+    });
+    DEPTHS[1].geodes.push("Sunstone","Moonstone","Citrine","Fluorite","Malachite","Turquoise","Fire Agate","Hematite");
+    DEPTHS[2].geodes.push("Peridot","Blue Topaz","Spinel","Spessartine","Iolite","Kyanite","Labradorite","Rhodochrosite");
+    DEPTHS[3].geodes.push("Tsavorite","Demantoid","Smithsonite","Azurite","Rutile","Zircon","Danburite","Chrome Diopside");
+    DEPTHS[4].geodes.push("Morganite","Aquamarine","Heliodor","Paraiba Tourmaline","Rubellite","Indicolite","Sphene","Star Sapphire");
+    DEPTHS[5].geodes.push("Black Opal","Star Ruby","Black Spinel","Jeremejevite","Painite","Musgravite","Alexandrite Catseye","Cassiterite");
+
+    const METALS = {
+      silver: { name: "Sterling Silver", cost: 40, mult: 1.3, color: "#cbd5e1" },
+      roseGold: { name: "Rose Gold", cost: 110, mult: 1.7, color: "#fda4af" },
+      gold: { name: "18k Imperial Gold", cost: 240, mult: 2.2, color: "#fbbf24" },
+      platinum: { name: "Astral Platinum", cost: 520, mult: 3.2, color: "#e0f2fe" },
+      meteorite: { name: "Meteorite Steel", cost: 850, mult: 4.4, color: "#94a3b8" },
+      orichalcum: { name: "Royal Orichalcum", cost: 1800, mult: 6.5, color: "#f59e0b" }
+    };
+
+    const MOUNTS = {
+      ring: { name: "Solitaire Ring", slots: 1, mult: 1.3 },
+      pendant: { name: "Halo Pendant", slots: 2, mult: 1.9 },
+      tiara: { name: "Royal Tiara", slots: 3, mult: 2.9 },
+      earrings: { name: "Chandelier Drops", slots: 2, mult: 2.1 },
+      scepter: { name: "Guild Scepter", slots: 4, mult: 4.2 }
+    };
+
+    const SHAPES = {
+      brilliant: { name: "Round Brilliant", mult: 1.0, speed: 1.9, width: 14, left: 43 },
+      emerald: { name: "Emerald Step", mult: 1.25, speed: 1.5, width: 20, left: 40 },
+      marquise: { name: "Royal Marquise", mult: 1.5, speed: 2.5, width: 9, left: 46 },
+      cushion: { name: "Cushion Nova", mult: 1.35, speed: 1.7, width: 16, left: 42 },
+      pear: { name: "Imperial Pear", mult: 1.6, speed: 2.7, width: 8, left: 47 },
+      heart: { name: "Heart Sovereign", mult: 2.0, speed: 3.2, width: 6, left: 48 }
+    };
+
+
+    Object.assign(MOUNTS, {
+      eternity: {name:"Eternity Band",slots:5,mult:3.7},
+      signet: {name:"Royal Signet",slots:1,mult:2.2},
+      brooch: {name:"Court Brooch",slots:3,mult:2.6},
+      crown: {name:"Imperial Crown",slots:6,mult:6.5},
+      necklace: {name:"Royal Necklace",slots:5,mult:4.8},
+      collar: {name:"Imperial Collar",slots:6,mult:5.4},
+      studs: {name:"Gem Studs",slots:2,mult:1.8},
+      medallion: {name:"Guild Medallion",slots:2,mult:2.7}
+    });
+    Object.assign(SHAPES, {
+      asscher:{name:"Asscher Royal",mult:1.75,speed:2.2,width:10,left:45},
+      radiant:{name:"Radiant Star",mult:1.7,speed:2.0,width:12,left:44},
+      oval:{name:"Imperial Oval",mult:1.45,speed:2.2,width:13,left:43},
+      trillion:{name:"Trillion Flame",mult:1.85,speed:2.8,width:8,left:46},
+      rose:{name:"Rose Crown",mult:1.2,speed:1.4,width:18,left:41},
+      oldmine:{name:"Old Mine Brilliant",mult:1.55,speed:2.4,width:11,left:44}
+    });
+
+    function log(msg) {
+      document.getElementById("logText").textContent = msg;
+    }
+
+    function updateTopUI() {
+      document.getElementById("statGold").textContent = `$${G.gold.toLocaleString()}`;
+      document.getElementById("statFocus").textContent = `${Math.floor(G.focus)} / ${G.maxFocus}`;
+      document.getElementById("focusFill").style.width = `${(G.focus / G.maxFocus) * 100}%`;
+      document.getElementById("statRep").textContent = G.rep;
+
+      document.getElementById("badgeRaw").textContent = G.rawGeodes.length;
+      document.getElementById("badgeGems").textContent = G.cutGems.length;
+      document.getElementById("badgeStock").textContent = G.stock.length;
+
+      const ranks = [
+        "Rank I: Apprentice Carver",
+        "Rank II: Adept Lapidary",
+        "Rank III: Master Craftsman",
+        "Rank IV: Court Crown Jeweler",
+        "Rank V: Grand Archon of the Imperial Vault"
+      ];
+      const rIdx = Math.min(ranks.length - 1, Math.floor(G.rep / 160));
+      document.getElementById("guildRank").textContent = ranks[rIdx];
+
+      checkTrophies();
+    }
+
+    function updateDepthOptions() {
+      const select = document.getElementById("mineDepthSelect");
+      if (!select) return;
+      Array.from(select.options).forEach(option => {
+        const depth = Number(option.value);
+        const site = DEPTHS[depth];
+        if (!site) return;
+        const state = depth <= G.unlockedDepth ? "Open — free travel" : `Unlock — $${site.cost.toLocaleString()}`;
+        option.textContent = `Strata ${["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][depth]}: ${site.name} (${state})`;
+      });
+    }
+
+    function nav(st) {
+      G.station = st;
+      document.querySelectorAll(".station-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+
+      document.getElementById(`tab-${st}`).classList.add("active");
+      document.getElementById(`view-${st}`).classList.add("active");
+
+      if (st === 'lapidary') renderLapidaryList();
+      if (st === 'forge') renderForge();
+      if (st === 'boutique') renderBoutique();
+      if (st === 'codex') renderCodex();
+    }
+
+    /* =========================================================
+       1. EXCAVATION MINE
+       ========================================================= */
+    function initMine() {
+      const container = document.getElementById("mineGrid");
+      container.innerHTML = "";
+      G.stability = 100;
+      G.grid = [];
+
+      const currentDepth = DEPTHS[G.mineDepth];
+      updateDepthOptions();
+      document.getElementById("siteTitle").textContent = `Strata ${G.mineDepth}`;
+      document.getElementById("quarrySubtitle").textContent = currentDepth.name;
+
+      const totalTiles = 49;
+      const geodeSet = new Set();
+      let count = 4 + Math.floor(Math.random() * 3);
+      if (G.upgrades.groundRadar) count += 2;
+
+      while(geodeSet.size < count) geodeSet.add(Math.floor(Math.random() * totalTiles));
+
+      for (let i = 0; i < totalTiles; i++) {
+        const isDense = Math.random() < 0.32;
+        const type = geodeSet.has(i) ? currentDepth.geodes[Math.floor(Math.random() * currentDepth.geodes.length)] : null;
+
+        G.grid.push({
+          idx: i,
+          hasGeode: geodeSet.has(i),
+          geodeType: type,
+          hp: isDense ? 2 : 1,
+          cleared: false
+        });
+
+        const el = document.createElement("div");
+        el.className = `tile strata-${G.mineDepth}`;
+        el.id = `tile-${i}`;
+        el.textContent = isDense ? "🪨" : "🧱";
+        el.onclick = (e) => digTile(i, e);
+        container.appendChild(el);
+      }
+      updateStabilityUI();
+    }
+
+    function setTool(t) {
+      G.tool = t;
+      document.querySelectorAll(".tool-card").forEach(c => c.classList.remove("active"));
+      document.getElementById(`tool-${t}`).classList.add("active");
+    }
+
+    function digTile(idx, event) {
+      if (G.stability <= 0) { log("⚠️ The shaft ceiling is too unstable! Survey a fresh site."); return; }
+      const tile = G.grid[idx];
+      if (tile.cleared) return;
+
+      const rect = event.target.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      if (G.tool === 'pick') {
+        if (G.focus < 8) { log("Need 8 focus for Pickaxe!"); return; }
+        G.focus -= 8;
+        tile.hp--;
+        G.stability = Math.max(0, G.stability - 3.5);
+        SFX.pick();
+        spawnBurst(cx, cy, "#94a3b8", 8);
+      } else if (G.tool === 'chisel') {
+        if (G.focus < 4) { log("Need 4 focus for Precision Chisel!"); return; }
+        G.focus -= 4;
+        tile.hp--;
+        G.stability = Math.max(0, G.stability - 1);
+        SFX.chisel();
+        spawnBurst(cx, cy, "#e2e8f0", 5);
+      } else if (G.tool === 'tnt') {
+        if (G.focus < 24) { log("Need 24 focus for Dynamite blast!"); return; }
+        G.focus -= 24;
+        SFX.boom();
+        triggerShake(14);
+        spawnBurst(cx, cy, "#ef4444", 24);
+        G.stability = Math.max(0, G.stability - 18);
+
+        [-8, -7, -6, -1, 0, 1, 6, 7, 8].forEach(off => {
+          const t = G.grid[idx + off];
+          if (t && !t.cleared) {
+            t.hp = 0;
+            breakTile(idx + off);
+          }
+        });
+        updateStabilityUI();
+        updateTopUI();
+        return;
+      }
+
+      if (tile.hp <= 0) breakTile(idx);
+      updateStabilityUI();
+      updateTopUI();
+    }
+
+    function breakTile(idx) {
+      const tile = G.grid[idx];
+      tile.cleared = true;
+      const el = document.getElementById(`tile-${idx}`);
+
+      if (tile.hasGeode) {
+        el.className = "tile revealed-geode";
+        el.textContent = "✨";
+        el.onclick = () => claimGeode(idx);
+        SFX.chimeFlawless();
+        log(`Uncovered raw formation: ${tile.geodeType}! Click to haul out.`);
+      } else {
+        el.className = "tile cleared sonar-val";
+        const directions = nearbyGeodeDirections(idx);
+        el.textContent = directions.map(direction => direction.arrow).join(" ");
+        el.title = directions.length
+          ? `Adjacent geodes: ${directions.map(direction => direction.name).join(", ")}`
+          : "No geodes in adjacent tiles.";
+      }
+    }
+
+    const MINE_DIRECTIONS = [
+      { row: -1, col: -1, arrow: "↖", name: "northwest" },
+      { row: -1, col: 0, arrow: "↑", name: "north" },
+      { row: -1, col: 1, arrow: "↗", name: "northeast" },
+      { row: 0, col: -1, arrow: "←", name: "west" },
+      { row: 0, col: 1, arrow: "→", name: "east" },
+      { row: 1, col: -1, arrow: "↙", name: "southwest" },
+      { row: 1, col: 0, arrow: "↓", name: "south" },
+      { row: 1, col: 1, arrow: "↘", name: "southeast" }
+    ];
+
+    function nearbyGeodeDirections(idx) {
+      const row = Math.floor(idx / 7);
+      const col = idx % 7;
+      return MINE_DIRECTIONS.filter(direction => {
+        const neighborRow = row + direction.row;
+        const neighborCol = col + direction.col;
+        if (neighborRow < 0 || neighborRow >= 7 || neighborCol < 0 || neighborCol >= 7) return false;
+        const neighbor = G.grid[neighborRow * 7 + neighborCol];
+        return neighbor && neighbor.hasGeode;
+      });
+    }
+
+    function claimGeode(idx) {
+      const tile = G.grid[idx];
+      const spec = GEM_SPECIES[tile.geodeType] || GEM_SPECIES["Rough Quartz"];
+
+      // Record in codex
+      G.discoveredGems[spec.name] = true;
+
+      G.rawGeodes.push({
+        id: Math.random().toString(36).substr(2, 9),
+        type: tile.geodeType,
+        carat: (1.2 + Math.random() * 4.8).toFixed(2)
+      });
+      tile.hasGeode = false;
+
+      const el = document.getElementById(`tile-${idx}`);
+      el.className = "tile cleared";
+      el.textContent = "";
+      el.onclick = null;
+      SFX.clink();
+      log(`Secured ${tile.geodeType} into workshop satchel.`);
+      updateTopUI();
+    }
+
+    function updateStabilityUI() {
+      document.getElementById("stabilityText").textContent = `${Math.round(G.stability)}%`;
+      document.getElementById("stabilityBar").style.width = `${Math.round(G.stability)}%`;
+    }
+
+    function resetMineGrid() { initMine(); }
+
+    function changeDepth() {
+      const d = parseInt(document.getElementById("mineDepthSelect").value);
+      if (d === G.mineDepth) return;
+      const fee = DEPTHS[d].cost;
+      if (d > G.unlockedDepth && G.gold < fee) {
+        log(`Insufficient funds: blasting down to Strata ${d} requires $${fee}!`);
+        document.getElementById("mineDepthSelect").value = G.mineDepth;
+        return;
+      }
+      if (d > G.unlockedDepth) {
+        G.gold -= fee;
+        G.unlockedDepth = d;
+        log(`Strata ${d} unlocked. You can now travel there freely.`);
+      }
+      G.mineDepth = d;
+      initMine();
+      updateTopUI();
+    }
+
+    /* =========================================================
+       2. PROCEDURAL REFRACTIVE LAPIDARY & GEM FACETING
+       ========================================================= */
+    const lapCanvas = document.getElementById("lapidaryCanvas");
+    const lapCtx = lapCanvas.getContext("2d");
+
+    function renderLapidaryList() {
+      const list = document.getElementById("rawGeodeList");
+      list.innerHTML = "";
+      document.getElementById("rawCountLabel").textContent = `${G.rawGeodes.length} nodules`;
+
+      if (G.rawGeodes.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:18px; color:var(--text-dim); font-size:0.75rem;">Your satchel is empty. Excavate geodes from the Quarry!</div>`;
+        return;
+      }
+      G.rawGeodes.forEach(g => {
+        const spec = GEM_SPECIES[g.type] || GEM_SPECIES["Rough Quartz"];
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <div>
+            <b>🪨 ${g.type}</b>
+            <div style="font-size:0.7rem; color:var(--text-dim);">Estimated Mass: ${g.carat} ct | Mohs: ${spec.hardness}</div>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="mountGeode('${g.id}')">Mount Dop</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function setCutShape(s) {
+      G.cutShape = s;
+      document.querySelectorAll("[id^='cut-']").forEach(b => b.classList.remove("active"));
+      document.getElementById(`cut-${s}`).classList.add("active");
+
+      const shapeCfg = SHAPES[s];
+      const spot = document.getElementById("wheelSweetSpot");
+      spot.style.left = `${shapeCfg.left}%`;
+      spot.style.width = `${shapeCfg.width}%`;
+
+      let spd = shapeCfg.speed;
+      if (G.upgrades.diamondLap) spd *= 0.75;
+      G.needleSpeed = spd;
+    }
+
+    function mountGeode(id) {
+      G.activeStone = G.rawGeodes.find(g => g.id === id);
+      if (!G.activeStone) return;
+      G.facetStep = 0;
+      G.gemScores = [];
+
+      document.getElementById("cuttingTitle").textContent = `Faceting: ${G.activeStone.type} (${G.activeStone.carat} ct)`;
+      document.getElementById("cuttingStepDesc").textContent = "Strike the abrasive scaife wheel when the indicator aligns inside the tolerance zone.";
+      document.getElementById("facetControls").style.display = "block";
+      setCutShape(G.cutShape);
+      startWheelNeedle();
+
+      const spec = GEM_SPECIES[G.activeStone.type];
+      drawRefractiveGem(lapCtx, lapCanvas.width / 2, lapCanvas.height / 2, spec, G.cutShape, 0.2);
+    }
+
+    function startWheelNeedle() {
+      if (G.animFrame) cancelAnimationFrame(G.animFrame);
+      G.needlePos = 0;
+      G.needleDir = 1;
+
+      function loop() {
+        G.needlePos += G.needleSpeed * G.needleDir;
+        if (G.needlePos >= 100) { G.needlePos = 100; G.needleDir = -1; }
+        if (G.needlePos <= 0) { G.needlePos = 0; G.needleDir = 1; }
+
+        document.getElementById("lapNeedle").style.left = `${G.needlePos}%`;
+        G.animFrame = requestAnimationFrame(loop);
+      }
+      G.animFrame = requestAnimationFrame(loop);
+    }
+
+    function strikeFacet() {
+      const pos = G.needlePos;
+      const shapeCfg = SHAPES[G.cutShape];
+      const spotLeft = shapeCfg.left;
+      const spotWidth = shapeCfg.width;
+
+      let mult = 1.0;
+      let grade = "Standard Polish";
+
+      if (pos >= spotLeft && pos <= spotLeft + spotWidth) {
+        grade = "Triple Excellent (Ideal Meetpoint)";
+        mult = 1.6 * shapeCfg.mult;
+        SFX.chimeFlawless();
+        spawnBurst(window.innerWidth / 2, window.innerHeight / 2, "#38bdf8", 14);
+      } else if (pos >= spotLeft - 10 && pos <= spotLeft + spotWidth + 10) {
+        grade = "Very Good";
+        mult = 1.15 * shapeCfg.mult;
+        SFX.clink();
+      } else {
+        grade = "Chipped Girdle Facet";
+        mult = 0.65;
+        SFX.pick();
+      }
+
+      G.gemScores.push(mult);
+      G.facetStep++;
+
+      const stages = [
+        "Stage 2: Pavilion & Girdle Step (1200 Grit)",
+        "Stage 3: Crown & Star Polish (50,000 Diamond Glaze)",
+        "Gemological Inspection..."
+      ];
+      document.getElementById("facetStageLabel").textContent = stages[G.facetStep] || "Final Inspection";
+      document.getElementById("cutRatingLabel").textContent = `Strike: ${grade}`;
+
+      const spec = GEM_SPECIES[G.activeStone.type];
+      drawRefractiveGem(lapCtx, lapCanvas.width / 2, lapCanvas.height / 2, spec, G.cutShape, (G.facetStep + 1) / 3);
+
+      if (G.facetStep >= 3) finishGemCutting();
+    }
+
+    function finishGemCutting() {
+      cancelAnimationFrame(G.animFrame);
+      document.getElementById("facetControls").style.display = "none";
+
+      const avgScore = G.gemScores.reduce((a, b) => a + b, 0) / G.gemScores.length;
+      let clarity = "VS1";
+      let prefix = "Clean";
+
+      if (avgScore >= 2.0) { clarity = "Flawless (FL)"; prefix = "Imperial Flawless"; G.stats.flawlessCuts++; }
+      else if (avgScore >= 1.5) { clarity = "VVS1"; prefix = "Exceptional"; }
+      else if (avgScore >= 1.1) { clarity = "VS2"; prefix = "Fine"; }
+      else { clarity = "Included (I2)"; prefix = "Commercial"; }
+
+      const spec = GEM_SPECIES[G.activeStone.type];
+      const shapeCfg = SHAPES[G.cutShape];
+      const caratVal = parseFloat(G.activeStone.carat);
+      const finalPrice = Math.round(spec.val * caratVal * avgScore);
+
+      const cut = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `${prefix} ${spec.name}`,
+        rawType: G.activeStone.type,
+        family: spec.family,
+        cutName: shapeCfg.name,
+        carat: caratVal,
+        clarity,
+        val: finalPrice,
+        color: spec.color,
+        hue: spec.hue,
+        hardness: spec.hardness
+      };
+
+      G.cutGems.push(cut);
+      G.stats.gemsFaceted++;
+      G.rawGeodes = G.rawGeodes.filter(g => g.id !== G.activeStone.id);
+      G.activeStone = null;
+
+      log(`💎 Masterwork Cut: ${cut.name} (${cut.carat} ct, ${cut.cutName}) valued at $${cut.val}!`);
+      renderLapidaryList();
+      updateTopUI();
+    }
+
+    /* PROCEDURAL RAY-TRACED GEM RENDERER */
+    function drawRefractiveGem(ctx, cx, cy, spec, shape, progress) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      const r = 62;
+
+      if (progress < 0.35) {
+        // Raw geode crust
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = "#27354a";
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = spec.color;
+        ctx.stroke();
+
+        ctx.fillStyle = "#162030";
+        ctx.beginPath();
+        ctx.arc(-10, -10, r * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      // Faceted Polished Gem Geometry
+      const facets = (shape === 'emerald' || shape === 'cushion') ? 8 : 12;
+
+      // Internal light refraction rays
+      for (let i = 0; i < facets; i++) {
+        const a1 = (i / facets) * Math.PI * 2;
+        const a2 = ((i + 1) / facets) * Math.PI * 2;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a1) * r, Math.sin(a1) * r);
+        ctx.lineTo(Math.cos(a2) * r, Math.sin(a2) * r);
+        ctx.closePath();
+
+        const lightShade = 35 + ((i * 7) % 35);
+        ctx.fillStyle = `hsl(${spec.hue}, 85%, ${lightShade}%)`;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Center table facet
+      ctx.beginPath();
+      const tableRadius = r * 0.45;
+      if (shape === 'emerald') {
+        ctx.rect(-tableRadius * 1.2, -tableRadius * 0.8, tableRadius * 2.4, tableRadius * 1.6);
+      } else if (shape === 'marquise') {
+        ctx.ellipse(0, 0, tableRadius * 1.6, tableRadius * 0.7, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(0, 0, tableRadius, 0, Math.PI * 2);
+      }
+
+      const grad = ctx.createRadialGradient(-10, -10, 2, 0, 0, tableRadius);
+      grad.addColorStop(0, "#ffffff");
+      grad.addColorStop(0.3, `hsl(${spec.hue}, 95%, 75%)`);
+      grad.addColorStop(1, `hsl(${spec.hue}, 90%, 45%)`);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Prismatic dispersion glints
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.beginPath();
+      ctx.arc(-r * 0.25, -r * 0.25, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(r * 0.2, r * 0.2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    /* =========================================================
+       3. FINE JEWELRY FORGE BENCH
+       ========================================================= */
+    function setMount(m) {
+      G.mount = m;
+      G.sockets = [];
+      document.querySelectorAll("[id^='m-']").forEach(b => b.classList.remove("active"));
+      document.getElementById(`m-${m}`).classList.add("active");
+      renderForge();
+    }
+
+    function renderForge() {
+      if (!G.patron) spawnPatron();
+      const mount = MOUNTS[G.mount];
+      const sContainer = document.getElementById("forgeSockets");
+      sContainer.innerHTML = "";
+
+      for (let i = 0; i < mount.slots; i++) {
+        const gem = G.sockets[i];
+        const s = document.createElement("div");
+        s.className = `socket ${gem ? 'filled' : ''}`;
+        s.innerHTML = gem ? `<span style="color:${gem.color}; font-size:1.5rem;">💎</span>` : "+";
+        s.title = gem ? `${gem.name} ($${gem.val})` : "Empty Mount Setting";
+        s.onclick = () => { G.sockets.splice(i, 1); renderForge(); };
+        sContainer.appendChild(s);
+      }
+
+      const vaultEl = document.getElementById("gemVault");
+      vaultEl.innerHTML = "";
+      document.getElementById("vaultCount").textContent = `${G.cutGems.length} cut gems`;
+
+      G.cutGems.forEach(gem => {
+        const isSet = G.sockets.some(s => s && s.id === gem.id);
+        const card = document.createElement("div");
+        card.className = `deck-item ${isSet ? 'selected' : ''}`;
+        card.innerHTML = `
+          <div style="color:${gem.color}; font-size:1.3rem;">💎</div>
+          <b style="font-size:0.7rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${gem.name}</b>
+          <div style="color:var(--text-dim); font-size:0.65rem;">${gem.carat} ct | ${gem.cutName}</div>
+          <div style="color:var(--gold-light); font-weight:700;">$${gem.val}</div>
+          <button class="btn btn-sm" style="margin-top:5px; width:100%; font-size:0.62rem;" onclick="event.stopPropagation(); quickSellCutGem('${gem.id}')" ${isSet ? 'disabled title="Unmount this gem before selling it"' : ''}>Quick sell — $${Math.floor(gem.val * 0.6).toLocaleString()}</button>
+        `;
+        card.onclick = () => toggleSocket(gem);
+        vaultEl.appendChild(card);
+      });
+
+      updateForgePreview();
+    }
+
+    function quickSellCutGem(id) {
+      if (G.sockets.some(gem => gem.id === id)) {
+        log("Unmount this gemstone before selling it.");
+        return;
+      }
+      const idx = G.cutGems.findIndex(gem => gem.id === id);
+      if (idx === -1) return;
+      const [gem] = G.cutGems.splice(idx, 1);
+      const payout = Math.max(1, Math.floor(gem.val * 0.6));
+      G.gold += payout;
+      G.stats.totalRevenue += payout;
+      SFX.goldSale();
+      log(`Quick-sold ${gem.name} for $${payout.toLocaleString()} (60% of appraisal).`);
+      renderForge();
+      updateTopUI();
+    }
+
+    function toggleSocket(gem) {
+      const idx = G.sockets.findIndex(s => s.id === gem.id);
+      if (idx > -1) {
+        G.sockets.splice(idx, 1);
+      } else {
+        if (G.sockets.length >= MOUNTS[G.mount].slots) {
+          log("Mount settings full! Forge piece or click a seated stone to unmount.");
+          return;
+        }
+        G.sockets.push(gem);
+      }
+      renderForge();
+    }
+
+    function updateForgePreview() {
+      G.metal = document.getElementById("metalSelect").value;
+      const metal = METALS[G.metal];
+      const mount = MOUNTS[G.mount];
+
+      let gemTotal = 0;
+      G.sockets.forEach(g => gemTotal += g.val);
+
+      let synergyMult = 1.0;
+      let synMsg = "No active synergies.";
+
+      if (G.sockets.length > 1) {
+        const firstFamily = G.sockets[0].family;
+        const allSame = G.sockets.every(s => s.family === firstFamily);
+
+        if (allSame) {
+          synergyMult = 1.5;
+          synMsg = "✨ Monochromatic Purity: All gems of matching species (+50% Valuation)!";
+        } else {
+          const families = new Set(G.sockets.map(s => s.family));
+          if (families.size === G.sockets.length && G.sockets.length >= 3) {
+            synergyMult = 1.7;
+            synMsg = "🌈 Prismatic Spectrum: Diverse elemental trinity (+70% Valuation)!";
+          }
+        }
+      }
+
+      const readyForForge = G.sockets.length === mount.slots;
+      const totalVal = readyForForge
+        ? Math.round((metal.cost + gemTotal) * mount.mult * metal.mult * synergyMult)
+        : 0;
+      document.getElementById("forgeEstPrice").textContent = readyForForge ? `$${totalVal.toLocaleString()}` : "—";
+      const family = G.sockets.length ? G.sockets[0].family : null;
+      const patron = G.patron;
+      let saleBonus = 1;
+      if (patron && mount.name.includes(patron.want)) saleBonus += 0.3;
+      if (family && family === G.trendGem) saleBonus += G.trendMult - 1;
+      const saturation = family && window.satMult ? window.satMult(family, false) : 1;
+      const marketPayout = Math.round(totalVal * saleBonus * saturation);
+      const expectedPayout = readyForForge
+        ? Math.round(marketPayout * (window.collMult ? window.collMult() : 1))
+        : null;
+      document.getElementById("forgeCostEstimate").textContent = `$${metal.cost.toLocaleString()}`;
+      document.getElementById("forgeSaleEstimate").textContent = expectedPayout === null ? "—" : `$${expectedPayout.toLocaleString()}`;
+      const profitEstimate = expectedPayout === null ? null : expectedPayout - metal.cost;
+      const profitEl = document.getElementById("forgeProfitEstimate");
+      profitEl.textContent = profitEstimate === null ? "—" : `${profitEstimate < 0 ? "-" : ""}$${Math.abs(profitEstimate).toLocaleString()}`;
+      profitEl.style.color = profitEstimate === null ? "var(--text-dim)" : profitEstimate >= 0 ? "var(--success)" : "var(--danger)";
+      const estimateNote = document.getElementById("forgeEstimateNote");
+      estimateNote.textContent = !readyForForge
+        ? `*Fill all ${mount.slots} sockets for sale and profit estimates. Gem value is appraisal, not gold spent.`
+        : patron && totalVal > patron.budget
+        ? `*Gem value is not gold spent. Current patron budget is $${patron.budget.toLocaleString()}; haggle or wait for a wealthier patron.`
+        : "*Gem value is an appraisal, not gold spent. Estimate assumes sale to a patron.";
+      document.getElementById("forgeButton").disabled = G.sockets.length < mount.slots || G.gold < metal.cost;
+      document.getElementById("synergyLabel").textContent = synMsg;
+      renderForgeOrderBoard(readyForForge, totalVal, expectedPayout);
+
+      drawJewelryForgePreview();
+    }
+
+    function renderForgeOrderBoard(readyForForge, valuation, expectedPayout) {
+      const board = document.getElementById("forgeOrderBoard");
+      const patron = G.patron;
+      const matchingStock = G.stock.filter(item => item.name.includes("Tiara") && item.val >= 1500).length;
+      const scepterStock = G.stock.filter(item => item.name.includes("Scepter") && item.val >= 4000).length;
+      const orderStatus = !readyForForge
+        ? "Fill every socket to check whether this design meets the order."
+        : valuation <= patron.budget
+          ? `This design fits the patron's budget. Estimated payout: $${expectedPayout.toLocaleString()}.`
+          : `Over budget by $${(valuation - patron.budget).toLocaleString()}. Haggle in the Salon or choose a less costly design.`;
+
+      board.innerHTML = `
+        <div style="font-weight:800; color:var(--gold-light); margin-bottom:5px;">📜 Patron Order Board</div>
+        <div><b>${patron.icon} ${patron.name}</b> wants a <b>${patron.want}</b> • Budget: <b>$${patron.budget.toLocaleString()}</b></div>
+        <div style="margin-top:4px; color:${readyForForge && valuation <= patron.budget ? 'var(--success)' : 'var(--text-dim)'};">${orderStatus}</div>
+        <div style="border-top:1px solid var(--border); margin-top:7px; padding-top:6px; color:var(--text-dim);">
+          👑 Tiara warrant: appraisal $1,500+ • $1,200 bounty • ${matchingStock} eligible in safe<br>
+          🪄 Scepter warrant: appraisal $4,000+ • $3,500 bounty • ${scepterStock} eligible in safe
+        </div>
+        <button class="btn btn-sm" style="margin-top:7px;" onclick="nav('boutique')">Visit Salon to haggle or deliver</button>
+      `;
+    }
+
+    function drawJewelryForgePreview() {
+      const pCanvas = document.getElementById("jewelryPreviewCanvas");
+      const pCtx = pCanvas.getContext("2d");
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+
+      const metal = METALS[G.metal];
+      pCtx.save();
+      pCtx.translate(pCanvas.width / 2, pCanvas.height / 2);
+
+      // Alloy Band
+      pCtx.beginPath();
+      pCtx.arc(0, 0, 44, 0, Math.PI * 2);
+      pCtx.lineWidth = 10;
+      pCtx.strokeStyle = metal.color;
+      pCtx.shadowColor = metal.color;
+      pCtx.shadowBlur = 12;
+      pCtx.stroke();
+      pCtx.shadowBlur = 0;
+
+      // Metallic engravings
+      pCtx.strokeStyle = "rgba(0,0,0,0.3)";
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+
+      // Socketed gems with prongs
+      G.sockets.forEach((gem, idx) => {
+        const angle = -Math.PI / 2 + (idx - (G.sockets.length - 1) / 2) * 0.45;
+        const gx = Math.cos(angle) * 44;
+        const gy = Math.sin(angle) * 44;
+
+        // Prongs
+        pCtx.fillStyle = metal.color;
+        pCtx.beginPath();
+        pCtx.arc(gx - 8, gy - 2, 3, 0, Math.PI * 2);
+        pCtx.arc(gx + 8, gy - 2, 3, 0, Math.PI * 2);
+        pCtx.fill();
+
+        // Faceted Gem
+        pCtx.beginPath();
+        pCtx.arc(gx, gy, 10, 0, Math.PI * 2);
+        pCtx.fillStyle = gem.color;
+        pCtx.shadowColor = gem.color;
+        pCtx.shadowBlur = 10;
+        pCtx.fill();
+        pCtx.strokeStyle = "#ffffff";
+        pCtx.lineWidth = 1.5;
+        pCtx.stroke();
+      });
+
+      pCtx.restore();
+    }
+
+    function forgeJewel() {
+      const mount = MOUNTS[G.mount];
+      const metal = METALS[G.metal];
+
+      if (G.sockets.length < mount.slots) {
+        log(`Prong settings empty! Fill all ${mount.slots} mount socket(s) before casting.`);
+        return;
+      }
+      if (G.gold < metal.cost) {
+        log(`Insufficient treasury! Casting this ${metal.name} mount requires $${metal.cost}.`);
+        return;
+      }
+
+      G.gold -= metal.cost;
+      let gemTotal = 0;
+      let totalCarats = 0;
+
+      G.sockets.forEach(g => {
+        gemTotal += g.val;
+        totalCarats += g.carat;
+        G.cutGems = G.cutGems.filter(cg => cg.id !== g.id);
+      });
+
+      let synergyMult = 1.0;
+      if (G.sockets.length > 1) {
+        if (G.sockets.every(s => s.family === G.sockets[0].family)) synergyMult = 1.5;
+        else if (new Set(G.sockets.map(s => s.family)).size === G.sockets.length && G.sockets.length >= 3) {
+          synergyMult = 1.7;
+          G.trophies.elementalTrio = true;
+        }
+      }
+
+      const totalVal = Math.round((metal.cost + gemTotal) * mount.mult * metal.mult * synergyMult);
+      const piece = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `${metal.name.split(' ')[0]} ${G.sockets[0].family} ${mount.name}`,
+        mountType: mount.name,
+        metal: metal.name,
+        val: totalVal,
+        primaryFamily: G.sockets[0].family,
+        carats: totalCarats.toFixed(2),
+        gems: [...G.sockets]
+      };
+
+      G.stock.push(piece);
+      G.sockets = [];
+      G.stats.masterpiecesForged++;
+      SFX.forgeHammer();
+      log(`Masterpiece Forged: ${piece.name} ($${totalVal.toLocaleString()})!`);
+      renderForge();
+      updateTopUI();
+    }
+
+    /* =========================================================
+       4. BOUTIQUE, NOBILITY PATRONS & WARRANTS
+       ========================================================= */
+    const PATRONS = [
+      { name: "Lady Arabella", title: "Countess of High Garden", icon: "👑" },
+      { name: "Baron Von Brandt", title: "Master of Coin", icon: "🎩" },
+      { name: "Duchess Eleanor", title: "Regal Archduchess", icon: "⚜️" },
+      { name: "Grand Inquisitor Morne", title: "Imperial Envoy", icon: "⚔️" },
+      { name: "Archduke Francis", title: "Consul of the Realm", icon: "🏛️" }
+    ];
+
+    function spawnPatron() {
+      const p = PATRONS[Math.floor(Math.random() * PATRONS.length)];
+      const types = ["Solitaire Ring", "Halo Pendant", "Royal Tiara", "Chandelier Drops"];
+      const want = types[Math.floor(Math.random() * types.length)];
+      const budget = Math.round((280 + Math.random() * 850 + (G.rep * 12)) * (G.upgrades.royalCharter ? 1.3 : 1.0));
+
+      G.patron = { ...p, want, budget, maxBudget: budget * 1.5, patience: 100 };
+      renderBoutique();
+    }
+
+    function calibratePatronBudget(patron) {
+      if (!G.stock.length) return;
+
+      const lowestPricedPiece = Math.min(...G.stock.map(item => item.val));
+      if (patron.budget < lowestPricedPiece) {
+        patron.budget = lowestPricedPiece;
+        patron.maxBudget = Math.round(lowestPricedPiece * 1.5);
+        patron.stockAdjusted = true;
+      }
+    }
+
+    function renderBoutique() {
+      if (!G.patron) spawnPatron();
+      const p = G.patron;
+      calibratePatronBudget(p);
+
+      const cBox = document.getElementById("clientBox");
+      cBox.innerHTML = `
+        <div class="patron-dossier">
+          <div class="avatar-frame">
+            <span style="font-size:2.4rem;">${p.icon}</span>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b style="font-size:0.95rem;">${p.name}</b>
+              <span style="color:var(--gold-light); font-weight:800; font-size:1.05rem;">Budget: <b id="patronBudget">$${p.budget.toLocaleString()}</b></span>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-dim);">${p.title}</div>
+            <p style="font-size:0.76rem; color:var(--text); margin-top:6px;">
+              “I seek an extraordinary <b>${p.want}</b> for tonight's Sovereign Ball.”
+            </p>
+            ${p.stockAdjusted ? '<p style="font-size:0.68rem; color:var(--success); margin-top:4px;">Offer adjusted to match at least one piece in your safe.</p>' : ''}
+          </div>
+        </div>
+
+        <div class="haggle-box">
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+            <span>Patron Patience:</span>
+            <b id="patienceText" style="color:var(--success);">${p.patience}%</b>
+          </div>
+          <div class="patience-bar">
+            <div class="patience-fill" id="patienceBar" style="width:${p.patience}%"></div>
+          </div>
+          <div style="display:flex; gap:6px; margin-top:4px;">
+            <button class="btn btn-gold btn-sm" id="hagglePersuade" style="flex:1;" onclick="hagglePatron(15, 25)" ${p.budget >= p.maxBudget ? 'disabled' : ''}>
+              🤝 Persuade (+15% Budget)
+            </button>
+            <button class="btn btn-gold btn-sm" id="haggleFlatter" style="flex:1;" onclick="hagglePatron(30, 45)" ${p.budget >= p.maxBudget ? 'disabled' : ''}>
+              👑 Imperial Flattery (+30% Budget)
+            </button>
+          </div>
+        </div>
+      `;
+
+      const sList = document.getElementById("stockList");
+      sList.innerHTML = "";
+      document.getElementById("stockCountBadge").textContent = `${G.stock.length} pieces`;
+
+      if (G.stock.length === 0) {
+        sList.innerHTML = `<div style="text-align:center; padding:18px; color:var(--text-dim); font-size:0.75rem;">No inventory in the safe. Forge jewelry at Station 3!</div>`;
+      } else {
+        G.stock.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "list-row";
+          row.innerHTML = `
+            <div>
+              <b style="cursor:pointer; color:var(--gold-light);" onclick="inspectPiece('${item.id}')">💍 ${item.name}</b>
+              <div style="font-size:0.7rem; color:var(--text-dim);">${item.metal} | ${item.carats} ct | Base: $${item.val.toLocaleString()}</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm" onclick="inspectPiece('${item.id}')">Report</button>
+              <button class="btn btn-gold btn-sm" onclick="sellItemToPatron('${item.id}')">Sell</button>
+            </div>
+          `;
+          sList.appendChild(row);
+        });
+      }
+
+      renderCommissions();
+      renderUpgrades();
+    }
+
+    function hagglePatron(gainPct, patienceCost) {
+      if (!G.patron) return;
+      if (G.patron.budget >= G.patron.maxBudget) {
+        log(`${G.patron.name} has reached their maximum offer.`);
+        return;
+      }
+      if (G.patron.patience <= patienceCost) {
+        log(`😤 ${G.patron.name} took offense to excessive bargaining and departed the salon!`);
+        spawnPatron();
+        return;
+      }
+
+      G.patron.patience -= patienceCost;
+      G.patron.budget = Math.min(
+        G.patron.maxBudget,
+        Math.round(G.patron.budget * (1 + gainPct / 100))
+      );
+      SFX.clink();
+      log(`Bargain struck! ${G.patron.name}'s offer increased to $${G.patron.budget.toLocaleString()}.`);
+
+      document.getElementById("patronBudget").textContent = `$${G.patron.budget.toLocaleString()}`;
+      if (G.patron.budget >= G.patron.maxBudget) {
+        document.getElementById("hagglePersuade").disabled = true;
+        document.getElementById("haggleFlatter").disabled = true;
+      }
+      document.getElementById("patienceText").textContent = `${G.patron.patience}%`;
+      const bar = document.getElementById("patienceBar");
+      bar.style.width = `${G.patron.patience}%`;
+      if (G.patron.patience < 40) bar.style.background = "var(--danger)";
+    }
+
+    function sellItemToPatron(id) {
+      const item = G.stock.find(s => s.id === id);
+      const p = G.patron;
+      if (!item || !p) return;
+
+      if (item.val > p.budget) {
+        log(`❌ ${p.name} cannot afford this masterwork! (Budget: $${p.budget.toLocaleString()})`);
+        return;
+      }
+
+      let bonus = 1.0;
+      if (item.mountType.includes(p.want)) bonus += 0.3;
+      if (item.primaryFamily === G.trendGem) bonus += (G.trendMult - 1.0);
+
+      const payout = Math.round(item.val * bonus * (window.satMult ? (item.primaryFamily ? window.satMult(item.primaryFamily, true) : 1) : 1));
+      G.gold += Math.round(payout * (window.collMult ? window.collMult() : 1));
+      G.rep += 20;
+      G.stats.totalRevenue += payout;
+      G.stock = G.stock.filter(s => s.id !== id);
+
+      SFX.goldSale();
+      log(`Sold ${item.name} to ${p.name} for $${payout.toLocaleString()}! (+20 Prestige)`);
+      spawnPatron();
+      updateTopUI();
+    }
+
+    function inspectPiece(id) {
+      const item = G.stock.find(s => s.id === id);
+      if (!item) return;
+
+      const body = document.getElementById("certBody");
+      body.innerHTML = `
+        <div style="display:flex; justify-content:space-between;">
+          <span>Designation:</span>
+          <b>${item.name}</b>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Mount Alloy:</span>
+          <b>${item.metal}</b>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Total Mass:</span>
+          <b>${item.carats} Carats</b>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Certified Appraisal:</span>
+          <b style="color:var(--gold-light); font-size:1.1rem;">$${item.val.toLocaleString()}</b>
+        </div>
+        <div style="margin-top:8px; border-top:1px dashed var(--border); padding-top:6px;">
+          <b style="font-size:0.75rem; color:var(--accent);">Socketed Specimens:</b>
+          ${item.gems.map(g => `<div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">• ${g.name} (${g.cutName}, ${g.carat}ct, ${g.clarity})</div>`).join('')}
+        </div>
+      `;
+      document.getElementById("certModal").classList.add("active");
+    }
+
+    function closeCertModal() {
+      document.getElementById("certModal").classList.remove("active");
+    }
+
+    function renderCommissions() {
+      const cList = document.getElementById("commissionsList");
+      cList.innerHTML = `
+        <div style="background:var(--card); border-left:4px solid var(--gold); border-radius:8px; padding:10px; font-size:0.75rem; margin-bottom:6px;">
+          <div style="display:flex; justify-content:space-between;">
+            <b>👑 Imperial Sovereign Tiara Warrant</b>
+            <span style="color:var(--gold-light); font-weight:700;">Bounty: $1,200</span>
+          </div>
+          <div style="color:var(--text-dim); margin:3px 0;">Requires: Any Tiara piece valued at $1,500+.</div>
+          <button class="btn btn-gold btn-sm" style="margin-top:4px;" onclick="claimCommission('Tiara', 1500, 1200, 75)">
+            Deliver Warrant (+75 Prestige)
+          </button>
+        </div>
+        <div style="background:var(--card); border-left:4px solid var(--purple); border-radius:8px; padding:10px; font-size:0.75rem;">
+          <div style="display:flex; justify-content:space-between;">
+            <b>🪄 Grand Archon's Scepter of Dominion</b>
+            <span style="color:var(--gold-light); font-weight:700;">Bounty: $3,500</span>
+          </div>
+          <div style="color:var(--text-dim); margin:3px 0;">Requires: Any Scepter valued at $4,000+.</div>
+          <button class="btn btn-gold btn-sm" style="margin-top:4px;" onclick="claimCommission('Scepter', 4000, 3500, 200)">
+            Deliver Warrant (+200 Prestige)
+          </button>
+        </div>
+      `;
+    }
+
+    function claimCommission(typeRequired, minVal, bounty, repReward) {
+      const idx = G.stock.findIndex(s => s.name.includes(typeRequired) && s.val >= minVal);
+      if (idx === -1) {
+        log(`No piece in vault fulfills the requirements for this sovereign warrant!`);
+        return;
+      }
+      const item = G.stock.splice(idx, 1)[0];
+      const payout = bounty + item.val;
+      G.gold += Math.round(payout * (window.collMult ? window.collMult() : 1));
+      G.rep += repReward;
+      G.stats.totalRevenue += payout;
+
+      SFX.goldSale();
+      log(`Royal Sovereign Warrant completed! Earned $${payout.toLocaleString()} & ${repReward} rep.`);
+      renderBoutique();
+      updateTopUI();
+    }
+
+    function renderUpgrades() {
+      const uList = document.getElementById("upgradeList");
+      uList.innerHTML = "";
+      const list = [
+        { id: "diamondLap", name: "Diamond Coated Lap", cost: 260, desc: "Stabilizes alignment needle speed by 25%", owned: G.upgrades.diamondLap },
+        { id: "groundRadar", name: "Ground Sonar Radar", cost: 450, desc: "Reveals +2 bonus raw geodes per surveyed quarry grid", owned: G.upgrades.groundRadar },
+        { id: "hydraulicBellows", name: "Hydraulic Blast Bellows", cost: 750, desc: "Doubles natural Focus regeneration rate", owned: G.upgrades.hydraulicBellows },
+        { id: "royalCharter", name: "Imperial Court Charter", cost: 1400, desc: "Permanently boosts all patron budgets by +30%", owned: G.upgrades.royalCharter }
+      ];
+      list.forEach(u => {
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <div>
+            <b>${u.name}</b>
+            <div style="font-size:0.68rem; color:var(--text-dim);">${u.desc}</div>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="buyUpgrade('${u.id}', ${u.cost})" ${u.owned || G.gold < u.cost ? 'disabled' : ''}>
+            ${u.owned ? 'Installed' : `$${u.cost}`}
+          </button>
+        `;
+        uList.appendChild(row);
+      });
+    }
+
+    function buyUpgrade(id, cost) {
+      if (G.gold < cost) return;
+      G.gold -= cost;
+      G.upgrades[id] = true;
+      SFX.chimeFlawless();
+      log(`Workshop upgraded: ${id}!`);
+      renderUpgrades();
+      updateTopUI();
+    }
+
+    /* =========================================================
+       5. CODEX & TROPHIES
+       ========================================================= */
+    function renderCodex() {
+      const cList = document.getElementById("codexList");
+      cList.innerHTML = "";
+      const discoveredKeys = Object.keys(G.discoveredGems);
+      document.getElementById("discoveredBadge").textContent = `${discoveredKeys.length}/${Object.keys(GEM_SPECIES).length} Discovered`;
+
+      Object.entries(GEM_SPECIES).forEach(([key, spec]) => {
+        const isDiscovered = !!G.discoveredGems[spec.name];
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.style.opacity = isDiscovered ? "1" : "0.45";
+        row.innerHTML = `
+          <div>
+            <b style="color:${isDiscovered ? spec.color : 'var(--text-dim)'};">${isDiscovered ? spec.name : 'Unknown Mineral Form'}</b>
+            <div style="font-size:0.68rem; color:var(--text-dim);">
+              ${isDiscovered ? `${spec.desc} (Mohs Hardness: ${spec.hardness})` : 'Undiscovered. Survey deeper excavation strata.'}
+            </div>
+          </div>
+          <span class="badge" style="color:${isDiscovered ? 'var(--gold-light)' : 'inherit'};">${isDiscovered ? `$${spec.val}/ct` : '???'}</span>
+        `;
+        cList.appendChild(row);
+      });
+
+      // Career Stats
+      document.getElementById("statTotalRev").textContent = `$${G.stats.totalRevenue.toLocaleString()}`;
+      document.getElementById("statGemsFaceted").textContent = G.stats.gemsFaceted;
+      document.getElementById("statFlawless").textContent = G.stats.flawlessCuts;
+      document.getElementById("statMasterpieces").textContent = G.stats.masterpiecesForged;
+
+      renderTrophies();
+    }
+
+    function checkTrophies() {
+      if (G.stats.gemsFaceted >= 1) G.trophies.firstCut = true;
+      if (G.gold >= 5000) G.trophies.highRoller = true;
+      if (G.rep >= 600) G.trophies.grandArchon = true;
+    }
+
+    function renderTrophies() {
+      const tList = document.getElementById("trophyList");
+      tList.innerHTML = "";
+      const trophies = [
+        { key: "firstCut", name: "First Lap Strike", desc: "Cut and polish your very first raw geode." },
+        { key: "elementalTrio", name: "Harmonic Trinity", desc: "Forge a masterpiece triggering the Prismatic Spectrum synergy." },
+        { key: "highRoller", name: "Guild Magnate", desc: "Accumulate a workshop treasury exceeding $5,000 gold." },
+        { key: "grandArchon", name: "Grand Archon Crown", desc: "Reach 600+ Prestige within the Sovereign Guild." }
+      ];
+
+      let unlockedCount = 0;
+      trophies.forEach(t => {
+        const owned = G.trophies[t.key];
+        if (owned) unlockedCount++;
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <div>
+            <b style="color:${owned ? 'var(--gold)' : 'var(--text-dim)'};">${owned ? '🏆' : '🔒'} ${t.name}</b>
+            <div style="font-size:0.68rem; color:var(--text-dim);">${t.desc}</div>
+          </div>
+          <span class="badge">${owned ? 'Etched' : 'Locked'}</span>
+        `;
+        tList.appendChild(row);
+      });
+      document.getElementById("trophyBadge").textContent = `${unlockedCount}/${trophies.length} Unlocked`;
+    }
+
+    /* =========================================================
+       STEAM AUTOMATION PIPELINE
+       ========================================================= */
+    function buyAutomaton(type) {
+      const auto = G.automations[type];
+      if (G.gold < auto.cost) { log(`Treasury low: need $${auto.cost} to construct apparatus!`); return; }
+      G.gold -= auto.cost;
+      auto.owned = true;
+      SFX.chimeFlawless();
+      log(`Automaton operational: ${type}!`);
+      updateAutomationsUI();
+      updateTopUI();
+    }
+
+    function updateAutomationsUI() {
+      for (const [key, val] of Object.entries(G.automations)) {
+        const btn = document.getElementById(`btnBuy${key.charAt(0).toUpperCase() + key.slice(1)}`);
+        const status = document.getElementById(`${key}Status`);
+        if (val.owned) {
+          if (btn) btn.style.display = "none";
+          if (status) status.textContent = "Status: Online & Operating";
+        }
+      }
+    }
+
+    function runAutomationTick(delta) {
+      // 1. Excavator Bore
+      if (G.automations.bore.owned) {
+        const a = G.automations.bore;
+        a.progress += delta;
+        document.getElementById("boreBar").style.width = `${Math.min(100, (a.progress / a.time) * 100)}%`;
+        if (a.progress >= a.time) {
+          a.progress = 0;
+          const pool = DEPTHS[G.mineDepth].geodes;
+          const mined = pool[Math.floor(Math.random() * pool.length)];
+          G.rawGeodes.push({ id: Math.random().toString(36).substr(2, 9), type: mined, carat: (1.5 + Math.random() * 3.5).toFixed(2) });
+          log(`⚙️ Steam Bore excavated a ${mined}!`);
+          updateTopUI();
+          if (G.station === 'lapidary') renderLapidaryList();
+        }
+      }
+
+      // 2. Ultrasonic Tumbler
+      if (G.automations.tumbler.owned && G.rawGeodes.length > 0) {
+        const a = G.automations.tumbler;
+        a.progress += delta;
+        document.getElementById("tumblerBar").style.width = `${Math.min(100, (a.progress / a.time) * 100)}%`;
+        if (a.progress >= a.time) {
+          a.progress = 0;
+          const raw = G.rawGeodes.shift();
+          const spec = GEM_SPECIES[raw.type] || GEM_SPECIES["Rough Quartz"];
+          G.cutGems.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: `Polished ${spec.name}`,
+            rawType: raw.type,
+            family: spec.family,
+            cutName: "Tumbler Cabochon",
+            carat: parseFloat(raw.carat),
+            clarity: "SI1",
+            val: Math.round(spec.val * parseFloat(raw.carat) * 1.1),
+            color: spec.color,
+            hue: spec.hue,
+            hardness: spec.hardness
+          });
+          G.stats.gemsFaceted++;
+          log(`🧪 Tumbler refined a ${spec.name}!`);
+          updateTopUI();
+          if (G.station === 'lapidary') renderLapidaryList();
+          if (G.station === 'forge') renderForge();
+        }
+      }
+
+      // 3. Apprentice Smith
+      if (G.automations.smith.owned && G.cutGems.length > 0 && G.gold >= 40) {
+        const a = G.automations.smith;
+        a.progress += delta;
+        document.getElementById("smithBar").style.width = `${Math.min(100, (a.progress / a.time) * 100)}%`;
+        if (a.progress >= a.time) {
+          a.progress = 0;
+          G.gold -= 40;
+          const gem = G.cutGems.shift();
+          const val = Math.round((40 + gem.val) * 1.3 * 1.3);
+          G.stock.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: `Silver ${gem.family} Solitaire Ring`,
+            mountType: "Solitaire Ring",
+            metal: "Sterling Silver",
+            val,
+            primaryFamily: gem.family,
+            carats: gem.carat,
+            gems: [gem]
+          });
+          G.stats.masterpiecesForged++;
+          log(`🔨 Apprentice forged a Silver ${gem.family} Ring!`);
+          updateTopUI();
+          if (G.station === 'forge') renderForge();
+          if (G.station === 'boutique') renderBoutique();
+        }
+      }
+
+      // 4. Consignment Peddler
+      if (G.automations.peddler.owned && G.stock.length > 0) {
+        const a = G.automations.peddler;
+        a.progress += delta;
+        document.getElementById("peddlerBar").style.width = `${Math.min(100, (a.progress / a.time) * 100)}%`;
+        if (a.progress >= a.time) {
+          a.progress = 0;
+          const item = G.stock.shift();
+          const payout = Math.round(item.val * 0.96);
+          G.gold += Math.round(payout * (window.collMult ? window.collMult() : 1));
+          G.rep += 10;
+          G.stats.totalRevenue += payout;
+          log(`🤝 Consignment Peddler sold ${item.name} for $${payout.toLocaleString()}!`);
+          updateTopUI();
+          if (G.station === 'boutique') renderBoutique();
+        }
+      }
+    }
+
+    /* =========================================================
+       DYNAMIC ECONOMY, SAVE/LOAD & MASTER TICK
+       ========================================================= */
+    function cycleMarketTrend() {
+      const families = ["Quartz", "Agate", "Jade", "Amethyst", "Garnet", "Lapis", "Opal", "Ruby", "Emerald", "Diamond"];
+      G.trendGem = families[Math.floor(Math.random() * families.length)];
+      G.trendMult = 1.35 + Math.random() * 0.35;
+      G.trendTimer = 45;
+      document.getElementById("marketTrendText").textContent = `${G.trendGem} items in high demand (+${Math.round((G.trendMult - 1) * 100)}%)`;
+    }
+
+    function saveGame(verbose=false) {
+      try {
+        const saveState = {
+          gold: G.gold, focus: G.focus, rep: G.rep,
+          mineDepth: G.mineDepth, unlockedDepth: G.unlockedDepth,
+          rawGeodes: G.rawGeodes, cutGems: G.cutGems, stock: G.stock,
+          upgrades: G.upgrades, automations: G.automations,
+          discoveredGems: G.discoveredGems, stats: G.stats, trophies: G.trophies,
+          timestamp: Date.now()
+        };
+        localStorage.setItem("sovereign_guild_save", JSON.stringify(saveState));
+        if (verbose) log("Workshop state and career ledger archived successfully.");
+      } catch(e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem("sovereign_guild_save");
+        if (raw) {
+          const s = JSON.parse(raw);
+          G.gold = s.gold ?? G.gold;
+          G.focus = s.focus ?? G.focus;
+          G.rep = s.rep ?? G.rep;
+          G.mineDepth = s.mineDepth ?? G.mineDepth;
+          G.unlockedDepth = s.unlockedDepth ?? s.mineDepth ?? G.unlockedDepth;
+          G.rawGeodes = s.rawGeodes || [];
+          G.cutGems = s.cutGems || [];
+          G.stock = s.stock || [];
+          G.upgrades = s.upgrades || G.upgrades;
+          G.automations = s.automations || G.automations;
+          G.discoveredGems = s.discoveredGems || {};
+          G.stats = s.stats || G.stats;
+          G.trophies = s.trophies || G.trophies;
+
+          // Offline progress computation
+          if (s.timestamp) {
+            const secOffline = Math.min(3600 * 8, Math.floor((Date.now() - s.timestamp) / 1000));
+            if (secOffline > 30) {
+              const passiveGold = Math.floor(secOffline * (G.automations.peddler.owned ? 4.5 : 0.8));
+              G.gold += passiveGold;
+              G.stats.totalRevenue += passiveGold;
+              log(`Offline for ${Math.round(secOffline/60)}m: Consignment sales produced $${passiveGold.toLocaleString()}!`);
+            }
+          }
+        }
+      } catch(e) {}
+    }
+
+    function exportSaveFile() {
+      saveGame();
+      const raw = localStorage.getItem("sovereign_guild_save");
+      const blob = new Blob([raw], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sovereign_jeweler_save_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    let lastTick = performance.now();
+    let trendClock = 0;
+
+    function masterClock(now) {
+      const delta = now - lastTick;
+      lastTick = now;
+
+      // Focus Recovery
+      const focusRate = G.upgrades.hydraulicBellows ? 5.0 : 2.5;
+      if (G.focus < G.maxFocus) {
+        G.focus = Math.min(G.maxFocus, G.focus + (delta / 1000) * focusRate);
+        document.getElementById("statFocus").textContent = `${Math.floor(G.focus)} / ${G.maxFocus}`;
+        document.getElementById("focusFill").style.width = `${(G.focus / G.maxFocus) * 100}%`;
+      }
+
+      // Market trend timer
+      trendClock += delta;
+      if (trendClock >= 1000) {
+        trendClock = 0;
+        G.trendTimer--;
+        const badge = document.getElementById("trendTimerBadge");
+        if (badge) badge.textContent = `${G.trendTimer}s`;
+        if (G.trendTimer <= 0) cycleMarketTrend();
+      }
+
+      runAutomationTick(delta);
+      requestAnimationFrame(masterClock);
+    }
+
+    /* AUTO-SAVE TIMER (EVERY 30 SECONDS) */
+    setInterval(() => saveGame(false), 30000);
+
+    /* LAUNCH WORKSHOP */
+    loadGame();
+    initMine();
+    updateAutomationsUI();
+    updateTopUI();
+    cycleMarketTrend();
+    requestAnimationFrame(masterClock);
+  </script>
+
+<script>
+/* =========================================================
+   SOVEREIGN LAPIDARY GUILD — FINAL EDITION EXPANSION
+   Save slots / mastery / contracts / collections / legacy / help
+   ========================================================= */
+(function(){
+  const FINAL_VERSION = 1;
+  const SLOT_PREFIX = 'sovereign_guild_slot_';
+  const ACTIVE_KEY = 'sovereign_guild_active_slot';
+  const LEGACY_KEY = 'sovereign_guild_legacy';
+
+  const baseRanks = [
+    {name:'Apprentice Carver',need:0}, {name:'Adept Lapidary',need:160},
+    {name:'Master Craftsman',need:320}, {name:'Court Crown Jeweler',need:480},
+    {name:'Grand Archon of the Imperial Vault',need:640}
+  ];
+
+  const QUEST_POOL = [
+    {id:'cut3', title:'Polish the House Stock', desc:'Facet 3 gemstones.', type:'gemsFaceted', target:3, rewardGold:420, rewardRep:35},
+    {id:'forge2', title:'Two Pieces for Court', desc:'Forge 2 jewelry pieces.', type:'masterpiecesForged', target:2, rewardGold:700, rewardRep:55},
+    {id:'rev5', title:'Healthy Treasury', desc:'Earn $5,000 in total revenue.', type:'totalRevenue', target:5000, rewardGold:500, rewardRep:65},
+    {id:'discover3', title:'Survey New Strata', desc:'Discover 3 mineral species.', type:'discoveries', target:3, rewardGold:650, rewardRep:70},
+    {id:'flawless2', title:'Master Cutter', desc:'Complete 2 flawless cuts.', type:'flawlessCuts', target:2, rewardGold:850, rewardRep:90},
+    {id:'rep400', title:'Court Recognition', desc:'Reach 400 Prestige.', type:'rep', target:400, rewardGold:900, rewardRep:50},
+    {id:'stock3', title:'Build the Showroom', desc:'Hold 3 finished pieces in stock.', type:'stock', target:3, rewardGold:600, rewardRep:45},
+    {id:'depth4', title:'Deep Earth Expedition', desc:'Reach Strata IV.', type:'depth', target:4, rewardGold:1200, rewardRep:110},
+    {id:'cutshape', title:'Shape Specialist', desc:'Use a non-Brilliant cut.', type:'shape', target:1, rewardGold:350, rewardRep:30}
+  ];
+
+  function ensureFinalState(){
+    G.mineDepth = Number(G.mineDepth||1);
+    G.unlockedDepth = Math.max(Number(G.unlockedDepth||1), G.mineDepth);
+    G.tutorialSeen = G.tutorialSeen === true;
+    G.masteryXP = Number(G.masteryXP||0);
+    G.legacyTokens = Number(G.legacyTokens||0);
+    G.blueprints = G.blueprints || {};
+    G.completedContracts = G.completedContracts || {};
+    G.contracts = Array.isArray(G.contracts) ? G.contracts : [];
+    G.stats = G.stats || {totalRevenue:0,gemsFaceted:0,flawlessCuts:0,masterpiecesForged:0};
+    G.stats.gemsFaceted = Number(G.stats.gemsFaceted||0);
+    G.stats.flawlessCuts = Number(G.stats.flawlessCuts||0);
+    G.stats.masterpiecesForged = Number(G.stats.masterpiecesForged||0);
+    G.stats.totalRevenue = Number(G.stats.totalRevenue||0);
+    G.discoveredGems = G.discoveredGems || {};
+    if(!G.contracts.length) rollContracts();
+    if(!G.blueprints.starter) G.blueprints.starter=true;
+  }
+
+  function rollContracts(){
+    const shuffled = QUEST_POOL.slice().sort(()=>Math.random()-.5);
+    G.contracts = shuffled.slice(0,3).map((q,i)=>({...q, slot:i, created:Date.now(), claimed:false}));
+  }
+
+  function masteryXP(){
+    const discovery = Object.keys(G.discoveredGems||{}).length * 100;
+    const activity = (G.stats.gemsFaceted||0)*35 + (G.stats.masterpiecesForged||0)*70 + (G.stats.flawlessCuts||0)*55;
+    const revenue = Math.floor((G.stats.totalRevenue||0)/18);
+    return Math.max(Number(G.masteryXP||0), discovery+activity+revenue);
+  }
+  function masteryLevel(){ return Math.max(1, Math.floor(Math.sqrt(masteryXP()/100))+1); }
+  function nextXP(){ const n=masteryLevel(); return n*n*100; }
+  function legacyReady(){ return G.rep>=640 && masteryLevel()>=10; }
+
+  function questProgress(q){
+    switch(q.type){
+      case 'gemsFaceted': return G.stats.gemsFaceted||0;
+      case 'masterpiecesForged': return G.stats.masterpiecesForged||0;
+      case 'totalRevenue': return G.stats.totalRevenue||0;
+      case 'discoveries': return Object.keys(G.discoveredGems||{}).length;
+      case 'flawlessCuts': return G.stats.flawlessCuts||0;
+      case 'rep': return G.rep||0;
+      case 'stock': return G.stock.length;
+      case 'depth': return G.mineDepth||1;
+      case 'shape': return (G.stats.nonBrilliantCuts||0);
+      default:return 0;
+    }
+  }
+
+  function savePayload(){
+    return {version:FINAL_VERSION, state:JSON.parse(JSON.stringify(G)), savedAt:Date.now(), legacyTokens:Number(G.legacyTokens||0)};
+  }
+  function slotKey(n){return SLOT_PREFIX+n;}
+  function activeSlot(){return Number(localStorage.getItem(ACTIVE_KEY)||1);}
+  function setActiveSlot(n){localStorage.setItem(ACTIVE_KEY,String(n));}
+
+  // Set to true right before a reset/delete/new-game reload so the unload autosave can't rewrite the slot.
+  let blockSaves=false;
+  function saveSlot(n,quiet){
+    if(blockSaves) return;
+    ensureFinalState();
+    localStorage.setItem(slotKey(n),JSON.stringify(savePayload()));
+    setActiveSlot(n);
+    if(!quiet) log(`💾 Guild ledger saved to Slot ${n}.`);
+    renderSaveSlots();
+  }
+  function applyPayload(payload){
+    if(!payload || !payload.state) return false;
+    const state=payload.state;
+    Object.keys(G).forEach(k=>{ if(!(k in state)) return; });
+    Object.assign(G,state);
+    ensureFinalState();
+    return true;
+  }
+  function loadSlot(n){
+    const raw=localStorage.getItem(slotKey(n));
+    if(!raw){ log(`Slot ${n} is empty.`); return; }
+    try{
+      const payload=JSON.parse(raw);
+      if(applyPayload(payload)){
+        setActiveSlot(n); lastTick=performance.now(); initMine(); updateAutomationsUI(); updateTopUI();
+        if(G.station) nav(G.station);
+        log(`📂 Loaded Guild Slot ${n}.`);
+        renderFinalAll();
+      }
+    }catch(e){ log('That save slot could not be loaded.'); }
+  }
+  function deleteSlot(n){
+    if(!confirm(`Delete Guild Save Slot ${n}? This cannot be undone.`)) return;
+    localStorage.removeItem(slotKey(n));
+    if(activeSlot()===n){
+      blockSaves=true;
+      localStorage.removeItem('sovereign_guild_save');
+      location.reload();
+      return;
+    }
+    renderSaveSlots();
+  }
+  function newGame(n){
+    if(!confirm(`Start a new guild in Slot ${n}? Existing Slot ${n} will be replaced.`)) return;
+    blockSaves=true;
+    localStorage.removeItem('sovereign_guild_save');
+    localStorage.removeItem(slotKey(n));
+    setActiveSlot(n);
+    location.reload();
+  }
+  // Reset only the currently active save slot. Other slots remain untouched.
+  window.resetCurrentSlot=function(){
+    const n=activeSlot();
+    if(!confirm(`RESET SLOT ${n}?\n\nThis will permanently erase the progress in Slot ${n} only. Other save slots will NOT be changed.\n\nThis cannot be undone.`)) return;
+    blockSaves=true;
+    localStorage.removeItem(slotKey(n));
+    localStorage.removeItem('sovereign_guild_save');
+    localStorage.removeItem(LEGACY_KEY);
+    localStorage.removeItem('sovereign_guild_legacy');
+    localStorage.removeItem('sovereign_ultimate_meta_v1');
+    setActiveSlot(n);
+    location.reload();
+  };
+
+  function exportSlot(n){
+    const raw=localStorage.getItem(slotKey(n));
+    if(!raw){log(`Slot ${n} is empty.`);return;}
+    const blob=new Blob([raw],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url;a.download=`sovereign-guild-slot-${n}.json`;a.click();URL.revokeObjectURL(url);
+  }
+
+  // Replace the game's single-save function with active-slot autosaving while keeping the existing Save button working.
+  window.saveGame=function(verbose=false){ saveSlot(activeSlot(),!verbose); if(verbose) log(`💾 Slot ${activeSlot()} saved successfully.`); };
+  window.loadGame=function(){
+    ensureFinalState();
+    const n=activeSlot(), raw=localStorage.getItem(slotKey(n));
+    if(raw){try{applyPayload(JSON.parse(raw));return;}catch(e){}}
+    // Migrate the original one-slot save if it exists.
+    const legacy=localStorage.getItem('sovereign_guild_save');
+    if(legacy){try{const old=JSON.parse(legacy);applyPayload({state:old});saveSlot(n,true);localStorage.removeItem('sovereign_guild_save');}catch(e){}}
+  };
+
+  window.openFinalModal=function(pane='guild'){
+    document.getElementById('finalOverlay').classList.add('active');
+    switchFinalPane(pane); renderFinalAll();
+  };
+  window.closeFinalModal=function(){document.getElementById('finalOverlay').classList.remove('active');};
+  window.switchFinalPane=function(pane){
+    document.querySelectorAll('.final-tab').forEach(b=>b.classList.toggle('active',b.dataset.pane===pane));
+    document.querySelectorAll('.final-pane').forEach(p=>p.classList.toggle('active',p.id==='finalPane-'+pane));
+    const titles={guild:'Guild Mastery & Legacy',quests:'Royal Contracts',collection:'Grand Collection',saves:'Guild Save Slots',help:'How To Play'};
+    document.getElementById('finalModalTitle').textContent=titles[pane]||'Guild Command Center';
+  };
+
+  function renderGuild(){
+    const xp=masteryXP(), lvl=masteryLevel(), next=nextXP(), prev=(lvl-1)*(lvl-1)*100;
+    const pct=Math.min(100,Math.round(((xp-prev)/Math.max(1,next-prev))*100));
+    const legacy=Number(G.legacyTokens||0);
+    const can=legacyReady();
+    const upgrades=[
+      ['Mining Doctrine','Deeper extraction efficiency and rare finds.'],
+      ['Master Cutter','Higher chance of flawless cuts.'],
+      ['Court Influence','Better commission and patron rewards.'],
+      ['Royal Logistics','Automation works faster.']
+    ];
+    document.getElementById('finalGuildContent').innerHTML=`
+      <div class="final-card">
+        <h3>🏛️ Guild Mastery</h3><div class="final-row"><b>Mastery Level</b><strong>${lvl}</strong></div>
+        <div class="final-row"><span>XP</span><span>${xp.toLocaleString()}</span></div><div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="final-row"><span>Next Level</span><span>${next.toLocaleString()} XP</span></div>
+        <div class="final-row"><span>Prestige</span><span>${G.rep.toLocaleString()}</span></div>
+        <div class="final-row"><span>Rank</span><span>${baseRanks[Math.min(4,Math.floor(G.rep/160))].name}</span></div>
+      </div>
+      <div class="final-card">
+        <h3>⚙️ Permanent Mastery Paths</h3>
+        ${upgrades.map((u,i)=>`<div class="final-row"><span>◆ ${u[0]}</span><span class="final-pill">Tier ${Math.min(10,Math.floor(lvl/(i+2))+1)}</span></div><p>${u[1]}</p>`).join('')}
+      </div>
+      <div class="final-card">
+        <div class="legacy-hero"><div><h3>♾️ Guild Legacy</h3><p>Ascend after reaching Grand Archon and Mastery 10. Legacy Tokens remain between runs.</p></div><div class="legacy-token">${legacy}</div></div>
+        <div class="final-row"><span>Ascension Status</span><b style="color:${can?'var(--success)':'var(--text-dim)'}">${can?'READY':'LOCKED'}</b></div>
+        <div class="final-row"><span>Requirement</span><span>640 Prestige + Mastery 10</span></div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" ${can?'':'disabled'} onclick="ascendGuild()">♾️ Ascend Guild (+1 Legacy)</button>
+      </div>`;
+  }
+
+  window.ascendGuild=function(){
+    ensureFinalState(); if(!legacyReady()) return;
+    if(!confirm('Ascend the guild? This starts a fresh career but keeps your Codex, trophies, blueprints and Legacy Tokens.')) return;
+    const keep={discoveredGems:G.discoveredGems,trophies:G.trophies,blueprints:G.blueprints,legacyTokens:(G.legacyTokens||0)+1};
+    blockSaves=true;
+    localStorage.removeItem('sovereign_guild_save');
+    localStorage.removeItem(slotKey(activeSlot()));
+    localStorage.setItem(LEGACY_KEY,JSON.stringify(keep));
+    location.reload();
+  };
+
+  function renderQuests(){
+    ensureFinalState();
+    const el=document.getElementById('finalQuestContent');
+    el.innerHTML=G.contracts.map(q=>{
+      const p=Math.min(q.target,questProgress(q)), done=p>=q.target, claimed=!!G.completedContracts[q.id];
+      return `<div class="quest-card ${done?'complete':''}"><h3>${done?'✓':'📜'} ${q.title}</h3><p>${q.desc}</p><div class="progress"><i style="width:${Math.round(p/q.target*100)}%"></i></div><div style="font-size:.66rem;color:var(--text-dim)">${Math.min(p,q.target).toLocaleString()} / ${q.target.toLocaleString()}</div><div class="reward">+$${q.rewardGold.toLocaleString()} • +${q.rewardRep} Prestige</div><button class="btn btn-sm ${done?'btn-gold':''}" style="margin-top:7px;width:100%" ${(!done||claimed)?'disabled':''} onclick="claimContract('${q.id}')">${claimed?'Claimed':done?'Claim Reward':'In Progress'}</button></div>`;
+    }).join('');
+  }
+  window.claimContract=function(id){
+    const q=G.contracts.find(x=>x.id===id); if(!q||G.completedContracts[id]||questProgress(q)<q.target)return;
+    G.gold+=q.rewardGold;G.rep+=q.rewardRep;G.completedContracts[id]=true;
+    G.masteryXP=(G.masteryXP||0)+q.rewardRep*4;
+    SFX.chimeFlawless();log(`📜 Contract complete: ${q.title} — reward collected.`);updateTopUI();renderQuests();renderGuild();saveGame(false);
+    if(G.contracts.every(x=>G.completedContracts[x.id])){rollContracts();log('👑 Three contracts completed. A new royal docket has arrived!');}
+  };
+
+  function renderCollection(){
+    const total=Object.keys(GEM_SPECIES).length, found=Object.keys(G.discoveredGems||{}).length;
+    const cutShapes=Object.keys(SHAPES).length, mounts=Object.keys(MOUNTS).length, metals=Object.keys(METALS).length;
+    const trophies=Object.values(G.trophies||{}).filter(Boolean).length, trophyTotal=Object.keys(G.trophies||{}).length;
+    const cards=[
+      ['Mineral Codex',found,total],['Cut Shapes',new Set((G.cutGems||[]).map(g=>g.cutName)).size,cutShapes],
+      ['Jewelry Designs',new Set((G.stock||[]).map(g=>g.mountType)).size,mounts],['Alloy Catalog',new Set((G.stock||[]).map(g=>g.metal)).size,metals],
+      ['Raw Specimens',G.rawGeodes.length,'∞'],['Cut Gem Vault',G.cutGems.length,'∞'],['Showroom Stock',G.stock.length,'∞'],['Trophies',trophies,trophyTotal]
+    ];
+    document.getElementById('finalCollectionContent').innerHTML=`<div class="collection-grid">${cards.map(c=>`<div class="collection-card"><b>${c[0]}</b><span>${c[1]} / ${c[2]}</span><div class="progress"><i style="width:${c[2]==='∞'?Math.min(100,c[1]*8):Math.min(100,c[1]/Math.max(1,c[2])*100)}%"></i></div></div>`).join('')}</div><div class="final-card" style="margin-top:8px"><h3>Collection Goals</h3><p>Discover every mineral, use every cut, forge every design, and complete every trophy. New species are distributed across deeper excavation strata.</p></div>`;
+  }
+
+  function renderSaveSlots(){
+    const el=document.getElementById('finalSaveContent');
+    let html='<div class="save-grid">';
+    for(let i=1;i<=3;i++){
+      const raw=localStorage.getItem(slotKey(i)); let data=null;
+      if(raw){try{data=JSON.parse(raw)}catch(e){}}
+      const st=data&&data.state, active=activeSlot()===i;
+      html+=`<div class="save-card ${active?'active':''}"><h3>Slot ${i} ${active?'• ACTIVE':''}</h3><div class="meta">${st?`${st.rep||0} Prestige • $${(st.gold||0).toLocaleString()} • ${Object.keys(st.discoveredGems||{}).length}/${Object.keys(GEM_SPECIES).length} minerals<br>Saved ${new Date(data.savedAt||Date.now()).toLocaleString()}`:'Empty slot'}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><button class="btn btn-sm btn-gold" onclick="loadSlot(${i})" ${st?'':'disabled'}>Load</button><button class="btn btn-sm" onclick="saveSlot(${i})">Save Here</button><button class="btn btn-sm" onclick="exportSlot(${i})" ${st?'':'disabled'}>Export</button><button class="btn btn-sm" onclick="deleteSlot(${i})" ${st?'':'disabled'}>Delete</button></div><button class="btn btn-sm" style="width:100%;margin-top:5px" onclick="newGame(${i})">New Game</button></div>`;
+    }
+    html+='</div><div class="final-card" style="margin-top:8px"><h3>Autosave</h3><p>The active slot autosaves every 30 seconds and whenever a major reward is claimed. The original single-save format is automatically migrated into Slot 1.</p><button class="btn btn-sm" style="width:100%;margin-top:8px;border-color:rgba(239,68,68,.55);color:#fecaca;background:rgba(127,29,29,.25)" onclick="resetCurrentSlot()">🗑️ RESET CURRENT SLOT</button><p style="font-size:.62rem;color:#fca5a5;margin-top:5px">Resets only the currently active slot. Other slots are preserved.</p></div>';
+    el.innerHTML=html;
+  }
+  window.saveSlot=saveSlot;window.loadSlot=loadSlot;window.deleteSlot=deleteSlot;window.newGame=newGame;window.exportSlot=exportSlot;
+
+  function renderHelp(){
+    document.getElementById('finalHelpContent').innerHTML=`<div class="final-grid"><div class="final-card"><h3>⛏️ 1. Mine</h3><p>Survey the grid, manage Focus and shaft Stability, then haul out geodes. Deeper strata contain rarer minerals. Use automations once the workshop can afford them.</p></div><div class="final-card"><h3>💎 2. Cut</h3><p>Select a rough stone, choose a shape, then time your strikes through the sweet spot. Better cutting improves gem value. Flawless cuts advance your mastery.</p></div><div class="final-card"><h3>💍 3. Forge</h3><p>Choose a mount, alloy and enough gems to fill every socket. Matching families create purity synergy; diverse sets can create spectrum synergy.</p></div><div class="final-card"><h3>🏪 4. Sell</h3><p>Use patrons, haggling, market trends and royal commissions to turn finished pieces into Gold and Prestige. Keep an eye on demand before selling.</p></div><div class="final-card"><h3>📜 5. Progress</h3><p>Contracts reward active play. The Codex tracks discoveries, while Mastery Level tracks your lifetime guild expertise.</p></div><div class="final-card"><h3>♾️ Endgame</h3><p>Reach Grand Archon and Mastery 10 to unlock Guild Ascension. Legacy Tokens persist and let future careers build on previous mastery.</p></div></div>`;
+    document.getElementById('finalHelpContent').insertAdjacentHTML('beforeend', `<div class="final-card" style="margin-top:8px"><h3>💰 Economy tips</h3><p>Forge estimates show alloy cost, estimated patron payout, and profit after alloy; gem appraisal is not gold spent. If you need cash, quick-sell an unsocketed gem from the Forge vault for 60% of its appraisal. Strata are paid for once as you unlock them; unlocked strata are free to revisit.</p></div>`);
+  }
+
+  function renderFinalAll(){ensureFinalState();renderGuild();renderQuests();renderCollection();renderSaveSlots();renderHelp();}
+
+  // Dynamic extra forge buttons and cut shapes without removing the original controls.
+  function addExtraForgeButtons(){
+    const wrap=document.querySelector("#view-forge [id^='m-ring']")?.parentElement; if(!wrap || wrap.dataset.finalExpanded) return;
+    wrap.dataset.finalExpanded='1';
+    const extras=[['eternity','💎 Eternity (5)'],['signet','🔱 Royal Signet (1)'],['brooch','🎖️ Court Brooch (3)'],['crown','👑 Imperial Crown (6)'],['necklace','📿 Royal Necklace (5)'],['collar','✨ Imperial Collar (6)'],['studs','💎 Gem Studs (2)'],['medallion','🏅 Guild Medallion (2)']];
+    extras.forEach(([k,label])=>{const b=document.createElement('button');b.className='btn btn-sm';b.id='m-'+k;b.textContent=label;b.onclick=()=>setMount(k);wrap.appendChild(b);});
+  }
+  function addExtraShapeButtons(){
+    const br=document.getElementById('cut-brilliant'); if(!br) return;
+    const wrap=br.parentElement; if(wrap.dataset.finalExpanded) return; wrap.dataset.finalExpanded='1';
+    const extras=[['asscher','Asscher Royal'],['radiant','Radiant Star'],['oval','Imperial Oval'],['trillion','Trillion Flame'],['rose','Rose Crown'],['oldmine','Old Mine']];
+    extras.forEach(([k,n])=>{const b=document.createElement('button');b.className='btn btn-sm';b.id='cut-'+k;b.textContent=n+` (${SHAPES[k].mult}x)`;b.onclick=()=>setCutShape(k);wrap.appendChild(b);});
+    wrap.style.gridTemplateColumns='repeat(4,1fr)';
+  }
+
+  // Patch selected mechanics lightly so new progression gets XP without replacing old gameplay.
+  const oldClaim=window.claimGeode; if(typeof oldClaim==='function') window.claimGeode=function(idx){oldClaim(idx);G.masteryXP=(G.masteryXP||0)+12;};
+  const oldForge=window.forgeJewel; if(typeof oldForge==='function') window.forgeJewel=function(){const before=G.stats.masterpiecesForged||0;oldForge();if((G.stats.masterpiecesForged||0)>before)G.masteryXP=(G.masteryXP||0)+70;};
+  const oldSetShape=window.setCutShape; if(typeof oldSetShape==='function') window.setCutShape=function(k){oldSetShape(k);if(k!=='brilliant')G.stats.nonBrilliantCuts=(G.stats.nonBrilliantCuts||0)+1;};
+
+  // Initial final state and legacy migration.
+  const legacyRaw=localStorage.getItem(LEGACY_KEY);
+  if(legacyRaw){try{const k=JSON.parse(legacyRaw);G.discoveredGems=k.discoveredGems||{};G.trophies=k.trophies||G.trophies;G.blueprints=k.blueprints||{};G.legacyTokens=k.legacyTokens||0;localStorage.removeItem(LEGACY_KEY);}catch(e){}}
+  ensureFinalState();
+  // Restore the active final-edition slot after the original game bootstrap has run.
+  const activeRaw = localStorage.getItem(slotKey(activeSlot()));
+  if(activeRaw){ try { applyPayload(JSON.parse(activeRaw)); initMine(); updateAutomationsUI(); updateTopUI(); nav(G.station||'mine'); } catch(e) {} }
+  renderFinalAll();
+  setTimeout(()=>{addExtraForgeButtons();addExtraShapeButtons();},250);
+  setInterval(()=>{ensureFinalState();renderGuild();renderQuests();},5000);
+
+  // Make the station view re-run compact expansion whenever the forge/cutting screen is entered.
+  const oldNav=window.nav; if(typeof oldNav==='function') window.nav=function(st){oldNav(st);if(st==='forge')addExtraForgeButtons();if(st==='lapidary')addExtraShapeButtons();};
+
+  // Improve top status with mastery / active slot indicators.
+  const oldTop=window.updateTopUI; if(typeof oldTop==='function') window.updateTopUI=function(){oldTop();const rank=document.getElementById('guildRank');if(rank)rank.title=`Mastery ${masteryLevel()} • Save Slot ${activeSlot()}`;};
+
+  // Save after visibility changes so closing the tab is safer.
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)saveSlot(activeSlot(),true);});
+  window.addEventListener('beforeunload',()=>saveSlot(activeSlot(),true));
+})();
+</script>
+
+
+<style id="ultimate-overhaul">
+/* ULTIMATE PRESENTATION + GAMEPLAY FEEDBACK LAYER */
+:root{--rare:#67e8f9;--epic:#a78bfa;--legend:#fbbf24;--mythic:#fb7185}
+.btn,.station-btn{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}.btn:hover,.station-btn:hover{transform:translateY(-1px);filter:brightness(1.12)}.btn:active,.station-btn:active{transform:translateY(1px) scale(.99)}
+.panel-card,.final-card,.save-card,.quest-card,.collection-card{box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.ult-toast{position:fixed;left:50%;top:18%;transform:translate(-50%,-20px) scale(.96);z-index:9999;pointer-events:none;opacity:0;min-width:280px;max-width:80vw;text-align:center;padding:14px 20px;border:1px solid rgba(253,230,138,.5);border-radius:14px;background:linear-gradient(135deg,rgba(13,18,29,.96),rgba(37,24,13,.96));box-shadow:0 15px 60px rgba(0,0,0,.5),0 0 30px rgba(245,158,11,.16);transition:opacity .22s,transform .22s}.ult-toast.show{opacity:1;transform:translate(-50%,0) scale(1)}.ult-toast b{display:block;color:#fde68a;font-size:1.05rem}.ult-toast span{display:block;color:#cbd5e1;font-size:.76rem;margin-top:3px}
+.quality-pop{position:fixed;left:50%;top:34%;z-index:9998;pointer-events:none;text-align:center;transform:translate(-50%,20px) scale(.7);opacity:0}.quality-pop.show{animation:masterwork 1.45s ease forwards}.quality-pop .q-title{font-weight:1000;font-size:clamp(1.5rem,4vw,3.2rem);letter-spacing:2px;background:linear-gradient(90deg,#fff,#fde68a,#f59e0b,#fff);-webkit-background-clip:text;color:transparent;text-shadow:0 0 28px rgba(245,158,11,.35)}.quality-pop .q-sub{font-size:1rem;color:#e2e8f0;margin-top:4px}@keyframes masterwork{0%{opacity:0;transform:translate(-50%,30px) scale(.65)}18%{opacity:1;transform:translate(-50%,0) scale(1.08)}70%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-35px) scale(1.02)}}
+.rare-glow{animation:rarePulse 1.5s ease-in-out infinite alternate}@keyframes rarePulse{from{filter:drop-shadow(0 0 2px rgba(103,232,249,.2))}to{filter:drop-shadow(0 0 12px rgba(103,232,249,.75))}}
+</style>
+<div id="ultToast" class="ult-toast"><b id="ultToastTitle">Nice!</b><span id="ultToastText"></span></div><div id="qualityPop" class="quality-pop"><div class="q-title" id="qualityTitle">MASTERWORK</div><div class="q-sub" id="qualitySub"></div></div>
+<script>
+/* ULTIMATE GAMEPLAY LAYER — additive, save-safe */
+(function(){
+ const UKEY='sovereign_ultimate_meta_v1';
+ const oldParse=JSON.parse;
+ function meta(){try{return Object.assign({daily:{},weekly:{},recipes:{},reputation:0,auctions:0,events:0,discoveries:0,stats:{}},oldParse(localStorage.getItem(UKEY)||'{}'))}catch(e){return {daily:{},weekly:{},recipes:{},reputation:0,auctions:0,events:0,discoveries:0,stats:{}}}}
+ function saveMeta(m){localStorage.setItem(UKEY,JSON.stringify(m))}
+ window.ULT={toast:function(t,x){let a=document.getElementById('ultToast');document.getElementById('ultToastTitle').textContent=t;document.getElementById('ultToastText').textContent=x||'';a.classList.remove('show');void a.offsetWidth;a.classList.add('show');clearTimeout(a._t);a._t=setTimeout(()=>a.classList.remove('show'),2600)},master:function(t,x){let a=document.getElementById('qualityPop');document.getElementById('qualityTitle').textContent=t;document.getElementById('qualitySub').textContent=x||'';a.classList.remove('show');void a.offsetWidth;a.classList.add('show'); if(window.spawnBurst)for(let i=0;i<4;i++)setTimeout(()=>spawnBurst(innerWidth*.5,innerHeight*.36,['#f59e0b','#fde68a','#a78bfa','#67e8f9'][i],18),i*90)},meta:meta,saveMeta:saveMeta};
+ // Daily/weekly challenges and achievement tracking
+ function resetChallenges(){let m=meta(),d=new Date(),day=d.toISOString().slice(0,10),week=`${d.getUTCFullYear()}-${Math.floor((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,1))/604800000)}`;if(m.dayKey!==day){m.dayKey=day;m.daily={mine:0,cut:0,forge:0,sell:0,claims:0}}if(m.weekKey!==week){m.weekKey=week;m.weekly={master:0,discover:0,gold:0}}saveMeta(m)}resetChallenges();
+ const origLog=window.log;window.log=function(x){try{let m=meta(),s=String(x);if(/geode|mine|excav/i.test(s))m.daily.mine++;if(/cut|facet/i.test(s))m.daily.cut++;if(/forge|crafted|jewel/i.test(s))m.daily.forge++;if(/sold|sale|revenue/i.test(s))m.daily.sell++;saveMeta(m)}catch(e){}return origLog?origLog.apply(this,arguments):void 0};
+ // Ambient keyboard shortcuts: 1-5 stations, M for mastery modal, Q for contracts
+ document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;let n=Number(e.key);if(n>=1&&n<=5&&window.nav)window.nav(['mine','lapidary','forge','boutique','codex'][n-1]);if(e.key.toLowerCase()==='q'&&window.openFinalModal)window.openFinalModal('quests');if(e.key.toLowerCase()==='m'&&window.openFinalModal)window.openFinalModal('guild')});
+ // Rare-item feedback based on existing arrays, without changing core inventory objects.
+ let lastCounts={raw:0,cut:0,stock:0};setInterval(()=>{try{let G=window.G;if(!G)return;let r=(G.rawGeodes||[]).length,c=(G.cutGems||[]).length,s=(G.stock||[]).length;if(r>lastCounts.raw)ULT.toast('⛏️ New Specimen','A fresh discovery entered the workshop.');if(c>lastCounts.cut)ULT.toast('💎 Gem Added','A newly cut stone is ready for crafting.');if(s>lastCounts.stock)ULT.toast('💍 Masterwork Stock','A finished piece is now available for the court.');lastCounts={raw:r,cut:c,stock:s}}catch(e){}},1500);
+ // Expose a lightweight recipe/auction/event API for future content while preserving current game.
+ window.ULT_RECIPES=[
+  ['Moonlit Sovereign Ring','Sapphire','Silver',2,4200],['Royal Sunburst Pendant','Ruby','Gold',2,7600],['Emerald Court Tiara','Emerald','Gold',4,18500],['Celestial Opal Relic','Opal','Platinum',3,32000],['Void Diamond Crown','Diamond','Platinum',5,85000]
+ ];
+ window.ULT_EVENTS=[['Gem Rush','Rare mineral finds are boosted for this event.'],['Royal Wedding','Elegant rings and bridal pieces command premium prices.'],['Forge Festival','Crafting is celebrated throughout the guild.'],['Moonlit Market','Blue and violet stones attract collectors.'],['Collector Week','Rare and unusual cuts receive special attention.'],['Meteor Shower','A chance for celestial material appears in deep strata.']];
+})();
+</script>
+
+<script>(function(){const f=window.renderFinalAll;window.renderFinalAll=function(){if(f)f();setTimeout(()=>{const x=document.getElementById('finalHelpContent');if(x&&!x.dataset.ultimate){x.insertAdjacentHTML('beforeend',`<div class="final-card" style="margin-top:8px"><h3>✨ Ultimate Systems</h3><p>Rare discoveries, masterwork feedback, rotating events, deeper collection goals, customer reputation, blueprint recipes, auction-ready economy hooks and keyboard station shortcuts are layered onto the existing guild. Use 1–5 to switch stations, Q for Contracts, and M for Guild.</p></div>`);x.dataset.ultimate='1'}},0)};})();</script>
+<style id="expansion-v4">
+.tile.strata-6{background:#06303a;border-bottom:3px solid #021a20;color:#67e8f9}
+.tile.strata-7{background:#2a1a3f;border-bottom:3px solid #150a24;color:#f0abfc}
+.tile.strata-8{background:#1e2430;border-bottom:3px solid #0d1118;color:#e2e8f0}
+.tile.strata-9{background:#3b0d1c;border-bottom:3px solid #1d0610;color:#fb7185}
+.tile.strata-10{background:#3a2a05;border-bottom:3px solid #1c1400;color:#fde047}
+@keyframes shk{0%,100%{transform:none}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
+body.shake{animation:shk .35s}
+.fx-float{position:fixed;z-index:1001;pointer-events:none;font-weight:900;color:#fde68a;text-shadow:0 0 8px #f59e0b,0 2px 2px #000;animation:fl 1.1s ease-out forwards}
+@keyframes fl{to{transform:translateY(-60px);opacity:0}}
+.fx-toast{position:fixed;top:70px;right:16px;z-index:1200;background:rgba(13,18,29,.95);border:1px solid var(--gold);border-radius:10px;padding:10px 14px;font-size:.8rem;box-shadow:0 0 18px rgba(245,158,11,.35);animation:tin .3s ease-out,tout .4s 3s forwards}
+@keyframes tin{from{transform:translateX(40px);opacity:0}}@keyframes tout{to{opacity:0;transform:translateY(-10px)}}
+#xpBtn{position:fixed;right:12px;bottom:56px;z-index:900}
+#xpOv{display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.72);align-items:center;justify-content:center}
+#xpOv.on{display:flex}
+#xpBox{width:min(680px,94vw);max-height:88vh;overflow:auto;background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:14px}
+.xp-h{color:var(--gold-light);font-weight:900;margin:12px 0 6px}
+.xp-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:.74rem}
+.xp-r small{color:var(--text-dim);display:block}.xp-ok{color:var(--success)}
+#tutorialOverlay{display:none;position:fixed;inset:0;z-index:14000;background:rgba(2,5,10,.84);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}
+#tutorialOverlay.open{display:flex}
+#tutorialCard{width:min(720px,96vw);max-height:90vh;overflow:auto;background:linear-gradient(145deg,#111a2a,#080d16);border:1px solid rgba(245,158,11,.55);border-radius:16px;padding:clamp(16px,4vw,28px);box-shadow:0 24px 90px rgba(0,0,0,.65)}
+.tutorial-step{display:grid;grid-template-columns:42px 1fr;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:.78rem;color:var(--text-dim);line-height:1.55}
+.tutorial-step:last-child{border-bottom:0}.tutorial-icon{font-size:1.4rem}.tutorial-step b{color:var(--text)}
+@media(max-width:520px){.tutorial-step{grid-template-columns:32px 1fr;gap:7px}}
+</style>
+<button id="xpBtn" class="btn btn-sm btn-gold" onclick="xpToggle()">🌳 Guild Tech</button>
+<div id="xpOv" onclick="if(event.target===this)xpToggle()"><div id="xpBox"></div></div>
+<script>
+/* V4 EXPANSION: deeper strata, automation levels, tech tree, set bonuses, achievements, juice */
+(function(){
+const $=id=>document.getElementById(id), RN=['','I','II','III','IV','V','VI','VII','VIII','IX','X'];
+function X(){G.ext=G.ext||{};const e=G.ext;e.lv=e.lv||{};e.tech=e.tech||{};e.ach=e.ach||{};return e}
+const rid=()=>Math.random().toString(36).substr(2,9);
+
+/* --- Strata VI-X --- */
+const NEW=[[6,'Abyssal Trench',4500,["Deep Sapphire","Paraiba Tourmaline","Star Sapphire","Rubellite","Indicolite","Aquamarine"]],
+[7,'Storm Cloud Citadel',9000,["Imperial Emerald","Royal Alexandrite","Alexandrite Catseye","Tsavorite","Demantoid","Star Ruby"]],
+[8,'Lunar Mare',18000,["Starlight Diamond","Black Opal","Jeremejevite","Void Tanzanite","Painite"]],
+[9,'Heart of a Dead Star',36000,["Painite","Musgravite","Jeremejevite","Starlight Diamond","Black Opal"]],
+[10,'The Sovereign Vault',75000,["Musgravite","Painite","Starlight Diamond"]]];
+NEW.forEach(([d,n,c,g])=>{DEPTHS[d]={name:n,cost:c,geodes:g};const o=document.createElement('option');o.value=d;o.textContent=`Strata ${RN[d]}: ${n} ($${c.toLocaleString()})`;$('mineDepthSelect').appendChild(o)});
+updateDepthOptions();
+
+/* --- Automation levels --- */
+const AUTO=[['bore','⚙️ Steam Bore'],['tumbler','🧪 Tumbler'],['smith','🔨 Smith'],['peddler','🛒 Peddler']];
+const lvOf=k=>X().lv[k]||1, lvCost=k=>Math.round(G.automations[k].cost*Math.pow(1.9,lvOf(k)));
+const lvMult=k=>{const l=lvOf(k);return 1+.3*(l-1)+(l>=5?.25:0)+(l>=10?.5:0)+(l>=25?1:0)+(X().tech.speed?.2:0)};
+const oT=window.runAutomationTick;
+window.runAutomationTick=function(d){oT(d);AUTO.forEach(([k])=>{const a=G.automations[k];if(a.owned){const m=lvMult(k)-1;if(m>0)a.progress=Math.min(a.progress+d*m,a.time)}})};
+
+/* --- Tech tree --- */
+const TECH=[{id:'ledger',n:'📒 Fine Ledgers',d:'+10% sale income',c:600},
+{id:'brokers',n:'🤝 Court Brokers',d:'+15% sale income',c:3000,req:'ledger'},
+{id:'monopoly',n:'👑 Royal Monopoly',d:'+25% sale income',c:15000,req:'brokers'},
+{id:'lungs',n:'🫁 Deep Lungs',d:'+25 max Focus',c:900},
+{id:'speed',n:'⚡ Overclocked Rigs',d:'+20% automation speed',c:2500,req:'lungs'},
+{id:'lucky',n:'🍀 Prospector Luck',d:'25% chance of a bonus geode',c:2000},
+{id:'surveyor',n:'🧭 Master Surveyor',d:'+3 geodes in every fresh grid',c:4000,req:'lucky'}];
+
+/* --- Set bonuses + achievements --- */
+const fams=()=>{const m={};for(const k in GEM_SPECIES){const s=GEM_SPECIES[k];(m[s.family]=m[s.family]||new Set()).add(s.name)}return m};
+const doneFams=()=>{const m=fams(),o=[];for(const f in m)if(m[f].size>1&&[...m[f]].every(n=>G.discoveredGems[n]))o.push(f);return o};
+const ACH=[['a1','First Fortune','Earn $10,000',()=>G.stats.totalRevenue>=1e4],['a2','Six Figures','Earn $100,000',()=>G.stats.totalRevenue>=1e5],
+['a3','Millionaire','Earn $1,000,000',()=>G.stats.totalRevenue>=1e6],['a4','Apprentice Cutter','Facet 25 gems',()=>G.stats.gemsFaceted>=25],
+['a5','Master Cutter','Facet 150 gems',()=>G.stats.gemsFaceted>=150],['a6','Flawless Hands','10 flawless cuts',()=>G.stats.flawlessCuts>=10],
+['a7','Court Jeweler','Forge 10 pieces',()=>G.stats.masterpiecesForged>=10],['a8','Naturalist','Discover 25 species',()=>Object.keys(G.discoveredGems).length>=25],
+['a9','Complete Codex','Discover every species',()=>Object.keys(G.discoveredGems).length>=Object.keys(GEM_SPECIES).length],
+['a10','Deep Diver','Reach Strata VI',()=>G.mineDepth>=6],['a11','Star Delver','Reach Strata X',()=>G.mineDepth>=10],
+['a12','Industrialist','Own all 4 automations',()=>AUTO.every(a=>G.automations[a[0]].owned)]];
+window.collMult=function(){const t=X().tech;return 1+doneFams().length*.04+Object.keys(X().ach).length*.02+(t.ledger?.1:0)+(t.brokers?.15:0)+(t.monopoly?.25:0)};
+
+/* --- Juice --- */
+let mx=innerWidth/2,my=140;addEventListener('pointerdown',e=>{mx=e.clientX;my=e.clientY},true);
+function fl(t,x,y,c){const e=document.createElement('div');e.className='fx-float';e.textContent=t;e.style.left=x+'px';e.style.top=y+'px';if(c)e.style.color=c;document.body.appendChild(e);setTimeout(()=>e.remove(),1100)}
+function toast(h,t){const e=document.createElement('div');e.className='fx-toast';e.innerHTML=`<b style="color:var(--gold-light)">${h}</b><br>${t}`;document.body.appendChild(e);setTimeout(()=>e.remove(),3500)}
+const shake=()=>{document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),350)};
+let lg=G.gold;setInterval(()=>{const d=G.gold-lg;lg=G.gold;if(d>=5)fl('+$'+Math.round(d).toLocaleString(),mx,my-10)},250);
+
+const oC=window.claimGeode;
+window.claimGeode=function(i){const t=G.grid[i],s=GEM_SPECIES[t.geodeType]||{},el=$('tile-'+i),r=el&&el.getBoundingClientRect();oC(i);
+ const v=s.val||0,tier=v>=2000?3:v>=700?2:v>=250?1:0;
+ if(r){const x=r.left+r.width/2,y=r.top+r.height/2;spawnBurst(x,y,s.color||'#fde68a',14+tier*14);if(tier>1)setTimeout(()=>spawnBurst(x,y,'#ffffff',20),120)}
+ if(tier>=2)shake();
+ if(tier>=1)toast(['','✨ Rare find','💎 Epic find','🌟 LEGENDARY find!'][tier],s.name||t.geodeType);
+ if(X().tech.lucky&&Math.random()<.25){G.rawGeodes.push({id:rid(),type:t.geodeType,carat:(1.2+Math.random()*4.8).toFixed(2)});fl('🍀 Bonus geode!',mx,my-34,'#86efac');updateTopUI()}};
+const oD=window.digTile;window.digTile=function(i,e){if(G.tool==='tnt'&&G.stability>0)shake();return oD(i,e)};
+const oI=window.initMine;
+window.initMine=function(){oI();if(X().tech.surveyor){const f=G.grid.filter(t=>!t.hasGeode),p=DEPTHS[G.mineDepth].geodes;for(let n=0;n<3&&f.length;n++){const t=f.splice(Math.floor(Math.random()*f.length),1)[0];t.hasGeode=true;t.geodeType=p[Math.floor(Math.random()*p.length)]}}};
+
+/* --- Overlay UI --- */
+function render(){const e=X(),fd=doneFams(),fm=fams();
+ let h=`<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:1.1rem;color:var(--gold-light)">🌳 Guild Tech &amp; Progress</b><button class="btn btn-sm" onclick="xpToggle()">✕</button></div>
+ <div class="final-row"><span>Gold</span><b>$${Math.floor(G.gold).toLocaleString()}</b></div><div class="final-row"><span>Total sale bonus</span><b class="xp-ok">+${Math.round((collMult()-1)*100)}%</b></div>`;
+ h+='<div class="xp-h">⚙️ Automation Levels</div>';
+ AUTO.forEach(([k,n])=>{const a=G.automations[k],l=lvOf(k),c=lvCost(k);h+=`<div class="xp-r"><span>${n} — Lv ${l} (×${lvMult(k).toFixed(2)})<small>Milestones: Lv5 +25%, Lv10 +50%, Lv25 +100% speed</small></span>${a.owned?`<button class="btn btn-sm btn-gold" ${G.gold<c?'disabled':''} onclick="xpLv('${k}')">Upgrade $${c.toLocaleString()}</button>`:'<small>Commission first</small>'}</div>`});
+ h+='<div class="xp-h">🔬 Tech Tree</div>';
+ TECH.forEach(t=>{const own=e.tech[t.id],lock=t.req&&!e.tech[t.req];h+=`<div class="xp-r"><span>${t.n}<small>${t.d}${lock?' • requires '+TECH.find(x=>x.id===t.req).n:''}</small></span>${own?'<b class="xp-ok">Owned</b>':`<button class="btn btn-sm btn-gold" ${lock||G.gold<t.c?'disabled':''} onclick="xpTech('${t.id}')">$${t.c.toLocaleString()}</button>`}</div>`});
+ h+=`<div class="xp-h">💠 Collection Set Bonuses (+4% sales each)</div>`;
+ h+=Object.keys(fm).filter(f=>fm[f].size>1).map(f=>{const got=[...fm[f]].filter(n=>G.discoveredGems[n]).length;return `<div class="xp-r"><span>${f}</span><b class="${fd.includes(f)?'xp-ok':''}">${got}/${fm[f].size}${fd.includes(f)?' ✓':''}</b></div>`}).join('');
+ h+='<div class="xp-h">🏆 Achievements (+2% sales each)</div>'+ACH.map(a=>`<div class="xp-r"><span>${e.ach[a[0]]?'🏆':'🔒'} ${a[1]}<small>${a[2]}</small></span></div>`).join('');
+ $('xpBox').innerHTML=h}
+window.xpToggle=function(){$('xpOv').classList.toggle('on');if($('xpOv').classList.contains('on'))render()};
+window.xpLv=function(k){const c=lvCost(k);if(G.gold<c)return;G.gold-=c;X().lv[k]=lvOf(k)+1;updateTopUI();render()};
+window.xpTech=function(id){const t=TECH.find(x=>x.id===id),e=X();if(e.tech[id]||G.gold<t.c||(t.req&&!e.tech[t.req]))return;G.gold-=t.c;e.tech[id]=true;if(id==='lungs'){G.maxFocus+=25}updateTopUI();toast('🔬 Researched',t.n);render()};
+setInterval(()=>{ACH.forEach(a=>{if(!X().ach[a[0]]&&a[3]()){X().ach[a[0]]=true;toast('🏆 Achievement',a[1]+' (+2% sales)');spawnBurst(innerWidth/2,100,'#fde047',30);if($('xpOv').classList.contains('on'))render()}})},2000);
+})();
+</script>
+
+<button id="x2Btn" class="btn btn-sm btn-gold" style="position:fixed;right:12px;bottom:92px;z-index:900" onclick="x2Toggle()">🏰 Houses &amp; Crew</button>
+<div id="x2Ov" class="" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.72);align-items:center;justify-content:center" onclick="if(event.target===this)x2Toggle()"><div id="x2Box" style="width:min(700px,94vw);max-height:88vh;overflow:auto;background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:14px"></div></div>
+<script>
+/* V5 EMPIRE: noble houses, crew, rooms, expeditions, events, market saturation, legacy tree */
+(function(){
+const $=id=>document.getElementById(id),rid=()=>Math.random().toString(36).substr(2,9);
+function E(){G.ext=G.ext||{};const e=G.ext;['hs','wk','rm','leg','sat'].forEach(k=>e[k]=e[k]||{});return e}
+function toast(h,t){const e=document.createElement('div');e.className='fx-toast';e.innerHTML=`<b style="color:var(--gold-light)">${h}</b><br>${t}`;document.body.appendChild(e);setTimeout(()=>e.remove(),3500)}
+const S=()=>G.stats, nd=()=>Object.keys(G.discoveredGems).length;
+const ch=(a,b,c,d,e)=>({t:a,g:b,ok:c,r:d,s:e});
+const HOUSES=[{id:'vale',n:'🦅 House Valemont',ch:[
+ ch('The Opening Gambit','Earn $15,000 total',()=>S().totalRevenue>=15e3,1500,'Lord Valemont tests the Guild with a modest order and finds every stone flawless.'),
+ ch('The Winter Court','Facet 60 gems',()=>S().gemsFaceted>=60,4000,'At the Winter Court your cuts become the talk of the season.'),
+ ch('The Crown Debt','Earn $250,000 total',()=>S().totalRevenue>=25e4,25000,'Valemont settles the crown debt in gems and swears fealty to the Guild.')]},
+{id:'sol',n:'🌞 House Solanis',ch:[
+ ch('A Wedding Commission','Forge 5 pieces',()=>S().masterpiecesForged>=5,2000,'The Solanis heir wears your ring to the altar.'),
+ ch('The Sun Throne','Forge 25 pieces',()=>S().masterpiecesForged>=25,9000,'A throne inlaid with your masterworks glows at the solstice feast.'),
+ ch('The Eternal Regalia','Forge 80 pieces',()=>S().masterpiecesForged>=80,40000,'Solanis crowns are now forged only by the Guild.')]},
+{id:'nyx',n:'🌙 House Nyxara',ch:[
+ ch('Moonlit Survey','Discover 15 species',()=>nd()>=15,2500,'Nyxara scholars catalogue your finds by moonlight.'),
+ ch('The Hidden Library','Discover 35 species',()=>nd()>=35,12000,'A forgotten library of gem lore is opened to you.'),
+ ch('The Starlit Codex','Discover every species',()=>nd()>=Object.keys(GEM_SPECIES).length,60000,'The Codex is complete. Nyxara names you Keeper of Stones.')]},
+{id:'iron',n:'⚒️ House Ironhold',ch:[
+ ch('Into the Deep','Reach Strata III',()=>G.mineDepth>=3,2000,'Ironhold dwarves teach you to read the ceiling.'),
+ ch('The Trench Road','Reach Strata VI',()=>G.mineDepth>=6,15000,'A road of iron rails now runs to the Abyssal Trench.'),
+ ch('Heart of the Mountain','Reach Strata IX',()=>G.mineDepth>=9,70000,'Ironhold opens its oldest vault to the Guild.')]}];
+const WK=[{id:'scout',n:'🧭 Scout',d:'Finds a geode every 20s ÷ level',c:1500},{id:'clerk',n:'📒 Clerk',d:'Earns steady gold each second',c:2500},{id:'foreman',n:'🧑‍🏭 Foreman',d:'+8% sale income per level',c:4000}];
+const RM=[{id:'archive',n:'📚 Archive',d:'+5% sale income per level'},{id:'vault',n:'🏦 Vault',d:'+25% expedition rewards per level'}];
+const EXP=[['Local Dig',60,500,2],['Caravan Run',180,2000,4],['Deep Survey',420,8000,7]];
+const LEG=[['l1','Ancestral Ledger','+15% sales',1],['l2','Founder\'s Eye','+25% sales',2],['l3','Time-Lost Pace','Crew works 25% faster',2]];
+const EVT=[['🎉 Royal Festival','Sales ×1.5 for 60s',1.5],['📉 Market Crash','Sales ×0.7 for 60s',.7],['🌪️ Gem Rush','5 bonus geodes!',0],['💰 Noble Gift','A patron gifts 3% of your gold',0]];
+const wl=k=>E().wk[k]||0, rl=k=>E().rm[k]||0, now=()=>Date.now();
+const wCost=k=>Math.round(WK.find(w=>w.id===k).c*Math.pow(2.2,wl(k)));
+const rCost=k=>Math.round(5000*Math.pow(3,rl(k)));
+const spent=()=>Object.keys(E().leg).reduce((a,k)=>a+LEG.find(l=>l[0]===k)[3],0);
+const evM=()=>{const v=E().ev;return v&&v.until>now()?v.m:1};
+const geodes=n=>{const p=DEPTHS[G.mineDepth].geodes;for(let i=0;i<n;i++)G.rawGeodes.push({id:rid(),type:p[Math.floor(Math.random()*p.length)],carat:(1.2+Math.random()*4.8).toFixed(2)});updateTopUI()};
+
+/* sale multiplier layer */
+const oM=window.collMult;
+window.collMult=function(){const e=E();let h=0;HOUSES.forEach(x=>h+=(e.hs[x.id]||0)*.03);
+ return oM()*(1+h+wl('foreman')*.08+rl('archive')*.05+(e.leg.l1?.15:0)+(e.leg.l2?.25:0))*evM()};
+/* market saturation: selling the same family repeatedly lowers its price; recovers over time */
+window.satMult=function(f,rec){const s=E().sat,o=s[f]||{n:0,t:now()};let n=Math.max(0,o.n-(now()-o.t)/20000);const m=Math.max(.6,1-.06*n);if(rec)n+=1;s[f]={n,t:now()};return m};
+
+/* crew + events + expeditions tick */
+let tc=0;setInterval(()=>{const e=E(),sp=e.leg.l3?1.25:1;tc++;
+ if(wl('scout')&&tc%Math.max(2,Math.round(20/(wl('scout')*sp)))===0)geodes(1);
+ if(wl('clerk')){const g=Math.max(2,S().totalRevenue*5e-5)*wl('clerk')*sp;G.gold+=g;S().totalRevenue+=g}
+ if(!e.ev||e.ev.until<now()){if(Math.random()<1/110){const i=Math.floor(Math.random()*EVT.length),v=EVT[i];toast(v[0],v[1]);
+  if(i<2)e.ev={m:v[2],until:now()+6e4,n:v[0]};else if(i===2)geodes(5);else{G.gold+=Math.round(G.gold*.03)}updateTopUI()}}
+ if(e.xp&&e.xp.end<=now()&&!e.xp.done){e.xp.done=true;toast('🧭 Expedition returned','Open Houses & Crew to collect')}},1000);
+
+/* UI */
+function render(){const e=E();let h=`<div style="display:flex;justify-content:space-between"><b style="font-size:1.1rem;color:var(--gold-light)">🏰 Houses, Crew &amp; Expeditions</b><button class="btn btn-sm" onclick="x2Toggle()">✕</button></div>
+<div class="final-row"><span>Gold</span><b>$${Math.floor(G.gold).toLocaleString()}</b></div>${e.ev&&e.ev.until>now()?`<div class="final-row"><span>Active event</span><b class="xp-ok">${e.ev.n}</b></div>`:''}`;
+ h+='<div class="xp-h">📜 Noble Houses (+3% sales per chapter)</div>';
+ HOUSES.forEach(x=>{const k=e.hs[x.id]||0,c=x.ch[k];h+=`<div class="xp-r"><span><b>${x.n}</b> — ${k}/3<small>${c?`${c.t}: ${c.g} • reward $${c.r.toLocaleString()}`:'Story complete'}${k?'<br><i>'+x.ch[k-1].s+'</i>':''}</small></span>${c?`<button class="btn btn-sm btn-gold" ${c.ok()?'':'disabled'} onclick="x2House('${x.id}')">Claim</button>`:'🏆'}</div>`});
+ h+='<div class="xp-h">👷 Crew</div>';
+ WK.forEach(w=>h+=`<div class="xp-r"><span>${w.n} Lv ${wl(w.id)}<small>${w.d}</small></span><button class="btn btn-sm btn-gold" ${G.gold<wCost(w.id)?'disabled':''} onclick="x2Work('${w.id}')">${wl(w.id)?'Train':'Hire'} $${wCost(w.id).toLocaleString()}</button></div>`);
+ h+='<div class="xp-h">🏗️ Workshop Rooms</div>';
+ RM.forEach(r=>h+=`<div class="xp-r"><span>${r.n} Lv ${rl(r.id)}/5<small>${r.d}</small></span>${rl(r.id)>=5?'Max':`<button class="btn btn-sm btn-gold" ${G.gold<rCost(r.id)?'disabled':''} onclick="x2Room('${r.id}')">Build $${rCost(r.id).toLocaleString()}</button>`}</div>`);
+ h+='<div class="xp-h">🧭 Expeditions</div>';
+ if(e.xp&&!e.xp.done)h+=`<div class="xp-r"><span>${EXP[e.xp.i][0]} underway<small>${Math.max(0,Math.ceil((e.xp.end-now())/1000))}s remaining</small></span></div>`;
+ else if(e.xp&&e.xp.done)h+=`<div class="xp-r"><span>${EXP[e.xp.i][0]} returned!</span><button class="btn btn-sm btn-gold" onclick="x2Collect()">Collect</button></div>`;
+ else EXP.forEach((x,i)=>h+=`<div class="xp-r"><span>${x[0]}<small>${x[1]}s • returns gold + ${x[3]} geodes</small></span><button class="btn btn-sm btn-gold" ${G.gold<x[2]?'disabled':''} onclick="x2Send(${i})">Send $${x[2].toLocaleString()}</button></div>`);
+ h+=`<div class="xp-h">♾️ Legacy Tree (${(G.legacyTokens||0)-spent()} tokens free)</div>`;
+ LEG.forEach(l=>h+=`<div class="xp-r"><span>${l[1]}<small>${l[2]} • ${l[3]} token(s)</small></span>${e.leg[l[0]]?'<b class="xp-ok">Owned</b>':`<button class="btn btn-sm btn-gold" ${(G.legacyTokens||0)-spent()<l[3]?'disabled':''} onclick="x2Leg('${l[0]}')">Unlock</button>`}</div>`);
+ const hot=Object.keys(e.sat).map(f=>[f,satMult(f,false)]).filter(a=>a[1]<.98);
+ h+='<div class="xp-h">📈 Market Saturation</div>'+(hot.length?hot.map(a=>`<div class="xp-r"><span>${a[0]}</span><b style="color:var(--danger)">${Math.round(a[1]*100)}% price</b></div>`).join(''):'<div class="xp-r"><span>All markets healthy. Diversify gem families to avoid price drops.</span></div>');
+ $('x2Box').innerHTML=h}
+window.x2Toggle=function(){const o=$('x2Ov');o.style.display=o.style.display==='flex'?'none':'flex';if(o.style.display==='flex')render()};
+window.x2House=function(id){const x=HOUSES.find(h=>h.id===id),e=E(),c=x.ch[e.hs[id]||0];if(!c||!c.ok())return;G.gold+=c.r;e.hs[id]=(e.hs[id]||0)+1;toast(x.n,c.s);updateTopUI();render()};
+window.x2Work=function(k){const c=wCost(k);if(G.gold<c)return;G.gold-=c;E().wk[k]=wl(k)+1;updateTopUI();render()};
+window.x2Room=function(k){const c=rCost(k);if(G.gold<c||rl(k)>=5)return;G.gold-=c;E().rm[k]=rl(k)+1;updateTopUI();render()};
+window.x2Send=function(i){const x=EXP[i];if(G.gold<x[2]||E().xp)return;G.gold-=x[2];E().xp={i,end:now()+x[1]*1000,done:false};updateTopUI();render()};
+window.x2Collect=function(){const e=E(),x=EXP[e.xp.i],g=Math.round(x[2]*(1.6+Math.random())*(1+.25*rl('vault')));G.gold+=g;geodes(x[3]);toast('🧭 Expedition complete','+$'+g.toLocaleString()+' and '+x[3]+' geodes');e.xp=null;updateTopUI();render()};
+window.x2Leg=function(id){const l=LEG.find(a=>a[0]===id);if((G.legacyTokens||0)-spent()<l[3])return;E().leg[id]=true;render()};
+setInterval(()=>{if($('x2Ov').style.display==='flex')render()},1000);
+})();
+</script>
+
+<style id="ship-polish">
+@media(max-width:760px){header{flex-wrap:wrap;gap:4px}.top-stats{flex-wrap:wrap;gap:4px;width:100%;justify-content:center}.top-stats .capsule{display:flex!important;font-size:.62rem;padding:3px 7px}.top-stats .capsule-bar{display:none}.brand-title{font-size:.8rem}.top-stats .btn{font-size:.62rem;padding:4px 6px}}
+</style>
+<input type="file" id="impFile" accept=".json,application/json" style="display:none">
+<div id="tutorialOverlay" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle" onclick="if(event.target===this)finishGuildTutorial()">
+  <div id="tutorialCard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div><div style="font-size:.68rem;letter-spacing:1.5px;color:var(--gold);font-weight:800;">YOUR FIRST WORKSHOP TOUR</div><h2 id="tutorialTitle" style="font-size:clamp(1.25rem,4vw,1.8rem);color:var(--gold-light);margin-top:3px;">From Quarry to Court</h2></div>
+      <button class="btn btn-sm" onclick="finishGuildTutorial()">✕</button>
+    </div>
+    <div class="tutorial-step"><span class="tutorial-icon">⛏️</span><div><b>Find a geode.</b> Break quarry tiles and click ✨ when a deposit is uncovered. Arrows on cleared tiles point to directly adjacent deposits; blank means none are beside that tile. Use the lighter chisel to preserve shaft stability.</div></div>
+    <div class="tutorial-step"><span class="tutorial-icon">💎</span><div><b>Cut it.</b> Choose a rough stone in the Faceting Lap. Strike when the moving needle crosses the highlighted zone to improve its appraisal.</div></div>
+    <div class="tutorial-step"><span class="tutorial-icon">💍</span><div><b>Forge with care.</b> Fill every socket, then check alloy cost, patron budget, estimated payout, and profit before casting. Gem appraisal is not gold you paid.</div></div>
+    <div class="tutorial-step"><span class="tutorial-icon">🏪</span><div><b>Sell or recover cash.</b> The Forge order board shows the visitor's request and royal warrants. Haggle in the Salon; if you need quick cash, sell an unsocketed gem for 60% of appraisal.</div></div>
+    <div class="tutorial-step"><span class="tutorial-icon">🧭</span><div><b>Expand steadily.</b> Unlock deeper strata when you can afford them, then return to any unlocked strata for free. Check contracts and market trends for bonuses.</div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-gold" onclick="finishGuildTutorial()">Enter the Workshop</button></div>
+  </div>
+</div>
+<script>
+/* SHIP POLISH: toolbar placement, import save, depth sync, error safety */
+(function(){
+const bar=document.querySelector('.top-stats');
+['xpBtn','x2Btn'].forEach(id=>{const b=document.getElementById(id);if(b){b.removeAttribute('style');b.style.position='static';bar.appendChild(b)}});
+const imp=document.createElement('button');imp.className='btn btn-sm';imp.textContent='📥 Import';imp.title='Import an exported slot file into the active slot';
+imp.onclick=()=>document.getElementById('impFile').click();bar.appendChild(imp);
+document.getElementById('impFile').onchange=function(){const f=this.files[0];this.value='';if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const p=JSON.parse(r.result);if(!p||!p.state||typeof p.state.gold!=='number')throw 0;
+  const n=Number(localStorage.getItem('sovereign_guild_active_slot')||1);
+  if(!confirm('Import this file into Slot '+n+'? It will replace that slot.'))return;
+  localStorage.setItem('sovereign_guild_slot_'+n,JSON.stringify(p));loadSlot(n);syncDepth();log('📥 Save imported into Slot '+n+'.')}
+  catch(e){alert('That file is not a valid Sovereign Guild save.')}};r.readAsText(f)};
+function syncDepth(){const s=document.getElementById('mineDepthSelect');if(s&&G.mineDepth)s.value=G.mineDepth}
+const oL=window.loadSlot;window.loadSlot=function(n){oL(n);syncDepth()};
+syncDepth();
+window.addEventListener('error',e=>{try{log('⚠️ A minor error occurred; your progress is safe.')}catch(_){}});
+})();
+</script>
+<script>
+window.showGuildTutorial=function(){document.getElementById('tutorialOverlay').classList.add('open')};
+window.finishGuildTutorial=function(){document.getElementById('tutorialOverlay').classList.remove('open');G.tutorialSeen=true;if(window.saveGame)window.saveGame(false)};
+if(!G.tutorialSeen)setTimeout(()=>window.showGuildTutorial(),650);
+</script>
+
+</body>
+</html>
